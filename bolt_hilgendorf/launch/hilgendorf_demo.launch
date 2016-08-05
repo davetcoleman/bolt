@@ -11,7 +11,7 @@
   <arg name="debug" default="false" />
   <arg unless="$(arg debug)" name="launch_prefix" value="" />
   <arg     if="$(arg debug)" name="launch_prefix"
-       value="gdb -x $(find curie_demos)/launch/debug_settings.gdb --ex run --args" />
+       value="gdb -x $(find bolt_hilgendorf)/launch/debug_settings.gdb --ex run --args" />
 
   <!-- Valgrind Arguments -->
   <arg name="valgrind" default="false" />
@@ -19,11 +19,11 @@
   <arg     if="$(arg valgrind)" name="launch_prefix2" value="valgrind --tool=callgrind --collect-atstart=no" />
 
   <!-- Main process -->
-  <node name="hilgendorf" pkg="curie_demos" type="curie_demos_main" respawn="false"
+  <node name="hilgendorf" pkg="bolt_hilgendorf" type="bolt_hilgendorf_main" respawn="false"
     launch-prefix="$(arg launch_prefix) $(arg launch_prefix2)" output="screen">
 
     <!-- Robot-specific settings -->
-    <rosparam command="load" file="$(find curie_demos)/config/config_hilgendorf_benchmark.yaml"/>
+    <rosparam command="load" file="$(find bolt_hilgendorf)/config/config_hilgendorf.yaml"/>
   </node>
 
   <!-- <node name="game_controller" pkg="joy" type="joy_node" respawn="true"/> -->

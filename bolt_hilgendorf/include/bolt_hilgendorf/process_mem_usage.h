@@ -3,8 +3,8 @@
  * Retrieved by Dave Coleman
  */
 
-#ifndef CURIE_DEMOS_PROCESS_MEM_USAGE_H
-#define CURIE_DEMOS_PROCESS_MEM_USAGE_H
+#ifndef BOLT_HILGENDORF_PROCESS_MEM_USAGE_H
+#define BOLT_HILGENDORF_PROCESS_MEM_USAGE_H
 
 #include <iostream>
 #include <string>
@@ -60,4 +60,4 @@ void processMemUsage(double& vm_usage, double& resident_set)
   resident_set = resident_set / 1024.0;
 }
 
-#endif  // CURIE_DEMOS_PROCESS_MEM_USAGE_H
+#endif  // BOLT_HILGENDORF_PROCESS_MEM_USAGE_H

@@ -40,16 +40,16 @@
 #include <rosparam_shortcuts/rosparam_shortcuts.h>
 
 // this package
-#include <curie_demos/cart_path_planner.h>
-#include <curie_demos/curie_demos.h>
-#include <curie_demos/path_loader.h>
+#include <bolt_hilgendorf/cart_path_planner.h>
+#include <bolt_hilgendorf/bolt_hilgendorf.h>
+#include <bolt_hilgendorf/path_loader.h>
 
 // moveit_boilerplate
 #include <moveit_boilerplate/namespaces.h>
 
-namespace curie_demos
+namespace bolt_hilgendorf
 {
-CartPathPlanner::CartPathPlanner(CurieDemos* parent) : name_("cart_path_planner"), nh_("~"), parent_(parent)
+CartPathPlanner::CartPathPlanner(BoltHilgendorf* parent) : name_("cart_path_planner"), nh_("~"), parent_(parent)
 {
   jmg_ = parent_->jmg_;
 
@@ -658,4 +658,4 @@ void CartPathPlanner::visualizeAllJointPoses(const std::vector<std::vector<doubl
   }
 }
 
-}  // namespace curie_demos
+}  // namespace bolt_hilgendorf

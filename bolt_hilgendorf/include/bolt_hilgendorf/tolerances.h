@@ -33,50 +33,38 @@
  *********************************************************************/
 
 /* Author: Dave Coleman
-   Desc:   Main executable
+   Desc:   Datastructures for specifying a underconstrained trajectory
 */
 
-// this package
-#include <curie_demos/curie_demos.h>
+#ifndef BOLT_HILGENDORF_TOLERANCES_H
+#define BOLT_HILGENDORF_TOLERANCES_H
 
-int main(int argc, char **argv)
+namespace bolt_hilgendorf
 {
-  // Initialize ROS
-  ros::init(argc, argv, "curie_demos");
-  ROS_INFO_STREAM_NAMED("main", "Starting CurieDemos...");
+enum Axis
+{
+  X_AXIS,
+  Y_AXIS,
+  Z_AXIS
+};
 
-  // Allow the action server to recieve and send ros messages
-  ros::AsyncSpinner spinner(2);
-  spinner.start();
+struct OrientationTol
+{
+  OrientationTol()
+  {
+  }
 
-  // Get name of this computer
-  char hostname[1024];
-  gethostname(hostname, 1024);
-  std::cout << "hostname: " << hostname << std::endl;
+  OrientationTol(double roll_tol, double pitch_tol, double yaw_tol)
+  {
+    axis_dist_from_center_.push_back(roll_tol);
+    axis_dist_from_center_.push_back(pitch_tol);
+    axis_dist_from_center_.push_back(yaw_tol);
+  }
 
-  // std::cout << "before get env " << std::endl;
-  // const std::string hostname2 = hostname;
-  // const std::string home = getenv("HOME");
-  // std::cout << "getEnv: " << home << std::endl;
+  std::vector<double> axis_dist_from_center_;
+};
 
-  // if (hostname2 != "ros-monster" && home.empty())
-  //   std::cout << "its true! " << std::endl;
+typedef std::vector<std::vector<ompl::tools::bolt::TaskVertex>> TrajectoryGraph;
 
-  // {
-  //   setenv("HOME", "/home/dave", 1);
-  // }
-
-  const std::string package_path = ros::package::getPath("curie_demos");
-
-  // Initialize main class
-  curie_demos::CurieDemos demo(hostname, package_path);
-
-  // Shutdown
-  ROS_INFO_STREAM_NAMED("main", "Shutting down.");
-  ros::spinOnce();
-  ros::Duration(2.0).sleep();
-  ros::spinOnce();
-  ros::shutdown();
-
-  return 0;
-}
+}  // namespace bolt_hilgendorf
+#endif  // BOLT_HILGENDORF_TOLERANCES_H

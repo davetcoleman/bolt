@@ -14,7 +14,7 @@
 
   <!-- Launch visualizer -->
   <node name="$(anon rviz)" launch-prefix="$(arg launch_prefix)" pkg="rviz" type="rviz" respawn="false"
-    args="-d $(find curie_demos)/launch/moveit.rviz" output="screen">
+    args="-d $(find bolt_hilgendorf)/launch/moveit.rviz" output="screen">
   </node>
 
   <!-- Ordered left to right, then top to bottom -->

@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>curie_demos</name>
+  <name>bolt_hilgendorf</name>
   <version>0.0.1</version>
   <description>Demonstrate dual arm manipulation using a combination of free space and Cartesian planning</description>
 
@@ -8,9 +8,9 @@
 
   <license>BSD</license>
 
-  <url type="website">https://github.com/ros-industrial-consortium/curie</url>
-  <url type="butracker">https://github.com/ros-industrial-consortium/curie/issues</url>
-  <url type="repository">https://github.com/ros-industrial-consortium/curie/</url>
+  <url type="website">https://github.com/davetcoleman/bolt</url>
+  <url type="butracker">https://github.com/davetcoleman/bolt/issues</url>
+  <url type="repository">https://github.com/davetcoleman/bolt/</url>
 
   <author email="davetcoleman@gmail.com">Dave Coleman</author>
 

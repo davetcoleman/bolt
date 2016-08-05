@@ -34,7 +34,7 @@
 
 /* Author: Dave Coleman, Ioan Sucan */
 
-#include <curie_demos/state_validity_checker.h>
+#include <bolt_hilgendorf/state_validity_checker.h>
 #include <ompl/base/SpaceInformation.h>
 #include <ros/ros.h>
 #include <moveit_ompl/detail/threadsafe_state_storage.h>

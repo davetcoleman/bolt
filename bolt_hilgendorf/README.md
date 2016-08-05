@@ -1,4 +1,4 @@
-# Curie Demos
+# Bolt Hilgendorf
 
 Description: Demonstrate dual arm manipulation using a combination of free space and Cartesian planning
 
@@ -15,19 +15,13 @@ Developed by [Dave Coleman](http://dav.ee/) at the University of Colorado Boulde
 
 Status:
 
- * [![Build Status](https://travis-ci.org/davetcoleman/curie_demos.svg)](https://travis-ci.org/davetcoleman/curie_demos) Travis - Continuous Integration
- * [![Build Status](http://build.ros.org/buildStatus/icon?job=Jsrc_uT__curie_demos__ubuntu_trusty__source)](http://build.ros.org/view/Jsrc_uT/job/Jsrc_uT__curie_demos__ubuntu_trusty__source/) ROS Buildfarm - Trusty Devel Source Build
- * [![Build Status](http://build.ros.org/buildStatus/icon?job=Jbin_uT64__curie_demos__ubuntu_trusty_amd64__binary)](http://build.ros.org/view/Jbin_uT64/job/Jbin_uT64__curie_demos__ubuntu_trusty_amd64__binary/) ROS Buildfarm - AMD64 Trusty Debian Build
+ * [![Build Status](https://travis-ci.org/davetcoleman/bolt_hilgendorf.svg)](https://travis-ci.org/davetcoleman/bolt_hilgendorf) Travis - Continuous Integration
+ * [![Build Status](http://build.ros.org/buildStatus/icon?job=Jsrc_uT__bolt_hilgendorf__ubuntu_trusty__source)](http://build.ros.org/view/Jsrc_uT/job/Jsrc_uT__bolt_hilgendorf__ubuntu_trusty__source/) ROS Buildfarm - Trusty Devel Source Build
+ * [![Build Status](http://build.ros.org/buildStatus/icon?job=Jbin_uT64__bolt_hilgendorf__ubuntu_trusty_amd64__binary)](http://build.ros.org/view/Jbin_uT64/job/Jbin_uT64__bolt_hilgendorf__ubuntu_trusty_amd64__binary/) ROS Buildfarm - AMD64 Trusty Debian Build
 
 ![](resources/screenshot.png)
 
 ## Install
-
-### Ubuntu Debian
-
-> Note: this package has not been released yet
-
-    sudo apt-get install ros-jade-curie-demos
 
 ### Build from Source
 
@@ -39,22 +33,22 @@ To build this package, ``git clone`` this repo into a [catkin workspace](http://
 
 > Note: this package has not been released yet
 
-See [Class Reference](http://docs.ros.org/jade/api/curie_demos/html/)
+See [Class Reference](http://docs.ros.org/jade/api/bolt_hilgendorf/html/)
 
 ## Usage
 
 Start Rviz:
 
-    roslaunch curie_demos hilgendorf_visualize.launch
+    roslaunch bolt_hilgendorf hilgendorf_visualize.launch
 
 Start simulated ros_control:
 
     ACTUALLY SKIP THIS STEP, NOT NECESSARY
-    #roslaunch curie_demos hilgendorf_simulation.launch
+    #roslaunch bolt_hilgendorf hilgendorf_simulation.launch
 
 Run example demo:
 
-    wmctrl -a RViz && roslaunch curie_demos hilgendorf_demo.launch
+    wmctrl -a RViz && roslaunch bolt_hilgendorf hilgendorf_demo.launch
 
 Note: the first time you run the program, it will discretize the configuration space in a brute-force manner, using the ``sparse_delta`` config. This will likely take ~1 hour. It will then save the database in the folder:
 
@@ -84,7 +78,7 @@ or in the shortcut:
 To run experiement:
 
     ssh amazonaws
-    screen -LdmS bolt bash -c 'roslaunch curie_demos hilgendorf_demo.launch debug:=0'
+    screen -LdmS bolt bash -c 'roslaunch bolt_hilgendorf hilgendorf_demo.launch debug:=0'
 
 Screen arguments key:
 
@@ -117,7 +111,7 @@ Documentation: http://docs.ros.org/api/robot_upstart/html/
 
 There are lots of settings that can easily be tweaked in the following file:
 
-    curie_demos/config/config_hilgendorf.yaml
+    bolt_hilgendorf/config/config_hilgendorf.yaml
 
 In particular, pay attention to the ``visualize/`` configurations for more indepth view of what is going on.
 
@@ -127,7 +121,7 @@ Unfinished test code
 
     rosrun tf_keyboard_cal tf_interactive_marker.py world thing 0 0 0 0 0 0 1
 
-    rosrun curie_demos test_pose_distance
+    rosrun bolt_hilgendorf test_pose_distance
 
 ## ROSCon Demo
 

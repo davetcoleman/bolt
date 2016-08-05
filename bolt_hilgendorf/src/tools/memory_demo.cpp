@@ -6,7 +6,7 @@
 #include <unistd.h>
 
 // this package
-#include <curie_demos/process_mem_usage.h>
+#include <bolt_hilgendorf/process_mem_usage.h>
 
 const std::size_t ARRAY_SIZE = 12;
 

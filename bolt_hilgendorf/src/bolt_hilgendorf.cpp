@@ -45,7 +45,7 @@
 #include <ompl_visual_tools/projection_viz_window.h>
 
 // this package
-#include <curie_demos/curie_demos.h>
+#include <bolt_hilgendorf/bolt_hilgendorf.h>
 
 // Profiling
 #include <valgrind/callgrind.h>
@@ -56,9 +56,9 @@ namespace otb = ompl::tools::bolt;
 namespace og = ompl::geometric;
 namespace rvt = rviz_visual_tools;
 
-namespace curie_demos
+namespace bolt_hilgendorf
 {
-CurieDemos::CurieDemos(const std::string &hostname, const std::string &package_path)
+BoltHilgendorf::BoltHilgendorf(const std::string &hostname, const std::string &package_path)
   : MoveItBase(), nh_("~"), remote_control_(nh_), package_path_(package_path)
 {
   // Profiler
@@ -162,7 +162,7 @@ CurieDemos::CurieDemos(const std::string &hostname, const std::string &package_p
   }
 
   // Set remote_control
-  remote_control_.setDisplayWaitingState(boost::bind(&CurieDemos::displayWaitingState, this, _1));
+  remote_control_.setDisplayWaitingState(boost::bind(&BoltHilgendorf::displayWaitingState, this, _1));
 
   // Wait until user does something
   if (!auto_run_)
@@ -176,14 +176,14 @@ CurieDemos::CurieDemos(const std::string &hostname, const std::string &package_p
   CALLGRIND_DUMP_STATS;
 }
 
-CurieDemos::~CurieDemos()
+BoltHilgendorf::~BoltHilgendorf()
 {
   // Free start and goal states
   space_->freeState(ompl_start_);
   space_->freeState(ompl_goal_);
 }
 
-bool CurieDemos::loadOMPL()
+bool BoltHilgendorf::loadOMPL()
 {
   moveit_ompl::ModelBasedStateSpaceSpecification mbss_spec(robot_model_, jmg_);
 
@@ -237,7 +237,7 @@ bool CurieDemos::loadOMPL()
   return true;
 }
 
-bool CurieDemos::loadData()
+bool BoltHilgendorf::loadData()
 {
   // double vm1, rss1;
   // if (track_memory_consumption_)  // Track memory usage
@@ -268,7 +268,7 @@ bool CurieDemos::loadData()
   return true;
 }
 
-void CurieDemos::run()
+void BoltHilgendorf::run()
 {
   deleteAllMarkers();  // again, cause it seems broken
 
@@ -337,7 +337,7 @@ void CurieDemos::run()
   bolt_->saveIfChanged();
 }
 
-bool CurieDemos::runProblems()
+bool BoltHilgendorf::runProblems()
 {
   // Logging
   std::ofstream logging_file;  // open to append
@@ -433,7 +433,7 @@ bool CurieDemos::runProblems()
   return true;
 }
 
-bool CurieDemos::plan()
+bool BoltHilgendorf::plan()
 {
   // Setup -----------------------------------------------------------
 
@@ -525,7 +525,7 @@ bool CurieDemos::plan()
   return true;
 }
 
-void CurieDemos::loadCollisionChecker()
+void BoltHilgendorf::loadCollisionChecker()
 {
   // Create state validity checking for this space
   validity_checker_ =
@@ -540,7 +540,7 @@ void CurieDemos::loadCollisionChecker()
   si_->setStateValidityCheckingResolution(0.005);
 }
 
-void CurieDemos::deleteAllMarkers(bool clearDatabase)
+void BoltHilgendorf::deleteAllMarkers(bool clearDatabase)
 {
   if (headless_)
     return;
@@ -565,7 +565,7 @@ void CurieDemos::deleteAllMarkers(bool clearDatabase)
   viz6_->trigger();
 }
 
-void CurieDemos::loadVisualTools()
+void BoltHilgendorf::loadVisualTools()
 {
   using namespace ompl_visual_tools;
   using namespace moveit_visual_tools;
@@ -682,10 +682,10 @@ void CurieDemos::loadVisualTools()
   }
 
   // Set other hooks
-  visual->setWaitForUserFeedback(boost::bind(&CurieDemos::waitForNextStep, this, _1));
+  visual->setWaitForUserFeedback(boost::bind(&BoltHilgendorf::waitForNextStep, this, _1));
 }
 
-void CurieDemos::visualizeStartGoal()
+void BoltHilgendorf::visualizeStartGoal()
 {
   visual_moveit_start_->publishRobotState(moveit_start_, rvt::GREEN);
   visual_moveit_goal_->publishRobotState(moveit_goal_, rvt::ORANGE);
@@ -697,7 +697,7 @@ void CurieDemos::visualizeStartGoal()
   // visual_moveit_start_->showJointLimits(moveit_goal_);
 }
 
-void CurieDemos::displayWaitingState(bool waiting)
+void BoltHilgendorf::displayWaitingState(bool waiting)
 {
   // std::cout << " TODO display waiting state " << std::endl;
   // if (waiting)
@@ -708,12 +708,12 @@ void CurieDemos::displayWaitingState(bool waiting)
   // viz_bg_->trigger();
 }
 
-void CurieDemos::waitForNextStep(const std::string &msg)
+void BoltHilgendorf::waitForNextStep(const std::string &msg)
 {
   remote_control_.waitForNextStep(msg);
 }
 
-void CurieDemos::testConnectionToGraphOfRandStates()
+void BoltHilgendorf::testConnectionToGraphOfRandStates()
 {
   ompl::base::State *random_state = space_->allocState();
 
@@ -746,7 +746,7 @@ void CurieDemos::testConnectionToGraphOfRandStates()
   space_->freeState(random_state);
 }
 
-void CurieDemos::visualizeRawTrajectory(og::PathGeometric &path)
+void BoltHilgendorf::visualizeRawTrajectory(og::PathGeometric &path)
 {
   ROS_INFO("Visualizing non-interpolated trajectory");
 
@@ -760,7 +760,7 @@ void CurieDemos::visualizeRawTrajectory(og::PathGeometric &path)
   viz3_->trigger();
 }
 
-bool CurieDemos::generateCartGraph()
+bool BoltHilgendorf::generateCartGraph()
 {
   // Generate the Descartes graph - if it fails let user adjust interactive marker
   while (true)
@@ -779,7 +779,7 @@ bool CurieDemos::generateCartGraph()
   return true;
 }
 
-bool CurieDemos::checkMoveItPathSolution(robot_trajectory::RobotTrajectoryPtr traj)
+bool BoltHilgendorf::checkMoveItPathSolution(robot_trajectory::RobotTrajectoryPtr traj)
 {
   std::size_t state_count = traj->getWayPointCount();
   if (state_count < 3)
@@ -838,7 +838,7 @@ bool CurieDemos::checkMoveItPathSolution(robot_trajectory::RobotTrajectoryPtr tr
   return true;
 }
 
-bool CurieDemos::getRandomState(moveit::core::RobotStatePtr &robot_state)
+bool BoltHilgendorf::getRandomState(moveit::core::RobotStatePtr &robot_state)
 {
   static const std::size_t MAX_ATTEMPTS = 1000;
   for (std::size_t i = 0; i < MAX_ATTEMPTS; ++i)
@@ -864,7 +864,7 @@ bool CurieDemos::getRandomState(moveit::core::RobotStatePtr &robot_state)
   return false;
 }
 
-void CurieDemos::testMotionValidator()
+void BoltHilgendorf::testMotionValidator()
 {
   // THIS FUNCTION BROKEN BECAUSE moveit_core SAYS "FCL continuous collision checking not yet implemented"
 
@@ -893,4 +893,4 @@ void CurieDemos::testMotionValidator()
   std::cout << "motion in collision: " << res.collision << std::endl;
 }
 
-}  // namespace curie_demos
+}  // namespace bolt_hilgendorf

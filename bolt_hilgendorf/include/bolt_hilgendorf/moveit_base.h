@@ -36,8 +36,8 @@
    Desc:   Base class for using MoveIt! in C++
 */
 
-#ifndef CURIE_DEMOS_MOVEIT_BASE_H
-#define CURIE_DEMOS_MOVEIT_BASE_H
+#ifndef BOLT_HILGENDORF_MOVEIT_BASE_H
+#define BOLT_HILGENDORF_MOVEIT_BASE_H
 
 // C++
 #include <string>
@@ -56,7 +56,7 @@
 // ROS parameter loading
 #include <rosparam_shortcuts/rosparam_shortcuts.h>
 
-namespace curie_demos
+namespace bolt_hilgendorf
 {
 static const std::string ROBOT_DESCRIPTION = "robot_description";
 
@@ -141,6 +141,6 @@ protected:
   JointModelGroup *jmg_;
 };  // end class
 
-}  // namespace curie_demos
+}  // namespace bolt_hilgendorf
 
-#endif  // CURIE_DEMOS_MOVEIT_BASE_H
+#endif  // BOLT_HILGENDORF_MOVEIT_BASE_H

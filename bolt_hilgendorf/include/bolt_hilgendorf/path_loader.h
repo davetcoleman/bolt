@@ -37,8 +37,8 @@
            Future possibility: https://github.com/memononen/nanosvg/blob/master/src/nanosvg.h
 */
 
-#ifndef CURIE_DEMOS_PATH_LOADER_H
-#define CURIE_DEMOS_PATH_LOADER_H
+#ifndef BOLT_HILGENDORF_PATH_LOADER_H
+#define BOLT_HILGENDORF_PATH_LOADER_H
 
 // ROS
 #include <ros/ros.h>
@@ -46,7 +46,7 @@
 // Boost
 #include <boost/filesystem.hpp>
 
-namespace curie_demos
+namespace bolt_hilgendorf
 {
 class PathLoader
 {
@@ -162,5 +162,5 @@ private:
 typedef boost::shared_ptr<PathLoader> PathLoaderPtr;
 typedef boost::shared_ptr<const PathLoader> PathLoaderConstPtr;
 
-}  // namespace curie_demos
-#endif  // CURIE_DEMOS_PATH_LOADER_H
+}  // namespace bolt_hilgendorf
+#endif  // BOLT_HILGENDORF_PATH_LOADER_H

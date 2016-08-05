@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(curie_demos)
+project(bolt_hilgendorf)
 
 # C++ 11
 add_compile_options(-std=c++11)
@@ -60,7 +60,7 @@ include_directories(
 
 # Library
 add_library(${PROJECT_NAME}
-  src/curie_demos.cpp
+  src/bolt_hilgendorf.cpp
   src/state_validity_checker.cpp
   src/moveit_base.cpp
   src/cart_path_planner.cpp
@@ -72,14 +72,14 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 # Main program
-add_executable(${PROJECT_NAME}_curie_demos_main
-  src/curie_demos_main.cpp
+add_executable(${PROJECT_NAME}_bolt_hilgendorf_main
+  src/bolt_hilgendorf_main.cpp
 )
 # Rename C++ executable without namespace
-set_target_properties(${PROJECT_NAME}_curie_demos_main
-  PROPERTIES OUTPUT_NAME curie_demos_main PREFIX "")
+set_target_properties(${PROJECT_NAME}_bolt_hilgendorf_main
+  PROPERTIES OUTPUT_NAME bolt_hilgendorf_main PREFIX "")
 # Specify libraries to link a library or executable target against
-target_link_libraries(${PROJECT_NAME}_curie_demos_main
+target_link_libraries(${PROJECT_NAME}_bolt_hilgendorf_main
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
@@ -124,7 +124,7 @@ roslint_cpp()
 #############
 
 ## Mark executables and/or libraries for installation
-install(TARGETS ${PROJECT_NAME}_curie_demos_main
+install(TARGETS ${PROJECT_NAME}_bolt_hilgendorf_main
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

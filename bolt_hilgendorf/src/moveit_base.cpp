@@ -41,13 +41,13 @@
 #include <vector>
 
 // this package
-#include <curie_demos/moveit_base.h>
+#include <bolt_hilgendorf/moveit_base.h>
 
 // Conversions
 #include <tf_conversions/tf_eigen.h>
 #include <eigen_conversions/eigen_msg.h>
 
-namespace curie_demos
+namespace bolt_hilgendorf
 {
 MoveItBase::MoveItBase() : name_("moveit_base")
 {
@@ -115,7 +115,7 @@ bool MoveItBase::loadPlanningSceneMonitor(const std::string& joint_state_topic)
   {
     // Optional monitors to start:
     // planning_scene_monitor_->startStateMonitor(joint_state_topic, "");
-    planning_scene_monitor_->getPlanningScene()->setName("curie_scene");
+    planning_scene_monitor_->getPlanningScene()->setName("bolt_scene");
     planning_scene_monitor_->startPublishingPlanningScene(psm::PlanningSceneMonitor::UPDATE_NONE,
                                                           planning_scene_topic_);
   }
@@ -239,4 +239,4 @@ bool MoveItBase::getTFTransform(const std::string& from_frame, const std::string
   return true;
 }
 
-}  // namespace curie_demos
+}  // namespace bolt_hilgendorf

@@ -36,8 +36,8 @@
    Desc:   Demo dual arm manipulation
 */
 
-#ifndef CURIE_DEMOS_CURIE_DEMOS_H
-#define CURIE_DEMOS_CURIE_DEMOS_H
+#ifndef BOLT_HILGENDORF_BOLT_HILGENDORF_H
+#define BOLT_HILGENDORF_BOLT_HILGENDORF_H
 
 // ROS
 #include <ros/ros.h>
@@ -46,7 +46,7 @@
 #include <moveit/planning_interface/planning_interface.h>
 #include <moveit/robot_state/conversions.h>
 #include <moveit/kinematic_constraints/utils.h>
-#include <curie_demos/moveit_base.h>
+#include <bolt_hilgendorf/moveit_base.h>
 
 // moveit_ompl
 #include <moveit_ompl/model_based_state_space.h>
@@ -58,23 +58,23 @@
 #include <ompl_visual_tools/moveit_viz_window.h>
 
 // this package
-//#include <curie_demos/process_mem_usage.h>
-#include <curie_demos/state_validity_checker.h>
-#include <curie_demos/cart_path_planner.h>
+//#include <bolt_hilgendorf/process_mem_usage.h>
+#include <bolt_hilgendorf/state_validity_checker.h>
+#include <bolt_hilgendorf/cart_path_planner.h>
 #include <moveit_visual_tools/imarker_robot_state.h>
 
 namespace mo = moveit_ompl;
 
-namespace curie_demos
+namespace bolt_hilgendorf
 {
-class CurieDemos : public curie_demos::MoveItBase
+class BoltHilgendorf : public bolt_hilgendorf::MoveItBase
 {
 public:
   /** \brief Constructor */
-  CurieDemos(const std::string& hostname, const std::string& package_path);
+  BoltHilgendorf(const std::string& hostname, const std::string& package_path);
 
   /** \brief Destructor */
-  ~CurieDemos();
+  ~BoltHilgendorf();
 
   /** \brief Load the basic planning context components */
   bool loadOMPL();
@@ -123,7 +123,7 @@ public:
   ros::NodeHandle nh_;
 
   // The short name of this class
-  std::string name_ = "curie_demos";
+  std::string name_ = "bolt_hilgendorf";
 
   // Recieve input from Rviz
   moveit_ompl::RemoteControl remote_control_;
@@ -220,9 +220,9 @@ public:
 };  // end class
 
 // Create boost pointers for this class
-typedef boost::shared_ptr<CurieDemos> CurieDemosPtr;
-typedef boost::shared_ptr<const CurieDemos> CurieDemosConstPtr;
+typedef boost::shared_ptr<BoltHilgendorf> BoltHilgendorfPtr;
+typedef boost::shared_ptr<const BoltHilgendorf> BoltHilgendorfConstPtr;
 
-}  // namespace curie_demos
+}  // namespace bolt_hilgendorf
 
-#endif  // CURIE_DEMOS_CURIE_DEMOS_H
+#endif  // BOLT_HILGENDORF_BOLT_HILGENDORF_H

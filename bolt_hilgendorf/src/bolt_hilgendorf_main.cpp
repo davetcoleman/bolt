@@ -33,38 +33,50 @@
  *********************************************************************/
 
 /* Author: Dave Coleman
-   Desc:   Datastructures for specifying a underconstrained trajectory
+   Desc:   Main executable
 */
 
-#ifndef CURIE_DEMOS_TOLERANCES_H
-#define CURIE_DEMOS_TOLERANCES_H
+// this package
+#include <bolt_hilgendorf/bolt_hilgendorf.h>
 
-namespace curie_demos
+int main(int argc, char **argv)
 {
-enum Axis
-{
-  X_AXIS,
-  Y_AXIS,
-  Z_AXIS
-};
+  // Initialize ROS
+  ros::init(argc, argv, "bolt_hilgendorf");
+  ROS_INFO_STREAM_NAMED("main", "Starting BoltHilgendorf...");
 
-struct OrientationTol
-{
-  OrientationTol()
-  {
-  }
+  // Allow the action server to recieve and send ros messages
+  ros::AsyncSpinner spinner(2);
+  spinner.start();
 
-  OrientationTol(double roll_tol, double pitch_tol, double yaw_tol)
-  {
-    axis_dist_from_center_.push_back(roll_tol);
-    axis_dist_from_center_.push_back(pitch_tol);
-    axis_dist_from_center_.push_back(yaw_tol);
-  }
+  // Get name of this computer
+  char hostname[1024];
+  gethostname(hostname, 1024);
+  std::cout << "hostname: " << hostname << std::endl;
 
-  std::vector<double> axis_dist_from_center_;
-};
+  // std::cout << "before get env " << std::endl;
+  // const std::string hostname2 = hostname;
+  // const std::string home = getenv("HOME");
+  // std::cout << "getEnv: " << home << std::endl;
 
-typedef std::vector<std::vector<ompl::tools::bolt::TaskVertex>> TrajectoryGraph;
+  // if (hostname2 != "ros-monster" && home.empty())
+  //   std::cout << "its true! " << std::endl;
 
-}  // namespace curie_demos
-#endif  // CURIE_DEMOS_TOLERANCES_H
+  // {
+  //   setenv("HOME", "/home/dave", 1);
+  // }
+
+  const std::string package_path = ros::package::getPath("bolt_hilgendorf");
+
+  // Initialize main class
+  bolt_hilgendorf::BoltHilgendorf demo(hostname, package_path);
+
+  // Shutdown
+  ROS_INFO_STREAM_NAMED("main", "Shutting down.");
+  ros::spinOnce();
+  ros::Duration(2.0).sleep();
+  ros::spinOnce();
+  ros::shutdown();
+
+  return 0;
+}

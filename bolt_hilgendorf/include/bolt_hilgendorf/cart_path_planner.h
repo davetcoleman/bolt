@@ -36,8 +36,8 @@
    Desc:   Creates a cartesian path to be inserted into a planning roadmap
 */
 
-#ifndef CURIE_DEMOS_CART_PATH_PLANNER_H
-#define CURIE_DEMOS_CART_PATH_PLANNER_H
+#ifndef BOLT_HILGENDORF_CART_PATH_PLANNER_H
+#define BOLT_HILGENDORF_CART_PATH_PLANNER_H
 
 // MoveIt
 #include <moveit/robot_state/robot_state.h>
@@ -61,11 +61,11 @@
 
 // this package
 #include <moveit_visual_tools/imarker_robot_state.h>
-#include <curie_demos/tolerances.h>
+#include <bolt_hilgendorf/tolerances.h>
 
-namespace curie_demos
+namespace bolt_hilgendorf
 {
-class CurieDemos;
+class BoltHilgendorf;
 
 class CartPathPlanner
 {
@@ -73,7 +73,7 @@ public:
   /**
    * \brief Constructor
    */
-  CartPathPlanner(CurieDemos* parent);
+  CartPathPlanner(BoltHilgendorf* parent);
 
   void initDescartes();
 
@@ -109,7 +109,7 @@ private:
   ros::NodeHandle nh_;
 
   // Parent class
-  CurieDemos* parent_;
+  BoltHilgendorf* parent_;
 
   // The main graph
   ompl::tools::bolt::TaskGraphPtr task_graph_;
@@ -157,5 +157,5 @@ private:
 typedef boost::shared_ptr<CartPathPlanner> CartPathPlannerPtr;
 typedef boost::shared_ptr<const CartPathPlanner> CartPathPlannerConstPtr;
 
-}  // namespace curie_demos
-#endif  // CURIE_DEMOS_CART_PATH_PLANNER_H
+}  // namespace bolt_hilgendorf
+#endif  // BOLT_HILGENDORF_CART_PATH_PLANNER_H
