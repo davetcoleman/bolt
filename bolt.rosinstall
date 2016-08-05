@@ -1,0 +1,77 @@
+# Packages being released into bloom:
+- git:
+    local-name: moveit_boilerplate
+    uri: https://github.com/davetcoleman/moveit_boilerplate.git
+    version: kinetic-devel
+- git:
+    local-name: rviz_visual_tools
+    uri: https://github.com/davetcoleman/rviz_visual_tools.git
+    version: kinetic-devel
+- git:
+    local-name: moveit_visual_tools
+    uri: https://github.com/davetcoleman/moveit_visual_tools.git
+    version: kinetic-devel
+- git:
+    local-name: rosparam_shortcuts
+    uri: https://github.com/davetcoleman/rosparam_shortcuts.git
+    version: kinetic-devel
+
+# Others Code that is not released
+- git:
+    local-name: descartes
+    uri: https://github.com/davetcoleman/descartes.git
+    version: indigo-all-all
+- git:
+    local-name: hilgendorf
+    uri: https://github.com/davetcoleman/hilgendorf.git
+    version: indigo-dave
+- git:
+    local-name: robotiq
+    uri: https://github.com/davetcoleman/robotiq.git
+    version: jade-all
+- git:
+    local-name: roscon_2015
+    uri: https://github.com/davetcoleman/roscon_2015.git
+    version: master-all
+- git:
+    local-name: universal_robot
+    uri: https://github.com/davetcoleman/universal_robot.git
+    version: indigo-dave
+
+# My custom code for Curie
+- git:
+    local-name: curie
+    uri: https://github.com/davetcoleman/curie.git
+    version: kinetic-devel
+- git:
+    local-name: moveit_dashboard
+    uri: https://github.com/davetcoleman/moveit_dashboard.git
+    version: kinetic-devel
+- git:
+    local-name: moveit_ompl
+    uri: https://github.com/davetcoleman/moveit_ompl.git
+    version: kinetic-devel
+- git:
+    local-name: ompl
+    uri: https://github.com/davetcoleman/ompl.git
+    version: bolt
+- git:
+    local-name: ompl_bolt
+    uri: https://github.com/davetcoleman/ompl_bolt.git
+    version: kinetic-devel
+- git:
+    local-name: ompl_experience_demos
+    uri: https://bitbucket.org/davetcoleman/ompl_experience_demos.git
+    version: kinetic-devel
+- git:
+    local-name: ompl_visual_tools
+    uri: https://github.com/davetcoleman/ompl_visual_tools.git
+    version: kinetic-devel
+
+# Temporary until MoveIt is updated
+- git: {local-name: moveit_core, uri: 'https://github.com/ros-planning/moveit_core.git', version: jade-devel}
+- git: {local-name: moveit_ros, uri: 'https://github.com/ros-planning/moveit_ros.git', version: jade-devel}
+- git: {local-name: moveit_msgs, uri: 'https://github.com/ros-planning/moveit_msgs.git', version: jade-devel}
+- git: {local-name: moveit_plugins, uri: 'https://github.com/ros-planning/moveit_plugins.git', version: jade-devel}
+# Required until warehouse_ros 0.9.0 is released
+- git: {local-name: warehouse_ros, uri: 'https://github.com/ros-planning/warehouse_ros.git', version: jade-devel}

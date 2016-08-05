@@ -1,0 +1,21 @@
+<!-- -*- mode: XML -*- -->
+<launch>
+
+  <!-- GDB Debug Arguments -->
+  <arg name="debug" default="false" />
+  <arg unless="$(arg debug)" name="launch_prefix" value="" />
+  <arg     if="$(arg debug)" name="launch_prefix" value="gdb --ex run --args" />
+
+  <!-- Valgrind Arguments -->
+  <arg name="valgrind" default="false" />
+  <arg unless="$(arg valgrind)" name="launch_prefix2" value="" />
+  <arg     if="$(arg valgrind)" name="launch_prefix2" value="valgrind --tool=callgrind --collect-atstart=no" />
+
+  <!-- Launch main node -->
+  <node name="ompl_experience_demos" launch-prefix="$(arg launch_prefix) $(arg launch_prefix2)" pkg="ompl_experience_demos" type="ompl_experience_demos" respawn="false" output="screen">
+
+    <!-- Robot-specific settings -->
+    <rosparam file="$(find ompl_experience_demos)/config/config_experience_demos.yaml" command="load"/>
+  </node>
+
+</launch>

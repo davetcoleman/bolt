@@ -1,0 +1,141 @@
+# ====================================================
+# Main program
+experience_demos:
+  # run mode
+  benchmark_performance: false
+  display_disjoint_sets: false
+  eliminate_dense_disjoint_sets: false
+  check_valid_vertices: false
+  create_spars: true
+  run_problems: false
+
+  # run type
+  planning_runs: 10
+  problem_type: 0 # 0 - random, 1 - static, 2 - static within sphere
+  problem_id: 0 # which start/goal pair to use, if problem_type is static
+  image_id: 7 # 0 - hard0, 4 - hard4, 5 - blank, 6 - sparse, 7 - narrow
+  post_processing_interval: 20 # how often (in runs) to adjust the graphs
+  use_experience: true
+  experience_planner: bolt
+  #experience_planner: spars2
+  seed_random: true
+  dimensions: 2
+  use_task_planning: true  # cartesian hybrid planning
+  collision_checking_enabled: true
+  verbose:
+    verbose: true
+  visualize:
+    start_goal_states: true
+    database_every_plan: false
+    database_on_load: true
+    time_between_plans: 1
+    wait_between_plans: true
+
+# ====================================================
+sparse_generator:
+  fourth_criteria_after_failures: 5000 # mode change to 4th criteria after this many failures
+  terminate_after_failures: 100000 # total failures, including 4th criteria
+  use_discretized_samples: true
+  use_random_samples: true
+  save_interval: 100 # how often to save during random sampling
+
+# ====================================================
+sparse_criteria:
+  sparse_delta_fraction: 0.05
+  dense_delta_fraction: 0.01 #NOTE: this is not used anymore
+  penetration_overlap_fraction: 0.01 #0.001
+  near_sample_points_multiple: 2 # 2 is value used by SPARStwo
+  stretch_factor: 1.5    # 0 means auto set
+  use_edge_improvement_rule: true
+  use_l2_norm: false # straight line distance
+  use_check_remove_close_vertices: true # Experimental feature that allows very closeby vertices to be merged with newly added ones
+  use_clear_edges_near_vertex: true # When adding a quality vertex, remove nearby edges
+  use_original_smoother: false # original is bad
+  verbose:
+    added_reason: false # debug criteria for adding vertices & edges
+    criteria: false
+    quality: false
+    quality_max_spanner: false
+    remove_close: false
+  visualize:
+    attempted_states: false # show the current sampled state before its added
+    connectivity: false # show states in different connected components for connectivity criteria
+    quality_criteria: false # window 5
+    quality_criteria_close_reps: false # window 3
+    quality_criteria_sampler: false
+    quality_criteria_astar: false # show results of astar test
+    remove_close_vertices: false
+
+# ====================================================
+sparse_graph:
+  save_enabled: false
+  super_debug: false # run more checks and tests that slow down speed
+  obstacle_clearance: 1
+  verbose:
+    add: false # debug when addVertex() and addEdge() are called
+  visualize:
+    spars_graph: false
+    spars_graph_speed: 0.000001 # if 0, does not animate but only single image draw
+    database_vertices: true
+    database_edges: true
+    database_coverage: false # the grey circles around vertices representing sparse delta
+    projection: false
+    graph_after_loading: false
+    quality_path_simp: false # show smoothing simplification
+    astar: false # show node expansions and openings
+    astar_speed: 0.01 # how many seconds to wait between each visualization
+    voronoi_diagram: false
+    voronoi_diagram_animated: false
+
+# ====================================================
+vertex_discretizer:
+  verbose:
+    verbose: true
+    thread: false
+  visualize:
+    grid_generation: false
+    grid_generation_wait: false
+
+# ====================================================
+task_graph:
+  num_neighbors_connect_to_cart: 10
+  verbose:
+    add: false # debug when addVertex() and addEdge() are called
+    search: false
+    visualize: false
+    verbose: true
+    heuristic: false
+    clear: false
+    generate_task: false
+  visualize:
+    task_graph: true
+    task_graph_speed: 0.00001 # if 0, does not animate but only single image draw
+    database_vertices: true
+    database_edges: true
+    astar: false # show node expansions and openings
+    astar_speed: 0.01 # how many seconds to wait between each visualization
+
+# ====================================================
+debug_interface:
+  autonomous: false
+  full_autonomous: true
+
+# ====================================================
+dense_cache:
+  disable_cache: false
+  enable_cache_saving: false
+  save_every_n_edges: 50000
+
+# ====================================================
+bolt_planner:
+  verbose:
+    verbose: true
+  visualize:
+    raw_trajectory: true
+
+# ====================================================
+bolt:
+  visualize:
+    raw_trajectory: true
+    smooth_trajectory: true
+    robot_trajectory: true

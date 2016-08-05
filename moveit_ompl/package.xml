@@ -1,0 +1,42 @@
+<package>
+  <name>moveit_ompl</name>
+  <version>1.0.0</version>
+  <description>MoveIt interface to OMPL</description>
+  <maintainer email="davetcoleman@gmail.com">Dave Coleman</maintainer>
+  <author email="davetcoleman@gmail.com">Dave Coleman</author>
+
+  <license>BSD</license>
+
+  <url type="website">http://moveit.ros.org</url>
+  <url type="bugtracker">https://github.com/davetcoleman/moveit_ompl/issues</url>
+  <url type="repository">https://github.com/davetcoleman/moveit_ompl</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>moveit_core</build_depend>
+  <build_depend>ompl</build_depend>
+  <build_depend>eigen_conversions</build_depend>
+  <build_depend>moveit_ros_planning</build_depend>
+  <build_depend>moveit_visual_tools</build_depend>
+  <build_depend>rosparam_shortcuts</build_depend>
+  <build_depend>dynamic_reconfigure</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>tf</build_depend>
+  <build_depend>pluginlib</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+
+  <run_depend>moveit_core</run_depend>
+  <run_depend>ompl</run_depend>
+  <run_depend>eigen_conversions</run_depend>
+  <run_depend>moveit_ros_planning</run_depend>
+  <run_depend>moveit_visual_tools</run_depend>
+  <run_depend>dynamic_reconfigure</run_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>tf</run_depend>
+  <run_depend>pluginlib</run_depend>
+
+  <export>
+    <moveit_core plugin="${prefix}/moveit_ompl_plugin_description.xml"/>
+  </export>
+
+</package>

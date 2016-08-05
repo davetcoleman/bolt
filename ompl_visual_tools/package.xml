@@ -1,0 +1,30 @@
+<package format="2">
+  <name>ompl_visual_tools</name>
+  <version>2.3.2</version>
+  <description>
+    Rviz 3-D visualizer for planning algorithms implemented with the Open Motion Planning Library (OMPL)
+  </description>
+
+  <maintainer email="davetcoleman@gmail.com">Dave Coleman</maintainer>
+  <author email="davetcoleman@gmail.com">Dave Coleman</author>
+
+  <license>BSD</license>
+
+  <url type="website">http://ros.org/wiki/ompl_visual_tools</url>
+  <url type="bugtracker">https://github.com/davetcoleman/ompl_visual_tools/issues</url>
+  <url type="repository">https://github.com/davetcoleman/ompl_visual_tools/</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>graph_msgs</depend>
+  <depend>moveit_visual_tools</depend>
+  <depend>moveit_ompl</depend>
+  <depend>moveit_core</depend>
+  <depend>roscpp</depend>
+  <depend>roslib</depend>
+  <depend>visualization_msgs</depend>
+  <depend>ompl</depend>
+
+  <export>
+  </export>
+</package>

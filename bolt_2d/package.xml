@@ -1,0 +1,28 @@
+<package format="2">
+  <name>ompl_experience_demos</name>
+  <version>0.0.1</version>
+  <description>
+    Research
+  </description>
+
+  <maintainer email="davetcoleman@gmail.com">Dave Coleman</maintainer>
+  <author email="davetcoleman@gmail.com">Dave Coleman</author>
+
+  <license>BSD</license>
+
+  <url type="website">http://ros.org/wiki/ompl_experience_demos</url>
+  <url type="bugtracker">https://github.com/davetcoleman/ompl_experience_demos/issues</url>
+  <url type="repository">https://github.com/davetcoleman/ompl_experience_demos/</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>ompl_visual_tools</depend>
+  <depend>roscpp</depend>
+  <depend>ompl</depend>
+  <depend>libgflags-dev</depend>
+  <depend>rosparam_shortcuts</depend>
+  <depend>ompl_bolt</depend>
+
+  <export>
+  </export>
+</package>

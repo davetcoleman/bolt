@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<launch>
+
+  <!-- Load the URDF, SRDF and other .yaml configuration files on the param server -->
+  <include file="$(find hilgendorf_moveit_config)/launch/planning_context.launch">
+    <arg name="load_robot_description" value="true"/>
+    <arg name="robot_description" value="hilgendorf/robot_description"/>
+  </include>
+
+  <!-- GDB Debug Arguments -->
+  <arg name="debug" default="false" />
+  <arg unless="$(arg debug)" name="launch_prefix" value="" />
+  <arg     if="$(arg debug)" name="launch_prefix"
+       value="gdb -x $(find curie_demos)/launch/debug_settings.gdb --ex run --args" />
+
+  <!-- Valgrind Arguments -->
+  <arg name="valgrind" default="false" />
+  <arg unless="$(arg valgrind)" name="launch_prefix2" value="" />
+  <arg     if="$(arg valgrind)" name="launch_prefix2" value="valgrind --tool=callgrind --collect-atstart=no" />
+
+  <!-- Main process -->
+  <node name="hilgendorf" pkg="curie_demos" type="curie_demos_main" respawn="false"
+    launch-prefix="$(arg launch_prefix) $(arg launch_prefix2)" output="screen">
+
+    <!-- Robot-specific settings -->
+    <rosparam command="load" file="$(find curie_demos)/config/config_hilgendorf_benchmark.yaml"/>
+  </node>
+
+  <!-- <node name="game_controller" pkg="joy" type="joy_node" respawn="true"/> -->
+</launch>

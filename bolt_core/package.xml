@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>ompl_bolt</name>
+  <version>0.0.1</version>
+  <description>The ompl_bolt package</description>
+
+  <maintainer email="davetcoleman@gmail.com">Dave Coleman</maintainer>
+
+  <license>BSD</license>
+
+  <url type="website">https://github.com/davetcoleman/ompl_bolt</url>
+  <url type="butracker">https://github.com/davetcoleman/ompl_bolt/issues</url>
+  <url type="repository">https://github.com/davetcoleman/ompl_bolt/</url>
+
+  <author email="davetcoleman@gmail.com">Dave Coleman</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>ompl</depend>
+  <depend>valgrind</depend>
+
+  <export>
+  </export>
+</package>
