@@ -1,6 +1,6 @@
 # ====================================================
 # Main program
-experience_demos:
+bolt_2d:
   # run mode
   benchmark_performance: false
   display_disjoint_sets: false

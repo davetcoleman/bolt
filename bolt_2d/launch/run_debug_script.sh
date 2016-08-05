@@ -1,1 +1,1 @@
-gdb -x `rospack find ompl_experience_demos`/launch/debug_settings.gdb --ex run --args /home/dave/ros/ws_moveit/devel/lib/ompl_experience_demos/thunder_spars_demo --verbose --runs 2 --image ~/ros/ws_moveit/src/ompl_visual_tools/resources/simple.ppm 
+gdb -x `rospack find bolt_2d`/launch/debug_settings.gdb --ex run --args /home/dave/ros/ws_moveit/devel/lib/bolt_2d/thunder_spars_demo --verbose --runs 2 --image ~/ros/ws_moveit/src/ompl_visual_tools/resources/simple.ppm 

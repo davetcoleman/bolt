@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(ompl_experience_demos)
+project(bolt_2d)
 
 # C++ 11
 add_compile_options(-std=c++11) 
@@ -47,7 +47,7 @@ include_directories(
 
 # Bolt Demo
 add_executable(${PROJECT_NAME}
-  src/experience_demos.cpp
+  src/bolt_2d.cpp
 )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}

@@ -2,8 +2,8 @@
  * Graph.h
  */
 
-#ifndef OMPL_EXPERIENCE_DEMOS_GRAPH_H_
-#define OMPL_EXPERIENCE_DEMOS_GRAPH_H_
+#ifndef BOLT_2D_GRAPH_H_
+#define BOLT_2D_GRAPH_H_
 
 #include "_graph_detail.h"
 
@@ -118,4 +118,4 @@ public:
   double graphDistance(Vertex u, Vertex v) const;
 };
 
-#endif  // OMPL_EXPERIENCE_DEMOS_GRAPH_H_
+#endif  // BOLT_2D_GRAPH_H_

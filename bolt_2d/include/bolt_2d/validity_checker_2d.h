@@ -36,8 +36,8 @@
    Desc:   Custom State Validity Checker with cost function
 */
 
-#ifndef OMPL_EXPERIENCE_DEMOS_VALIDITY_CHECKER_2D_H
-#define OMPL_EXPERIENCE_DEMOS_VALIDITY_CHECKER_2D_H
+#ifndef BOLT_2D_VALIDITY_CHECKER_2D_H
+#define BOLT_2D_VALIDITY_CHECKER_2D_H
 
 // Boost
 #include <boost/numeric/ublas/matrix.hpp>

@@ -58,7 +58,7 @@ namespace ob = ompl::base;
 namespace ot = ompl::tools;
 namespace og = ompl::geometric;
 
-namespace ompl_experience_demos
+namespace bolt_2d
 {
 static const std::string BASE_FRAME = "/world";
 
@@ -675,7 +675,7 @@ public:
 // *********************************************************************************************************
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "ompl_experience_demos");
+  ros::init(argc, argv, "bolt_2d");
   ROS_INFO("OMPL Visual Tools with Lightning Framework ----------------------------------------- ");
 
   // Seed random
@@ -796,7 +796,7 @@ int main(int argc, char** argv)
   }
 
   // Create the planner
-  ompl_experience_demos::LightningDemo demo(verbose, use_visuals);
+  bolt_2d::LightningDemo demo(verbose, use_visuals);
   ROS_DEBUG_STREAM_NAMED("main", "Loaded " << demo.getLightning()->getExperiencesCount() << " experiences from file");
 
   // Clear Rviz

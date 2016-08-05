@@ -62,7 +62,7 @@
 namespace ob = ompl::base;
 namespace og = ompl::geometric;
 
-namespace ompl_experience_demos
+namespace bolt_2d
 {
 static const std::string BASE_FRAME = "/world";
 
@@ -467,7 +467,7 @@ public:
 // *********************************************************************************************************
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "ompl_experience_demos");
+  ros::init(argc, argv, "bolt_2d");
   ROS_INFO("OMPL Visual Tools Demo ----------------------------------------- ");
 
   // Seed random
@@ -554,7 +554,7 @@ int main(int argc, char** argv)
   }
 
   // Create the planner
-  ompl_experience_demos::SparsTwoDemo demo(verbose, use_visuals);
+  bolt_2d::SparsTwoDemo demo(verbose, use_visuals);
 
   // Clear Rviz
   demo.deleteAllMakers();

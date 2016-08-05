@@ -9,12 +9,12 @@ Clone into your [catkin workspace](http://wiki.ros.org/catkin/Tutorials/create_a
 Start Rviz using the included launch file:
 
 ```
-roslaunch ompl_experience_demos ompl_rviz.launch
+roslaunch bolt_2d ompl_rviz.launch
 ```
 
 ### Experienced based-planning with Lightning Framework
 
-The package ``ompl_experience_demos`` can help debug experience-based planning like the lightning framework.
+The package ``bolt_2d`` can help debug experience-based planning like the lightning framework.
 
 ### Examples:
 
@@ -29,7 +29,7 @@ Image of multiple paths in a experience database:
 To run:
 
 ```
-wmctrl -a RViz && roslaunch ompl_experience_demos ompl_demo.launch
+wmctrl -a RViz && roslaunch bolt_2d ompl_demo.launch
 ```
 
 ## Documentation on Thunder

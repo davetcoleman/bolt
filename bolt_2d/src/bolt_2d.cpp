@@ -44,7 +44,7 @@
 // Display in Rviz tool
 #include <ompl_visual_tools/ros_viz_window.h>
 #include <ompl/tools/debug/VizWindow.h>
-#include <ompl_experience_demos/validity_checker_2d.h>
+#include <bolt_2d/validity_checker_2d.h>
 
 // OMPL
 #include <ompl/tools/lightning/Lightning.h>
@@ -65,7 +65,7 @@ namespace otb = ompl::tools::bolt;
 namespace og = ompl::geometric;
 namespace rvt = rviz_visual_tools;
 
-namespace ompl_experience_demos
+namespace bolt_2d
 {
 static const std::string BASE_FRAME = "/world";
 
@@ -511,7 +511,7 @@ public:
   void loadCollisionChecker(double max_cost_threshold_percent = 0.4)
   {
     // Get image path based on package name
-    std::string image_path = ros::package::getPath("ompl_experience_demos");
+    std::string image_path = ros::package::getPath("bolt_2d");
 
     if (image_path.empty())
     {
@@ -1221,7 +1221,7 @@ private:
   ros::NodeHandle nh_;
 
   // Name of this class
-  std::string name_ = "experience_demos";
+  std::string name_ = "bolt_2d";
 
   // Recieve input from Rviz
   moveit_ompl::RemoteControl remote_control_;
@@ -1325,7 +1325,7 @@ int main(int argc, char **argv)
   // google::SetUsageMessage("Demonstrate usage of OMPL exerperience databases");
   // google::ParseCommandLineFlags(&argc, &argv, true);
 
-  ros::init(argc, argv, "experience_demos");
+  ros::init(argc, argv, "bolt_2d");
   ROS_INFO("OMPL Visual Tools with the Experience Framework ----------------------------------------- ");
 
   // Allow the action server to recieve and send ros messages
@@ -1333,7 +1333,7 @@ int main(int argc, char **argv)
   spinner.start();
 
   // Create the demo
-  ompl_experience_demos::ExperienceDemos demo;
+  bolt_2d::ExperienceDemos demo;
 
   // Wait to let anything still being published finish
   ros::spinOnce();

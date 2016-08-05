@@ -1,5 +1,5 @@
 <package format="2">
-  <name>ompl_experience_demos</name>
+  <name>bolt_2d</name>
   <version>0.0.1</version>
   <description>
     Research
@@ -10,9 +10,9 @@
 
   <license>BSD</license>
 
-  <url type="website">http://ros.org/wiki/ompl_experience_demos</url>
-  <url type="bugtracker">https://github.com/davetcoleman/ompl_experience_demos/issues</url>
-  <url type="repository">https://github.com/davetcoleman/ompl_experience_demos/</url>
+  <url type="website">http://ros.org/wiki/bolt_2d</url>
+  <url type="bugtracker">https://github.com/davetcoleman/bolt_2d/issues</url>
+  <url type="repository">https://github.com/davetcoleman/bolt_2d/</url>
 
   <buildtool_depend>catkin</buildtool_depend>
 
