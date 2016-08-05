@@ -617,6 +617,12 @@ std::size_t SparseGraph::getDisjointSetsCount(bool verbose) const
 
 void SparseGraph::getDisjointSets(SparseDisjointSetsMap &disjointSets)
 {
+  if (!sparseCriteria_->useConnectivtyCriteria_)
+  {
+    BOLT_WARN(0, true, "Disjoint Sets disabled");
+    return;
+  }
+
   disjointSets.clear();
 
   // Flatten the parents tree so that the parent of every element is its representative.
@@ -637,6 +643,13 @@ void SparseGraph::getDisjointSets(SparseDisjointSetsMap &disjointSets)
 void SparseGraph::printDisjointSets(SparseDisjointSetsMap &disjointSets)
 {
   OMPL_INFORM("Print disjoint sets");
+
+  if (!sparseCriteria_->useConnectivtyCriteria_)
+  {
+    BOLT_WARN(0, true, "Disjoint Sets disabled");
+    return;
+  }
+
   for (SparseDisjointSetsMap::const_iterator iterator = disjointSets.begin(); iterator != disjointSets.end();
        iterator++)
   {
@@ -649,6 +662,12 @@ void SparseGraph::printDisjointSets(SparseDisjointSetsMap &disjointSets)
 void SparseGraph::visualizeDisjointSets(SparseDisjointSetsMap &disjointSets)
 {
   OMPL_INFORM("Visualizing disjoint sets");
+
+  if (!sparseCriteria_->useConnectivtyCriteria_)
+  {
+    BOLT_WARN(0, true, "Disjoint Sets disabled");
+    return;
+  }
 
   // Find the disjoint set that is the 'main' large one
   std::size_t maxDisjointSetSize = 0;
@@ -760,8 +779,8 @@ SparseVertex SparseGraph::addVertex(base::State *state, const VertexType &type, 
   if (sparseCriteria_->getUseFourthCriteria())
     clearInterfaceData(state);
 
-  // Connected component tracking
-  disjointSets_.make_set(v);
+  if (sparseCriteria_->useConnectivtyCriteria_)
+    disjointSets_.make_set(v);
 
   // Add vertex to nearest neighbor structure
   {
@@ -832,7 +851,8 @@ SparseVertex SparseGraph::addVertexFromFile(base::State *state, const VertexType
   vertexPopularity_[v] = MAX_POPULARITY_WEIGHT;  // 100 means the vertex is very unpopular
 
   // Connected component tracking
-  disjointSets_.make_set(v);
+  if (sparseCriteria_->useConnectivtyCriteria_)
+    disjointSets_.make_set(v);
 
   return v;
 }
@@ -906,7 +926,8 @@ void SparseGraph::removeDeletedVertices(std::size_t indent)
   nn_->clear();
 
   // Reset disjoint sets
-  disjointSets_ = SparseDisjointSetType(boost::get(boost::vertex_rank, g_), boost::get(boost::vertex_predecessor, g_));
+  if (sparseCriteria_->useConnectivtyCriteria_)
+    disjointSets_ = SparseDisjointSetType(boost::get(boost::vertex_rank, g_), boost::get(boost::vertex_predecessor, g_));
 
   // Reinsert vertices into nearest neighbor
   foreach (SparseVertex v, boost::vertices(g_))
@@ -915,16 +936,18 @@ void SparseGraph::removeDeletedVertices(std::size_t indent)
       continue;
 
     nn_->add(v);
-    disjointSets_.make_set(v);
+    if (sparseCriteria_->useConnectivtyCriteria_)
+      disjointSets_.make_set(v);
   }
 
   // Reinsert edges into disjoint sets
-  foreach (SparseEdge e, boost::edges(g_))
-  {
-    SparseVertex v1 = boost::source(e, g_);
-    SparseVertex v2 = boost::target(e, g_);
-    disjointSets_.union_set(v1, v2);
-  }
+  if (sparseCriteria_->useConnectivtyCriteria_)
+    foreach (SparseEdge e, boost::edges(g_))
+    {
+      SparseVertex v1 = boost::source(e, g_);
+      SparseVertex v2 = boost::target(e, g_);
+      disjointSets_.union_set(v1, v2);
+    }
 }
 
 SparseEdge SparseGraph::addEdge(SparseVertex v1, SparseVertex v2, EdgeType type, std::size_t indent)
@@ -958,7 +981,8 @@ SparseEdge SparseGraph::addEdge(SparseVertex v1, SparseVertex v2, EdgeType type,
   edgeCollisionStatePropertySparse_[e] = NOT_CHECKED;
 
   // Add the edge to the incrementeal connected components datastructure
-  disjointSets_.union_set(v1, v2);
+  if (sparseCriteria_->useConnectivtyCriteria_)
+    disjointSets_.union_set(v1, v2);
 
   // Visualize
   if (visualizeSparseGraph_)

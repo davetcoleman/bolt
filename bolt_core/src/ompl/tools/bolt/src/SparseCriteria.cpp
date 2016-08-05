@@ -266,8 +266,12 @@ bool SparseCriteria::checkAddConnectivity(CandidateData &candidateD, std::size_t
 {
   BOLT_FUNC(indent, vCriteria_, "checkAddConnectivity() Does this node connect "
                                 "two disconnected components?");
-  BOLT_DEBUG(indent, vCriteria_, "NOT adding node for connectivity - disabled ");
-  return false;
+
+  if (!useConnectivtyCriteria_)
+  {
+    BOLT_DEBUG(indent, vCriteria_, "NOT adding node for connectivity - disabled ");
+    return false;
+  }
 
   // If less than 2 neighbors there is no way to find a pair of nodes in
   // different connected components

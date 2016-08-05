@@ -29,7 +29,7 @@ Image of multiple paths in a experience database:
 To run:
 
 ```
-wmctrl -a RViz && roslaunch bolt_2d ompl_demo.launch
+wmctrl -a RViz && roslaunch bolt_2d bolt_2d.launch
 ```
 
 ## Documentation on Thunder
