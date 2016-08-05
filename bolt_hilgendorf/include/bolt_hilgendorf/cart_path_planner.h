@@ -51,7 +51,7 @@
 #include <descartes_trajectory/cart_trajectory_pt.h>
 #include <descartes_planner/dense_planner.h>
 #include <descartes_planner/sparse_planner.h>
-#include <ur5_demo_descartes/ur5_robot_model.h>
+#include <bolt_ur5/ur5_robot_model.h>
 
 // Eigen
 #include <eigen_conversions/eigen_msg.h>
@@ -127,7 +127,7 @@ private:
   const moveit::core::JointModelGroup* jmg_;
 
   // Performs tasks specific to the Robot such IK, FK and collision detection
-  ur5_demo_descartes::UR5RobotModelPtr ur5_robot_model_;
+  bolt_ur5::UR5RobotModelPtr ur5_robot_model_;
 
   // The exact trajectory to follow
   EigenSTL::vector_Affine3d exact_poses_;

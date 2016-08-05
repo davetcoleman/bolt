@@ -106,7 +106,7 @@ void CartPathPlanner::initDescartes()
 
   // Instantiating a robot model
   const std::string prefix = "right_";
-  ur5_robot_model_.reset(new ur5_demo_descartes::UR5RobotModel(prefix));
+  ur5_robot_model_.reset(new bolt_ur5::UR5RobotModel(prefix));
 
   // Initialize
   if (!ur5_robot_model_->initialize(visual_tools_->getSharedRobotState()->getRobotModel(), group_name_, world_frame_,

@@ -5,9 +5,9 @@
  *      Author: ros-devel
  */
 
-#include <ur5_demo_descartes/ur5_robot_model.h>
+#include <bolt_ur5/ur5_robot_model.h>
 
-namespace ur5_demo_descartes
+namespace bolt_ur5
 {
 
 UR5RobotModel::UR5RobotModel(const std::string& prefix)
@@ -187,4 +187,4 @@ bool UR5RobotModel::getAllIK(const Eigen::Affine3d &pose, std::vector<std::vecto
   return rtn;
 }
 
-} /* namespace ur5_demo_descartes */
+} /* namespace bolt_ur5 */

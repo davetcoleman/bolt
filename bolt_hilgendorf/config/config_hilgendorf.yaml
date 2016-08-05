@@ -150,7 +150,7 @@ bolt:
     robot_trajectory: true
 
 # ====================================================
-# for ur5_demo_descartes/src/ur_moveit_plugin.cpp TODO: this is crappy code
+# for bolt_ur5/src/ur_moveit_plugin.cpp TODO: this is crappy code
 arm_prefix: right_
 
 # ====================================================

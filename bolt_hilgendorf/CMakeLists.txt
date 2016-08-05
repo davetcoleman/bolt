@@ -18,7 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
   descartes_core
   descartes_planner
   descartes_moveit
-  ur5_demo_descartes
+  bolt_ur5
 )
 
 find_package(Boost REQUIRED)

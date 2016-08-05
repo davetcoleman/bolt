@@ -84,8 +84,8 @@
 #include <moveit/rdf_loader/rdf_loader.h>
 
 // UR kin
-#include <ur5_demo_descartes/ur_moveit_plugin.h>
-#include <ur5_demo_descartes/ur_kin.h>
+#include <bolt_ur5/ur_moveit_plugin.h>
+#include <bolt_ur5/ur_kin.h>
 
 
 namespace ur_kinematics

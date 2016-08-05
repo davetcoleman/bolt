@@ -1,4 +1,4 @@
-#include <ur5_demo_descartes/ur_kin.h>
+#include <bolt_ur5/ur_kin.h>
 
 namespace ur_kinematics {
 

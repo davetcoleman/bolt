@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-  <name>ur5_demo_descartes</name>
+  <name>bolt_ur5</name>
   <version>0.0.0</version>
-  <description>The ur5_demo_descartes package</description>
+  <description>The bolt_ur5 package</description>
 
   <maintainer email="jnicho@swri.org">Jorge Nicho</maintainer>
   <license>Apache2.0</license>
@@ -30,6 +30,6 @@
   <run_depend>ur_kinematics</run_depend>
 
   <export>
-    <descartes_core plugin="${prefix}/ur5_demo_descartes_plugins.xml"/>
+    <descartes_core plugin="${prefix}/bolt_ur5_plugins.xml"/>
   </export>
 </package>

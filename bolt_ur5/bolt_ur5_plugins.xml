@@ -1,0 +1,6 @@
+<?xml version="1.0" ?>
+<library path="lib/libbolt_ur5">
+<class name="bolt_ur5/UR5RobotModel" type="bolt_ur5::UR5RobotModel" base_class_type="descartes_core::RobotModel">
+<description>This is a Descartes robot model adapter for of the universal UR5 arm.</description>
+</class>
+</library>

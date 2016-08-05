@@ -35,8 +35,8 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
-#ifndef UR5_DEMO_DESCARTES_UR_KIN_H
-#define UR5_DEMO_DESCARTES_UR_KIN_H
+#ifndef BOLT_UR5_UR_KIN_H
+#define BOLT_UR5_UR_KIN_H
 #include <math.h>
 #include <stdio.h>
 
