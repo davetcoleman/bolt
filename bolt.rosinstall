@@ -30,48 +30,33 @@
     uri: https://github.com/davetcoleman/robotiq.git
     version: jade-all
 - git:
-    local-name: roscon_2015
-    uri: https://github.com/davetcoleman/roscon_2015.git
-    version: master-all
-- git:
     local-name: universal_robot
     uri: https://github.com/davetcoleman/universal_robot.git
     version: indigo-dave
 
-# My custom code for Curie
+# My custom code
 - git:
-    local-name: curie
-    uri: https://github.com/davetcoleman/curie.git
-    version: kinetic-devel
+    local-name: bolt
+    uri: https://github.com/davetcoleman/bolt.git
+    version: master
 - git:
     local-name: moveit_dashboard
     uri: https://github.com/davetcoleman/moveit_dashboard.git
     version: kinetic-devel
 - git:
-    local-name: moveit_ompl
-    uri: https://github.com/davetcoleman/moveit_ompl.git
-    version: kinetic-devel
-- git:
     local-name: ompl
     uri: https://github.com/davetcoleman/ompl.git
-    version: bolt
-- git:
-    local-name: bolt_core
-    uri: https://github.com/davetcoleman/bolt_core.git
-    version: kinetic-devel
-- git:
-    local-name: ompl_experience_demos
-    uri: https://bitbucket.org/davetcoleman/ompl_experience_demos.git
-    version: kinetic-devel
-- git:
-    local-name: ompl_visual_tools
-    uri: https://github.com/davetcoleman/ompl_visual_tools.git
-    version: kinetic-devel
+    version: bolt_w_spars2_hooks
 
-# Temporary until MoveIt is updated
-- git: {local-name: moveit_core, uri: 'https://github.com/ros-planning/moveit_core.git', version: jade-devel}
-- git: {local-name: moveit_ros, uri: 'https://github.com/ros-planning/moveit_ros.git', version: jade-devel}
-- git: {local-name: moveit_msgs, uri: 'https://github.com/ros-planning/moveit_msgs.git', version: jade-devel}
-- git: {local-name: moveit_plugins, uri: 'https://github.com/ros-planning/moveit_plugins.git', version: jade-devel}
-# Required until warehouse_ros 0.9.0 is released
-- git: {local-name: warehouse_ros, uri: 'https://github.com/ros-planning/warehouse_ros.git', version: jade-devel}
+- git:
+    local-name: moveit
+    uri: https://github.com/ros-planning/moveit.git
+    version: jade-devel
+- git:
+    local-name: moveit_msgs
+    uri: https://github.com/ros-planning/moveit_msgs.git
+    version: jade-devel
+- git:
+    local-name: warehouse_ros
+    uri: https://github.com/ros-planning/warehouse_ros.git
+    version: jade-devel
