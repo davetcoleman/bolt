@@ -56,8 +56,8 @@
     uri: https://github.com/davetcoleman/ompl.git
     version: bolt
 - git:
-    local-name: ompl_bolt
-    uri: https://github.com/davetcoleman/ompl_bolt.git
+    local-name: bolt_core
+    uri: https://github.com/davetcoleman/bolt_core.git
     version: kinetic-devel
 - git:
     local-name: ompl_experience_demos

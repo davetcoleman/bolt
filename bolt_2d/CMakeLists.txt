@@ -9,7 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   ompl_visual_tools
   roscpp
   rosparam_shortcuts
-  ompl_bolt
+  bolt_core
 )
 
 find_package(ompl REQUIRED)
@@ -22,7 +22,7 @@ catkin_package(
     ompl_visual_tools
     roscpp
     rosparam_shortcuts
-    ompl_bolt
+    bolt_core
   INCLUDE_DIRS include
 )
 

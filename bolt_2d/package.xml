@@ -21,7 +21,7 @@
   <depend>ompl</depend>
   <depend>libgflags-dev</depend>
   <depend>rosparam_shortcuts</depend>
-  <depend>ompl_bolt</depend>
+  <depend>bolt_core</depend>
 
   <export>
   </export>

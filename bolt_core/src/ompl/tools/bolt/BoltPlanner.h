@@ -34,8 +34,8 @@
 
 /* Author: Dave Coleman */
 
-#ifndef OMPL_BOLT_BOLT_PLANNER_
-#define OMPL_BOLT_BOLT_PLANNER_
+#ifndef BOLT_CORE_BOLT_PLANNER_
+#define BOLT_CORE_BOLT_PLANNER_
 
 #include <ompl/geometric/planners/PlannerIncludes.h>
 #include <ompl/geometric/PathGeometric.h>
@@ -213,4 +213,4 @@ public:
 }  // namespace tools
 }  // namespace ompl
 
-#endif  // OMPL_BOLT_BOLT_PLANNER_
+#endif  // BOLT_CORE_BOLT_PLANNER_

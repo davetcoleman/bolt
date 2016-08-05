@@ -10,9 +10,9 @@ Developed by [Dave Coleman](http://dav.ee/) at the University of Colorado Boulde
 
 Status:
 
- * [![Build Status](https://travis-ci.org/davetcoleman/ompl_bolt.svg)](https://travis-ci.org/davetcoleman/ompl_bolt) Travis - Continuous Integration
- * [![Build Status](http://build.ros.org/buildStatus/icon?job=Jsrc_uT__ompl_bolt__ubuntu_trusty__source)](http://build.ros.org/view/Jsrc_uT/job/Jsrc_uT__ompl_bolt__ubuntu_trusty__source/) ROS Buildfarm - Trusty Devel Source Build
- * [![Build Status](http://build.ros.org/buildStatus/icon?job=Jbin_uT64__ompl_bolt__ubuntu_trusty_amd64__binary)](http://build.ros.org/view/Jbin_uT64/job/Jbin_uT64__ompl_bolt__ubuntu_trusty_amd64__binary/) ROS Buildfarm - AMD64 Trusty Debian Build
+ * [![Build Status](https://travis-ci.org/davetcoleman/bolt_core.svg)](https://travis-ci.org/davetcoleman/bolt_core) Travis - Continuous Integration
+ * [![Build Status](http://build.ros.org/buildStatus/icon?job=Jsrc_uT__bolt_core__ubuntu_trusty__source)](http://build.ros.org/view/Jsrc_uT/job/Jsrc_uT__bolt_core__ubuntu_trusty__source/) ROS Buildfarm - Trusty Devel Source Build
+ * [![Build Status](http://build.ros.org/buildStatus/icon?job=Jbin_uT64__bolt_core__ubuntu_trusty_amd64__binary)](http://build.ros.org/view/Jbin_uT64/job/Jbin_uT64__bolt_core__ubuntu_trusty_amd64__binary/) ROS Buildfarm - AMD64 Trusty Debian Build
 
 ![](resources/screenshot.png)
 
@@ -34,7 +34,7 @@ To build this package, ``git clone`` this repo into a [catkin workspace](http://
 
 > Note: this package has not been released yet
 
-See [Class Reference](http://docs.ros.org/indigo/api/ompl_bolt/html/)
+See [Class Reference](http://docs.ros.org/indigo/api/bolt_core/html/)
 
 ## Usage
 
