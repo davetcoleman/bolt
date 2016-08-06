@@ -131,7 +131,7 @@ bool SparseGraph::setup()
   // Initialize path simplifier
   if (!pathSimplifier_)
   {
-    //pathSimplifier_.reset(new PathSimplifier(si_));
+    // pathSimplifier_.reset(new PathSimplifier(si_));
     pathSimplifier_.reset(new geometric::PathSimplifier(si_));
     pathSimplifier_->freeStates(false);
   }
@@ -345,8 +345,10 @@ bool SparseGraph::astarSearch(const SparseVertex start, const SparseVertex goal,
       }
 
       // Ensure start and goal states are included in path
-      BOLT_ASSERT(si_->getStateSpace()->equalStates(getState(vertexPath.back()), getState(start)), "Start states are not the same");
-      BOLT_ASSERT(si_->getStateSpace()->equalStates(getState(vertexPath.front()), getState(goal)), "Goal states are not the same");
+      BOLT_ASSERT(si_->getStateSpace()->equalStates(getState(vertexPath.back()), getState(start)), "Start states are "
+                                                                                                   "not the same");
+      BOLT_ASSERT(si_->getStateSpace()->equalStates(getState(vertexPath.front()), getState(goal)), "Goal states are "
+                                                                                                   "not the same");
 
       foundGoal = true;
     }
@@ -404,7 +406,7 @@ bool SparseGraph::astarSearchLength(SparseVertex start, SparseVertex goal, doubl
 
   try
   {
-    double popularityBias = 0; // TODO: remove this functionality
+    double popularityBias = 0;  // TODO: remove this functionality
     bool popularityBiasEnabled = false;
     boost::astar_search(g_,                                                              // graph
                         start,                                                           // start state
@@ -577,8 +579,8 @@ bool SparseGraph::smoothQualityPath(geometric::PathGeometric *path, double clear
   BOLT_FUNC(indent, visualizeQualityPathSimp_, "smoothQualityPath()");
 
   // TODO: only for testing
-  base::State* startCopy = si_->cloneState(path->getState(0));
-  base::State* goalCopy = si_->cloneState(path->getState(path->getStateCount() - 1));
+  base::State *startCopy = si_->cloneState(path->getState(0));
+  base::State *goalCopy = si_->cloneState(path->getState(path->getStateCount() - 1));
 
   // Visualize path
   if (visualizeQualityPathSimp_)
@@ -608,49 +610,49 @@ bool SparseGraph::smoothQualityPath(geometric::PathGeometric *path, double clear
   for (std::size_t i = 0; i < 3; ++i)
   {
     ompl::base::PlannerTerminationCondition neverTerminate = base::plannerNonTerminatingCondition();
-    //pathSimplifier_->simplify(*path, neverTerminate, indent);
+    // pathSimplifier_->simplify(*path, neverTerminate, indent);
     pathSimplifier_->simplify(*path, neverTerminate);
 
-    //std::cout << "path->getStateCount(): " << path->getStateCount() << std::endl;
+    // std::cout << "path->getStateCount(): " << path->getStateCount() << std::endl;
 
     if (visualizeQualityPathSimp_)
     {
-      //visual_->viz3()->deleteAllMarkers();
+      // visual_->viz3()->deleteAllMarkers();
       visual_->viz3()->path(path, tools::SMALL, tools::ORANGE);
       visual_->viz3()->trigger();
       usleep(0.1 * 1000000);
 
-      //visual_->waitForUserFeedback("optimizing path");
+      // visual_->waitForUserFeedback("optimizing path");
     }
 
-    pathSimplifier_->reduceVertices(*path, 1000, path->getStateCount() * 4); // /*rangeRatio*/ 0.33, indent);
+    pathSimplifier_->reduceVertices(*path, 1000, path->getStateCount() * 4);  // /*rangeRatio*/ 0.33, indent);
 
     if (minStatesFound > path->getStateCount())
       minStatesFound = path->getStateCount();
 
     if (visualizeQualityPathSimp_)
     {
-      //visual_->viz4()->deleteAllMarkers();
+      // visual_->viz4()->deleteAllMarkers();
       visual_->viz4()->path(path, tools::SMALL, tools::BLUE);
       visual_->viz4()->trigger();
       usleep(0.1 * 1000000);
 
-      //visual_->waitForUserFeedback("optimizing path");
+      // visual_->waitForUserFeedback("optimizing path");
     }
   }
 
   // Turn off the clearance requirement
   dmv->setRequiredStateClearance(0.0);
 
-  pathSimplifier_->reduceVertices(*path, 1000, path->getStateCount() * 4); //, /*rangeRatio*/ 0.33, indent);
-  //std::cout << "path->getStateCount(): " << path->getStateCount() << std::endl;
+  pathSimplifier_->reduceVertices(*path, 1000, path->getStateCount() * 4);  //, /*rangeRatio*/ 0.33, indent);
+  // std::cout << "path->getStateCount(): " << path->getStateCount() << std::endl;
 
   if (visualizeQualityPathSimp_)
   {
     visual_->viz6()->deleteAllMarkers();
     visual_->viz6()->path(path, tools::SMALL, tools::GREEN);
     visual_->viz6()->trigger();
-    //visual_->waitForUserFeedback("finished quality path");
+    // visual_->waitForUserFeedback("finished quality path");
   }
 
   if (minStatesFound < path->getStateCount())
@@ -661,8 +663,9 @@ bool SparseGraph::smoothQualityPath(geometric::PathGeometric *path, double clear
 
   std::pair<bool, bool> repairResult = path->checkAndRepair(100);
 
-  BOLT_ASSERT(si_->equalStates(path->getState(0),startCopy), "Start state is no longer the same");
-  BOLT_ASSERT(si_->equalStates(path->getState(path->getStateCount() - 1),goalCopy), "Goal state is no longer the same");
+  BOLT_ASSERT(si_->equalStates(path->getState(0), startCopy), "Start state is no longer the same");
+  BOLT_ASSERT(si_->equalStates(path->getState(path->getStateCount() - 1), goalCopy), "Goal state is no longer the "
+                                                                                     "same");
 
   if (!repairResult.second)  // Repairing was not successful
   {
@@ -679,8 +682,8 @@ bool SparseGraph::smoothMax(geometric::PathGeometric *path, std::size_t indent)
     return true;
 
   // For testing that start and goal state do not move
-  base::State* startCopy;
-  base::State* goalCopy;
+  base::State *startCopy;
+  base::State *goalCopy;
   BOLT_ASSERT(startCopy = si_->cloneState(path->getState(0)), "Only copy if in debug");
   BOLT_ASSERT(goalCopy = si_->cloneState(path->getState(path->getStateCount() - 1)), "Only copy if in debug");
 
@@ -707,7 +710,8 @@ bool SparseGraph::smoothMax(geometric::PathGeometric *path, std::size_t indent)
     std::size_t times = 0;
     while (tryMore && ++times <= 5)
     {
-      tryMore = pathSimplifier_->reduceVertices(*path, 1000, path->getStateCount() * 4); // /*rangeRatio*/ 0.33, indent);
+      tryMore =
+          pathSimplifier_->reduceVertices(*path, 1000, path->getStateCount() * 4);  // /*rangeRatio*/ 0.33, indent);
 
       if (visualizeQualityPathSimp_)
       {
@@ -750,7 +754,7 @@ bool SparseGraph::smoothMax(geometric::PathGeometric *path, std::size_t indent)
 
     // ------------------------------------------------------------------
     // smooth the path with BSpline interpolation
-    pathSimplifier_->smoothBSpline(*path, 3, path->length()/100.0);
+    pathSimplifier_->smoothBSpline(*path, 3, path->length() / 100.0);
 
     if (visualizeQualityPathSimp_)
     {
@@ -765,8 +769,9 @@ bool SparseGraph::smoothMax(geometric::PathGeometric *path, std::size_t indent)
 
   std::pair<bool, bool> repairResult = path->checkAndRepair(100);
 
-  BOLT_ASSERT(si_->equalStates(path->getState(0),startCopy), "Start state is no longer the same");
-  BOLT_ASSERT(si_->equalStates(path->getState(path->getStateCount() - 1),goalCopy), "Goal state is no longer the same");
+  BOLT_ASSERT(si_->equalStates(path->getState(0), startCopy), "Start state is no longer the same");
+  BOLT_ASSERT(si_->equalStates(path->getState(path->getStateCount() - 1), goalCopy), "Goal state is no longer the "
+                                                                                     "same");
 
   if (!repairResult.second)  // Repairing was not successful
   {
@@ -1108,12 +1113,13 @@ void SparseGraph::removeDeletedVertices(std::size_t indent)
 
   // Reset disjoint sets
   if (sparseCriteria_->useConnectivityCriteria_)
-    disjointSets_ = SparseDisjointSetType(boost::get(boost::vertex_rank, g_), boost::get(boost::vertex_predecessor, g_));
+    disjointSets_ =
+        SparseDisjointSetType(boost::get(boost::vertex_rank, g_), boost::get(boost::vertex_predecessor, g_));
 
   // Reinsert vertices into nearest neighbor
   foreach (SparseVertex v, boost::vertices(g_))
   {
-    if (v <= queryVertices_.back()) // Ignore query vertices
+    if (v <= queryVertices_.back())  // Ignore query vertices
       continue;
 
     nn_->add(v);
@@ -1144,11 +1150,11 @@ SparseEdge SparseGraph::addEdge(SparseVertex v1, SparseVertex v2, EdgeType type,
     BOLT_ASSERT(v1 != v2, "Verticex IDs are the same");
     BOLT_ASSERT(!hasEdge(v1, v2), "There already exists an edge between two vertices requested");
     BOLT_ASSERT(hasEdge(v1, v2) == hasEdge(v2, v1), "There already exists an edge between two vertices requested, "
-                                                         "other direction");
+                                                    "other direction");
     BOLT_ASSERT(getState(v1) != getState(v2), "States on both sides of an edge are the same");
     BOLT_ASSERT(!si_->getStateSpace()->equalStates(getState(v1), getState(v2)), "Vertex IDs are different but "
-                                                                                     "states are the equal");
-    //BOLT_ASSERT(si_->checkMotion(vertexStateProperty_[v1], vertexStateProperty_[v2]), "Edge is in collision");
+                                                                                "states are the equal");
+    // BOLT_ASSERT(si_->checkMotion(vertexStateProperty_[v1], vertexStateProperty_[v2]), "Edge is in collision");
   }
 
   // Create the new edge
@@ -1247,7 +1253,7 @@ VizColors SparseGraph::edgeTypeToColor(EdgeType edgeType)
 base::State *&SparseGraph::getQueryStateNonConst(std::size_t threadID)
 {
   BOLT_ASSERT(threadID < queryVertices_.size(), "Attempted to request state of regular vertex using query "
-                                                     "function");
+                                                "function");
   return queryStates_[threadID];
 }
 
@@ -1399,8 +1405,8 @@ void SparseGraph::displayDatabase(bool showVertices, bool showEdges, std::size_t
       // If desired show coverage, but we can't add to the main states array
       // TODO: add secondary array for this size spheres?
       if (visualizeDatabaseCoverage_)
-        visual_->viz(windowID)->state(getState(v), tools::VARIABLE_SIZE, tools::TRANSLUCENT_LIGHT,
-                                      sparseCriteria_->getSparseDelta());
+        visual_->viz(windowID)
+            ->state(getState(v), tools::VARIABLE_SIZE, tools::TRANSLUCENT_LIGHT, sparseCriteria_->getSparseDelta());
 
       // Populate properties
       colors.push_back(vertexTypeToColor(vertexTypeProperty_[v]));
@@ -1580,7 +1586,7 @@ bool SparseGraph::verifyGraph(std::size_t indent)
 
   foreach (const SparseVertex v, boost::vertices(g_))
   {
-    if (v <= queryVertices_.back()) // Ignore query vertices
+    if (v <= queryVertices_.back())  // Ignore query vertices
       continue;
 
     // Skip deleted vertices

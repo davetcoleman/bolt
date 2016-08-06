@@ -65,8 +65,8 @@ moveit_ompl::ConstrainedGoalSampler::ConstrainedGoalSampler(const ModelBasedPlan
   }
   constraint_sampler_->setVerbose(false);  // be default it *is* verbose during testing
   ROS_DEBUG("Constructed a ConstrainedGoalSampler instance at address %p", this);
-  //ROS_ERROR_STREAM("disabled goal sampling");
-  startSampling(); // DTC
+  // ROS_ERROR_STREAM("disabled goal sampling");
+  startSampling();  // DTC
 }
 
 bool moveit_ompl::ConstrainedGoalSampler::checkStateValidity(ob::State* new_goal, const robot_state::RobotState& state,
@@ -111,7 +111,7 @@ bool moveit_ompl::ConstrainedGoalSampler::sampleUsingConstraintSampler(const ob:
   // terminate after a maximum number of samples
   if (gls->getStateCount() >= planning_context_->getMaximumGoalSamples())
   {
-    //std::cout << "terminate after maximum number of samples " << std::endl;
+    // std::cout << "terminate after maximum number of samples " << std::endl;
     return false;
   }
 
@@ -148,7 +148,7 @@ bool moveit_ompl::ConstrainedGoalSampler::sampleUsingConstraintSampler(const ob:
     {
       // makes the constraint sampler also perform a validity callback
       robot_state::GroupStateValidityCallbackFn gsvcf =
-        boost::bind(&moveit_ompl::ConstrainedGoalSampler::stateValidityCallback, this, new_goal,
+          boost::bind(&moveit_ompl::ConstrainedGoalSampler::stateValidityCallback, this, new_goal,
                       _1,  // pointer to state
                       _2,  // const* joint model group
                       _3,  // double* of joint positions

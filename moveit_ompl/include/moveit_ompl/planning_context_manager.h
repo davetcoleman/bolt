@@ -64,8 +64,7 @@ public:
 
   void createPlanningContext(ModelBasedPlanningContextPtr &context,
                              const planning_interface::PlannerConfigurationSettings &config,
-                             const moveit_msgs::MotionPlanRequest &req,
-                             const ModelBasedStateSpaceFactoryPtr &factory,
+                             const moveit_msgs::MotionPlanRequest &req, const ModelBasedStateSpaceFactoryPtr &factory,
                              moveit_visual_tools::MoveItVisualToolsPtr visual_tools) const;
 
   /** @brief Return the previously set planner configurations */

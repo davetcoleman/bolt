@@ -186,7 +186,7 @@ bool DenseCache::load()
 {
   if (disableCache_)
   {
-    //OMPL_INFORM("DenseCache: disabled, not loading");
+    // OMPL_INFORM("DenseCache: disabled, not loading");
     return false;
   }
 
@@ -306,8 +306,7 @@ void DenseCache::saveStates(boost::archive::binary_oarchive &oa)
 
     // Feedback
     if (stateID % feedbackFrequency == 0)
-      std::cout << static_cast<int>(stateID / double(stateCache_.size()) * 100.0) << "% "
-                << std::flush;
+      std::cout << static_cast<int>(stateID / double(stateCache_.size()) * 100.0) << "% " << std::flush;
   }
 
   std::cout << std::endl;

@@ -36,7 +36,6 @@
  * Desc:   Optimization objective that simply reads a value from a 2D cost map
  */
 
-
 #ifndef OMPL_VISUAL_TOOLS_COST_MAP_OPTIMIZATION_OBJECTIVE_H
 #define OMPL_VISUAL_TOOLS_COST_MAP_OPTIMIZATION_OBJECTIVE_H
 
@@ -70,186 +69,179 @@ namespace base
 class CostMap2DOptimizationObjective : public OptimizationObjective
 {
 public:
-    /** \brief Constructor */
-    CostMap2DOptimizationObjective(const SpaceInformationPtr &si, double pathLengthWeight = 0.0001)
-        : OptimizationObjective(si),
-          image_(NULL),
-          max_cost_threshold_percent_(0.4),
-          pathLengthWeight_(pathLengthWeight)
-    {
-        description_ = "Cost Map";
+  /** \brief Constructor */
+  CostMap2DOptimizationObjective(const SpaceInformationPtr &si, double pathLengthWeight = 0.0001)
+    : OptimizationObjective(si), image_(NULL), max_cost_threshold_percent_(0.4), pathLengthWeight_(pathLengthWeight)
+  {
+    description_ = "Cost Map";
 
-        cost_.reset(new ompl_visual_tools::intMatrix());
-    };
+    cost_.reset(new ompl_visual_tools::intMatrix());
+  };
 
-    /** \brief Deconstructor */
-    ~CostMap2DOptimizationObjective()
-    {
-        delete image_;
-    };
+  /** \brief Deconstructor */
+  ~CostMap2DOptimizationObjective()
+  {
+    delete image_;
+  };
 
-    double getPathLengthWeight() const
+  double getPathLengthWeight() const
+  {
+    return pathLengthWeight_;
+  }
+
+  /** \brief Defines motion cost */
+  virtual ompl::base::Cost motionCost(const State *s1, const State *s2) const
+  {
+    // Only accrue positive changes in cost
+    double positiveCostAccrued = std::max(stateCost(s2).value() - stateCost(s1).value(), 0.0);
+    return Cost(positiveCostAccrued + pathLengthWeight_ * si_->distance(s1, s2));
+  };
+
+  ompl::base::Cost stateCost(const State *state) const
+  {
+    const double *coords = state->as<ob::RealVectorStateSpace::StateType>()->values;
+
+    // Return the cost from the matrix at the current dimensions
+    double cost = (*cost_)(natRound(coords[1]), natRound(coords[0]));
+
+    return Cost(cost);
+  }
+
+  /** \brief Passed in a cost matrix loaded from an image file, etc */
+  void setCostMatrix(ompl_visual_tools::intMatrixPtr cost)
+  {
+    cost_ = cost;
+  };
+
+  /**
+   * \brief NatRounding helper function to make readings from cost map more accurate
+   * \param double
+   * \return rounded down number
+   */
+  int natRound(double x) const
+  {
+    return static_cast<int>(floor(x + 0.5f));
+  };
+
+  void loadImage(std::string image_path)
+  {
+    // Load cost map from image file
+    image_ = ompl_visual_tools::readPPM(image_path.c_str());
+
+    // Error check
+    if (!image_)
     {
-        return pathLengthWeight_;
+      ROS_ERROR("No image data loaded ");
+      return;
     }
 
-    /** \brief Defines motion cost */
-    virtual ompl::base::Cost motionCost(const State *s1, const State *s2) const
+    // Disallow non-square
+    if (image_->x != image_->y)
     {
-        // Only accrue positive changes in cost
-      double positiveCostAccrued = std::max(stateCost(s2).value() - stateCost(s1).value(), 0.0);
-        return Cost(positiveCostAccrued + pathLengthWeight_*si_->distance(s1,s2));
-    };
-
-    ompl::base::Cost stateCost(const State *state) const
-    {
-        const double *coords = state->as<ob::RealVectorStateSpace::StateType>()->values;
-
-        // Return the cost from the matrix at the current dimensions
-        double cost = (*cost_)( natRound(coords[1]), natRound(coords[0]) );
-
-        return Cost(cost);
+      ROS_ERROR("Does not currently support non-square images because of some weird bug. Feel free to fork and fix!");
+      return;
     }
 
-    /** \brief Passed in a cost matrix loaded from an image file, etc */
-    void setCostMatrix(ompl_visual_tools::intMatrixPtr cost)
+    ROS_INFO_STREAM("Map Height: " << image_->y << " Map Width: " << image_->x);
+
+    // Create an array of ints that represent the cost of every pixel
+    cost_->resize(image_->x, image_->y);
+
+    // Generate the cost map
+    createCostMap();
+  };
+
+  /**
+   * \brief Helper Function: calculate cost map
+   */
+  void createCostMap()
+  {
+    // gets the min and max values of the cost map
+    getMinMaxPixels();
+
+    // This factor is the author's visual preference for scaling a cost map in Rviz
+    const double artistic_scale = 6.0;  // smaller is taller
+
+    const double pixel_diff = max_pixel_ - min_pixel_;
+
+    // This scale adapts that factor depending on the cost map min max
+    const double scale = pixel_diff / (image_->x / artistic_scale);  // image->x is width
+
+    // Dynamically calculate the obstacle threshold
+    max_cost_threshold_ = (max_pixel_ - (max_cost_threshold_percent_ * pixel_diff)) / scale;
+
+    // Preprocess the pixel data for cost and give it a nice colored tint
+    for (size_t i = 0; i < image_->getSize(); ++i)
     {
-        cost_ = cost;
-    };
+      // Calculate cost
+      cost_->data()[i] = (image_->data[i].red - min_pixel_) / scale;
 
-    /**
-     * \brief NatRounding helper function to make readings from cost map more accurate
-     * \param double
-     * \return rounded down number
-     */
-    int natRound(double x) const
+      // Prevent cost from being zero
+      if (!cost_->data()[i])
+        cost_->data()[i] = 1;
+
+      // Color different if it is an obstacle
+      if (cost_->data()[i] >= max_cost_threshold_ || cost_->data()[i] <= 1)
+      {
+        // std::cout << "cost is " <<  cost_->data()[i] << " threshold is " <<  max_cost_threshold_ << std::endl;
+
+        image_->data[i].red = 255;  // image_->data[ i ].red;
+        image_->data[i].green = image_->data[i].green;
+        image_->data[i].blue = image_->data[i].blue;
+      }
+    }
+  }
+
+  /**
+   * \brief Helper Function: gets the min and max values of the cost map
+   */
+  void getMinMaxPixels()
+  {
+    // Find the min and max cost from the image
+    min_pixel_ = image_->data[0].red;
+    max_pixel_ = image_->data[0].red;
+
+    for (size_t i = 0; i < image_->getSize(); ++i)
     {
-        return static_cast<int>(floor(x + 0.5f));
-    };
-
-    void loadImage( std::string image_path )
-    {
-        // Load cost map from image file
-        image_ = ompl_visual_tools::readPPM( image_path.c_str() );
-
-        // Error check
-        if( !image_ )
-        {
-            ROS_ERROR( "No image data loaded " );
-            return;
-        }
-
-        // Disallow non-square
-        if( image_->x != image_->y )
-        {
-            ROS_ERROR( "Does not currently support non-square images because of some weird bug. Feel free to fork and fix!" );
-            return;
-        }
-
-        ROS_INFO_STREAM( "Map Height: " << image_->y << " Map Width: " << image_->x );
-
-        // Create an array of ints that represent the cost of every pixel
-        cost_->resize( image_->x, image_->y );
-
-        // Generate the cost map
-        createCostMap();
-    };
-
-    /**
-     * \brief Helper Function: calculate cost map
-     */
-    void createCostMap()
-    {
-        // gets the min and max values of the cost map
-        getMinMaxPixels();
-
-        // This factor is the author's visual preference for scaling a cost map in Rviz
-        const double artistic_scale = 6.0; // smaller is taller
-
-        const double pixel_diff = max_pixel_ - min_pixel_;
-
-        // This scale adapts that factor depending on the cost map min max
-        const double scale = pixel_diff / ( image_->x / artistic_scale ); //image->x is width
-
-        // Dynamically calculate the obstacle threshold
-        max_cost_threshold_ = (max_pixel_ - ( max_cost_threshold_percent_ * pixel_diff )) / scale;
-
-        // Preprocess the pixel data for cost and give it a nice colored tint
-        for( size_t i = 0; i < image_->getSize(); ++i )
-        {
-            // Calculate cost
-            cost_->data()[i]  = ( image_->data[ i ].red - min_pixel_ ) / scale;
-
-            // Prevent cost from being zero
-            if( !cost_->data()[i] )
-                cost_->data()[i] = 1;
-
-            // Color different if it is an obstacle
-            if( cost_->data()[i] >= max_cost_threshold_ || cost_->data()[i] <= 1)
-            {
-                //std::cout << "cost is " <<  cost_->data()[i] << " threshold is " <<  max_cost_threshold_ << std::endl;
-
-                image_->data[ i ].red = 255; //image_->data[ i ].red;
-                image_->data[ i ].green = image_->data[ i ].green;
-                image_->data[ i ].blue = image_->data[ i ].blue;
-            }
-
-        }
-
+      // Max
+      if (image_->data[i].red > max_pixel_)
+        max_pixel_ = image_->data[i].red;
+      // Min
+      else if (image_->data[i].red < min_pixel_)
+        min_pixel_ = image_->data[i].red;
     }
 
-    /**
-     * \brief Helper Function: gets the min and max values of the cost map
-     */
-    void getMinMaxPixels()
+    // Override for blank images
+    if (max_pixel_ < std::numeric_limits<double>::epsilon())
     {
-        // Find the min and max cost from the image
-        min_pixel_ = image_->data[ 0 ].red;
-        max_pixel_ = image_->data[ 0 ].red;
-
-        for( size_t i = 0; i < image_->getSize(); ++i )
-        {
-            // Max
-            if( image_->data[ i ].red > max_pixel_ )
-                max_pixel_ = image_->data[ i ].red;
-            // Min
-            else if( image_->data[ i ].red < min_pixel_ )
-                min_pixel_ = image_->data[ i ].red;
-        }
-
-        // Override for blank images
-        if (max_pixel_ < std::numeric_limits<double>::epsilon())
-        {
-          std::cout << "BLANK IMAGE - cost_map_2d_opt... " << std::endl;
-          min_pixel_ = 0;
-          max_pixel_ = 255;
-        }
+      std::cout << "BLANK IMAGE - cost_map_2d_opt... " << std::endl;
+      min_pixel_ = 0;
+      max_pixel_ = 255;
     }
+  }
 
-    // The RGB image data
-    ompl_visual_tools::PPMImage *image_;
+  // The RGB image data
+  ompl_visual_tools::PPMImage *image_;
 
-    // The cost for each x,y - which is derived from the RGB data
-    ompl_visual_tools::intMatrixPtr cost_;
+  // The cost for each x,y - which is derived from the RGB data
+  ompl_visual_tools::intMatrixPtr cost_;
 
-    // The cost at which it becomes an obstacle
-    double max_cost_threshold_;
+  // The cost at which it becomes an obstacle
+  double max_cost_threshold_;
 
-    // The percentage of the top min/max cost value that is considered an obstacle, e.g. 0.1 is top 10% of peaks
-    double max_cost_threshold_percent_;
+  // The percentage of the top min/max cost value that is considered an obstacle, e.g. 0.1 is top 10% of peaks
+  double max_cost_threshold_percent_;
 
 protected:
+  /** \brief The weighing factor for the path length in the mechanical work objective formulation. */
+  double pathLengthWeight_;
 
-    /** \brief The weighing factor for the path length in the mechanical work objective formulation. */
-    double pathLengthWeight_;
-
-    // Remember the min and max cost from the image
-    int max_pixel_;
-    int min_pixel_;
-
+  // Remember the min and max cost from the image
+  int max_pixel_;
+  int min_pixel_;
 };
 
-typedef std::shared_ptr< CostMap2DOptimizationObjective > CostMap2DOptimizationObjectivePtr;
+typedef std::shared_ptr<CostMap2DOptimizationObjective> CostMap2DOptimizationObjectivePtr;
 }
 }
 

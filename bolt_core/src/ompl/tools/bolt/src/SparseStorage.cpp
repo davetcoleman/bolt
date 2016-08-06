@@ -161,7 +161,7 @@ void SparseStorage::saveVertices(boost::archive::binary_oarchive &oa)
       std::cout << static_cast<int>(count / double(sparseGraph_->getNumVertices()) * 100.0) << "% " << std::flush;
   }
   BOLT_ASSERT(errorCheckNumQueryVertices == numQueryVertices_, "There should be the same number of query vertex "
-                                                                    "as threads that were skipped while saving");
+                                                               "as threads that were skipped while saving");
 
   std::cout << std::endl;
 }

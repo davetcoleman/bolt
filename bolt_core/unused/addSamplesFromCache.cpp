@@ -1,5 +1,4 @@
-  void addSamplesFromCache(std::size_t indent);
-
+void addSamplesFromCache(std::size_t indent);
 
 void SparseCriteria::addSamplesFromCache(std::size_t indent)
 {

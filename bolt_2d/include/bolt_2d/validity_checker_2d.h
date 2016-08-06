@@ -278,7 +278,7 @@ private:
     const double *coords = state->as<ob::RealVectorStateSpace::StateType>()->values;
 
     // Return the cost from the matrix at the current dimensions
-    //double cost = (*cost_)(nat_round(coords[1]), nat_round(coords[0]));
+    // double cost = (*cost_)(nat_round(coords[1]), nat_round(coords[0]));
     double cost = (*cost_)(floor(coords[1]), floor(coords[0]));
     return cost;  // TODO(davetcoleman): make memory copy more efficient
   }
@@ -291,7 +291,7 @@ private:
   /** \brief Class for managing various visualization features */
   ompl::tools::VisualizerPtr visual_;
 
-  //mutable boost::mutex vizMutex_;
+  // mutable boost::mutex vizMutex_;
 
 };  // class ValidityChecker2D
 

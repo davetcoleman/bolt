@@ -540,19 +540,19 @@ void Bolt::benchmarkVisualizeSampling()
   std::size_t debugIncrement = std::max(benchmarkRuns, std::size_t(benchmarkRuns / 100.0));
 
   // Pre-allocate state
-  std::vector<ompl::base::State*> stateMemory(debugIncrement);
+  std::vector<ompl::base::State *> stateMemory(debugIncrement);
 
-  for (base::State*& state : stateMemory)
+  for (base::State *&state : stateMemory)
     state = si_->getStateSpace()->allocState();
 
-  std::vector<const ompl::base::State*> states;
+  std::vector<const ompl::base::State *> states;
   states.reserve(debugIncrement);
   std::vector<ot::VizColors> colors;
   colors.reserve(debugIncrement);
 
   // Allow time to reset image
   visual_->viz1()->trigger();
-  usleep(0.1*1000000);
+  usleep(0.1 * 1000000);
 
   // Benchmark runtime
   for (std::size_t i = 0; i < benchmarkRuns; ++i)
@@ -563,11 +563,11 @@ void Bolt::benchmarkVisualizeSampling()
     states.push_back(candidateState);
     colors.push_back(tools::GREEN);
 
-    if ((i+1) % debugIncrement == 0 || i == benchmarkRuns - 1)
+    if ((i + 1) % debugIncrement == 0 || i == benchmarkRuns - 1)
     {
       visual_->viz1()->states(states, colors, tools::SMALL);
       visual_->viz1()->trigger();
-      usleep(0.1*1000000);
+      usleep(0.1 * 1000000);
 
       states.clear();
       colors.clear();
@@ -576,7 +576,7 @@ void Bolt::benchmarkVisualizeSampling()
     }
   }
 
-  for (base::State* state : stateMemory)
+  for (base::State *state : stateMemory)
     si_->freeState(state);
 
   // Benchmark runtime

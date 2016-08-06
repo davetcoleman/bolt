@@ -41,16 +41,16 @@
 #include <stdio.h>
 
 #define ZERO_THRESH 0.00000001
-#define SIGN(x) ( ( (x) > 0 ) - ( (x) < 0 ) )
+#define SIGN(x) (((x) > 0) - ((x) < 0))
 #define PI M_PI
 
 //#define UR5_PARAMS
-#define ur_kin_d1  0.089159
+#define ur_kin_d1 0.089159
 #define ur_kin_a2 -0.42500
 #define ur_kin_a3 -0.39225
-#define ur_kin_d4  0.10915
-#define ur_kin_d5  0.09465
-#define ur_kin_d6  0.0823
+#define ur_kin_d4 0.10915
+#define ur_kin_d5 0.09465
+#define ur_kin_d6 0.0823
 
 // These kinematics find the tranfrom from the base link to the end effector.
 // Though the raw D-H parameters specify a transform from the 0th link to the 6th link,
@@ -69,23 +69,22 @@
 //  1,  0,  0,  0
 //  0,  0,  0,  1
 
-namespace ur_kinematics {
+namespace ur_kinematics
+{
+// @param q       The 6 joint values
+// @param T       The 4x4 end effector pose in row-major ordering
+void forward(const double* q, double* T);
 
-  // @param q       The 6 joint values
-  // @param T       The 4x4 end effector pose in row-major ordering
-  void forward(const double* q, double* T);
+// @param q       The 6 joint values
+// @param Ti      The 4x4 link i pose in row-major ordering. If NULL, nothing is stored.
+void forward_all(const double* q, double* T1, double* T2, double* T3, double* T4, double* T5, double* T6);
 
-  // @param q       The 6 joint values
-  // @param Ti      The 4x4 link i pose in row-major ordering. If NULL, nothing is stored.
-  void forward_all(const double* q, double* T1, double* T2, double* T3,
-                                    double* T4, double* T5, double* T6);
-
-  // @param T       The 4x4 end effector pose in row-major ordering
-  // @param q_sols  An 8x6 array of doubles returned, all angles should be in [0,2*PI)
-  // @param q6_des  An optional parameter which designates what the q6 value should take
-  //                in case of an infinite solution on that joint.
-  // @return        Number of solutions found (maximum of 8)
-  int inverse(const double* T, double* q_sols, double q6_des=0.0);
+// @param T       The 4x4 end effector pose in row-major ordering
+// @param q_sols  An 8x6 array of doubles returned, all angles should be in [0,2*PI)
+// @param q6_des  An optional parameter which designates what the q6 value should take
+//                in case of an infinite solution on that joint.
+// @return        Number of solutions found (maximum of 8)
+int inverse(const double* T, double* q_sols, double q6_des = 0.0);
 };
 
-#endif //UR_KIN_H
+#endif  // UR_KIN_H

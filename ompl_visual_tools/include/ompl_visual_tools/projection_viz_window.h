@@ -67,7 +67,6 @@ typedef std::shared_ptr<ModelBasedPlanningContext> ModelBasedPlanningContextPtr;
 
 namespace ompl_visual_tools
 {
-
 typedef std::map<std::string, std::list<std::size_t> > MarkerList;
 
 class ProjectionVizWindow : public ompl::tools::VizWindow
@@ -81,7 +80,7 @@ public:
 
   /** \brief Visualize multiple states during runtime, externally */
   void states(std::vector<const ompl::base::State*> states, std::vector<ompl::tools::VizColors> colors,
-  ompl::tools::VizSizes size);
+              ompl::tools::VizSizes size);
 
   /** \brief Visualize edge during runtime, externally */
   void edge(const ompl::base::State* stateA, const ompl::base::State* stateB, double cost);

@@ -1238,10 +1238,10 @@ TaskEdge TaskGraph::addEdge(TaskVertex v1, TaskVertex v2, EdgeType type, std::si
   BOLT_ASSERT(v1 != v2, "Verticex IDs are the same");
   BOLT_ASSERT(!hasEdge(v1, v2), "There already exists an edge between two vertices requested");
   BOLT_ASSERT(hasEdge(v1, v2) == hasEdge(v2, v1), "There already exists an edge between two vertices requested, "
-                                                       "other direction");
+                                                  "other direction");
   BOLT_ASSERT(getState(v1) != getState(v2), "States on both sides of an edge are the same");
   BOLT_ASSERT(!si_->getStateSpace()->equalStates(getState(v1), getState(v2)), "Vertex IDs are different but "
-                                                                                   "states are the equal");
+                                                                              "states are the equal");
 
   // Create the new edge
   TaskEdge e = (boost::add_edge(v1, v2, g_)).first;

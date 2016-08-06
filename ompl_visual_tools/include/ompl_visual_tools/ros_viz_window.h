@@ -75,7 +75,8 @@ public:
              double extraData);
 
   /** \brief Visualize multiple states during runtime, externally */
-  void states(std::vector<const ompl::base::State*> states, std::vector<ompl::tools::VizColors> colors, ompl::tools::VizSizes size);
+  void states(std::vector<const ompl::base::State*> states, std::vector<ompl::tools::VizColors> colors,
+              ompl::tools::VizSizes size);
 
   /** \brief Visualize edge with a level during runtime, externally */
   void edge(const ompl::base::State* stateA, const ompl::base::State* stateB, ompl::tools::VizSizes size,
@@ -85,7 +86,8 @@ public:
   void edge(const ompl::base::State* stateA, const ompl::base::State* stateB, double cost);
 
   /** \brief Visualize multiple edges during runtime, externally */
-  // void edges(const std::vector<const ompl::base::State*> stateAs, const std::vector<const ompl::base::State*> stateBs,
+  // void edges(const std::vector<const ompl::base::State*> stateAs, const std::vector<const ompl::base::State*>
+  // stateBs,
   //            std::vector<ompl::tools::VizColors> colors, ompl::tools::VizSizes size){};
 
   /** \brief Visualize path during runtime, externally */
@@ -154,7 +156,7 @@ public:
    * \brief Display States
    * \return true on success
    */
-  //bool publishStates(std::vector<const ompl::base::State*> states);
+  // bool publishStates(std::vector<const ompl::base::State*> states);
 
   /**
    * \brief Display result path from a solver

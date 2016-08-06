@@ -324,9 +324,9 @@ bool ROSVizWindow::publishCostMap(PPMImage* image, bool static_id)
     color.r = image->data[image->getID(x, y)].red / 255.0;
     color.g = image->data[image->getID(x, y)].green / 255.0;
     color.b = image->data[image->getID(x, y)].blue / 255.0;
-    if (color.r + color.g + color.b > 3.0 - 2.0*std::numeric_limits<double>::epsilon())
+    if (color.r + color.g + color.b > 3.0 - 2.0 * std::numeric_limits<double>::epsilon())
     {
-      continue; // transparent, do not publish
+      continue;  // transparent, do not publish
     }
 
     // Overide to black

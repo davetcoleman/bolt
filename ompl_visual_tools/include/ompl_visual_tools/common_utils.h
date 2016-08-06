@@ -44,9 +44,6 @@
 
 namespace ompl_visual_tools
 {
-
-
-
 }  // namespace ompl_visual_tools
 
 #endif  // OMPL_VISUAL_TOOLS__COMMON_UTILS_

@@ -47,7 +47,7 @@
 namespace moveit_ompl
 {
 typedef std::function<bool(const ompl::base::State *from, const ompl::base::State *to, const double t,
-                             ompl::base::State *state)> InterpolationFunction;
+                           ompl::base::State *state)> InterpolationFunction;
 typedef std::function<double(const ompl::base::State *state1, const ompl::base::State *state2)> DistanceFunction;
 
 struct ModelBasedStateSpaceSpecification
@@ -76,11 +76,7 @@ public:
   class StateType : public ompl::base::State
   {
   public:
-
-    StateType()
-      : ompl::base::State(),
-        values(NULL),
-        level(0)
+    StateType() : ompl::base::State(), values(NULL), level(0)
     {
     }
 

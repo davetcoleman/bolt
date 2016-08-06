@@ -183,7 +183,8 @@ bool SparseCriteria::setup(std::size_t indent)
   si_->getStateValidityChecker()->setClearanceSearchDistance(sg_->getObstacleClearance());
 
   if (si_->getStateValidityChecker()->getClearanceSearchDistance() < sg_->getObstacleClearance())
-    OMPL_WARN("State validity checker clearance search distance %f is less than the required obstacle clearance %f for our state sampler, incompatible settings!",
+    OMPL_WARN("State validity checker clearance search distance %f is less than the required obstacle clearance %f for "
+              "our state sampler, incompatible settings!",
               si_->getStateValidityChecker()->getClearanceSearchDistance(), sg_->getObstacleClearance());
 
   return true;
@@ -815,7 +816,7 @@ bool SparseCriteria::addQualityPath(SparseVertex v, SparseVertex vp, SparseVerte
   if (useConnectivityCriteria_ && path->length() > shortestPathVpVpp)
   {
     BOLT_WARN(indent, vQuality_ || 1, "Smoothed path does not improve connectivity");
-    //visual_->waitForUserFeedback("smoothed path");
+    // visual_->waitForUserFeedback("smoothed path");
     return false;
   }
 
@@ -986,7 +987,7 @@ double SparseCriteria::qualityEdgeAstarTest(SparseVertex vp, SparseVertex vpp, I
     }
     visual_->viz6()->trigger();
   }
-  else // faster search
+  else  // faster search
   {
     if (!sg_->astarSearchLength(vp, vpp, pathLength, indent))
     {

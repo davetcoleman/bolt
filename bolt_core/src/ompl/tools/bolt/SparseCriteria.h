@@ -102,13 +102,15 @@ public:
   void visualizeCheckAddPath(SparseVertex v, SparseVertex vp, SparseVertex vpp, InterfaceData& iData,
                              std::size_t indent);
 
-  bool addQualityPath(SparseVertex v, SparseVertex vp, SparseVertex vpp, InterfaceData& iData, const double shortestPathVpVpp, std::size_t indent);
+  bool addQualityPath(SparseVertex v, SparseVertex vp, SparseVertex vpp, InterfaceData& iData,
+                      const double shortestPathVpVpp, std::size_t indent);
 
   /** \brief As described in paper */
-  bool spannerTestOriginal(SparseVertex v, SparseVertex vp, SparseVertex vpp, InterfaceData& iData, double& shortestPathVpVpp, std::size_t indent);
+  bool spannerTestOriginal(SparseVertex v, SparseVertex vp, SparseVertex vpp, InterfaceData& iData,
+                           double& shortestPathVpVpp, std::size_t indent);
 
   /** \brief Get shortest path between two vertices */
-  double qualityEdgeAstarTest(SparseVertex vp, SparseVertex vpp, InterfaceData & iData, std::size_t indent);
+  double qualityEdgeAstarTest(SparseVertex vp, SparseVertex vpp, InterfaceData& iData, std::size_t indent);
 
   /** \brief Finds the representative of the input state, st  */
   SparseVertex findGraphRepresentative(base::State* st, std::size_t threadID, std::size_t indent);

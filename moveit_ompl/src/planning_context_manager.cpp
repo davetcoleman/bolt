@@ -183,7 +183,7 @@ void mo::PlanningContextManager::createPlanningContext(ModelBasedPlanningContext
   context_spec.config_ = config.config;
   context_spec.planner_selector_ = getPlannerSelector();
   context_spec.constraint_sampler_manager_ = constraint_sampler_manager_;
-  //context_spec.state_space_ = factory->getNewStateSpace(space_spec, visual_tools);
+  // context_spec.state_space_ = factory->getNewStateSpace(space_spec, visual_tools);
 
   enum SimpleSetupType
   {
@@ -349,13 +349,12 @@ void mo::PlanningContextManager::createPlanningContext(ModelBasedPlanningContext
   // Add new context to cache
   {
     boost::mutex::scoped_lock slock(cached_contexts_->lock_);
-    //cached_contexts_->contexts_[std::make_pair(config.name, factory->getType())].push_back(context);
+    // cached_contexts_->contexts_[std::make_pair(config.name, factory->getType())].push_back(context);
   }
 }
 
 mo::ModelBasedPlanningContextPtr mo::PlanningContextManager::getPlanningContext(
-    const planning_interface::PlannerConfigurationSettings &config,
-    const moveit_msgs::MotionPlanRequest &req,
+    const planning_interface::PlannerConfigurationSettings &config, const moveit_msgs::MotionPlanRequest &req,
     moveit_visual_tools::MoveItVisualToolsPtr visual_tools) const
 {
   // Check for a cached planning context

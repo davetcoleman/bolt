@@ -206,7 +206,6 @@ void SparseGenerator::createSPARS()
   if (!sg_->visualizeSparseGraph_)
     sg_->displayDatabase(true, indent);
 
-
   // Ensure the graph is valid
   checkSparseGraphOptimality();
 
@@ -531,8 +530,9 @@ void SparseGenerator::findGraphNeighbors(CandidateData &candidateD, std::size_t 
     candidateD.visibleNeighborhood_.push_back(candidateD.graphNeighborhood_[i]);
   }
 
-  BOLT_DEBUG(indent, verbose_, "Graph neighborhood: " << candidateD.graphNeighborhood_.size() << " | Visible neighborhood: "
-                                                  << candidateD.visibleNeighborhood_.size());
+  BOLT_DEBUG(indent, verbose_,
+             "Graph neighborhood: " << candidateD.graphNeighborhood_.size()
+                                    << " | Visible neighborhood: " << candidateD.visibleNeighborhood_.size());
 }
 
 bool SparseGenerator::checkSparseGraphOptimality()
@@ -547,7 +547,7 @@ bool SparseGenerator::checkSparseGraphOptimality()
     // Choose random start and goal state that has a nearest neighbor
     std::vector<CandidateData> endPoints(2);
 
-    for (CandidateData& point : endPoints)
+    for (CandidateData &point : endPoints)
     {
       // Allocate
       point.state_ = si_->getStateSpace()->allocState();
@@ -566,15 +566,15 @@ bool SparseGenerator::checkSparseGraphOptimality()
       }
 
       // Check for neighbor
-      if (point.visibleNeighborhood_.size() < 1) // first state is usually itself
+      if (point.visibleNeighborhood_.size() < 1)  // first state is usually itself
         throw Exception(name_, "Found vertex with no neighbors");
     }
 
     // Astar search through graph
-    const base::State* actualStart = endPoints.front().state_;
-    const base::State* actualGoal = endPoints.back().state_;
+    const base::State *actualStart = endPoints.front().state_;
+    const base::State *actualGoal = endPoints.back().state_;
     const SparseVertex start = endPoints.front().visibleNeighborhood_[0];
-    const SparseVertex goal  = endPoints.back().visibleNeighborhood_[0];
+    const SparseVertex goal = endPoints.back().visibleNeighborhood_[0];
 
     // Visualize actual and snapped states
     visual_->viz3()->deleteAllMarkers();
@@ -632,7 +632,7 @@ bool SparseGenerator::checkSparseGraphOptimality()
     BOLT_WARN(indent + 2, 1, "Percent of max allowed:  " << percentOfMaxAllows << " %");
     BOLT_DEBUG(indent, 1, "-----------------------------------------");
 
-    usleep(0.01*1000000);
+    usleep(0.01 * 1000000);
     visual_->waitForUserFeedback("next");
   }
 
@@ -646,8 +646,9 @@ bool SparseGenerator::checkSparseGraphOptimality()
   return true;
 }
 
-bool SparseGenerator::convertVertexPathToStatePath(std::vector<SparseVertex> &vertexPath, const base::State *actualStart,
-                                                   const base::State *actualGoal, og::PathGeometric &geometricSolution)
+bool SparseGenerator::convertVertexPathToStatePath(std::vector<SparseVertex> &vertexPath,
+                                                   const base::State *actualStart, const base::State *actualGoal,
+                                                   og::PathGeometric &geometricSolution)
 {
   BOLT_ASSERT(!vertexPath.empty(), "Vertex path is empty");
 

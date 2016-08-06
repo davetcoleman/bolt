@@ -333,7 +333,7 @@ public:
         break;
       }
     }
-    else // graph loaded fine and will not be modified
+    else  // graph loaded fine and will not be modified
     {
       ROS_INFO_STREAM_NAMED(name_, "Checking loaded graph for optimality");
       bolt_->getSparseGenerator()->checkSparseGraphOptimality();

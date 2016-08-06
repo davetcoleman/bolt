@@ -199,11 +199,11 @@ public:
    *  \param distance - the length of the returned path
    *  \return true if candidate solution found
    */
-  bool astarSearch(SparseVertex start, SparseVertex goal, std::vector<SparseVertex>& vertexPath,
-                   double& distance, std::size_t indent);
+  bool astarSearch(SparseVertex start, SparseVertex goal, std::vector<SparseVertex>& vertexPath, double& distance,
+                   std::size_t indent);
 
   /** \brief Same as astarSearch except does not return vertexPath for performance reasons */
-  bool astarSearchLength(SparseVertex start, SparseVertex goal, double &distance, std::size_t indent);
+  bool astarSearchLength(SparseVertex start, SparseVertex goal, double& distance, std::size_t indent);
 
   /** \brief Distance between two states with special bias using popularity */
   double astarHeuristic(SparseVertex a, SparseVertex b) const;
@@ -295,7 +295,7 @@ public:
   bool smoothQualityPath(geometric::PathGeometric* path, double clearance, bool debug, std::size_t indent);
 
   /** \brief For finding the optimal path */
-  bool smoothMax(geometric::PathGeometric *path, std::size_t indent);
+  bool smoothMax(geometric::PathGeometric* path, std::size_t indent);
 
   /* ---------------------------------------------------------------------------------
    * Disjoint Sets

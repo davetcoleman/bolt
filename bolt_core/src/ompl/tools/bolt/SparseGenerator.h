@@ -93,13 +93,13 @@ public:
    * \param stateID representing a pre-populate state
    * \return true if sparse graph is still accepting states, false if the sparse graph has completed
    */
-  bool addSample(CandidateData& candidateD, std::size_t threadID, bool& usedState, std::size_t indent);
+  bool addSample(CandidateData &candidateD, std::size_t threadID, bool &usedState, std::size_t indent);
 
   /**
    * \brief Get neighbors within sparseDelta radius
    * \param indent - debugging tool
    */
-  void findGraphNeighbors(CandidateData& candidateD, std::size_t threadID, std::size_t indent);
+  void findGraphNeighbors(CandidateData &candidateD, std::size_t threadID, std::size_t indent);
 
   /**
    * \brief Tests for ensuring the generated roadmap obeys the theoretical guarantees
@@ -108,11 +108,12 @@ public:
   bool convertVertexPathToStatePath(std::vector<SparseVertex> &vertexPath, const base::State *actualStart,
                                     const base::State *actualGoal, geometric::PathGeometric &geometricSolution);
 
-  /** \brief Stop and reset the candidate queue because it uses the nearest neighbors and will have bad vertices stored */
+  /** \brief Stop and reset the candidate queue because it uses the nearest neighbors and will have bad vertices stored
+   */
   void stopCandidateQueueAndSave(std::size_t indent);
 
   /** \brief Getter for vertexDiscretizer */
-  VertexDiscretizerPtr& getVertexDiscretizer()
+  VertexDiscretizerPtr &getVertexDiscretizer()
   {
     return vertexDiscretizer_;
   }
@@ -163,7 +164,6 @@ protected:
   time::point timeDiscretizeAndRandomStarted_;
 
 public:
-
   bool verbose_ = false;
 
   /** \brief Number of failed state insertion attempts before stopping the algorithm */

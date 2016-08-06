@@ -92,7 +92,7 @@ public:
       @param pconfig Configurations for the different planners */
   const planning_interface::PlannerConfigurationMap &getPlannerConfigurations() const
   {
-    //return context_manager_->getPlannerConfigurations();
+    // return context_manager_->getPlannerConfigurations();
   }
 
   /// \brief Calls the function above but ignores the error_code
@@ -101,7 +101,6 @@ public:
                      const planning_interface::MotionPlanRequest &req, moveit_msgs::MoveItErrorCodes &error_code) const;
 
 protected:
-
   /** @brief Configure the planners*/
   void loadPlannerConfigurations();
 

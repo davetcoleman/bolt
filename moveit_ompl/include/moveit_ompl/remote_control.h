@@ -50,7 +50,6 @@
 
 namespace moveit_ompl
 {
-
 typedef std::function<void(bool)> DisplayWaitingState;
 
 class RemoteControl

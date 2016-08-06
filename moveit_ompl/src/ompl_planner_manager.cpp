@@ -79,7 +79,6 @@ bool OMPLPlannerManager::canServiceRequest(const moveit_msgs::MotionPlanRequest 
 
 void OMPLPlannerManager::getPlanningAlgorithms(std::vector<std::string> &algs) const
 {
-
 }
 
 void OMPLPlannerManager::setPlannerConfigurations(const planning_interface::PlannerConfigurationMap &pconfig)
@@ -121,7 +120,6 @@ planning_interface::PlanningContextPtr OMPLPlannerManager::getPlanningContext(
   else
     context->setMaximumSolutionSegmentLength(max_solution_segment_length_);
   context->setMinimumWaypointCount(minimum_waypoint_count_);
-
 }
 
 }  // namespace

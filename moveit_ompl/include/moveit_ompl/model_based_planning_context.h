@@ -310,8 +310,8 @@ protected:
   void preSolve();
   void postSolve();
 
-  //void startSampling();
-  //void stopSampling();
+  // void startSampling();
+  // void stopSampling();
 
   virtual ob::ProjectionEvaluatorPtr getProjectionEvaluator(const std::string &peval) const;
   virtual ob::StateSamplerPtr allocPathConstrainedSampler(const ompl::base::StateSpace *ss) const;

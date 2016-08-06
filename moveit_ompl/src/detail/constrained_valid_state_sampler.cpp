@@ -143,8 +143,8 @@ bool moveit_ompl::ValidConstrainedSampler::createState(ob::State *state, std::ve
   // Convert to OMPL
   planning_context_->getOMPLStateSpace()->copyToRobotState(work_state_, state);
 
-  //if (kinematic_constraint_set_->decide(work_state_).satisfied)
-  //return true;
+  // if (kinematic_constraint_set_->decide(work_state_).satisfied)
+  // return true;
 
   return false;
 }

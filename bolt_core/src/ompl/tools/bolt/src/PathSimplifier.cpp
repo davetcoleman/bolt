@@ -34,11 +34,10 @@
 
 /* Author: Ioan Sucan, Ryan Luna, Dave Coleman */
 
-
 #include <ompl/tools/bolt/PathSimplifier.h>
 #include <ompl/tools/bolt/Debug.h>
 #include <ompl/tools/config/MagicConstants.h>
-#include <ompl/base/spaces/RealVectorStateSpace.h> // TODO remove
+#include <ompl/base/spaces/RealVectorStateSpace.h>  // TODO remove
 #include <algorithm>
 #include <limits>
 #include <cstdlib>
@@ -51,10 +50,8 @@ namespace tools
 {
 namespace bolt
 {
-PathSimplifier::PathSimplifier(const base::SpaceInformationPtr &si)
-  : si_(si), freeStates_(true)
+PathSimplifier::PathSimplifier(const base::SpaceInformationPtr &si) : si_(si), freeStates_(true)
 {
-
 }
 
 bool PathSimplifier::freeStates() const
@@ -123,8 +120,8 @@ bool PathSimplifier::reduceVertices(geometric::PathGeometric &path, unsigned int
   }
 
   // TODO: only for testing
-  base::State* startCopy = si_->cloneState(path.getState(0));
-  base::State* goalCopy = si_->cloneState(path.getState(path.getStateCount() - 1));
+  base::State *startCopy = si_->cloneState(path.getState(0));
+  base::State *goalCopy = si_->cloneState(path.getState(path.getStateCount() - 1));
   BOLT_WARN(indent, true, "Orignal goal state:");
   si_->printState(goalCopy);
 
@@ -147,11 +144,12 @@ bool PathSimplifier::reduceVertices(geometric::PathGeometric &path, unsigned int
     std::vector<base::State *> newStates(2);
     newStates[0] = states.front();
     newStates[1] = states.back();
-    BOLT_DEBUG(indent+2, true, "Swapping states");
+    BOLT_DEBUG(indent + 2, true, "Swapping states");
     states.swap(newStates);
 
-    BOLT_ASSERT(si_->equalStates(path.getState(0),startCopy), "Start state is no longer the same");
-    BOLT_ASSERT(si_->equalStates(path.getState(path.getStateCount() - 1),goalCopy), "Goal state is no longer the same");
+    BOLT_ASSERT(si_->equalStates(path.getState(0), startCopy), "Start state is no longer the same");
+    BOLT_ASSERT(si_->equalStates(path.getState(path.getStateCount() - 1), goalCopy), "Goal state is no longer the "
+                                                                                     "same");
 
     return true;
   }
@@ -182,13 +180,14 @@ bool PathSimplifier::reduceVertices(geometric::PathGeometric &path, unsigned int
       if (freeStates_)
         for (int j = p1 + 1; j < p2; ++j)
           si->freeState(states[j]);
-      BOLT_DEBUG(indent+2, true, "Erasing states p1: " << p1 << " p2: " << p2 << " total states: " << states.size());
+      BOLT_DEBUG(indent + 2, true, "Erasing states p1: " << p1 << " p2: " << p2 << " total states: " << states.size());
       states.erase(states.begin() + p1 + 1, states.begin() + p2);
       nochange = 0;
 
       si_->printState(path.getState(path.getStateCount() - 1));
-      BOLT_ASSERT(si_->equalStates(path.getState(0),startCopy), "Start state is no longer the same");
-      BOLT_ASSERT(si_->equalStates(path.getState(path.getStateCount() - 1),goalCopy), "Goal state is no longer the same");
+      BOLT_ASSERT(si_->equalStates(path.getState(0), startCopy), "Start state is no longer the same");
+      BOLT_ASSERT(si_->equalStates(path.getState(path.getStateCount() - 1), goalCopy), "Goal state is no longer the "
+                                                                                       "same");
 
       result = true;
     }
@@ -450,8 +449,8 @@ void PathSimplifier::simplify(geometric::PathGeometric &path, const base::Planne
     return;
 
   // TODO: only for testing
-  base::State* startCopy = si_->cloneState(path.getState(0));
-  base::State* goalCopy = si_->cloneState(path.getState(path.getStateCount() - 1));
+  base::State *startCopy = si_->cloneState(path.getState(0));
+  base::State *goalCopy = si_->cloneState(path.getState(path.getStateCount() - 1));
 
   // try a randomized step of connecting vertices
   bool tryMore = false;
@@ -460,8 +459,8 @@ void PathSimplifier::simplify(geometric::PathGeometric &path, const base::Planne
     tryMore = reduceVertices(path, 0, 0, 0.33, indent);
   }
 
-  BOLT_ASSERT(si_->equalStates(path.getState(0),startCopy), "Start state is no longer the same");
-  BOLT_ASSERT(si_->equalStates(path.getState(path.getStateCount() - 1),goalCopy), "Goal state is no longer the same");
+  BOLT_ASSERT(si_->equalStates(path.getState(0), startCopy), "Start state is no longer the same");
+  BOLT_ASSERT(si_->equalStates(path.getState(path.getStateCount() - 1), goalCopy), "Goal state is no longer the same");
 
   // try to collapse close-by vertices
   if (ptc == false)
@@ -469,8 +468,8 @@ void PathSimplifier::simplify(geometric::PathGeometric &path, const base::Planne
     collapseCloseVertices(path, 0, 0, indent);
   }
 
-  BOLT_ASSERT(si_->equalStates(path.getState(0),startCopy), "Start state is no longer the same");
-  BOLT_ASSERT(si_->equalStates(path.getState(path.getStateCount() - 1),goalCopy), "Goal state is no longer the same");
+  BOLT_ASSERT(si_->equalStates(path.getState(0), startCopy), "Start state is no longer the same");
+  BOLT_ASSERT(si_->equalStates(path.getState(path.getStateCount() - 1), goalCopy), "Goal state is no longer the same");
 
   // try to reduce verices some more, if there is any point in doing so
   int times = 0;
@@ -479,8 +478,8 @@ void PathSimplifier::simplify(geometric::PathGeometric &path, const base::Planne
     tryMore = reduceVertices(path, 0, 0, 0.33, indent);
   }
 
-  BOLT_ASSERT(si_->equalStates(path.getState(0),startCopy), "Start state is no longer the same");
-  BOLT_ASSERT(si_->equalStates(path.getState(path.getStateCount() - 1),goalCopy), "Goal state is no longer the same");
+  BOLT_ASSERT(si_->equalStates(path.getState(0), startCopy), "Start state is no longer the same");
+  BOLT_ASSERT(si_->equalStates(path.getState(path.getStateCount() - 1), goalCopy), "Goal state is no longer the same");
 
   // if the space is metric, we can do some additional smoothing
   if (si_->getStateSpace()->isMetricSpace())
@@ -490,15 +489,15 @@ void PathSimplifier::simplify(geometric::PathGeometric &path, const base::Planne
     do
     {
       BOLT_DEBUG(indent, true, "while loop " << times << " ------------------------------");
-      bool shortcut = shortcutPath(path, 0, 0, 0.33, 0.005, indent);                           // split path segments, not just vertices
+      bool shortcut = shortcutPath(path, 0, 0, 0.33, 0.005, indent);  // split path segments, not just vertices
 
       BOLT_DEBUG(indent, true, "New (bad) goal state:");
-      base::State* tempState = path.getState(path.getStateCount() - 1);
+      base::State *tempState = path.getState(path.getStateCount() - 1);
       si_->printState(tempState);
 
-      const double *s1 = static_cast<const ompl::base::RealVectorStateSpace::StateType*>(tempState)->values;
-      const double *s2 = static_cast<const ompl::base::RealVectorStateSpace::StateType*>(goalCopy)->values;
-      for (unsigned int i = 0 ; i < si_->getStateDimension(); ++i)
+      const double *s1 = static_cast<const ompl::base::RealVectorStateSpace::StateType *>(tempState)->values;
+      const double *s2 = static_cast<const ompl::base::RealVectorStateSpace::StateType *>(goalCopy)->values;
+      for (unsigned int i = 0; i < si_->getStateDimension(); ++i)
       {
         double diff = (*s1++) - (*s2++);
         if (fabs(diff) > std::numeric_limits<double>::epsilon() * 2.0)
@@ -508,11 +507,13 @@ void PathSimplifier::simplify(geometric::PathGeometric &path, const base::Planne
         }
       }
 
-      BOLT_ASSERT(si_->equalStates(path.getState(0),startCopy), "Start state is no longer the same");
-      BOLT_ASSERT(si_->equalStates(path.getState(path.getStateCount() - 1),goalCopy), "Goal state is no longer the same");
+      BOLT_ASSERT(si_->equalStates(path.getState(0), startCopy), "Start state is no longer the same");
+      BOLT_ASSERT(si_->equalStates(path.getState(path.getStateCount() - 1), goalCopy), "Goal state is no longer the "
+                                                                                       "same");
 
-      BOLT_ASSERT(si_->equalStates(path.getState(0),startCopy), "Start state is no longer the same");
-      BOLT_ASSERT(si_->equalStates(path.getState(path.getStateCount() - 1),goalCopy), "Goal state is no longer the same");
+      BOLT_ASSERT(si_->equalStates(path.getState(0), startCopy), "Start state is no longer the same");
+      BOLT_ASSERT(si_->equalStates(path.getState(path.getStateCount() - 1), goalCopy), "Goal state is no longer the "
+                                                                                       "same");
 
       tryMore = shortcut;
     } while (ptc == false && tryMore && ++times <= 5);
@@ -521,8 +522,9 @@ void PathSimplifier::simplify(geometric::PathGeometric &path, const base::Planne
     if (ptc == false)
       smoothBSpline(path, 3, path.length() / 100.0);
 
-    BOLT_ASSERT(si_->equalStates(path.getState(0),startCopy), "Start state is no longer the same");
-    BOLT_ASSERT(si_->equalStates(path.getState(path.getStateCount() - 1),goalCopy), "Goal state is no longer the same");
+    BOLT_ASSERT(si_->equalStates(path.getState(0), startCopy), "Start state is no longer the same");
+    BOLT_ASSERT(si_->equalStates(path.getState(path.getStateCount() - 1), goalCopy), "Goal state is no longer the "
+                                                                                     "same");
 
     BOLT_DEBUG(indent, true, "checkAndRepair()");
     // we always run this if the metric-space algorithms were run.  In non-metric spaces this does not work.
@@ -533,17 +535,16 @@ void PathSimplifier::simplify(geometric::PathGeometric &path, const base::Planne
       OMPL_WARN("Solution path may slightly touch on an invalid region of the state space");
 
     BOLT_DEBUG(indent, true, "New (bad) goal state:");
-    base::State* tempState = path.getState(path.getStateCount() - 1);
+    base::State *tempState = path.getState(path.getStateCount() - 1);
     si_->printState(tempState);
 
-    BOLT_ASSERT(si_->equalStates(path.getState(0),startCopy), "Start state is no longer the same");
-    BOLT_ASSERT(si_->equalStates(path.getState(path.getStateCount() - 1),goalCopy), "Goal state is no longer the same");
+    BOLT_ASSERT(si_->equalStates(path.getState(0), startCopy), "Start state is no longer the same");
+    BOLT_ASSERT(si_->equalStates(path.getState(path.getStateCount() - 1), goalCopy), "Goal state is no longer the "
+                                                                                     "same");
   }
   BOLT_DEBUG(indent, true, "done simplify");
 }
 
-
-
-} // namespace
+}  // namespace
 }
 }

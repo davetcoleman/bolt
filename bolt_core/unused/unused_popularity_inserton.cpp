@@ -34,9 +34,8 @@ bool SparseCriteria::getPopularityOrder(std::list<WeightedVertex> &vertexInserti
   bool verbose = false;
 
   // Error check
-  BOLT_ASSERT(getNumVertices() > queryVertices_.size(),
-                   "Unable to get vertices in order of popularity because dense "
-                   "graph is empty");
+  BOLT_ASSERT(getNumVertices() > queryVertices_.size(), "Unable to get vertices in order of popularity because dense "
+                                                        "graph is empty");
 
   if (visualizeNodePopularity_)  // Clear visualization
   {

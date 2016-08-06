@@ -30,7 +30,6 @@ bool recurseSnapWaypoints(ompl::geometric::PathGeometric &inputPath, std::vector
 /** \brief Keep graph evenly weighted */
 void normalizeGraphEdgeWeights();
 
-
 /** \brief Check that all states are the correct type */
 void checkStateType();
 
@@ -43,7 +42,6 @@ void checkStateType();
 void connectNewVertex(TaskVertex denseV);
 
 void removeInvalidVertices();
-
 
 bool TaskGraph::postProcessPath(og::PathGeometric &solutionPath)
 {

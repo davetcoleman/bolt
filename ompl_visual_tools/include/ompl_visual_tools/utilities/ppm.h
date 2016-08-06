@@ -13,12 +13,12 @@
 
 namespace ompl_visual_tools
 {
-
 // *************************************************************************************************
 // PPMPixel Struct
 // *************************************************************************************************
-typedef struct {
-  unsigned char red,green,blue;
+typedef struct
+{
+  unsigned char red, green, blue;
 } PPMPixel;
 
 // *************************************************************************************************
@@ -28,32 +28,31 @@ class PPMImage
 {
 public:
   // Constructor
-  PPMImage() :
-    x(0), y(0), data(NULL)
+  PPMImage() : x(0), y(0), data(NULL)
   {
   }
 
   // Deconstructor
   ~PPMImage()
   {
-    if( data != NULL )
+    if (data != NULL)
       free(data);
   }
 
   // Convert coordinates to a id number
-  unsigned int getID( unsigned int x_coord, unsigned int y_coord )
+  unsigned int getID(unsigned int x_coord, unsigned int y_coord)
   {
     return y_coord * x + x_coord;
   }
 
   // Convert id to x
-  unsigned int getX( unsigned int id )
+  unsigned int getX(unsigned int id)
   {
     return id % x;
   }
 
   // Convert id to y
-  unsigned int getY( unsigned int id )
+  unsigned int getY(unsigned int id)
   {
     return id / x;
   }
@@ -68,7 +67,6 @@ public:
   PPMPixel *data;
 };
 
-
 #define CREATOR "RPFELGUEIRAS"
 #define RGB_COMPONENT_COLOR 255
 
@@ -78,9 +76,6 @@ public:
 
 PPMImage *readPPM(const char *filename);
 
-
-} // namespace
+}  // namespace
 
 #endif
-
-

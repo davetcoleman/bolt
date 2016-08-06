@@ -98,9 +98,10 @@ moveit_ompl::ModelBasedPlanningContext::getProjectionEvaluator(const std::string
     if (getRobotModel()->hasLinkModel(link_name))
       return ob::ProjectionEvaluatorPtr(new ProjectionEvaluatorLinkPose(this, link_name));
     else
-      ROS_ERROR_NAMED(class_name_, "Attempted to set projection evaluator with respect to position of link '%s', but that link is not "
-                "known to the kinematic model.",
-                             link_name.c_str());
+      ROS_ERROR_NAMED(class_name_, "Attempted to set projection evaluator with respect to position of link '%s', but "
+                                   "that link is not "
+                                   "known to the kinematic model.",
+                      link_name.c_str());
   }
   else if (peval.find_first_of("joints(") == 0 && peval[peval.length() - 1] == ')')
   {
@@ -125,9 +126,10 @@ moveit_ompl::ModelBasedPlanningContext::getProjectionEvaluator(const std::string
           ROS_WARN_NAMED(class_name_, "Ignoring joint '%s' in projection since it has 0 DOF", v.c_str());
       }
       else
-        ROS_ERROR_NAMED(class_name_, "Attempted to set projection evaluator with respect to value of joint '%s', but that joint is "
-                  "not known to the group '%s'.",
-                  v.c_str(), getGroupName().c_str());
+        ROS_ERROR_NAMED(class_name_,
+                        "Attempted to set projection evaluator with respect to value of joint '%s', but that joint is "
+                        "not known to the group '%s'.",
+                        v.c_str(), getGroupName().c_str());
     }
     if (j.empty())
       ROS_ERROR_STREAM_NAMED(class_name_, "No valid joints specified for joint projection");
@@ -185,7 +187,7 @@ void moveit_ompl::ModelBasedPlanningContext::configure()
 }
 
 void moveit_ompl::ModelBasedPlanningContext::visualizationState(const ompl::base::State *state, std::size_t type,
-                                                                        double neighborRadius)
+                                                                double neighborRadius)
 {
   std::cout << "ModelBasedPlanningContext::visualizationState()" << std::endl;
   if (!visual_tools_)
@@ -218,8 +220,7 @@ void moveit_ompl::ModelBasedPlanningContext::useConfig()
   std::map<std::string, std::string> cfg = config;
 
   // debug all configs
-  for(std::map<std::string, std::string>::const_iterator it = cfg.begin();
-      it != cfg.end(); ++it)
+  for (std::map<std::string, std::string>::const_iterator it = cfg.begin(); it != cfg.end(); ++it)
   {
     std::cout << it->first << " " << it->second << std::endl;
   }
@@ -248,9 +249,10 @@ void moveit_ompl::ModelBasedPlanningContext::useConfig()
     cfg.erase(it);
     ompl_simple_setup_->setPlannerAllocator(
         boost::bind(spec_.planner_selector_(type), _1, name_ != getGroupName() ? name_ : "", spec_));
-    ROS_INFO_NAMED(class_name_, "Planner configuration '%s' will use planner '%s'. Additional configuration parameters will be set when "
-             "the planner is constructed.",
-             type.c_str());
+    ROS_INFO_NAMED(class_name_, "Planner configuration '%s' will use planner '%s'. Additional configuration parameters "
+                                "will be set when "
+                                "the planner is constructed.",
+                   type.c_str());
   }
 
   // call the setParams() after setup(), so we know what the params are
@@ -267,7 +269,8 @@ void moveit_ompl::ModelBasedPlanningContext::setPlanningVolume(const moveit_msgs
       wparams.min_corner.z == wparams.max_corner.z && wparams.min_corner.z == 0.0)
     ROS_WARN_STREAM_NAMED(class_name_, "It looks like the planning volume was not specified.");
 
-  // ROS_DEBUG_NAMED(class_name_, "Setting planning volume (affects SE2 & SE3 joints only) to x = [%f, %f], y = [%f, %f], z = [%f, %f]",
+  // ROS_DEBUG_NAMED(class_name_, "Setting planning volume (affects SE2 & SE3 joints only) to x = [%f, %f], y = [%f,
+  // %f], z = [%f, %f]",
   //           wparams.min_corner.x, wparams.max_corner.x, wparams.min_corner.y, wparams.max_corner.y,
   //           wparams.min_corner.z, wparams.max_corner.z);
 
@@ -284,8 +287,8 @@ void moveit_ompl::ModelBasedPlanningContext::simplifySolution(double timeout)
 
 void moveit_ompl::ModelBasedPlanningContext::interpolateSolution()
 {
-  //std::cout << "skipping interpolation step ==================================" << std::endl;
-  //return;
+  // std::cout << "skipping interpolation step ==================================" << std::endl;
+  // return;
 
   if (ompl_simple_setup_->haveSolutionPath())
   {
@@ -295,7 +298,7 @@ void moveit_ompl::ModelBasedPlanningContext::interpolateSolution()
         (unsigned int)floor(0.5 + path_geometric.length() / max_solution_segment_length_), minimum_waypoint_count_));
 
     ROS_INFO_NAMED(class_name_, "Path states from interpolation increased from %d to %d", prev_path_states,
-             path_geometric.getStateCount());
+                   path_geometric.getStateCount());
   }
 }
 
@@ -328,7 +331,7 @@ void moveit_ompl::ModelBasedPlanningContext::setVerboseStateValidityChecks(bool 
 ompl::base::GoalPtr moveit_ompl::ModelBasedPlanningContext::constructGoal()
 {
   // ******************* set up the goal representation, based on goal constraints
-  //ROS_ERROR_STREAM_NAMED(name_, "constructing goal with " << goal_constraints_.size() << " constraints");
+  // ROS_ERROR_STREAM_NAMED(name_, "constructing goal with " << goal_constraints_.size() << " constraints");
 
   std::vector<ob::GoalPtr> goals;
   for (std::size_t i = 0; i < goal_constraints_.size(); ++i)
@@ -354,7 +357,7 @@ ompl::base::GoalPtr moveit_ompl::ModelBasedPlanningContext::constructGoal()
 
   if (goals.size() == 1)
   {
-    //ROS_INFO_STREAM_NAMED(name_, "Problem has only one goal");
+    // ROS_INFO_STREAM_NAMED(name_, "Problem has only one goal");
     return goals[0];
   }
 
@@ -481,7 +484,7 @@ void moveit_ompl::ModelBasedPlanningContext::preSolve()
 
 void moveit_ompl::ModelBasedPlanningContext::postSolve()
 {
-  //stopSampling();
+  // stopSampling();
   int v = ompl_simple_setup_->getSpaceInformation()->getMotionValidator()->getValidMotionCount();
   int iv = ompl_simple_setup_->getSpaceInformation()->getMotionValidator()->getInvalidMotionCount();
   ROS_DEBUG_NAMED(class_name_, "There were %d valid motions and %d invalid motions.", v, iv);
@@ -500,7 +503,8 @@ bool moveit_ompl::ModelBasedPlanningContext::solve(planning_interface::MotionPla
 
     if (disableSimplifyAndInterpolate)
     {
-      ROS_INFO_STREAM_NAMED(class_name_, "Disabled simplifySolution and interpolateSolution in model_based_planning_context.cpp");
+      ROS_INFO_STREAM_NAMED(class_name_, "Disabled simplifySolution and interpolateSolution in "
+                                         "model_based_planning_context.cpp");
     }
     else
     {
@@ -512,12 +516,12 @@ bool moveit_ompl::ModelBasedPlanningContext::solve(planning_interface::MotionPla
     }
 
     ROS_INFO_STREAM_NAMED(class_name_, "ModelBasedPlanningContext::solve() skipping interpolating solution");
-    //ROS_INFO_STREAM_NAMED(class_name_, "ModelBasedPlanningContext::solve() Interpolating solution");
-    //interpolateSolution();
+    // ROS_INFO_STREAM_NAMED(class_name_, "ModelBasedPlanningContext::solve() Interpolating solution");
+    // interpolateSolution();
 
     // fill the response
     ROS_INFO_NAMED(class_name_, "Returning successful solution with %lu states",
-             getOMPLSimpleSetup()->getSolutionPath().getStateCount());
+                   getOMPLSimpleSetup()->getSolutionPath().getStateCount());
 
     res.trajectory_.reset(new robot_trajectory::RobotTrajectory(getRobotModel(), getGroupName()));
     getSolutionPath(*res.trajectory_);
@@ -551,7 +555,7 @@ bool moveit_ompl::ModelBasedPlanningContext::solve(planning_interface::MotionPla
     // simplify solution if time remains
     if (simplify_solutions_ && ptime < request_.allowed_planning_time)
     {
-      //simplifySolution(request_.allowed_planning_time - ptime);
+      // simplifySolution(request_.allowed_planning_time - ptime);
       res.processing_time_.push_back(getLastSimplifyTime());
       res.description_.push_back("simplify");
       res.trajectory_.resize(res.trajectory_.size() + 1);
@@ -569,7 +573,7 @@ bool moveit_ompl::ModelBasedPlanningContext::solve(planning_interface::MotionPla
 
     // fill the response
     ROS_DEBUG_NAMED(class_name_, "Returning successful solution with %lu states",
-              getOMPLSimpleSetup()->getSolutionPath().getStateCount());
+                    getOMPLSimpleSetup()->getSolutionPath().getStateCount());
     return true;
   }
   else

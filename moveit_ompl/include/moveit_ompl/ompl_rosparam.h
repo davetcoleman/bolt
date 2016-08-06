@@ -66,7 +66,7 @@ void loadOMPLParameters(ros::NodeHandle nh, const std::string &name, ompl::tools
   ompl::tools::bolt::SparseGeneratorPtr sparseGenerator = bolt->getSparseGenerator();
   ompl::tools::bolt::BoltPlannerPtr boltPlanner = bolt->getBoltPlanner();
   ompl::tools::bolt::VertexDiscretizerPtr vertexDiscret = sparseGenerator->getVertexDiscretizer();
-  //ompl::tools::bolt::DenseCachePtr denseCache = sparseGraph->getDenseCache();
+  // ompl::tools::bolt::DenseCachePtr denseCache = sparseGraph->getDenseCache();
 
   // Bolt
   {
@@ -132,7 +132,8 @@ void loadOMPLParameters(ros::NodeHandle nh, const std::string &name, ompl::tools
     error += !get(name, rpnh, "visualize/connectivity", sparseCriteria->visualizeConnectivity_);
     error += !get(name, rpnh, "visualize/remove_close_vertices", sparseCriteria->visualizeRemoveCloseVertices_);
     error += !get(name, rpnh, "visualize/quality_criteria", sparseCriteria->visualizeQualityCriteria_);
-    error += !get(name, rpnh, "visualize/quality_criteria_close_reps", sparseCriteria->visualizeQualityCriteriaCloseReps_);
+    error +=
+        !get(name, rpnh, "visualize/quality_criteria_close_reps", sparseCriteria->visualizeQualityCriteriaCloseReps_);
     error += !get(name, rpnh, "visualize/quality_criteria_sampler", sparseCriteria->visualizeQualityCriteriaSampler_);
     error += !get(name, rpnh, "visualize/quality_criteria_astar", sparseCriteria->visualizeQualityCriteriaAstar_);
     shutdownIfError(name, error);
@@ -186,50 +187,50 @@ void loadOMPLParameters(ros::NodeHandle nh, const std::string &name, ompl::tools
   }
 }
 
-  /**
-   * \brief Creates a directory names *database_direction* in the user's *home* folder, and inside that creates a file
-   *        named *database_name.ompl*
-   * \param file_path - result to generate
-   * \param file_name - name of file to create
-   * \param home_directory - name of folder to save in user directory
-   * \return true on success
-   */
-  bool getFilePath(std::string &file_path, const std::string &file_name, const std::string &home_directory)
+/**
+ * \brief Creates a directory names *database_direction* in the user's *home* folder, and inside that creates a file
+ *        named *database_name.ompl*
+ * \param file_path - result to generate
+ * \param file_name - name of file to create
+ * \param home_directory - name of folder to save in user directory
+ * \return true on success
+ */
+bool getFilePath(std::string &file_path, const std::string &file_name, const std::string &home_directory)
+{
+  namespace fs = boost::filesystem;
+  // Check that the directory exists, if not, create it
+  fs::path rootPath;
+
+  // rootPath = fs::path("/home/dave");
+  // std::cout << "Over-rode root path to : " << rootPath << std::endl;
+
+  if (!std::string(getenv("HOME")).empty())
+    rootPath = fs::path(getenv("HOME"));  // Support Linux/Mac
+  else if (!std::string(getenv("HOMEPATH")).empty())
+    rootPath = fs::path(getenv("HOMEPATH"));  // Support Windows
+  else
   {
-    namespace fs = boost::filesystem;
-    // Check that the directory exists, if not, create it
-    fs::path rootPath;
-
-    //rootPath = fs::path("/home/dave");
-    //std::cout << "Over-rode root path to : " << rootPath << std::endl;
-
-    if (!std::string(getenv("HOME")).empty())
-      rootPath = fs::path(getenv("HOME"));  // Support Linux/Mac
-    else if (!std::string(getenv("HOMEPATH")).empty())
-      rootPath = fs::path(getenv("HOMEPATH"));  // Support Windows
-    else
-    {
-      ROS_WARN("Unable to find a home path for this computer");
-      rootPath = fs::path("");
-    }
-    rootPath = rootPath / fs::path(home_directory);
-
-    boost::system::error_code returnedError;
-    fs::create_directories(rootPath, returnedError);
-
-    if (returnedError)
-    {
-      // did not successfully create directories
-      ROS_ERROR("Unable to create directory %s", home_directory.c_str());
-      return false;
-    }
-
-    // directories successfully created, append the group name as the file name
-    rootPath = rootPath / fs::path(file_name);
-    file_path = rootPath.string();
-
-    return true;
+    ROS_WARN("Unable to find a home path for this computer");
+    rootPath = fs::path("");
   }
+  rootPath = rootPath / fs::path(home_directory);
+
+  boost::system::error_code returnedError;
+  fs::create_directories(rootPath, returnedError);
+
+  if (returnedError)
+  {
+    // did not successfully create directories
+    ROS_ERROR("Unable to create directory %s", home_directory.c_str());
+    return false;
+  }
+
+  // directories successfully created, append the group name as the file name
+  rootPath = rootPath / fs::path(file_name);
+  file_path = rootPath.string();
+
+  return true;
+}
 
 }  // namespace
 

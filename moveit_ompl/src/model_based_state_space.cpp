@@ -94,11 +94,12 @@ mo::ModelBasedStateSpace::ModelBasedStateSpace(const ModelBasedStateSpaceSpecifi
   }
 
   // default settings
-  //setTagSnapToSegment(0.95);
+  // setTagSnapToSegment(0.95);
 
   /// expose parameters
-  //params_.declareParam<double>("tag_snap_to_segment", boost::bind(&ModelBasedStateSpace::setTagSnapToSegment, this, _1),
-  //boost::bind(&ModelBasedStateSpace::getTagSnapToSegment, this));
+  // params_.declareParam<double>("tag_snap_to_segment", boost::bind(&ModelBasedStateSpace::setTagSnapToSegment, this,
+  // _1),
+  // boost::bind(&ModelBasedStateSpace::getTagSnapToSegment, this));
 }
 
 mo::ModelBasedStateSpace::~ModelBasedStateSpace()
@@ -209,7 +210,7 @@ bool mo::ModelBasedStateSpace::equalStates(const ompl::base::State *state1, cons
       return false;
 
   // Check level
-  if(state1->as<StateType>()->level != state2->as<StateType>()->level)
+  if (state1->as<StateType>()->level != state2->as<StateType>()->level)
     return false;
 
   return true;
@@ -230,7 +231,7 @@ void mo::ModelBasedStateSpace::interpolate(const ompl::base::State *from, const 
                                            ompl::base::State *state) const
 {
   // clear any cached info (such as validity known or not)
-  //state->as<StateType>()->clearKnownInformation();
+  // state->as<StateType>()->clearKnownInformation();
 
   if (!interpolation_function_ || !interpolation_function_(from, to, t, state))
   {

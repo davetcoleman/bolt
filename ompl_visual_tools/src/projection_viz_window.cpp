@@ -69,7 +69,7 @@ ProjectionVizWindow::ProjectionVizWindow(rviz_visual_tools::RvizVisualToolsPtr v
   : name_("projection_viz_window"), visuals_(visuals), si_(si)
 {
   // with this OMPL interface to Rviz all pubs must be manually triggered
-  //visuals_->enableBatchPublishing(false);
+  // visuals_->enableBatchPublishing(false);
 
   // Calculate ranges
   moveit_ompl::ModelBasedStateSpacePtr mb_state_space =
@@ -100,7 +100,7 @@ void ProjectionVizWindow::state(const ompl::base::State* state, ot::VizSizes siz
   {
     case ompl::tools::VARIABLE_SIZE:
 
-      //extra_data /= range_[0];  // hack for projection TODO(davetcoleman): is this correct?
+      // extra_data /= range_[0];  // hack for projection TODO(davetcoleman): is this correct?
       std::cout << "orig extra_data " << extra_data << std::endl;
       extra_data = (extra_data - low_[0]) / range_[0];
       std::cout << "projected extra_data " << extra_data << std::endl;
@@ -382,23 +382,23 @@ Eigen::Vector3d ProjectionVizWindow::stateToPoint(const ob::State* state)
   {
     temp = state->as<moveit_ompl::ModelBasedStateSpace::StateType>()->values[i];
 
-    if (i < 3) // regular dimensions
+    if (i < 3)  // regular dimensions
     {
       // Project to 1:1:1 3D space
       point[i] = (temp - low_[i]) / range_[i];
     }
-    else if (i >= 3) // Move the 3D space over
+    else if (i >= 3)  // Move the 3D space over
     {
       // Project to 1:1:1 3D space
       temp = (temp - low_[i]) / range_[i];
 
-      point[i-3] += temp * 5;
+      point[i - 3] += temp * 5;
     }
   }
 
   // Copy to eigen structure
-  //const double x_offset = 1.0; // Move all points to a hard coded location
-  static const double x_offset = -0.5; // Move all points to a hard coded location
+  // const double x_offset = 1.0; // Move all points to a hard coded location
+  static const double x_offset = -0.5;  // Move all points to a hard coded location
   static const double y_offset = -0.5;
   static const double z_offset = 0.0;
   temp_eigen_point_.x() = point[0] + x_offset;

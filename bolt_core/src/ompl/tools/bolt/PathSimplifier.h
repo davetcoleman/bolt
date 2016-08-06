@@ -178,7 +178,8 @@ public:
       consecutive empty steps before the simplification
       process terminates.
   */
-  bool collapseCloseVertices(geometric::PathGeometric &path, unsigned int maxSteps = 0, unsigned int maxEmptySteps = 0, std::size_t indent = 0);
+  bool collapseCloseVertices(geometric::PathGeometric &path, unsigned int maxSteps = 0, unsigned int maxEmptySteps = 0,
+                             std::size_t indent = 0);
 
   /** \brief Given a path, attempt to smooth it (the
       validity of the path is maintained).
