@@ -92,6 +92,7 @@ void loadOMPLParameters(ros::NodeHandle nh, const std::string &name, ompl::tools
     error += !get(name, rpnh, "save_enabled", sparseGraph->savingEnabled_);
     error += !get(name, rpnh, "super_debug", sparseGraph->superDebug_);
     error += !get(name, rpnh, "verbose/add", sparseGraph->vAdd_);
+    error += !get(name, rpnh, "verbose/search", sparseGraph->vSearch_);
     error += !get(name, rpnh, "visualize/spars_graph", sparseGraph->visualizeSparseGraph_);
     error += !get(name, rpnh, "visualize/spars_graph_speed", sparseGraph->visualizeSparseGraphSpeed_);
     error += !get(name, rpnh, "visualize/database_vertices", sparseGraph->visualizeDatabaseVertices_);
@@ -120,6 +121,8 @@ void loadOMPLParameters(ros::NodeHandle nh, const std::string &name, ompl::tools
     error += !get(name, rpnh, "use_check_remove_close_vertices", sparseCriteria->useCheckRemoveCloseVertices_);
     error += !get(name, rpnh, "use_clear_edges_near_vertex", sparseCriteria->useClearEdgesNearVertex_);
     error += !get(name, rpnh, "use_original_smoother", sparseCriteria->useOriginalSmoother_);
+    error += !get(name, rpnh, "use_connectivy_criteria", sparseCriteria->useConnectivityCriteria_);
+    error += !get(name, rpnh, "use_smoothed_path_rejection", sparseCriteria->useSmoothedPathRejection_);
     error += !get(name, rpnh, "verbose/criteria", sparseCriteria->vCriteria_);
     error += !get(name, rpnh, "verbose/quality", sparseCriteria->vQuality_);
     error += !get(name, rpnh, "verbose/quality_max_spanner", sparseCriteria->vQualityMaxSpanner_);
@@ -143,7 +146,7 @@ void loadOMPLParameters(ros::NodeHandle nh, const std::string &name, ompl::tools
     error += !get(name, rpnh, "use_discretized_samples", sparseGenerator->useDiscretizedSamples_);
     error += !get(name, rpnh, "use_random_samples", sparseGenerator->useRandomSamples_);
     error += !get(name, rpnh, "save_interval", sparseGenerator->saveInterval_);
-
+    error += !get(name, rpnh, "verbose", sparseGenerator->verbose_);
   }
 
   // TaskGraph

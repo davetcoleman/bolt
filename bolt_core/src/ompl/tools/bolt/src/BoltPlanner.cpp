@@ -729,9 +729,9 @@ bool BoltPlanner::simplifyTaskPath(og::PathGeometric &path, Termination &ptc, st
     pathSegment[1].getStates().pop_back();
 
     // Check the operations were correct
-    BOOST_ASSERT_MSG(seg0Size + 1 == pathSegment[0].getStateCount(), "Invalid size of pathSegement after rearrangment");
-    BOOST_ASSERT_MSG(seg1Size - 2 == pathSegment[1].getStateCount(), "Invalid size of pathSegement after rearrangment");
-    BOOST_ASSERT_MSG(seg2Size + 1 == pathSegment[2].getStateCount(), "Invalid size of pathSegement after rearrangment");
+    BOLT_ASSERT(seg0Size + 1 == pathSegment[0].getStateCount(), "Invalid size of pathSegement after rearrangment");
+    BOLT_ASSERT(seg1Size - 2 == pathSegment[1].getStateCount(), "Invalid size of pathSegement after rearrangment");
+    BOLT_ASSERT(seg2Size + 1 == pathSegment[2].getStateCount(), "Invalid size of pathSegement after rearrangment");
   }
   else
   {

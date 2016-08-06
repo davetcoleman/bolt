@@ -541,7 +541,7 @@ void TaskGraph::connectNewVertex(TaskVertex v1)
   }  // for each neighbor
 
   // Make sure one and only one vertex is returned from the NN search that is the same as parent vertex
-  BOOST_ASSERT_MSG(errorCheckNumSameVerticies <= numSameVerticiesFound, "Too many same verticies found ");
+  BOLT_ASSERT(errorCheckNumSameVerticies <= numSameVerticiesFound, "Too many same verticies found ");
 
   // Visualize
   if (visualizeAddSample_)

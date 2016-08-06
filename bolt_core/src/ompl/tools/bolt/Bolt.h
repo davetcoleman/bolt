@@ -137,7 +137,7 @@ public:
 
   void visualize();
 
-  bool checkOptimalityGuarantees(std::size_t indent = 0);
+  bool checkBoltPlannerOptimality(std::size_t indent = 0);
 
   /** \brief Helper function for logging data to file */
   void logResults();

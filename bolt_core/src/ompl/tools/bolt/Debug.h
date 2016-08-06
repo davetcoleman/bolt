@@ -40,6 +40,7 @@
 #define OMPL_TOOLS_BOLT_DEBUG_H
 
 #include <ostream>
+#include <ompl/tools/bolt/ThrowAssert.h>
 
 // clang-format off
 

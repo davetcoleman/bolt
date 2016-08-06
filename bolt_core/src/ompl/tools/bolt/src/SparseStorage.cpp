@@ -140,6 +140,9 @@ void SparseStorage::saveVertices(boost::archive::binary_oarchive &oa)
       continue;
     }
 
+    // Check that the vertex wasn't deleted
+    BOLT_ASSERT(sparseGraph_->getStateNonConst(v) != NULL, "State is null");
+
     // Convert to new structure
     BoltVertexData vertexData;
 
@@ -157,7 +160,7 @@ void SparseStorage::saveVertices(boost::archive::binary_oarchive &oa)
     if ((++count) % feedbackFrequency == 0)
       std::cout << static_cast<int>(count / double(sparseGraph_->getNumVertices()) * 100.0) << "% " << std::flush;
   }
-  BOOST_ASSERT_MSG(errorCheckNumQueryVertices == numQueryVertices_, "There should be the same number of query vertex "
+  BOLT_ASSERT(errorCheckNumQueryVertices == numQueryVertices_, "There should be the same number of query vertex "
                                                                     "as threads that were skipped while saving");
 
   std::cout << std::endl;
@@ -241,7 +244,7 @@ bool SparseStorage::load(const std::string &filePath, std::size_t indent)
 
 bool SparseStorage::load(std::istream &in)
 {
-  BOOST_ASSERT_MSG(!sparseGraph_->visualizeSparseGraph_, "Visualizations should be off when loading sparse graph");
+  BOLT_ASSERT(!sparseGraph_->visualizeSparseGraph_, "Visualizations should be off when loading sparse graph");
 
   if (!in.good())
   {
@@ -363,7 +366,7 @@ void SparseStorage::populateNNThread(std::size_t startingVertex)
   }
 
   // There should be one vertex left
-  BOOST_ASSERT_MSG(vertexID == sparseGraph_->getNumVertices() - 1, "There should only be one vertex left");
+  BOLT_ASSERT(vertexID == sparseGraph_->getNumVertices() - 1, "There should only be one vertex left");
 
   // Add the last vertex
   sparseGraph_->getNN()->add(vertexID);

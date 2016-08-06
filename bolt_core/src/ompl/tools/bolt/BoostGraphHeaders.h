@@ -481,6 +481,11 @@ struct CandidateData
   CandidateData(base::State* state) : state_(state)
   {
   }
+
+  CandidateData()
+  {
+  }
+
   // Graph version number - allow to determine if candidate was expired by time candidate was generated
   std::size_t graphVersion_;
 

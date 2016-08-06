@@ -267,7 +267,7 @@ bool SparseCriteria::checkAddConnectivity(CandidateData &candidateD, std::size_t
   BOLT_FUNC(indent, vCriteria_, "checkAddConnectivity() Does this node connect "
                                 "two disconnected components?");
 
-  if (!useConnectivtyCriteria_)
+  if (!useConnectivityCriteria_)
   {
     BOLT_DEBUG(indent, vCriteria_, "NOT adding node for connectivity - disabled ");
     return false;
@@ -769,7 +769,7 @@ bool SparseCriteria::addQualityPath(SparseVertex v, SparseVertex vp, SparseVerte
   {
     BOLT_DEBUG(indent, vQuality_, "Adding edge between vp and vpp");
 
-    BOOST_ASSERT_MSG(!sg_->hasEdge(vp, vpp), "Edge already exists, cannot add quality");
+    BOLT_ASSERT(!sg_->hasEdge(vp, vpp), "Edge already exists, cannot add quality");
     sg_->addEdge(vp, vpp, eQUALITY, indent + 2);
     // visual_->waitForUserFeedback("addQualityPath");
 
@@ -812,7 +812,7 @@ bool SparseCriteria::addQualityPath(SparseVertex v, SparseVertex vp, SparseVerte
   }
 
   // Determine if this smoothed path actually helps improve connectivity
-  if (path->length() > shortestPathVpVpp)
+  if (useConnectivityCriteria_ && path->length() > shortestPathVpVpp)
   {
     BOLT_WARN(indent, vQuality_ || 1, "Smoothed path does not improve connectivity");
     //visual_->waitForUserFeedback("smoothed path");
@@ -825,7 +825,7 @@ bool SparseCriteria::addQualityPath(SparseVertex v, SparseVertex vp, SparseVerte
   std::vector<base::State *> &states = path->getStates();
 
   BOLT_DEBUG(indent + 2, vQuality_, "Shortcuted path now has " << path->getStateCount() << " states");
-  BOOST_ASSERT_MSG(states.size() > 2, "Somehow path has shrunk to less than three vertices");
+  BOLT_ASSERT(states.size() > 2, "Somehow path has shrunk to less than three vertices");
 
   bool addEdgeEnabled = true;                          // if a vertex is skipped, stop adding edges
   for (std::size_t i = 1; i < states.size() - 1; ++i)  // first and last states are vp and vpp, don't sg_->addVertex()
@@ -855,7 +855,6 @@ bool SparseCriteria::addQualityPath(SparseVertex v, SparseVertex vp, SparseVerte
     if (!sufficientClearance(state))
     {
       BOLT_WARN(indent + 2, true, "Skipped adding vertex in new path b/c insufficient clearance");
-      visual_->waitForUserFeedback("insufficient clearance");
       addEdgeEnabled = false;
       continue;
     }
@@ -965,16 +964,19 @@ double SparseCriteria::qualityEdgeAstarTest(SparseVertex vp, SparseVertex vpp, I
 
   // Experimental calculations
   double pathLength = 0;
-  std::vector<SparseVertex> vertexPath;
-  if (!sg_->astarSearch(vp, vpp, vertexPath, pathLength, indent))
-  {
-    BOLT_ERROR(indent, vQuality_, "No path found");
-    visual_->waitForUserFeedback("No path found");
-    return std::numeric_limits<double>::infinity();
-  }
 
   if (visualizeQualityCriteriaAstar_)
   {
+    // Search and get path
+    std::vector<SparseVertex> vertexPath;
+    if (!sg_->astarSearch(vp, vpp, vertexPath, pathLength, indent))
+    {
+      BOLT_ERROR(indent, vQuality_, "No path found");
+      visual_->waitForUserFeedback("No path found");
+      return std::numeric_limits<double>::infinity();
+    }
+
+    // Visualize
     visual_->viz6()->deleteAllMarkers();
     assert(vertexPath.size() > 1);
     for (std::size_t i = 1; i < vertexPath.size(); ++i)
@@ -983,6 +985,15 @@ double SparseCriteria::qualityEdgeAstarTest(SparseVertex vp, SparseVertex vpp, I
                             tools::GREEN);
     }
     visual_->viz6()->trigger();
+  }
+  else // faster search
+  {
+    if (!sg_->astarSearchLength(vp, vpp, pathLength, indent))
+    {
+      BOLT_ERROR(indent, vQuality_, "No path found");
+      visual_->waitForUserFeedback("No path found");
+      return std::numeric_limits<double>::infinity();
+    }
   }
 
   return pathLength;

@@ -52,7 +52,7 @@
 #include <ompl/base/ScopedState.h>
 
 // Custom validity checker that accounts for cost
-#include <ompl_visual_tools/costs/cost_map_2d_optimization_objective.h>
+//#include <ompl_visual_tools/costs/cost_map_2d_optimization_objective.h>
 
 // MoveIt
 #include <moveit_ompl/model_based_state_space.h>

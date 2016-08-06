@@ -207,7 +207,7 @@ void Bolt::visualize()
   }
 }
 
-bool Bolt::checkOptimalityGuarantees(std::size_t indent)
+bool Bolt::checkBoltPlannerOptimality(std::size_t indent)
 {
   geometric::PathGeometric *rawPath = boltPlanner_->getOriginalSolutionPath().get();
   geometric::PathGeometric *smoothedPath = static_cast<geometric::PathGeometric *>(pdef_->getSolutionPath().get());
@@ -289,7 +289,7 @@ void Bolt::logResults()
         exit(-1);
 
       // Check optimality
-      // if (!checkOptimalityGuarantees())
+      // if (!checkBoltPlannerOptimality())
       // exit(-1);
 
       // Stats

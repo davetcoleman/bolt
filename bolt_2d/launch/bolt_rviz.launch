@@ -8,7 +8,7 @@
 
   <!-- Launch visualizer -->
   <node name="$(anon rviz)" launch-prefix="$(arg launch_prefix)" pkg="rviz" type="rviz"
-	respawn="false" output="screen" args="-d $(find bolt_2d)/launch/ompl_rviz.rviz" />
+	respawn="false" output="screen" args="-d $(find bolt_2d)/launch/bolt_rviz.rviz" />
 
   <!-- Ordered left to right, then top to bottom -->
   <node pkg="tf" type="static_transform_publisher" name="tfdummy5" args="120 -60 0 0 0 0 /world /world_visual1 10" />

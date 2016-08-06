@@ -283,7 +283,8 @@ public:
   bool useCheckRemoveCloseVertices_ = true;
   bool useClearEdgesNearVertex_ = true;
   bool useOriginalSmoother_ = false;
-  bool useConnectivtyCriteria_ = false;
+  bool useConnectivityCriteria_ = true;
+  bool useSmoothedPathRejection_ = true;
 
   /** \brief Verbose flags */
   bool vCriteria_ = false;

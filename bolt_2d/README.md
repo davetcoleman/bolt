@@ -9,7 +9,7 @@ Clone into your [catkin workspace](http://wiki.ros.org/catkin/Tutorials/create_a
 Start Rviz using the included launch file:
 
 ```
-roslaunch bolt_2d ompl_rviz.launch
+roslaunch bolt_2d bolt_rviz.launch
 ```
 
 ### Experienced based-planning with Lightning Framework

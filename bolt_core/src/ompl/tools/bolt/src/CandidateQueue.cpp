@@ -140,6 +140,13 @@ void CandidateQueue::stopGenerating(std::size_t indent)
     delete generatorThreads_[i];
   }
 
+  // Clear all data
+  while (!queue_.empty())
+  {
+    si_->getStateSpace()->freeState(queue_.front().state_);
+    queue_.pop();
+  }
+
   BOLT_FUNC(indent, true, "CandidateQueue.stopGenerating() Generating threads have stopped");
 }
 

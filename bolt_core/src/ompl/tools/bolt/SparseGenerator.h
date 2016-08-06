@@ -101,6 +101,16 @@ public:
    */
   void findGraphNeighbors(CandidateData& candidateD, std::size_t threadID, std::size_t indent);
 
+  /**
+   * \brief Tests for ensuring the generated roadmap obeys the theoretical guarantees
+   */
+  bool checkSparseGraphOptimality();
+  bool convertVertexPathToStatePath(std::vector<SparseVertex> &vertexPath, const base::State *actualStart,
+                                    const base::State *actualGoal, geometric::PathGeometric &geometricSolution);
+
+  /** \brief Stop and reset the candidate queue because it uses the nearest neighbors and will have bad vertices stored */
+  void stopCandidateQueueAndSave(std::size_t indent);
+
   /** \brief Getter for vertexDiscretizer */
   VertexDiscretizerPtr& getVertexDiscretizer()
   {
@@ -153,6 +163,9 @@ protected:
   time::point timeDiscretizeAndRandomStarted_;
 
 public:
+
+  bool verbose_ = false;
+
   /** \brief Number of failed state insertion attempts before stopping the algorithm */
   std::size_t terminateAfterFailures_ = 1000;
 

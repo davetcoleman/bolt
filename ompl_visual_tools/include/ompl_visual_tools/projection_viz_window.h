@@ -51,9 +51,6 @@
 #include <ompl/geometric/PathGeometric.h>
 #include <ompl/base/ScopedState.h>
 
-// Custom validity checker that accounts for cost
-#include <ompl_visual_tools/costs/cost_map_2d_optimization_objective.h>
-
 // Visualization
 #include <moveit_visual_tools/moveit_visual_tools.h>
 
@@ -70,9 +67,6 @@ typedef std::shared_ptr<ModelBasedPlanningContext> ModelBasedPlanningContextPtr;
 
 namespace ompl_visual_tools
 {
-// Default constants
-// static const std::string RVIZ_MARKER_TOPIC = "/ompl_rviz_markers";
-// static const double COST_HEIGHT_OFFSET = 0.5;
 
 typedef std::map<std::string, std::list<std::size_t> > MarkerList;
 
@@ -234,9 +228,6 @@ private:
   ompl::base::SpaceInformationPtr si_;
 
   // From ompl_visual_tools ------------------------------------------------------
-
-  // Keep a pointer to an optional cost map
-  intMatrixPtr cost_;
 
   // Cached Point object to reduce memory loading
   geometry_msgs::Point temp_point_;

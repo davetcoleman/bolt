@@ -190,7 +190,7 @@ bool SparseGraph::load()
   printGraphStats();
 
   // Nothing to save because was just loaded from file
-  graphUnsaved_ = false;
+  hasUnsavedChanges_ = false;
 
   if (visualizeGraphAfterLoading_)
     displayDatabase();
@@ -200,7 +200,9 @@ bool SparseGraph::load()
 
 bool SparseGraph::saveIfChanged(std::size_t indent)
 {
-  if (graphUnsaved_)
+  BOLT_FUNC(indent, true, "saveIfChanged()");
+
+  if (hasUnsavedChanges_)
   {
     return save(indent);
   }
@@ -214,8 +216,10 @@ bool SparseGraph::saveIfChanged(std::size_t indent)
 
 bool SparseGraph::save(std::size_t indent)
 {
-  if (!graphUnsaved_)
-    OMPL_WARN("No need to save because graphUnsaved_ is false, but saving anyway because requested");
+  BOLT_FUNC(indent, true, "save()");
+
+  if (!hasUnsavedChanges_)
+    OMPL_WARN("No need to save because hasUnsavedChanges_ is false, but saving anyway because requested");
 
   // Disabled
   if (!savingEnabled_)
@@ -230,6 +234,9 @@ bool SparseGraph::save(std::size_t indent)
     return false;
   }
 
+  // Always must clear out deleted veritices from graph before saving otherwise NULL state will throw exception
+  removeDeletedVertices(indent);
+
   // Benchmark
   time::point start = time::now();
 
@@ -237,7 +244,7 @@ bool SparseGraph::save(std::size_t indent)
   {
     // std::lock_guard<std::mutex> guard(modifyGraphMutex_);
     sparseStorage_->save(filePath_.c_str());
-    graphUnsaved_ = false;
+    hasUnsavedChanges_ = false;
   }
 
   // Benchmark
@@ -251,6 +258,18 @@ bool SparseGraph::astarSearch(const SparseVertex start, const SparseVertex goal,
                               double &distance, std::size_t indent)
 {
   BOLT_FUNC(indent, vSearch_, "astarSearch()");
+
+  // Check if start and goal are the same
+  if (si_->getStateSpace()->equalStates(getState(start), getState(goal)))
+  {
+    BOLT_WARN(indent, true, "astarSearch: start and goal states are the same");
+
+    // Just add one vertex - this is the whole path
+    vertexPath.push_back(start);
+
+    distance = 0;
+    return true;
+  }
 
   // Hold a list of the shortest path parent to each vertex
   SparseVertex *vertexPredecessors = new SparseVertex[getNumVertices()];
@@ -315,13 +334,19 @@ bool SparseGraph::astarSearch(const SparseVertex start, const SparseVertex goal,
         vertexPath.push_back(v);
       }
 
-      // Debug
-      // for (auto v2 : vertexPath)
-      //   si_->printState(getState(v2));
+      BOLT_ASSERT(vertexPath.size(), "Vertex path is empty! " << vertexPath.size());
+
+      if (!si_->getStateSpace()->equalStates(getState(vertexPath.back()), getState(start)))
+      {
+        BOLT_ERROR(indent, true, "Start states are not the same");
+        // Debug
+        for (auto v2 : vertexPath)
+          si_->printState(getState(v2));
+      }
 
       // Ensure start and goal states are included in path
-      BOOST_ASSERT_MSG(si_->getStateSpace()->equalStates(getState(vertexPath.back()), getState(start)), "Start states are not the same");
-      BOOST_ASSERT_MSG(si_->getStateSpace()->equalStates(getState(vertexPath.front()), getState(goal)), "Goal states are not the same");
+      BOLT_ASSERT(si_->getStateSpace()->equalStates(getState(vertexPath.back()), getState(start)), "Start states are not the same");
+      BOLT_ASSERT(si_->getStateSpace()->equalStates(getState(vertexPath.front()), getState(goal)), "Goal states are not the same");
 
       foundGoal = true;
     }
@@ -351,11 +376,63 @@ bool SparseGraph::astarSearch(const SparseVertex start, const SparseVertex goal,
   delete[] vertexPredecessors;
   delete[] vertexDistances;
 
+  BOLT_ASSERT(vertexPath.size() >= 2, "Vertex path size is too small");
+
   // No solution found from start to goal
   return foundGoal;
 }
 
-double SparseGraph::astarHeuristic(const SparseVertex a, const SparseVertex b) const
+bool SparseGraph::astarSearchLength(SparseVertex start, SparseVertex goal, double &distance, std::size_t indent)
+{
+  BOLT_FUNC(indent, vSearch_, "astarSearchLength()");
+
+  // Hold a list of the shortest path parent to each vertex
+  SparseVertex *vertexPredecessors = new SparseVertex[getNumVertices()];
+
+  bool foundGoal = false;
+  double *vertexDistances = new double[getNumVertices()];
+  distance = std::numeric_limits<double>::infinity();
+
+  // Reset statistics
+  numNodesOpened_ = 0;
+  numNodesClosed_ = 0;
+
+  if (visualizeAstar_)
+  {
+    visual_->viz4()->deleteAllMarkers();
+  }
+
+  try
+  {
+    double popularityBias = 0; // TODO: remove this functionality
+    bool popularityBiasEnabled = false;
+    boost::astar_search(g_,                                                              // graph
+                        start,                                                           // start state
+                        boost::bind(&otb::SparseGraph::astarHeuristic, this, _1, goal),  // the heuristic
+                        // ability to disable edges (set cost to inifinity):
+                        boost::weight_map(SparseEdgeWeightMap(g_, edgeCollisionStatePropertySparse_, popularityBias,
+                                                              popularityBiasEnabled))
+                            .predecessor_map(vertexPredecessors)
+                            .distance_map(&vertexDistances[0])
+                            .visitor(SparsestarVisitor(goal, this)));
+  }
+  catch (FoundGoalException &)
+  {
+    distance = vertexDistances[goal];
+
+    if (!isinf(vertexDistances[goal]))  // TODO(davetcoleman): test that this works
+      foundGoal = true;
+  }
+
+  // Unload
+  delete[] vertexPredecessors;
+  delete[] vertexDistances;
+
+  // No solution found from start to goal
+  return foundGoal;
+}
+
+double SparseGraph::astarHeuristic(SparseVertex a, SparseVertex b) const
 {
   // Assume vertex 'a' is the one we care about its populariy
 
@@ -408,7 +485,7 @@ double SparseGraph::astarHeuristic(const SparseVertex a, const SparseVertex b) c
   return dist;
 }
 
-double SparseGraph::distanceFunction(const SparseVertex a, const SparseVertex b) const
+double SparseGraph::distanceFunction(SparseVertex a, SparseVertex b) const
 {
   // std::cout << "sg.distancefunction() " << a << ", " << b << std::endl;
   // Special case: query vertices store their states elsewhere
@@ -483,7 +560,6 @@ bool SparseGraph::smoothQualityPathOriginal(geometric::PathGeometric *path, std:
   if (visualizeQualityPathSimp_)
     visual_->waitForUserFeedback("path simplification");
 
-  OMPL_ERROR("The results of this comparison may be wrong");
   pathSimplifier_->reduceVertices(*path, 10);
   pathSimplifier_->shortcutPath(*path, 50);
 
@@ -585,12 +661,116 @@ bool SparseGraph::smoothQualityPath(geometric::PathGeometric *path, double clear
 
   std::pair<bool, bool> repairResult = path->checkAndRepair(100);
 
-  BOOST_ASSERT_MSG(si_->equalStates(path->getState(0),startCopy), "Start state is no longer the same");
-  BOOST_ASSERT_MSG(si_->equalStates(path->getState(path->getStateCount() - 1),goalCopy), "Goal state is no longer the same");
+  BOLT_ASSERT(si_->equalStates(path->getState(0),startCopy), "Start state is no longer the same");
+  BOLT_ASSERT(si_->equalStates(path->getState(path->getStateCount() - 1),goalCopy), "Goal state is no longer the same");
 
   if (!repairResult.second)  // Repairing was not successful
   {
     throw Exception(name_, "check and repair failed?");
+  }
+  return true;
+}
+
+bool SparseGraph::smoothMax(geometric::PathGeometric *path, std::size_t indent)
+{
+  BOLT_FUNC(indent, visualizeQualityPathSimp_, "smoothMax()");
+
+  if (path->getStateCount() < 3)
+    return true;
+
+  // For testing that start and goal state do not move
+  base::State* startCopy;
+  base::State* goalCopy;
+  BOLT_ASSERT(startCopy = si_->cloneState(path->getState(0)), "Only copy if in debug");
+  BOLT_ASSERT(goalCopy = si_->cloneState(path->getState(path->getStateCount() - 1)), "Only copy if in debug");
+
+  // Visualize path
+  if (visualizeQualityPathSimp_)
+  {
+    visual_->viz2()->deleteAllMarkers();
+    visual_->viz2()->path(path, tools::SMALL, tools::BLUE);
+    visual_->viz2()->trigger();
+    usleep(0.001 * 1000000);
+  }
+
+  // Set the motion validator to use clearance, this way isValid() checks clearance before confirming valid
+  base::DiscreteMotionValidator *dmv =
+      dynamic_cast<base::DiscreteMotionValidator *>(si_->getMotionValidatorNonConst().get());
+  dmv->setRequiredStateClearance(obstacleClearance_);
+
+  for (std::size_t i = 0; i < 3; ++i)
+  {
+    // ------------------------------------------------------------------
+    // try a randomized step of connecting vertices
+
+    bool tryMore = true;
+    std::size_t times = 0;
+    while (tryMore && ++times <= 5)
+    {
+      tryMore = pathSimplifier_->reduceVertices(*path, 1000, path->getStateCount() * 4); // /*rangeRatio*/ 0.33, indent);
+
+      if (visualizeQualityPathSimp_)
+      {
+        visual_->viz3()->deleteAllMarkers();
+        visual_->viz3()->path(path, tools::SMALL, tools::ORANGE);
+        visual_->viz3()->trigger();
+        usleep(0.1 * 1000000);
+        BOLT_DEBUG(indent, true, "path->length() " << path->length());
+        visual_->waitForUserFeedback("reduce vertices");
+      }
+    }
+
+    // ------------------------------------------------------------------
+    // try to collapse close-by vertices
+    pathSimplifier_->collapseCloseVertices(*path);
+
+    if (visualizeQualityPathSimp_)
+    {
+      visual_->viz4()->deleteAllMarkers();
+      visual_->viz4()->path(path, tools::SMALL, tools::ORANGE);
+      visual_->viz4()->trigger();
+      usleep(0.1 * 1000000);
+      BOLT_DEBUG(indent, true, "path->length() " << path->length());
+      visual_->waitForUserFeedback("collapseCloseVertices");
+    }
+
+    // ------------------------------------------------------------------
+    // split path segments, not just vertices
+    pathSimplifier_->shortcutPath(*path);
+
+    if (visualizeQualityPathSimp_)
+    {
+      visual_->viz5()->deleteAllMarkers();
+      visual_->viz5()->path(path, tools::SMALL, tools::ORANGE);
+      visual_->viz5()->trigger();
+      usleep(0.1 * 1000000);
+      BOLT_DEBUG(indent, true, "path->length() " << path->length());
+      visual_->waitForUserFeedback("shortcutPath");
+    }
+
+    // ------------------------------------------------------------------
+    // smooth the path with BSpline interpolation
+    pathSimplifier_->smoothBSpline(*path, 3, path->length()/100.0);
+
+    if (visualizeQualityPathSimp_)
+    {
+      visual_->viz6()->deleteAllMarkers();
+      visual_->viz6()->path(path, tools::SMALL, tools::ORANGE);
+      visual_->viz6()->trigger();
+      usleep(0.1 * 1000000);
+      BOLT_DEBUG(indent, true, "path->length() " << path->length());
+      visual_->waitForUserFeedback("smoothBSpline");
+    }
+  }
+
+  std::pair<bool, bool> repairResult = path->checkAndRepair(100);
+
+  BOLT_ASSERT(si_->equalStates(path->getState(0),startCopy), "Start state is no longer the same");
+  BOLT_ASSERT(si_->equalStates(path->getState(path->getStateCount() - 1),goalCopy), "Goal state is no longer the same");
+
+  if (!repairResult.second)  // Repairing was not successful
+  {
+    BOLT_ASSERT(true, "Check and repair failed");
   }
   return true;
 }
@@ -617,7 +797,7 @@ std::size_t SparseGraph::getDisjointSetsCount(bool verbose) const
 
 void SparseGraph::getDisjointSets(SparseDisjointSetsMap &disjointSets)
 {
-  if (!sparseCriteria_->useConnectivtyCriteria_)
+  if (!sparseCriteria_->useConnectivityCriteria_)
   {
     BOLT_WARN(0, true, "Disjoint Sets disabled");
     return;
@@ -644,7 +824,7 @@ void SparseGraph::printDisjointSets(SparseDisjointSetsMap &disjointSets)
 {
   OMPL_INFORM("Print disjoint sets");
 
-  if (!sparseCriteria_->useConnectivtyCriteria_)
+  if (!sparseCriteria_->useConnectivityCriteria_)
   {
     BOLT_WARN(0, true, "Disjoint Sets disabled");
     return;
@@ -663,7 +843,7 @@ void SparseGraph::visualizeDisjointSets(SparseDisjointSetsMap &disjointSets)
 {
   OMPL_INFORM("Visualizing disjoint sets");
 
-  if (!sparseCriteria_->useConnectivtyCriteria_)
+  if (!sparseCriteria_->useConnectivityCriteria_)
   {
     BOLT_WARN(0, true, "Disjoint Sets disabled");
     return;
@@ -693,7 +873,7 @@ void SparseGraph::visualizeDisjointSets(SparseDisjointSetsMap &disjointSets)
     const SparseVertex v1 = iterator->first;
     const std::size_t freq = iterator->second.size();
 
-    BOOST_ASSERT_MSG(freq > 0, "Frequency must be at least 1");
+    BOLT_ASSERT(freq > 0, "Frequency must be at least 1");
 
     if (freq == maxDisjointSetSize)  // any subgraph that is smaller than the full graph
       continue;                      // the main disjoint set is not considered a disjoint set
@@ -779,7 +959,7 @@ SparseVertex SparseGraph::addVertex(base::State *state, const VertexType &type, 
   if (sparseCriteria_->getUseFourthCriteria())
     clearInterfaceData(state);
 
-  if (sparseCriteria_->useConnectivtyCriteria_)
+  if (sparseCriteria_->useConnectivityCriteria_)
     disjointSets_.make_set(v);
 
   // Add vertex to nearest neighbor structure
@@ -830,7 +1010,7 @@ SparseVertex SparseGraph::addVertex(base::State *state, const VertexType &type, 
     visual_->vizVoronoiDiagram();
 
   // Enable saving
-  graphUnsaved_ = true;
+  hasUnsavedChanges_ = true;
 
   // Debugging
   // if (!sparseCriteria_->getDiscretizedSamplesInsertion())
@@ -851,7 +1031,7 @@ SparseVertex SparseGraph::addVertexFromFile(base::State *state, const VertexType
   vertexPopularity_[v] = MAX_POPULARITY_WEIGHT;  // 100 means the vertex is very unpopular
 
   // Connected component tracking
-  if (sparseCriteria_->useConnectivtyCriteria_)
+  if (sparseCriteria_->useConnectivityCriteria_)
     disjointSets_.make_set(v);
 
   return v;
@@ -886,7 +1066,7 @@ void SparseGraph::removeVertex(SparseVertex v, std::size_t indent)
 void SparseGraph::removeDeletedVertices(std::size_t indent)
 {
   bool verbose = true;
-  BOLT_FUNC(indent, verbose || true, "removeDeletedVertices()");
+  BOLT_FUNC(indent, verbose, "removeDeletedVertices()");
 
   // Remove all vertices that are set to 0
   std::size_t numRemoved = 0;
@@ -923,10 +1103,11 @@ void SparseGraph::removeDeletedVertices(std::size_t indent)
   }
 
   // Reset the nearest neighbor tree
+  std::lock_guard<std::mutex> guard(nearestNeighborMutex_);
   nn_->clear();
 
   // Reset disjoint sets
-  if (sparseCriteria_->useConnectivtyCriteria_)
+  if (sparseCriteria_->useConnectivityCriteria_)
     disjointSets_ = SparseDisjointSetType(boost::get(boost::vertex_rank, g_), boost::get(boost::vertex_predecessor, g_));
 
   // Reinsert vertices into nearest neighbor
@@ -936,18 +1117,20 @@ void SparseGraph::removeDeletedVertices(std::size_t indent)
       continue;
 
     nn_->add(v);
-    if (sparseCriteria_->useConnectivtyCriteria_)
+    if (sparseCriteria_->useConnectivityCriteria_)
       disjointSets_.make_set(v);
   }
 
   // Reinsert edges into disjoint sets
-  if (sparseCriteria_->useConnectivtyCriteria_)
+  if (sparseCriteria_->useConnectivityCriteria_)
     foreach (SparseEdge e, boost::edges(g_))
     {
       SparseVertex v1 = boost::source(e, g_);
       SparseVertex v2 = boost::target(e, g_);
       disjointSets_.union_set(v1, v2);
     }
+
+  BOLT_DEBUG(indent, verbose, "Finished removing deleted vertices");
 }
 
 SparseEdge SparseGraph::addEdge(SparseVertex v1, SparseVertex v2, EdgeType type, std::size_t indent)
@@ -956,16 +1139,16 @@ SparseEdge SparseGraph::addEdge(SparseVertex v1, SparseVertex v2, EdgeType type,
 
   if (superDebug_)  // Extra checks
   {
-    BOOST_ASSERT_MSG(v1 <= getNumVertices(), "Vertex1 is larger than max vertex id");
-    BOOST_ASSERT_MSG(v2 <= getNumVertices(), "Vertex2 is larger than max vertex id");
-    BOOST_ASSERT_MSG(v1 != v2, "Verticex IDs are the same");
-    BOOST_ASSERT_MSG(!hasEdge(v1, v2), "There already exists an edge between two vertices requested");
-    BOOST_ASSERT_MSG(hasEdge(v1, v2) == hasEdge(v2, v1), "There already exists an edge between two vertices requested, "
+    BOLT_ASSERT(v1 <= getNumVertices(), "Vertex1 is larger than max vertex id");
+    BOLT_ASSERT(v2 <= getNumVertices(), "Vertex2 is larger than max vertex id");
+    BOLT_ASSERT(v1 != v2, "Verticex IDs are the same");
+    BOLT_ASSERT(!hasEdge(v1, v2), "There already exists an edge between two vertices requested");
+    BOLT_ASSERT(hasEdge(v1, v2) == hasEdge(v2, v1), "There already exists an edge between two vertices requested, "
                                                          "other direction");
-    BOOST_ASSERT_MSG(getState(v1) != getState(v2), "States on both sides of an edge are the same");
-    BOOST_ASSERT_MSG(!si_->getStateSpace()->equalStates(getState(v1), getState(v2)), "Vertex IDs are different but "
+    BOLT_ASSERT(getState(v1) != getState(v2), "States on both sides of an edge are the same");
+    BOLT_ASSERT(!si_->getStateSpace()->equalStates(getState(v1), getState(v2)), "Vertex IDs are different but "
                                                                                      "states are the equal");
-    //BOOST_ASSERT_MSG(si_->checkMotion(vertexStateProperty_[v1], vertexStateProperty_[v2]), "Edge is in collision");
+    //BOLT_ASSERT(si_->checkMotion(vertexStateProperty_[v1], vertexStateProperty_[v2]), "Edge is in collision");
   }
 
   // Create the new edge
@@ -981,7 +1164,7 @@ SparseEdge SparseGraph::addEdge(SparseVertex v1, SparseVertex v2, EdgeType type,
   edgeCollisionStatePropertySparse_[e] = NOT_CHECKED;
 
   // Add the edge to the incrementeal connected components datastructure
-  if (sparseCriteria_->useConnectivtyCriteria_)
+  if (sparseCriteria_->useConnectivityCriteria_)
     disjointSets_.union_set(v1, v2);
 
   // Visualize
@@ -1022,7 +1205,7 @@ SparseEdge SparseGraph::addEdge(SparseVertex v1, SparseVertex v2, EdgeType type,
   // }
 
   // Enable saving
-  graphUnsaved_ = true;
+  hasUnsavedChanges_ = true;
 
   // Debugging
   // if (!sparseCriteria_->getDiscretizedSamplesInsertion())
@@ -1063,26 +1246,26 @@ VizColors SparseGraph::edgeTypeToColor(EdgeType edgeType)
 
 base::State *&SparseGraph::getQueryStateNonConst(std::size_t threadID)
 {
-  BOOST_ASSERT_MSG(threadID < queryVertices_.size(), "Attempted to request state of regular vertex using query "
+  BOLT_ASSERT(threadID < queryVertices_.size(), "Attempted to request state of regular vertex using query "
                                                      "function");
   return queryStates_[threadID];
 }
 
 SparseVertex SparseGraph::getQueryVertices(std::size_t threadID)
 {
-  BOOST_ASSERT_MSG(threadID < queryVertices_.size(), "Attempted to request vertex beyond threadID count");
+  BOLT_ASSERT(threadID < queryVertices_.size(), "Attempted to request vertex beyond threadID count");
   return queryVertices_[threadID];
 }
 
 base::State *&SparseGraph::getStateNonConst(SparseVertex v)
 {
-  BOOST_ASSERT_MSG(v >= queryVertices_.size(), "Attempted to request state of query vertex using wrong function");
+  BOLT_ASSERT(v >= queryVertices_.size(), "Attempted to request state of query vertex using wrong function");
   return vertexStateProperty_[v];
 }
 
 const base::State *SparseGraph::getState(SparseVertex v) const
 {
-  BOOST_ASSERT_MSG(v >= queryVertices_.size(), "Attempted to request state of query vertex using wrong function");
+  BOLT_ASSERT(v >= queryVertices_.size(), "Attempted to request state of query vertex using wrong function");
   return vertexStateProperty_[v];
 }
 

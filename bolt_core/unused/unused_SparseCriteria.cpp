@@ -102,7 +102,7 @@ void SparseCriteria::createSPARSOuterLoop()
 
     double newDistance = si_->distance(iData.getInterface1Outside(),
                                        iData.getInterface2Outside());  // TODO(davetcoleman): cache?
-    BOOST_ASSERT_MSG(newDistance > 0, "Distance between outer interface vertices cannot be 0");
+    BOLT_ASSERT(newDistance > 0, "Distance between outer interface vertices cannot be 0");
 
     if (stretchFactor_ * newDistance < midpointPathLength)
     {

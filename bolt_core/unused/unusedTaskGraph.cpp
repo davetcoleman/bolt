@@ -436,8 +436,8 @@ otb::TaskEdge TaskGraph::addEdge(const TaskVertex &v1, const TaskVertex &v2, con
                                  const EdgeCollisionState collisionState)
 {
   // Error check
-  BOOST_ASSERT_MSG(v1 <= getNumVertices(), "Vertex 1 out of range of possible verticies");
-  BOOST_ASSERT_MSG(v2 <= getNumVertices(), "Vertex 2 out of range of possible verticies");
+  BOLT_ASSERT(v1 <= getNumVertices(), "Vertex 1 out of range of possible verticies");
+  BOLT_ASSERT(v2 <= getNumVertices(), "Vertex 2 out of range of possible verticies");
 
   // Create the new edge
   TaskEdge e = (boost::add_edge(v1, v2, g_)).first;
@@ -615,7 +615,7 @@ void TaskGraph::visualizeDisjointSets(DisjointSetsParentKey &disjointSets)
     const std::size_t freq = iterator->second.size();
     std::cout << v1 << ": frequency: " << freq << std::endl;
 
-    BOOST_ASSERT_MSG(freq > 0, "Frequnecy must be at least 1");
+    BOLT_ASSERT(freq > 0, "Frequnecy must be at least 1");
 
     if (freq == maxDisjointSetSize)  // any subgraph that is smaller than the full graph
       continue;                      // the main disjoint set is not considered a disjoint set

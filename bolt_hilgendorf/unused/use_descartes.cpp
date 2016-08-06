@@ -215,8 +215,8 @@ bool CartPathPlanner::convertDescartesGraphToBolt(ompl::tools::bolt::TaskGraphPt
 
     const ompl::tools::bolt::TaskVertex v1 = descarteToBoltVertex.at(jv1);
     const ompl::tools::bolt::TaskVertex v2 = descarteToBoltVertex.at(jv2);
-    BOOST_ASSERT_MSG(v1 > startingVertex && v1 <= endingVertex, "Attempting to create edge with out of range vertex");
-    BOOST_ASSERT_MSG(v2 > startingVertex && v2 <= endingVertex, "Attempting to create edge with out of range vertex");
+    BOLT_ASSERT(v1 > startingVertex && v1 <= endingVertex, "Attempting to create edge with out of range vertex");
+    BOLT_ASSERT(v2 > startingVertex && v2 <= endingVertex, "Attempting to create edge with out of range vertex");
 
     task_graph->addEdge(v1, v2, edge_type, indent);
 

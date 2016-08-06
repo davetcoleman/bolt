@@ -494,8 +494,8 @@ void TaskGraph::generateTaskSpace(std::size_t indent)
     EdgeType type = sg_->getEdgeTypeProperty(sparseE);
 
     // Error check
-    BOOST_ASSERT_MSG(sparseE_v1 >= sg_->getNumQueryVertices(), "Found query vertex in sparse graph that has an edge!");
-    BOOST_ASSERT_MSG(sparseE_v2 >= sg_->getNumQueryVertices(), "Found query vertex in sparse graph that has an edge!");
+    BOLT_ASSERT(sparseE_v1 >= sg_->getNumQueryVertices(), "Found query vertex in sparse graph that has an edge!");
+    BOLT_ASSERT(sparseE_v2 >= sg_->getNumQueryVertices(), "Found query vertex in sparse graph that has an edge!");
 
     // Create level 0 edge
     // TaskEdge taskEdge1 =
@@ -721,7 +721,7 @@ void TaskGraph::getNeighborsAtLevel(const TaskVertex origVertex, const VertexLev
 {
   BOLT_FUNC(indent, vGenerateTask_, "TaskGraph.getNeighborsAtLevel()");
 
-  BOOST_ASSERT_MSG(level != 1, "Unhandled level, does not support level 1");
+  BOLT_ASSERT(level != 1, "Unhandled level, does not support level 1");
 
   const std::size_t threadID = 0;
   base::State *origState = getStateNonConst(origVertex);
@@ -1039,7 +1039,7 @@ void TaskGraph::visualizeDisjointSets(TaskDisjointSetsMap &disjointSets, std::si
     const TaskVertex v1 = iterator->first;
     const std::size_t freq = iterator->second.size();
 
-    BOOST_ASSERT_MSG(freq > 0, "Frequency must be at least 1");
+    BOLT_ASSERT(freq > 0, "Frequency must be at least 1");
 
     if (freq == maxDisjointSetSize)  // any subgraph that is smaller than the full graph
       continue;                      // the main disjoint set is not considered a disjoint set
@@ -1233,14 +1233,14 @@ TaskEdge TaskGraph::addEdge(TaskVertex v1, TaskVertex v2, EdgeType type, std::si
 {
   BOLT_FUNC(indent, vAdd_, "TaskGraph.addEdge(): from vertex " << v1 << " to " << v2 << " type " << type);
 
-  BOOST_ASSERT_MSG(v1 <= getNumVertices(), "Vertex1 is larger than max vertex id");
-  BOOST_ASSERT_MSG(v2 <= getNumVertices(), "Vertex2 is larger than max vertex id");
-  BOOST_ASSERT_MSG(v1 != v2, "Verticex IDs are the same");
-  BOOST_ASSERT_MSG(!hasEdge(v1, v2), "There already exists an edge between two vertices requested");
-  BOOST_ASSERT_MSG(hasEdge(v1, v2) == hasEdge(v2, v1), "There already exists an edge between two vertices requested, "
+  BOLT_ASSERT(v1 <= getNumVertices(), "Vertex1 is larger than max vertex id");
+  BOLT_ASSERT(v2 <= getNumVertices(), "Vertex2 is larger than max vertex id");
+  BOLT_ASSERT(v1 != v2, "Verticex IDs are the same");
+  BOLT_ASSERT(!hasEdge(v1, v2), "There already exists an edge between two vertices requested");
+  BOLT_ASSERT(hasEdge(v1, v2) == hasEdge(v2, v1), "There already exists an edge between two vertices requested, "
                                                        "other direction");
-  BOOST_ASSERT_MSG(getState(v1) != getState(v2), "States on both sides of an edge are the same");
-  BOOST_ASSERT_MSG(!si_->getStateSpace()->equalStates(getState(v1), getState(v2)), "Vertex IDs are different but "
+  BOLT_ASSERT(getState(v1) != getState(v2), "States on both sides of an edge are the same");
+  BOLT_ASSERT(!si_->getStateSpace()->equalStates(getState(v1), getState(v2)), "Vertex IDs are different but "
                                                                                    "states are the equal");
 
   // Create the new edge
@@ -1277,19 +1277,19 @@ bool TaskGraph::hasEdge(TaskVertex v1, TaskVertex v2)
 
 base::State *&TaskGraph::getQueryStateNonConst(TaskVertex v)
 {
-  BOOST_ASSERT_MSG(v < queryVertices_.size(), "Attempted to request state of regular vertex using query function");
+  BOLT_ASSERT(v < queryVertices_.size(), "Attempted to request state of regular vertex using query function");
   return queryStates_[v];
 }
 
 base::State *&TaskGraph::getStateNonConst(TaskVertex v)
 {
-  BOOST_ASSERT_MSG(v >= queryVertices_.size(), "Attempted to request state of query vertex using wrong function");
+  BOLT_ASSERT(v >= queryVertices_.size(), "Attempted to request state of query vertex using wrong function");
   return vertexStateProperty_[v];
 }
 
 const base::State *TaskGraph::getState(TaskVertex v) const
 {
-  BOOST_ASSERT_MSG(v >= queryVertices_.size(), "Attempted to request state of query vertex using wrong function");
+  BOLT_ASSERT(v >= queryVertices_.size(), "Attempted to request state of query vertex using wrong function");
   return vertexStateProperty_[v];
 }
 

@@ -51,8 +51,9 @@ sparse_graph:
   obstacle_clearance: 0.006 #0.0035 # max before gripper piece is in collision
   verbose:
     add: false # debug when addVertex() and addEdge() are called
+    search: false
   visualize:
-    spars_graph: false
+    spars_graph: true
     spars_graph_speed: 0.00001 # if 0, does not animate but only single image draw
     database_vertices: true # must have spars_graph enabled
     database_edges: true # must have spars_graph enabled
@@ -78,6 +79,8 @@ sparse_criteria:
   use_check_remove_close_vertices: true # Experimental feature that allows very closeby vertices to be merged with newly added ones
   use_clear_edges_near_vertex: true # When adding a quality vertex, remove nearby edges
   use_original_smoother: false # original is bad
+  use_connectivy_criteria: true
+  use_smoothed_path_rejection: true
   verbose:
     added_reason: false # print when adding vertices & edges, and the reason why
     criteria: false # all criteria except 4th (quality)
@@ -100,6 +103,8 @@ sparse_generator:
   use_discretized_samples: true
   use_random_samples: true
   save_interval: 1000 # how often to save during random sampling
+  verbose:
+    verbose: true
 
 # ====================================================
 vertex_discretizer:
@@ -128,12 +133,6 @@ task_graph:
     database_edges: true
     astar: false # show node expansions and openings
     astar_speed: 0.01 # how many seconds to wait between each visualization
-
-# ====================================================
-dense_cache:
-  disable_cache: false
-  enable_cache_saving: false
-  save_every_n_edges: 50000
 
 # ====================================================
 bolt_planner:

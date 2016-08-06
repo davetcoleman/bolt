@@ -6,7 +6,7 @@ bolt_2d:
   display_disjoint_sets: false
   eliminate_dense_disjoint_sets: false
   check_valid_vertices: false
-  create_spars: false # create more of the graph even if loaded graph from file
+  create_spars: true
   run_problems: false
 
   # run type
@@ -17,7 +17,6 @@ bolt_2d:
   post_processing_interval: 20 # how often (in runs) to adjust the graphs
   use_experience: true
   experience_planner: bolt
-  #experience_planner: spars2
   seed_random: true
   dimensions: 2
   use_task_planning: true  # cartesian hybrid planning
@@ -34,27 +33,27 @@ bolt_2d:
 # ====================================================
 sparse_generator:
   fourth_criteria_after_failures: 5000 # mode change to 4th criteria after this many failures
-  terminate_after_failures: 10000 # total failures, including 4th criteria
-  use_discretized_samples: true
+  terminate_after_failures: 100000 # total failures, including 4th criteria
+  use_discretized_samples: false
   use_random_samples: true
-  save_interval: 1000 # how often to save during random sampling
+  save_interval: 100 # how often to save during random sampling
   verbose:
     verbose: true
 
 # ====================================================
 sparse_criteria:
-  sparse_delta_fraction: 0.1
+  sparse_delta_fraction: 0.05
   dense_delta_fraction: 0.01 #NOTE: this is not used anymore
   penetration_overlap_fraction: 0.01 #0.001
   near_sample_points_multiple: 2 # 2 is value used by SPARStwo
   stretch_factor: 1.5    # 0 means auto set
-  use_edge_improvement_rule: true
+  use_edge_improvement_rule: false
   use_l2_norm: false # straight line distance
-  use_check_remove_close_vertices: true # Experimental feature that allows very closeby vertices to be merged with newly added ones
-  use_clear_edges_near_vertex: true # When adding a quality vertex, remove nearby edges
-  use_original_smoother: false # original is bad
-  use_connectivy_criteria: false # if true, discretization does not work
-  use_smoothed_path_rejection: true
+  use_check_remove_close_vertices: false # Experimental feature that allows very closeby vertices to be merged with newly added ones
+  use_clear_edges_near_vertex: false # When adding a quality vertex, remove nearby edges
+  use_original_smoother: true # original is bad
+  use_connectivy_criteria: false
+  use_smoothed_path_rejection: false
   verbose:
     added_reason: false # debug criteria for adding vertices & edges
     criteria: false
@@ -72,21 +71,21 @@ sparse_criteria:
 
 # ====================================================
 sparse_graph:
-  save_enabled: true
+  save_enabled: false
   super_debug: false # run more checks and tests that slow down speed
   obstacle_clearance: 1
   verbose:
     add: false # debug when addVertex() and addEdge() are called
-    search: true
+    search: false
   visualize:
     spars_graph: true
-    spars_graph_speed: 0.01 # if 0, does not animate but only single image draw
+    spars_graph_speed: 0.000001 # if 0, does not animate but only single image draw
     database_vertices: true
     database_edges: true
     database_coverage: false # the grey circles around vertices representing sparse delta
     projection: false
-    graph_after_loading: true
-    quality_path_simp: true # show smoothing simplification
+    graph_after_loading: false
+    quality_path_simp: false # show smoothing simplification
     astar: false # show node expansions and openings
     astar_speed: 0.01 # how many seconds to wait between each visualization
     voronoi_diagram: false

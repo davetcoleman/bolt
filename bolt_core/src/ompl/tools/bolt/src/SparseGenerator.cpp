@@ -96,7 +96,7 @@ bool SparseGenerator::setup(std::size_t indent)
 void SparseGenerator::createSPARS()
 {
   std::size_t indent = 0;
-  BOLT_FUNC(indent, true, "createSPARS()");
+  BOLT_FUNC(indent, verbose_ || true, "createSPARS()");
 
   // Error check
   if (!useRandomSamples_ && !useDiscretizedSamples_)
@@ -119,7 +119,7 @@ void SparseGenerator::createSPARS()
   // Start the graph off with discretized states
   if (useDiscretizedSamples_)
   {
-    BOLT_INFO(indent, true, "Adding discretized states");
+    BOLT_INFO(indent, verbose_, "Adding discretized states");
     addDiscretizedStates(indent);
   }
 
@@ -140,8 +140,8 @@ void SparseGenerator::createSPARS()
   CALLGRIND_TOGGLE_COLLECT;
   CALLGRIND_DUMP_STATS;
 
-  // Cleanup removed vertices
-  sg_->removeDeletedVertices(indent);
+  // Save graph - this also calls removeDeletedVertices();
+  sg_->saveIfChanged(indent);
 
   // Benchmark runtime
   double duration = time::seconds(time::now() - timeDiscretizeAndRandomStarted_);
@@ -206,6 +206,10 @@ void SparseGenerator::createSPARS()
   if (!sg_->visualizeSparseGraph_)
     sg_->displayDatabase(true, indent);
 
+
+  // Ensure the graph is valid
+  checkSparseGraphOptimality();
+
   OMPL_INFORM("Finished creating sparse database");
 }
 
@@ -238,14 +242,14 @@ void SparseGenerator::copyPasteState(std::size_t numSets)
 
 void SparseGenerator::addDiscretizedStates(std::size_t indent)
 {
-  BOLT_FUNC(indent, true, "addDiscretizedStates()");
+  BOLT_FUNC(indent, verbose_, "addDiscretizedStates()");
   bool vAdd = sg_->vAdd_;
   sg_->vAdd_ = false;  // only do this for random sampling
 
   // This only runs if the graph is empty
   if (!sg_->isEmpty())
   {
-    BOLT_WARN(indent, true, "Unable to generate discretized states because graph is not empty");
+    BOLT_WARN(indent, verbose_, "Unable to generate discretized states because graph is not empty");
     return;
   }
 
@@ -261,7 +265,7 @@ void SparseGenerator::addDiscretizedStates(std::size_t indent)
 
 bool SparseGenerator::addRandomSamples(std::size_t indent)
 {
-  BOLT_FUNC(indent, true, "addRandomSamples()");
+  BOLT_FUNC(indent, verbose_, "addRandomSamples()");
 
   // Clear stats
   numRandSamplesAdded_ = 0;
@@ -284,7 +288,7 @@ bool SparseGenerator::addRandomSamples(std::size_t indent)
     // Debug
     if (false)
     {
-      BOLT_DEBUG(indent, true, "Randomly sampled state: " << candidateState);
+      BOLT_DEBUG(indent, verbose_, "Randomly sampled state: " << candidateState);
       sg_->debugState(candidateState);
     }
 
@@ -310,7 +314,7 @@ bool SparseGenerator::addRandomSamples(std::size_t indent)
 
 bool SparseGenerator::addRandomSamplesOneThread(std::size_t indent)
 {
-  BOLT_FUNC(indent, true, "addRandomSamplesOneThread()");
+  BOLT_FUNC(indent, verbose_, "addRandomSamplesOneThread()");
 
   // Clear stats
   numRandSamplesAdded_ = 0;
@@ -347,7 +351,7 @@ bool SparseGenerator::addRandomSamplesOneThread(std::size_t indent)
 
 bool SparseGenerator::addRandomSamplesTwoThread(std::size_t indent)
 {
-  BOLT_FUNC(indent, true, "addRandomSamplesTwoThread()");
+  BOLT_FUNC(indent, verbose_, "addRandomSamplesTwoThread()");
 
   // Clear stats
   numRandSamplesAdded_ = 0;
@@ -395,7 +399,7 @@ bool SparseGenerator::addRandomSamplesTwoThread(std::size_t indent)
 
 bool SparseGenerator::addSample(CandidateData &candidateD, std::size_t threadID, bool &usedState, std::size_t indent)
 {
-  BOLT_FUNC(indent, false, "addSample() threadID: " << threadID);
+  BOLT_FUNC(indent, verbose_, "addSample() threadID: " << threadID);
 
   // Run SPARS checks
   VertexType addReason;  // returns why the state was added
@@ -407,7 +411,8 @@ bool SparseGenerator::addSample(CandidateData &candidateD, std::size_t threadID,
     // Save on interval of new state addition
     if ((numRandSamplesAdded_ + 1) % saveInterval_ == 0)
     {
-      sg_->saveIfChanged(indent);
+      stopCandidateQueueAndSave(indent);
+
       double duration = time::seconds(time::now() - timeRandSamplesStarted_);
       BOLT_DEBUG(indent, true, "Adding samples at rate: " << numRandSamplesAdded_ / duration << " hz");
       copyPasteState();
@@ -422,7 +427,7 @@ bool SparseGenerator::addSample(CandidateData &candidateD, std::size_t threadID,
     if (visual_->viz1()->shutdownRequested())
     {
       BOLT_INFO(indent, true, "Shutdown requested");
-      sg_->saveIfChanged(indent);
+      stopCandidateQueueAndSave(indent);
       exit(0);
     }
   }
@@ -496,7 +501,7 @@ bool SparseGenerator::addSample(CandidateData &candidateD, std::size_t threadID,
 
 void SparseGenerator::findGraphNeighbors(CandidateData &candidateD, std::size_t threadID, std::size_t indent)
 {
-  BOLT_FUNC(indent, true, "findGraphNeighbors() within sparse delta " << sparseCriteria_->getSparseDelta());
+  BOLT_FUNC(indent, verbose_, "findGraphNeighbors() within sparse delta " << sparseCriteria_->getSparseDelta());
   const bool verbose = false;
 
   // Search in thread-safe manner
@@ -526,8 +531,162 @@ void SparseGenerator::findGraphNeighbors(CandidateData &candidateD, std::size_t 
     candidateD.visibleNeighborhood_.push_back(candidateD.graphNeighborhood_[i]);
   }
 
-  BOLT_DEBUG(indent, true, "Graph neighborhood: " << candidateD.graphNeighborhood_.size() << " | Visible neighborhood: "
+  BOLT_DEBUG(indent, verbose_, "Graph neighborhood: " << candidateD.graphNeighborhood_.size() << " | Visible neighborhood: "
                                                   << candidateD.visibleNeighborhood_.size());
+}
+
+bool SparseGenerator::checkSparseGraphOptimality()
+{
+  std::size_t indent = 0;
+  std::size_t numTests = 500;
+  std::size_t numFailedPlans = 0;
+
+  // For each test
+  for (std::size_t i = 0; i < numTests; ++i)
+  {
+    // Choose random start and goal state that has a nearest neighbor
+    std::vector<CandidateData> endPoints(2);
+
+    for (CandidateData& point : endPoints)
+    {
+      // Allocate
+      point.state_ = si_->getStateSpace()->allocState();
+
+      // Sample
+      if (!clearanceSampler_->sample(point.state_))
+        throw Exception(name_, "No valid sample found");
+
+      // Find nearest neighbor
+      findGraphNeighbors(point, 0 /*threadID*/, indent);
+
+      // Check if first state is same as input
+      if (si_->getStateSpace()->equalStates(point.state_, sg_->getState(point.visibleNeighborhood_[0])))
+      {
+        BOLT_ERROR(indent, true, "first neighbor is itself");
+      }
+
+      // Check for neighbor
+      if (point.visibleNeighborhood_.size() < 1) // first state is usually itself
+        throw Exception(name_, "Found vertex with no neighbors");
+    }
+
+    // Astar search through graph
+    const base::State* actualStart = endPoints.front().state_;
+    const base::State* actualGoal = endPoints.back().state_;
+    const SparseVertex start = endPoints.front().visibleNeighborhood_[0];
+    const SparseVertex goal  = endPoints.back().visibleNeighborhood_[0];
+
+    // Visualize actual and snapped states
+    visual_->viz3()->deleteAllMarkers();
+    visual_->viz3()->state(actualStart, tools::LARGE, tools::RED, 0);
+    visual_->viz3()->state(actualGoal, tools::LARGE, tools::GREEN, 0);
+    visual_->viz3()->state(sg_->getState(start), tools::LARGE, tools::BLACK, 0);
+    visual_->viz3()->state(sg_->getState(goal), tools::LARGE, tools::BLACK, 0);
+    visual_->viz3()->trigger();
+
+    std::vector<SparseVertex> vertexPath;
+    double distance;
+    if (!sg_->astarSearch(start, goal, vertexPath, distance, indent))
+    {
+      BOLT_ERROR(indent, true, "No path found through graph");
+      visual_->waitForUserFeedback("no path");
+      numFailedPlans++;
+      continue;
+    }
+
+    // If path found (same connected component) sum up total length
+    geometric::PathGeometric geometricSolution(si_);
+    convertVertexPathToStatePath(vertexPath, actualStart, actualGoal, geometricSolution);
+    // visual_->viz2()->deleteAllMarkers();
+    // visual_->viz2()->path(&geometricSolution, tools::SMALL, tools::RED);
+    // visual_->viz2()->trigger();
+
+    // Smooth path to find the "optimal" path
+    geometric::PathGeometric smoothedPath = geometricSolution;
+    geometric::PathSimplifier pathSimplifier(si_);
+    sg_->smoothMax(&smoothedPath, indent);
+    visual_->viz2()->path(&smoothedPath, tools::SMALL, tools::GREEN);
+    visual_->viz2()->trigger();
+
+    // Calculate theoretical guarantees
+    double optimalLength = smoothedPath.length();
+    double sparseLength = geometricSolution.length();
+    double theoryLength = sparseCriteria_->getStretchFactor() * optimalLength + 4 * sparseCriteria_->getSparseDelta();
+    double percentOfMaxAllows = sparseLength / theoryLength * 100.0;
+
+    BOLT_DEBUG(indent, 1, "-----------------------------------------");
+    BOLT_DEBUG(indent, 1, "Checking Asymptotic Optimality Guarantees");
+    BOLT_DEBUG(indent + 2, 1, "Raw Path Length:         " << sparseLength);
+    BOLT_DEBUG(indent + 2, 1, "Smoothed Path Length:    " << optimalLength);
+    BOLT_DEBUG(indent + 2, 1, "Theoretical Path Length: " << theoryLength);
+    BOLT_DEBUG(indent + 2, 1, "Stretch Factor t:        " << sparseCriteria_->getStretchFactor());
+    BOLT_DEBUG(indent + 2, 1, "Sparse Delta:            " << sparseCriteria_->getSparseDelta());
+
+    if (sparseLength >= theoryLength)
+    {
+      BOLT_ERROR(indent + 2, 1, "Asymptotic optimality guarantee VIOLATED");
+      return false;
+    }
+    else
+      BOLT_GREEN_DEBUG(indent + 2, 1, "Asymptotic optimality guarantee maintained");
+    BOLT_WARN(indent + 2, 1, "Percent of max allowed:  " << percentOfMaxAllows << " %");
+    BOLT_DEBUG(indent, 1, "-----------------------------------------");
+
+    usleep(0.01*1000000);
+    visual_->waitForUserFeedback("next");
+  }
+
+  // Summary
+  BOLT_DEBUG(indent, 1, "-----------------------------------------");
+  BOLT_DEBUG(indent, 1, "Checking Asymptotic Optimality Guarantees");
+  BOLT_DEBUG(indent + 2, 1, "Total tests:               " << numTests);
+  BOLT_DEBUG(indent + 2, 1, "Number failed plans:       " << numFailedPlans);
+  BOLT_DEBUG(indent, 1, "-----------------------------------------");
+
+  return true;
+}
+
+bool SparseGenerator::convertVertexPathToStatePath(std::vector<SparseVertex> &vertexPath, const base::State *actualStart,
+                                                   const base::State *actualGoal, og::PathGeometric &geometricSolution)
+{
+  BOLT_ASSERT(!vertexPath.empty(), "Vertex path is empty");
+
+  // Add original start if it is different than the first state
+  if (!si_->getStateSpace()->equalStates(actualStart, sg_->getState(vertexPath.back())))
+  {
+    geometricSolution.append(actualStart);
+  }
+
+  // Reverse the vertexPath and convert to state path
+  for (std::size_t i = vertexPath.size(); i > 0; --i)
+  {
+    geometricSolution.append(sg_->getState(vertexPath[i - 1]));
+  }
+
+  // Add original goal if it is different than the last state
+  if (!si_->getStateSpace()->equalStates(actualGoal, sg_->getState(vertexPath.front())))
+  {
+    geometricSolution.append(actualGoal);
+  }
+
+  return true;
+}
+
+void SparseGenerator::stopCandidateQueueAndSave(std::size_t indent)
+{
+  BOLT_FUNC(indent, true, "stopCandidateQueueAndSave()");
+
+  if (sg_->hasUnsavedChanges())
+  {
+    // Stop and reset the candidate queue because it uses the nearest neighbors and will have bad vertices stored
+    candidateQueue_->stopGenerating(indent);
+
+    // Save
+    sg_->saveIfChanged(indent);
+
+    // Restart the queue
+    candidateQueue_->startGenerating(indent);
+  }
 }
 
 }  // namespace bolt

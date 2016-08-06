@@ -295,8 +295,8 @@ void VertexDiscretizer::recursiveDiscretization(std::size_t threadID, std::vecto
   ob::RealVectorBounds bounds = si->getStateSpace()->getBounds();
 
   // Error check
-  BOOST_ASSERT_MSG(jointID < values.size(), "Joint ID too high");
-  BOOST_ASSERT_MSG(bounds.high[jointID] - bounds.low[jointID] > discretization_, "Bounds too small");
+  BOLT_ASSERT(jointID < values.size(), "Joint ID too high");
+  BOLT_ASSERT(bounds.high[jointID] - bounds.low[jointID] > discretization_, "Bounds too small");
 
   // Loop through current joint
   for (double value = bounds.low[jointID] + startingValueOffset_; value <= bounds.high[jointID];

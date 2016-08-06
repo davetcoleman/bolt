@@ -122,7 +122,7 @@ public:
     rosparam_shortcuts::shutdownIfError(name_, error);
 
     // Error check
-    BOOST_ASSERT_MSG(dimensions_ >= 2, "Must have at least 2 dimensions");
+    BOLT_ASSERT(dimensions_ >= 2, "Must have at least 2 dimensions");
 
     // Seed random
     if (seed_random_)
@@ -290,7 +290,7 @@ public:
         return false;
       }
     }
-    return false;
+    return true;
   }
 
   void run()
@@ -304,7 +304,7 @@ public:
     }
 
     // Load from file or generate graph
-    if (!loadData())
+    if (!loadData() || create_spars_)
     {
       // Create SPARs graph
       switch (planner_name_)
@@ -332,6 +332,11 @@ public:
         }
         break;
       }
+    }
+    else // graph loaded fine and will not be modified
+    {
+      ROS_INFO_STREAM_NAMED(name_, "Checking loaded graph for optimality");
+      bolt_->getSparseGenerator()->checkSparseGraphOptimality();
     }
 
     // Display disconnected components

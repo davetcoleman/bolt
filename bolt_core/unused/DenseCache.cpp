@@ -377,9 +377,9 @@ bool DenseCache::checkMotionWithCache(const StateID &stateID1, const StateID &st
   CachedEdge &edge = keys_[threadID];
 
   // Error check
-  // BOOST_ASSERT_MSG(stateID1 >= numThreads_, "stateID1: The queryVertex_ should not be checked within the DenseCache,
+  // BOLT_ASSERT(stateID1 >= numThreads_, "stateID1: The queryVertex_ should not be checked within the DenseCache,
   // because it is subject to change");
-  // BOOST_ASSERT_MSG(stateID2 >= numThreads_, "stateID2: The queryVertex_ should not be checked within the DenseCache,
+  // BOLT_ASSERT(stateID2 >= numThreads_, "stateID2: The queryVertex_ should not be checked within the DenseCache,
   // because it is subject to change");
 
   // Create edge to search for - only store pairs in one direction

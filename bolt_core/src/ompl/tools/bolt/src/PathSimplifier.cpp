@@ -150,8 +150,8 @@ bool PathSimplifier::reduceVertices(geometric::PathGeometric &path, unsigned int
     BOLT_DEBUG(indent+2, true, "Swapping states");
     states.swap(newStates);
 
-    BOOST_ASSERT_MSG(si_->equalStates(path.getState(0),startCopy), "Start state is no longer the same");
-    BOOST_ASSERT_MSG(si_->equalStates(path.getState(path.getStateCount() - 1),goalCopy), "Goal state is no longer the same");
+    BOLT_ASSERT(si_->equalStates(path.getState(0),startCopy), "Start state is no longer the same");
+    BOLT_ASSERT(si_->equalStates(path.getState(path.getStateCount() - 1),goalCopy), "Goal state is no longer the same");
 
     return true;
   }
@@ -187,8 +187,8 @@ bool PathSimplifier::reduceVertices(geometric::PathGeometric &path, unsigned int
       nochange = 0;
 
       si_->printState(path.getState(path.getStateCount() - 1));
-      BOOST_ASSERT_MSG(si_->equalStates(path.getState(0),startCopy), "Start state is no longer the same");
-      BOOST_ASSERT_MSG(si_->equalStates(path.getState(path.getStateCount() - 1),goalCopy), "Goal state is no longer the same");
+      BOLT_ASSERT(si_->equalStates(path.getState(0),startCopy), "Start state is no longer the same");
+      BOLT_ASSERT(si_->equalStates(path.getState(path.getStateCount() - 1),goalCopy), "Goal state is no longer the same");
 
       result = true;
     }
@@ -460,8 +460,8 @@ void PathSimplifier::simplify(geometric::PathGeometric &path, const base::Planne
     tryMore = reduceVertices(path, 0, 0, 0.33, indent);
   }
 
-  BOOST_ASSERT_MSG(si_->equalStates(path.getState(0),startCopy), "Start state is no longer the same");
-  BOOST_ASSERT_MSG(si_->equalStates(path.getState(path.getStateCount() - 1),goalCopy), "Goal state is no longer the same");
+  BOLT_ASSERT(si_->equalStates(path.getState(0),startCopy), "Start state is no longer the same");
+  BOLT_ASSERT(si_->equalStates(path.getState(path.getStateCount() - 1),goalCopy), "Goal state is no longer the same");
 
   // try to collapse close-by vertices
   if (ptc == false)
@@ -469,8 +469,8 @@ void PathSimplifier::simplify(geometric::PathGeometric &path, const base::Planne
     collapseCloseVertices(path, 0, 0, indent);
   }
 
-  BOOST_ASSERT_MSG(si_->equalStates(path.getState(0),startCopy), "Start state is no longer the same");
-  BOOST_ASSERT_MSG(si_->equalStates(path.getState(path.getStateCount() - 1),goalCopy), "Goal state is no longer the same");
+  BOLT_ASSERT(si_->equalStates(path.getState(0),startCopy), "Start state is no longer the same");
+  BOLT_ASSERT(si_->equalStates(path.getState(path.getStateCount() - 1),goalCopy), "Goal state is no longer the same");
 
   // try to reduce verices some more, if there is any point in doing so
   int times = 0;
@@ -479,8 +479,8 @@ void PathSimplifier::simplify(geometric::PathGeometric &path, const base::Planne
     tryMore = reduceVertices(path, 0, 0, 0.33, indent);
   }
 
-  BOOST_ASSERT_MSG(si_->equalStates(path.getState(0),startCopy), "Start state is no longer the same");
-  BOOST_ASSERT_MSG(si_->equalStates(path.getState(path.getStateCount() - 1),goalCopy), "Goal state is no longer the same");
+  BOLT_ASSERT(si_->equalStates(path.getState(0),startCopy), "Start state is no longer the same");
+  BOLT_ASSERT(si_->equalStates(path.getState(path.getStateCount() - 1),goalCopy), "Goal state is no longer the same");
 
   // if the space is metric, we can do some additional smoothing
   if (si_->getStateSpace()->isMetricSpace())
@@ -508,11 +508,11 @@ void PathSimplifier::simplify(geometric::PathGeometric &path, const base::Planne
         }
       }
 
-      BOOST_ASSERT_MSG(si_->equalStates(path.getState(0),startCopy), "Start state is no longer the same");
-      BOOST_ASSERT_MSG(si_->equalStates(path.getState(path.getStateCount() - 1),goalCopy), "Goal state is no longer the same");
+      BOLT_ASSERT(si_->equalStates(path.getState(0),startCopy), "Start state is no longer the same");
+      BOLT_ASSERT(si_->equalStates(path.getState(path.getStateCount() - 1),goalCopy), "Goal state is no longer the same");
 
-      BOOST_ASSERT_MSG(si_->equalStates(path.getState(0),startCopy), "Start state is no longer the same");
-      BOOST_ASSERT_MSG(si_->equalStates(path.getState(path.getStateCount() - 1),goalCopy), "Goal state is no longer the same");
+      BOLT_ASSERT(si_->equalStates(path.getState(0),startCopy), "Start state is no longer the same");
+      BOLT_ASSERT(si_->equalStates(path.getState(path.getStateCount() - 1),goalCopy), "Goal state is no longer the same");
 
       tryMore = shortcut;
     } while (ptc == false && tryMore && ++times <= 5);
@@ -521,8 +521,8 @@ void PathSimplifier::simplify(geometric::PathGeometric &path, const base::Planne
     if (ptc == false)
       smoothBSpline(path, 3, path.length() / 100.0);
 
-    BOOST_ASSERT_MSG(si_->equalStates(path.getState(0),startCopy), "Start state is no longer the same");
-    BOOST_ASSERT_MSG(si_->equalStates(path.getState(path.getStateCount() - 1),goalCopy), "Goal state is no longer the same");
+    BOLT_ASSERT(si_->equalStates(path.getState(0),startCopy), "Start state is no longer the same");
+    BOLT_ASSERT(si_->equalStates(path.getState(path.getStateCount() - 1),goalCopy), "Goal state is no longer the same");
 
     BOLT_DEBUG(indent, true, "checkAndRepair()");
     // we always run this if the metric-space algorithms were run.  In non-metric spaces this does not work.
@@ -536,8 +536,8 @@ void PathSimplifier::simplify(geometric::PathGeometric &path, const base::Planne
     base::State* tempState = path.getState(path.getStateCount() - 1);
     si_->printState(tempState);
 
-    BOOST_ASSERT_MSG(si_->equalStates(path.getState(0),startCopy), "Start state is no longer the same");
-    BOOST_ASSERT_MSG(si_->equalStates(path.getState(path.getStateCount() - 1),goalCopy), "Goal state is no longer the same");
+    BOLT_ASSERT(si_->equalStates(path.getState(0),startCopy), "Start state is no longer the same");
+    BOLT_ASSERT(si_->equalStates(path.getState(path.getStateCount() - 1),goalCopy), "Goal state is no longer the same");
   }
   BOLT_DEBUG(indent, true, "done simplify");
 }

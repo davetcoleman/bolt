@@ -186,21 +186,30 @@ public:
    */
   bool save(std::size_t indent = 0);
 
+  bool hasUnsavedChanges()
+  {
+    return hasUnsavedChanges_;
+  }
+
   /** \brief Given two milestones from the same connected component, construct a path connecting them and set it as
    * the solution
    *  \param start
    *  \param goal
-   *  \param vertexPath
+   *  \param vertexPath - this will return empty if start and goal states are the same
+   *  \param distance - the length of the returned path
    *  \return true if candidate solution found
    */
-  bool astarSearch(const SparseVertex start, const SparseVertex goal, std::vector<SparseVertex>& vertexPath,
+  bool astarSearch(SparseVertex start, SparseVertex goal, std::vector<SparseVertex>& vertexPath,
                    double& distance, std::size_t indent);
 
+  /** \brief Same as astarSearch except does not return vertexPath for performance reasons */
+  bool astarSearchLength(SparseVertex start, SparseVertex goal, double &distance, std::size_t indent);
+
   /** \brief Distance between two states with special bias using popularity */
-  double astarHeuristic(const SparseVertex a, const SparseVertex b) const;
+  double astarHeuristic(SparseVertex a, SparseVertex b) const;
 
   /** \brief Compute distance between two milestones (this is simply distance between the states of the milestones) */
-  double distanceFunction(const SparseVertex a, const SparseVertex b) const;
+  double distanceFunction(SparseVertex a, SparseVertex b) const;
 
   /** \brief Custom A* visitor statistics */
   void recordNodeOpened()  // discovered
@@ -284,6 +293,9 @@ public:
   /** \brief Path smoothing helpers */
   bool smoothQualityPathOriginal(geometric::PathGeometric* path, std::size_t indent);
   bool smoothQualityPath(geometric::PathGeometric* path, double clearance, bool debug, std::size_t indent);
+
+  /** \brief For finding the optimal path */
+  bool smoothMax(geometric::PathGeometric *path, std::size_t indent);
 
   /* ---------------------------------------------------------------------------------
    * Disjoint Sets
@@ -384,7 +396,7 @@ public:
   void debugState(const ompl::base::State* state);
 
   /** \brief Print info to console */
-  void debugVertex(const SparseVertex v);
+  void debugVertex(SparseVertex v);
 
   /** \brief Print nearest neighbor info to console */
   void debugNN();
@@ -459,7 +471,7 @@ protected:
   std::size_t numNodesClosed_ = 0;
 
   /** \brief Track if the graph has been modified */
-  bool graphUnsaved_ = false;
+  bool hasUnsavedChanges_ = false;
 
   tools::VizSizes vertexSize_ = tools::LARGE;
   tools::VizSizes edgeSize_ = tools::MEDIUM;
