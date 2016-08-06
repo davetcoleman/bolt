@@ -12,7 +12,6 @@ find_package(catkin REQUIRED COMPONENTS
   moveit_visual_tools
   moveit_ompl
   rosparam_shortcuts
-  ompl_visual_tools
   bolt_core
   tf_conversions
   descartes_core
@@ -32,7 +31,6 @@ catkin_package(
     moveit_visual_tools
     moveit_ompl
     rosparam_shortcuts
-    ompl_visual_tools
     bolt_core
   DEPENDS
     Eigen
@@ -60,6 +58,8 @@ include_directories(
 
 # Library
 add_library(${PROJECT_NAME}
+  src/projection_viz_window.cpp
+  src/moveit_viz_window.cpp
   src/bolt_hilgendorf.cpp
   src/state_validity_checker.cpp
   src/moveit_base.cpp

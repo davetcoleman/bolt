@@ -45,7 +45,7 @@
 // ROS parameter loading
 #include <rosparam_shortcuts/rosparam_shortcuts.h>
 
-#include <ompl/tools/bolt/SparseCriteria.h>
+#include <bolt_core/SparseCriteria.h>
 
 // Boost
 #include <boost/filesystem.hpp>

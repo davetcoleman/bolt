@@ -11,37 +11,36 @@
 
 
 
-/home/dave/ros/current/ws_swri/src/bolt/ompl_visual_tools/include/ompl_visual_tools/moveit_viz_window.h
-/home/dave/ros/current/ws_swri/src/bolt/ompl_visual_tools/include/ompl_visual_tools/projection_viz_window.h
-/home/dave/ros/current/ws_swri/src/bolt/ompl_visual_tools/src/moveit_viz_window.cpp
-/home/dave/ros/current/ws_swri/src/bolt/ompl_visual_tools/src/ros_viz_window.cpp
-/home/dave/ros/current/ws_swri/src/bolt/ompl_visual_tools/src/projection_viz_window.cpp
+/home/dave/ros/current/ws_swri/src/bolt/bolt_hilgendorf/include/bolt_hilgendorf/moveit_viz_window.h
+/home/dave/ros/current/ws_swri/src/bolt/bolt_hilgendorf/include/bolt_hilgendorf/projection_viz_window.h
+/home/dave/ros/current/ws_swri/src/bolt/bolt_hilgendorf/src/moveit_viz_window.cpp
+/home/dave/ros/current/ws_swri/src/bolt/bolt_hilgendorf/src/projection_viz_window.cpp
 
-/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl/tools/bolt/Bolt.h
-/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl/tools/bolt/BoostGraphHeaders.h
-/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl/tools/bolt/SparseGraph.h
-/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl/tools/bolt/SparseCriteria.h
-/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl/tools/bolt/SparseGenerator.h
-/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl/tools/bolt/SparseStorage.h
-/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl/tools/bolt/TaskGraph.h
-/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl/tools/bolt/VertexDiscretizer.h
-/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl/tools/bolt/BoltPlanner.h
-/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl/tools/bolt/DenseCache.h
-/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl/tools/bolt/Debug.h
-/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl/tools/bolt/CandidateQueue.h
-/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl/tools/bolt/SamplingQueue.h
+/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl_bolt/Bolt.h
+/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl_bolt/BoostGraphHeaders.h
+/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl_bolt/SparseGraph.h
+/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl_bolt/SparseCriteria.h
+/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl_bolt/SparseGenerator.h
+/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl_bolt/SparseStorage.h
+/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl_bolt/TaskGraph.h
+/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl_bolt/VertexDiscretizer.h
+/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl_bolt/BoltPlanner.h
+/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl_bolt/DenseCache.h
+/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl_bolt/Debug.h
+/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl_bolt/CandidateQueue.h
+/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl_bolt/SamplingQueue.h
 
-/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl/tools/bolt/src/Bolt.cpp
-/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl/tools/bolt/src/SparseGraph.cpp
-/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl/tools/bolt/src/SparseCriteria.cpp
-/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl/tools/bolt/src/SparseGenerator.cpp
-/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl/tools/bolt/src/SparseStorage.cpp
-/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl/tools/bolt/src/TaskGraph.cpp
-/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl/tools/bolt/src/VertexDiscretizer.cpp
-/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl/tools/bolt/src/BoltPlanner.cpp
-/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl/tools/bolt/src/DenseCache.cpp
-/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl/tools/bolt/src/CandidateQueue.cpp
-/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl/tools/bolt/src/SamplingQueue.cpp
+/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl_bolt/src/Bolt.cpp
+/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl_bolt/src/SparseGraph.cpp
+/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl_bolt/src/SparseCriteria.cpp
+/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl_bolt/src/SparseGenerator.cpp
+/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl_bolt/src/SparseStorage.cpp
+/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl_bolt/src/TaskGraph.cpp
+/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl_bolt/src/VertexDiscretizer.cpp
+/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl_bolt/src/BoltPlanner.cpp
+/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl_bolt/src/DenseCache.cpp
+/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl_bolt/src/CandidateQueue.cpp
+/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/ompl_bolt/src/SamplingQueue.cpp
 
 /home/dave/ros/current/ws_swri/src/ompl/src/ompl/tools/debug/Visualizer.h
 /home/dave/ros/current/ws_swri/src/ompl/src/ompl/geometric/PathGeometric.h

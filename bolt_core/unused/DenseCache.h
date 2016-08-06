@@ -42,7 +42,7 @@
 // OMPL
 #include <ompl/base/SpaceInformation.h>
 #include <ompl/base/SpaceInformation.h>
-#include <ompl/tools/bolt/BoostGraphHeaders.h>
+#include <bolt_core/BoostGraphHeaders.h>
 
 // Boost
 #include <boost/thread/shared_mutex.hpp>

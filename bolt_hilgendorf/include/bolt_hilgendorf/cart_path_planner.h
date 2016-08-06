@@ -57,7 +57,7 @@
 #include <eigen_conversions/eigen_msg.h>
 
 // OMPL
-#include <ompl/tools/bolt/TaskGraph.h>
+#include <bolt_core/TaskGraph.h>
 
 // this package
 #include <moveit_visual_tools/imarker_robot_state.h>

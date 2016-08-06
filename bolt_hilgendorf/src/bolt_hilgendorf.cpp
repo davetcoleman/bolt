@@ -36,16 +36,16 @@
    Desc:   Demo dual arm manipulation
 */
 
-// Interface for loading rosparam settings into OMPL
-#include <moveit_ompl/ompl_rosparam.h>
-
 // ROS parameter loading
 #include <rosparam_shortcuts/rosparam_shortcuts.h>
 
-#include <ompl_visual_tools/projection_viz_window.h>
+#include <bolt_hilgendorf/projection_viz_window.h>
 
 // this package
 #include <bolt_hilgendorf/bolt_hilgendorf.h>
+
+// Interface for loading rosparam settings into OMPL
+#include <moveit_ompl/ompl_rosparam.h>
 
 // Profiling
 #include <valgrind/callgrind.h>
@@ -567,7 +567,7 @@ void BoltHilgendorf::deleteAllMarkers(bool clearDatabase)
 
 void BoltHilgendorf::loadVisualTools()
 {
-  using namespace ompl_visual_tools;
+  using namespace bolt_hilgendorf;
   using namespace moveit_visual_tools;
 
   Eigen::Affine3d offset;

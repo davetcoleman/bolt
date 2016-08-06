@@ -54,8 +54,8 @@
 
 // OMPL
 #include <ompl/tools/thunder/Thunder.h>
-#include <ompl/tools/bolt/Bolt.h>
-#include <ompl_visual_tools/moveit_viz_window.h>
+#include <bolt_core/Bolt.h>
+#include <bolt_hilgendorf/moveit_viz_window.h>
 
 // this package
 //#include <bolt_hilgendorf/process_mem_usage.h>
@@ -140,13 +140,13 @@ public:
   ompl::base::SpaceInformationPtr si_;
 
   // The visual tools for interfacing with Rviz
-  std::vector<ompl_visual_tools::MoveItVizWindowPtr> vizs_;
-  ompl_visual_tools::MoveItVizWindowPtr viz1_;
-  ompl_visual_tools::MoveItVizWindowPtr viz2_;
-  ompl_visual_tools::MoveItVizWindowPtr viz3_;
-  ompl_visual_tools::MoveItVizWindowPtr viz4_;
-  ompl_visual_tools::MoveItVizWindowPtr viz5_;
-  ompl_visual_tools::MoveItVizWindowPtr viz6_;
+  std::vector<bolt_hilgendorf::MoveItVizWindowPtr> vizs_;
+  bolt_hilgendorf::MoveItVizWindowPtr viz1_;
+  bolt_hilgendorf::MoveItVizWindowPtr viz2_;
+  bolt_hilgendorf::MoveItVizWindowPtr viz3_;
+  bolt_hilgendorf::MoveItVizWindowPtr viz4_;
+  bolt_hilgendorf::MoveItVizWindowPtr viz5_;
+  bolt_hilgendorf::MoveItVizWindowPtr viz6_;
   moveit_visual_tools::MoveItVisualToolsPtr visual_moveit_start_;  // Clone of ompl1
   moveit_visual_tools::MoveItVisualToolsPtr visual_moveit_goal_;   // Clone of ompl2
 

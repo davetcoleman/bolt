@@ -36,11 +36,10 @@
    Desc:   Tools for displaying OMPL components in Rviz
 */
 
-#ifndef BOLT_2D__2D_VIZ_WINDOW_
-#define BOLT_2D__2D_VIZ_WINDOW_
+#ifndef BOLT_HILGENDORF__PROJECTION_VIZ_WINDOW_
+#define BOLT_HILGENDORF__PROJECTION_VIZ_WINDOW_
 
 #include <ros/ros.h>
-//#include <bolt_2d/bolt_2d.h>
 #include <ompl/tools/debug/VizWindow.h>
 
 #include <visualization_msgs/Marker.h>
@@ -51,22 +50,29 @@
 #include <ompl/tools/debug/Visualizer.h>
 #include <ompl/geometric/PathGeometric.h>
 #include <ompl/base/ScopedState.h>
-#include <ompl/util/PPM.h> // For reading image files
 
 // Visualization
-#include <rviz_visual_tools/rviz_visual_tools.h>
+#include <moveit_visual_tools/moveit_visual_tools.h>
 
 namespace ob = ompl::base;
 namespace og = ompl::geometric;
 namespace bnu = boost::numeric::ublas;
 namespace rvt = rviz_visual_tools;
 
-namespace bolt_2d
+namespace ompl_interface
 {
-class TwoDimVizWindow : public ompl::tools::VizWindow
+class ModelBasedPlanningContext;
+typedef std::shared_ptr<ModelBasedPlanningContext> ModelBasedPlanningContextPtr;
+}
+
+namespace bolt_hilgendorf
+{
+typedef std::map<std::string, std::list<std::size_t> > MarkerList;
+
+class ProjectionVizWindow : public ompl::tools::VizWindow
 {
 public:
-  TwoDimVizWindow(rviz_visual_tools::RvizVisualToolsPtr visuals, ompl::base::SpaceInformationPtr si);
+  ProjectionVizWindow(rviz_visual_tools::RvizVisualToolsPtr visuals, ompl::base::SpaceInformationPtr si);
 
   /** \brief Visualize a state during runtime, externally */
   void state(const ompl::base::State* state, ompl::tools::VizSizes size, ompl::tools::VizColors color,
@@ -76,17 +82,16 @@ public:
   void states(std::vector<const ompl::base::State*> states, std::vector<ompl::tools::VizColors> colors,
               ompl::tools::VizSizes size);
 
+  /** \brief Visualize edge during runtime, externally */
+  void edge(const ompl::base::State* stateA, const ompl::base::State* stateB, double cost);
+
   /** \brief Visualize edge with a level during runtime, externally */
   void edge(const ompl::base::State* stateA, const ompl::base::State* stateB, ompl::tools::VizSizes size,
             ompl::tools::VizColors color);
 
-  /** \brief Visualize edge during runtime, externally */
-  void edge(const ompl::base::State* stateA, const ompl::base::State* stateB, double cost);
-
   /** \brief Visualize multiple edges during runtime, externally */
-  // void edges(const std::vector<const ompl::base::State*> stateAs, const std::vector<const ompl::base::State*>
-  // stateBs,
-  //            std::vector<ompl::tools::VizColors> colors, ompl::tools::VizSizes size){};
+  void edges(const std::vector<const ompl::base::State*> stateAs, const std::vector<const ompl::base::State*> stateBs,
+             std::vector<ompl::tools::VizColors> colors, ompl::tools::VizSizes size);
 
   /** \brief Visualize path during runtime, externally */
   void path(ompl::geometric::PathGeometric* path, ompl::tools::VizSizes type, ompl::tools::VizColors color);
@@ -106,17 +111,7 @@ public:
     return visuals_;
   }
 
-  // From bolt_2d ------------------------------------------------------
-
-  /**
-   * \brief Visualize Results
-   */
-  bool publishPPMImage(ompl::PPM& ppm, bool static_id = true);
-
-  /**
-   * \brief Helper Function to display triangles
-   */
-  bool publishTriangle(int x, int y, visualization_msgs::Marker* marker, std_msgs::ColorRGBA color);
+  // From bolt_hilgendorf ------------------------------------------------------
 
   /**
    * \brief Publish a marker of a series of spheres to rviz
@@ -141,12 +136,6 @@ public:
                    const double radius = 0.05);
 
   /**
-   * \brief Display States
-   * \return true on success
-   */
-  // bool publishStates(std::vector<const ompl::base::State*> states);
-
-  /**
    * \brief Display result path from a solver
    * \return true on success
    */
@@ -165,6 +154,13 @@ public:
   // Eigen::Vector3d stateToPoint(std::size_t vertex_id, ob::PlannerDataPtr planner_data);
   Eigen::Vector3d stateToPoint(const ob::ScopedState<> state);
   Eigen::Vector3d stateToPoint(const ob::State* state);
+
+  /**
+   * \brief Nat_Rounding helper function to make readings from cost map more accurate
+   * \param double
+   * \return rounded down number
+   */
+  static int natRound(double x);
 
   /**
    * \brief Display the start and goal states on the image map
@@ -230,7 +226,7 @@ private:
   /** \brief Remember what space we are working in */
   ompl::base::SpaceInformationPtr si_;
 
-  // From bolt_2d ------------------------------------------------------
+  // From bolt_hilgendorf ------------------------------------------------------
 
   // Cached Point object to reduce memory loading
   geometry_msgs::Point temp_point_;
@@ -248,11 +244,15 @@ private:
   double min_state_radius_ = 0.5;
 
   double level_scale_ = 20.0;
+
+  // Properties of state space
+  std::vector<double> range_;
+  std::vector<double> low_;
 };
 
-typedef std::shared_ptr<TwoDimVizWindow> TwoDimVizWindowPtr;
-typedef std::shared_ptr<const TwoDimVizWindow> TwoDimVizWindowConstPtr;
+typedef std::shared_ptr<ProjectionVizWindow> ProjectionVizWindowPtr;
+typedef std::shared_ptr<const ProjectionVizWindow> ProjectionVizWindowConstPtr;
 
-}  // namespace bolt_2d
+}  // namespace bolt_hilgendorf
 
-#endif  // BOLT_2D__2D_VIZ_WINDOW_
+#endif  // BOLT_HILGENDORF__PROJECTION_VIZ_WINDOW_

@@ -49,7 +49,7 @@
 // OMPL
 #include <ompl/tools/lightning/Lightning.h>
 #include <ompl/tools/thunder/Thunder.h>
-#include <ompl/tools/bolt/Bolt.h>
+#include <bolt_core/Bolt.h>
 #include <ompl/geometric/SimpleSetup.h>
 #include <ompl/base/PlannerTerminationCondition.h>
 #include <ompl/geometric/planners/prm/SPARStwo.h>

@@ -47,9 +47,9 @@
 #include <rosparam_shortcuts/rosparam_shortcuts.h>
 
 // OMPL
-#include <ompl/tools/bolt/Bolt.h>
-#include <ompl/tools/bolt/SparseCriteria.h>
-#include <ompl/tools/bolt/SparseGenerator.h>
+#include <bolt_core/Bolt.h>
+#include <bolt_core/SparseCriteria.h>
+#include <bolt_core/SparseGenerator.h>
 
 // Boost
 #include <boost/filesystem.hpp>

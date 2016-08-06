@@ -23,7 +23,6 @@
   <depend>moveit_visual_tools</depend>
   <depend>moveit_ompl</depend>
   <depend>rosparam_shortcuts</depend>
-  <depend>ompl_visual_tools</depend>
   <depend>bolt_core</depend>
   <depend>eigen</depend>
   <depend>cmake_modules</depend>

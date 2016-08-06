@@ -37,7 +37,7 @@
 */
 
 // OMPL
-#include <ompl/tools/bolt/TaskGraph.h>
+#include <bolt_core/TaskGraph.h>
 #include <ompl/base/ScopedState.h>
 #include <ompl/util/Time.h>
 #include <ompl/util/Console.h>

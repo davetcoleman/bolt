@@ -59,7 +59,7 @@
 #include <moveit/ompl/joint_space/model_based_state_space.h>
 
 #include <ompl/tools/thunder/Thunder.h>
-#include <ompl/tools/bolt/Bolt.h>
+#include <bolt_core/Bolt.h>
 
 // C++
 #include <algorithm>

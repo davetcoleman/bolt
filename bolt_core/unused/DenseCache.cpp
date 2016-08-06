@@ -37,7 +37,7 @@
 */
 
 // OMPL
-#include <ompl/tools/bolt/SparseGraph.h>
+#include <bolt_core/SparseGraph.h>
 
 // Boost
 #include <boost/serialization/map.hpp>

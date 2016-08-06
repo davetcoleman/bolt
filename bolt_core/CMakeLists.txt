@@ -45,21 +45,37 @@ include_directories(
 
 # Library
 add_library(${PROJECT_NAME}
-  src/ompl/tools/bolt/src/Bolt.cpp
-  src/ompl/tools/bolt/src/BoltPlanner.cpp
-  src/ompl/tools/bolt/src/SparseGraph.cpp
-  src/ompl/tools/bolt/src/SparseGenerator.cpp
-  src/ompl/tools/bolt/src/SparseCriteria.cpp
-  src/ompl/tools/bolt/src/SparseStorage.cpp
-  src/ompl/tools/bolt/src/TaskGraph.cpp
-  src/ompl/tools/bolt/src/VertexDiscretizer.cpp
-  src/ompl/tools/bolt/src/SamplingQueue.cpp
-  src/ompl/tools/bolt/src/CandidateQueue.cpp
-  #src/ompl/tools/bolt/src/PathSimplifier.cpp
+  src/bolt_core/src/Bolt.cpp
+  src/bolt_core/src/BoltPlanner.cpp
+  src/bolt_core/src/SparseGraph.cpp
+  src/bolt_core/src/SparseGenerator.cpp
+  src/bolt_core/src/SparseCriteria.cpp
+  src/bolt_core/src/SparseStorage.cpp
+  src/bolt_core/src/TaskGraph.cpp
+  src/bolt_core/src/VertexDiscretizer.cpp
+  src/bolt_core/src/SamplingQueue.cpp
+  src/bolt_core/src/CandidateQueue.cpp
 )
+
 # Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${OMPL_LIBRARIES}
   ${Boost_LIBRARIES}
+)
+
+#############
+## Install ##
+#############
+
+## Mark executables and/or libraries for installation
+install(TARGETS ${PROJECT_NAME}
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+# Mark cpp header files for installation
+install(DIRECTORY src/bolt_core/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )

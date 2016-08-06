@@ -44,9 +44,9 @@
 #include <ompl/geometric/PathGeometric.h>
 #include <ompl/datastructures/NearestNeighbors.h>
 #include <ompl/tools/debug/Visualizer.h>
-#include <ompl/tools/bolt/SparseGraph.h>
-#include <ompl/tools/bolt/BoostGraphHeaders.h>
-#include <ompl/tools/bolt/DenseCache.h>
+#include <bolt_core/SparseGraph.h>
+#include <bolt_core/BoostGraphHeaders.h>
+#include <bolt_core/DenseCache.h>
 
 // Boost
 #include <boost/graph/astar_search.hpp>
