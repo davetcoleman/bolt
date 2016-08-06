@@ -36,7 +36,7 @@
    Desc:   Tools for displaying OMPL components in Rviz
 */
 
-#include <ompl_visual_tools/two_dim_viz_window.h>
+#include <bolt_2d/two_dim_viz_window.h>
 
 // ROS
 #include <ros/ros.h>
@@ -58,18 +58,18 @@ namespace ob = ompl::base;
 namespace og = ompl::geometric;
 namespace bnu = boost::numeric::ublas;
 
-namespace ompl_visual_tools
+namespace bolt_2d
 {
-ROSVizWindow::ROSVizWindow(rviz_visual_tools::RvizVisualToolsPtr visuals, ompl::base::SpaceInformationPtr si)
+TwoDimVizWindow::TwoDimVizWindow(rviz_visual_tools::RvizVisualToolsPtr visuals, ompl::base::SpaceInformationPtr si)
   : name_("two_dim_viz_window"), visuals_(visuals), si_(si)
 {
   // with this OMPL interface to Rviz all pubs must be manually triggered
   // visuals_->enableBatchPublishing(true);
 
-  ROS_DEBUG_STREAM_NAMED(name_, "Initializing ROSVizWindow()");
+  ROS_DEBUG_STREAM_NAMED(name_, "Initializing TwoDimVizWindow()");
 }
 
-void ROSVizWindow::state(const ompl::base::State* state, ot::VizSizes size, ot::VizColors color, double extra_data)
+void TwoDimVizWindow::state(const ompl::base::State* state, ot::VizSizes size, ot::VizColors color, double extra_data)
 {
   Eigen::Vector3d point = stateToPoint(state);
 
@@ -132,7 +132,7 @@ void ROSVizWindow::state(const ompl::base::State* state, ot::VizSizes size, ot::
   }
 }
 
-void ROSVizWindow::states(std::vector<const ompl::base::State*> states, std::vector<ot::VizColors> colors,
+void TwoDimVizWindow::states(std::vector<const ompl::base::State*> states, std::vector<ot::VizColors> colors,
                           ot::VizSizes size)
 {
   // Cache spheres
@@ -154,11 +154,11 @@ void ROSVizWindow::states(std::vector<const ompl::base::State*> states, std::vec
     sphere_colors.push_back(visuals_->intToRvizColor(colors[i]));
   }
 
-  // Publish - ROSVizWindow scales are one smaller than MoveItVizWindow
+  // Publish - TwoDimVizWindow scales are one smaller than MoveItVizWindow
   visuals_->publishSpheres(sphere_points, sphere_colors, visuals_->intToRvizScale(size - 1));
 }
 
-void ROSVizWindow::edge(const ompl::base::State* stateA, const ompl::base::State* stateB, ot::VizSizes size,
+void TwoDimVizWindow::edge(const ompl::base::State* stateA, const ompl::base::State* stateB, ot::VizSizes size,
                         ot::VizColors color)
 {
   Eigen::Vector3d pointA = stateToPoint(stateA);
@@ -184,7 +184,7 @@ void ROSVizWindow::edge(const ompl::base::State* stateA, const ompl::base::State
   visuals_->publishCylinder(pointA, pointB, visuals_->intToRvizColor(color), radius);
 }
 
-void ROSVizWindow::edge(const ompl::base::State* stateA, const ompl::base::State* stateB, double cost)
+void TwoDimVizWindow::edge(const ompl::base::State* stateA, const ompl::base::State* stateB, double cost)
 {
   // Error check
   if (si_->getStateSpace()->equalStates(stateA, stateB))
@@ -215,7 +215,7 @@ void ROSVizWindow::edge(const ompl::base::State* stateA, const ompl::base::State
   publishEdge(stateA, stateB, visuals_->getColorScale(percent), radius);
 }
 
-void ROSVizWindow::path(ompl::geometric::PathGeometric* path, ompl::tools::VizSizes type, ot::VizColors color)
+void TwoDimVizWindow::path(ompl::geometric::PathGeometric* path, ompl::tools::VizSizes type, ot::VizColors color)
 {
   // Convert
   const og::PathGeometric& geometric_path = *path;  // static_cast<og::PathGeometric&>(*path);
@@ -234,17 +234,17 @@ void ROSVizWindow::path(ompl::geometric::PathGeometric* path, ompl::tools::VizSi
   }
 }
 
-void ROSVizWindow::trigger()
+void TwoDimVizWindow::trigger()
 {
   visuals_->triggerBatchPublish();
 }
 
-void ROSVizWindow::deleteAllMarkers()
+void TwoDimVizWindow::deleteAllMarkers()
 {
   visuals_->deleteAllMarkers();
 }
 
-bool ROSVizWindow::shutdownRequested()
+bool TwoDimVizWindow::shutdownRequested()
 {
   if (!ros::ok())
   {
@@ -254,25 +254,9 @@ bool ROSVizWindow::shutdownRequested()
   return false;
 }
 
-// From ompl_visual_tools ------------------------------------------------------
+// From bolt_2d ------------------------------------------------------
 
-void ROSVizWindow::setCostMap(intMatrixPtr cost)
-{
-  cost_ = cost;
-}
-
-double ROSVizWindow::getCost(const geometry_msgs::Point& point)
-{
-  // Check that a cost map has been passed in
-  if (cost_)
-  {
-    return double((*cost_)(natRound(point.y), natRound(point.x))) / 2.0;
-  }
-  else
-    return 1;
-}
-
-bool ROSVizWindow::publishCostMap(PPMImage* ppm, bool static_id)
+bool TwoDimVizWindow::publishPPMImage(ompl::PPM& ppm, bool static_id)
 {
   visualization_msgs::Marker marker;
   // Set the frame ID and timestamp.  See the TF tutorials for information on these.
@@ -280,7 +264,7 @@ bool ROSVizWindow::publishCostMap(PPMImage* ppm, bool static_id)
   marker.header.stamp = ros::Time::now();
 
   // Set the namespace and id for this marker.  This serves to create a unique ID
-  marker.ns = "cost_map";
+  marker.ns = "background";
 
   // Set the marker type.
   marker.type = visualization_msgs::Marker::TRIANGLE_LIST;
@@ -288,15 +272,15 @@ bool ROSVizWindow::publishCostMap(PPMImage* ppm, bool static_id)
   // Set the marker action.  Options are ADD and DELETE
   marker.action = visualization_msgs::Marker::ADD;
 
-  static std::size_t cost_map_id = 0;
+  static std::size_t marker_id = 0;
   if (static_id)
   {
     marker.id = 0;
   }
   else
   {
-    cost_map_id++;
-    marker.id = cost_map_id;
+    marker_id++;
+    marker.id = marker_id;
   }
 
   marker.pose.position.x = 0;
@@ -311,38 +295,36 @@ bool ROSVizWindow::publishCostMap(PPMImage* ppm, bool static_id)
   marker.scale.z = 1.0;
   marker.color = visuals_->getColor(rvt::BLACK);
 
+  static const double MAX_COLOR = 255.0 * 3  - 2.0 * std::numeric_limits<double>::epsilon();
+
   // Visualize Results -------------------------------------------------------------------------------------------------
-  for (std::size_t marker_id = 0; marker_id < image->getSize(); ++marker_id)
+  for (std::size_t x = 0; x < ppm.getWidth(); ++x)
   {
-    unsigned int x = marker_id % image->x;  // Map index back to coordinates
-    unsigned int y = marker_id / image->x;  // Map index back to coordinates
-
-    std_msgs::ColorRGBA color;
-    color.r = image->data[image->getID(x, y)].red / 255.0;
-    color.g = image->data[image->getID(x, y)].green / 255.0;
-    color.b = image->data[image->getID(x, y)].blue / 255.0;
-    if (color.r + color.g + color.b > 3.0 - 2.0 * std::numeric_limits<double>::epsilon())
+    for (std::size_t y = 0; y < ppm.getHeight(); ++y)
     {
-      continue;  // transparent, do not publish
-    }
+      ompl::PPM::Color& map_color = ppm.getPixel(x, y);
 
-    // Overide to black
-    color = visuals_->getColor(rvt::DARK_GREY);
-    color.a = 1.0;
+      if (map_color.red + map_color.green + map_color.blue >= MAX_COLOR)
+        continue;  // transparent, do not publish
 
-    // Make right and down triangle
-    // Check that we are not on the far right or bottom
-    if (!(x + 1 >= image->x || y + 1 >= image->y))
-    {
-      // Top left triangle
-      publishTriangle(x, y, &marker, color);
-      publishTriangle(x + 1, y, &marker, color);
-      publishTriangle(x + 1, y + 1, &marker, color);
+      // set single color
+      std_msgs::ColorRGBA color = visuals_->getColor(rvt::DARK_GREY);
+      color.a = 1.0;
 
-      // Bottom right triangle
-      publishTriangle(x, y, &marker, color);
-      publishTriangle(x, y + 1, &marker, color);
-      publishTriangle(x + 1, y + 1, &marker, color);
+      // Make right and down triangle
+      // Check that we are not on the far right or bottom
+      if (!(x + 1 >= ppm.getWidth() || y + 1 >= ppm.getHeight()))
+      {
+        // Top left triangle
+        publishTriangle(x, y, &marker, color);
+        publishTriangle(x + 1, y, &marker, color);
+        publishTriangle(x + 1, y + 1, &marker, color);
+
+        // Bottom right triangle
+        publishTriangle(x, y, &marker, color);
+        publishTriangle(x, y + 1, &marker, color);
+        publishTriangle(x + 1, y + 1, &marker, color);
+      }
     }
   }
 
@@ -350,11 +332,11 @@ bool ROSVizWindow::publishCostMap(PPMImage* ppm, bool static_id)
   return visuals_->publishMarker(marker);
 }
 
-bool ROSVizWindow::publishTriangle(int x, int y, visualization_msgs::Marker* marker, std_msgs::ColorRGBA color)
+bool TwoDimVizWindow::publishTriangle(int x, int y, visualization_msgs::Marker* marker, std_msgs::ColorRGBA color)
 {
   // Point
-  temp_point_.x = x;
-  temp_point_.y = y;
+  temp_point_.y = x;
+  temp_point_.x = y;
   temp_point_.z = 0.1;  // all costs become zero in flat world
 
   marker->points.push_back(temp_point_);
@@ -363,13 +345,13 @@ bool ROSVizWindow::publishTriangle(int x, int y, visualization_msgs::Marker* mar
   return true;
 }
 
-bool ROSVizWindow::publishEdge(const ob::State* stateA, const ob::State* stateB, const std_msgs::ColorRGBA& color,
+bool TwoDimVizWindow::publishEdge(const ob::State* stateA, const ob::State* stateB, const std_msgs::ColorRGBA& color,
                                const double radius)
 {
   return visuals_->publishCylinder(stateToPoint(stateA), stateToPoint(stateB), color, radius / 2.0);
 }
 
-bool ROSVizWindow::publishSpheres(const og::PathGeometric& path, const rvt::colors& color, double scale,
+bool TwoDimVizWindow::publishSpheres(const og::PathGeometric& path, const rvt::colors& color, double scale,
                                   const std::string& ns)
 {
   geometry_msgs::Vector3 scale_vector;
@@ -379,13 +361,13 @@ bool ROSVizWindow::publishSpheres(const og::PathGeometric& path, const rvt::colo
   return publishSpheres(path, color, scale_vector, ns);
 }
 
-bool ROSVizWindow::publishSpheres(const og::PathGeometric& path, const rvt::colors& color, const rvt::scales scale,
+bool TwoDimVizWindow::publishSpheres(const og::PathGeometric& path, const rvt::colors& color, const rvt::scales scale,
                                   const std::string& ns)
 {
   return publishSpheres(path, color, visuals_->getScale(scale), ns);
 }
 
-bool ROSVizWindow::publishSpheres(const og::PathGeometric& path, const rvt::colors& color,
+bool TwoDimVizWindow::publishSpheres(const og::PathGeometric& path, const rvt::colors& color,
                                   const geometry_msgs::Vector3& scale, const std::string& ns)
 {
   std::vector<geometry_msgs::Point> points;
@@ -396,13 +378,13 @@ bool ROSVizWindow::publishSpheres(const og::PathGeometric& path, const rvt::colo
 }
 
 // Deprecated
-bool ROSVizWindow::publishPath(const og::PathGeometric& path, const rvt::colors& color, const double thickness,
+bool TwoDimVizWindow::publishPath(const og::PathGeometric& path, const rvt::colors& color, const double thickness,
                                const std::string& ns)
 {
   return publish2DPath(path, color, thickness, ns);
 }
 
-bool ROSVizWindow::publish2DPath(const og::PathGeometric& path, const rvt::colors& color, const double thickness,
+bool TwoDimVizWindow::publish2DPath(const og::PathGeometric& path, const rvt::colors& color, const double thickness,
                                  const std::string& ns)
 {
   // Error check
@@ -432,12 +414,12 @@ bool ROSVizWindow::publish2DPath(const og::PathGeometric& path, const rvt::color
   return true;
 }
 
-Eigen::Vector3d ROSVizWindow::stateToPoint(const ob::ScopedState<> state)
+Eigen::Vector3d TwoDimVizWindow::stateToPoint(const ob::ScopedState<> state)
 {
   return stateToPoint(state.get());
 }
 
-Eigen::Vector3d ROSVizWindow::stateToPoint(const ob::State* state)
+Eigen::Vector3d TwoDimVizWindow::stateToPoint(const ob::State* state)
 {
   if (!state)
   {
@@ -461,42 +443,37 @@ Eigen::Vector3d ROSVizWindow::stateToPoint(const ob::State* state)
   return temp_eigen_point_;
 }
 
-int ROSVizWindow::natRound(double x)
-{
-  return static_cast<int>(floor(x + 0.5f));
-}
-
-bool ROSVizWindow::publishState(const ob::State* state, const rvt::colors& color, const rvt::scales scale,
+bool TwoDimVizWindow::publishState(const ob::State* state, const rvt::colors& color, const rvt::scales scale,
                                 const std::string& ns)
 {
   return visuals_->publishSphere(stateToPoint(state), color, scale, ns);
 }
 
-bool ROSVizWindow::publishState(const ob::State* state, const rvt::colors& color, const double scale,
+bool TwoDimVizWindow::publishState(const ob::State* state, const rvt::colors& color, const double scale,
                                 const std::string& ns)
 {
   return visuals_->publishSphere(stateToPoint(state), color, scale, ns);
 }
 
-bool ROSVizWindow::publishState(const ob::ScopedState<> state, const rvt::colors& color, const rvt::scales scale,
+bool TwoDimVizWindow::publishState(const ob::ScopedState<> state, const rvt::colors& color, const rvt::scales scale,
                                 const std::string& ns)
 {
   return visuals_->publishSphere(stateToPoint(state), color, scale, ns);
 }
 
-bool ROSVizWindow::publishState(const ob::ScopedState<> state, const rvt::colors& color, double scale,
+bool TwoDimVizWindow::publishState(const ob::ScopedState<> state, const rvt::colors& color, double scale,
                                 const std::string& ns)
 {
   return visuals_->publishSphere(stateToPoint(state), color, scale, ns);
 }
 
-bool ROSVizWindow::publishState(const ob::ScopedState<> state, const rvt::colors& color,
+bool TwoDimVizWindow::publishState(const ob::ScopedState<> state, const rvt::colors& color,
                                 const geometry_msgs::Vector3& scale, const std::string& ns)
 {
   return visuals_->publishSphere(stateToPoint(state), color, scale.x, ns);
 }
 
-bool ROSVizWindow::publishSampleRegion(const ob::ScopedState<>& state_area, const double& distance)
+bool TwoDimVizWindow::publishSampleRegion(const ob::ScopedState<>& state_area, const double& distance)
 {
   temp_point_.x = state_area[0];
   temp_point_.y = state_area[1];
@@ -507,4 +484,4 @@ bool ROSVizWindow::publishSampleRegion(const ob::ScopedState<>& state_area, cons
   return visuals_->publishSphere(temp_point_, rvt::TRANSLUCENT, rvt::REGULAR, "sample_region");
 }
 
-}  // namespace ompl_visual_tools
+}  // namespace bolt_2d

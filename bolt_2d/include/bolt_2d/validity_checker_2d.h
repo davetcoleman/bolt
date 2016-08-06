@@ -33,7 +33,7 @@
  *********************************************************************/
 
 /* Author: Dave Coleman
-   Desc:   Custom State Validity Checker with cost function
+   Desc:   Custom State Validity Checker based on PPM map - black is obstacle
 */
 
 #ifndef BOLT_2D_VALIDITY_CHECKER_2D_H
@@ -45,6 +45,7 @@
 
 // OMPL
 #include <ompl/base/StateValidityChecker.h>
+#include <ompl/base/spaces/RealVectorStateSpace.h>
 #include <ompl/tools/debug/Visualizer.h>
 
 // C++
@@ -56,7 +57,7 @@
 
 namespace ob = ompl::base;
 
-namespace ompl_visual_tools
+namespace bolt_2d
 {
 typedef boost::numeric::ublas::matrix<int> intMatrix;
 typedef std::shared_ptr<intMatrix> intMatrixPtr;
@@ -66,25 +67,21 @@ namespace ompl
 {
 namespace base
 {
-// Nat_Rounding helper function to make readings from cost map more accurate
-int nat_round(double x)
-{
-  return static_cast<int>(floor(x + 0.5f));
-}
 
 /// @cond IGNORE
 OMPL_CLASS_FORWARD(ValidityChecker2D);
 /// @endcond
 
+static const double MAX_COLOR = 255.0 * 3  - 2.0 * std::numeric_limits<double>::epsilon();
+
 class ValidityChecker2D : public ob::StateValidityChecker
 {
 public:
   /** \brief Constructor */
-  ValidityChecker2D(const ob::SpaceInformationPtr &si, ompl_visual_tools::intMatrixPtr cost, double max_threshold)
+  ValidityChecker2D(const ob::SpaceInformationPtr &si, ompl::PPM* ppm)
     : StateValidityChecker(si)
+    , ppm_(ppm)
   {
-    cost_ = cost;
-    max_threshold_ = max_threshold;
 
     // We can detect clearance
     specs_.clearanceComputationType = StateValidityCheckerSpecs::APPROXIMATE;
@@ -99,12 +96,14 @@ public:
     if (!enabled_)
       return true;
 
-    return cost(state) < max_threshold_ && cost(state) > 1;
+    const double *coords = state->as<ompl::base::RealVectorStateSpace::StateType>()->values;
+    const ompl::PPM::Color& map_color = ppm_->getPixel(floor(coords[1]), floor(coords[0]));
+
+    return (map_color.red + map_color.green + map_color.blue >= MAX_COLOR);
 
     /*
        // Debug visualization with multiple threads
-    bool result = cost(state) < max_threshold_ && cost(state) > 1;
-
+       bool result = (map_color.red + map_color.green + map_color.blue >= MAX_COLOR);
 
     boost::lock_guard<boost::mutex> lock(vizMutex_);
     {
@@ -118,9 +117,6 @@ public:
     }
     return result;
     */
-
-    // double cost = cost(state);
-    // return cost < max_threshold_ && cost > 1;  // TODO(davetcoleman): why greater than 1?
   }
 
   /** \brief Report the distance to the nearest invalid state when starting from \e state. If the distance is
@@ -271,19 +267,7 @@ private:
     return false;
   }
 
-  // Note: this cost function is not the one used for the optimization objective, it is only a helper function for
-  // isValid
-  double cost(const ob::State *state) const
-  {
-    const double *coords = state->as<ob::RealVectorStateSpace::StateType>()->values;
-
-    // Return the cost from the matrix at the current dimensions
-    // double cost = (*cost_)(nat_round(coords[1]), nat_round(coords[0]));
-    double cost = (*cost_)(floor(coords[1]), floor(coords[0]));
-    return cost;  // TODO(davetcoleman): make memory copy more efficient
-  }
-
-  ompl_visual_tools::intMatrixPtr cost_;
+  ompl::PPM* ppm_;
   double max_threshold_;
 
   bool enabled_ = true;

@@ -16,12 +16,13 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <depend>ompl_visual_tools</depend>
+  <depend>moveit_visual_tools</depend>
   <depend>roscpp</depend>
   <depend>ompl</depend>
   <depend>libgflags-dev</depend>
   <depend>rosparam_shortcuts</depend>
   <depend>bolt_core</depend>
+  <depend>moveit_ompl</depend>
 
   <export>
   </export>

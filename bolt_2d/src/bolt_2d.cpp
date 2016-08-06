@@ -42,7 +42,7 @@
 #include <ros/package.h>  // for getting file path of package names
 
 // Display in Rviz tool
-#include <ompl_visual_tools/ros_viz_window.h>
+#include <bolt_2d/two_dim_viz_window.h>
 #include <ompl/tools/debug/VizWindow.h>
 #include <bolt_2d/validity_checker_2d.h>
 
@@ -50,10 +50,10 @@
 #include <ompl/tools/lightning/Lightning.h>
 #include <ompl/tools/thunder/Thunder.h>
 #include <ompl/tools/bolt/Bolt.h>
-//#include <ompl/geometric/planners/rrt/RRTConnect.h>
 #include <ompl/geometric/SimpleSetup.h>
 #include <ompl/base/PlannerTerminationCondition.h>
 #include <ompl/geometric/planners/prm/SPARStwo.h>
+#include <ompl/util/PPM.h> // For reading image files
 
 // Interface for loading rosparam settings into OMPL
 #include <moveit_ompl/ompl_rosparam.h>
@@ -95,6 +95,7 @@ public:
     // run mode
     error += !rosparam_shortcuts::get(name_, rpnh, "run_problems", run_problems_);
     error += !rosparam_shortcuts::get(name_, rpnh, "create_spars", create_spars_);
+    error += !rosparam_shortcuts::get(name_, rpnh, "continue_spars", continue_spars_);
     error += !rosparam_shortcuts::get(name_, rpnh, "eliminate_dense_disjoint_sets", eliminate_dense_disjoint_sets_);
     error += !rosparam_shortcuts::get(name_, rpnh, "check_valid_vertices", check_valid_vertices_);
     error += !rosparam_shortcuts::get(name_, rpnh, "display_disjoint_sets", display_disjoint_sets_);
@@ -202,7 +203,7 @@ public:
     loadVisualTools();
 
     // Load collision checker
-    loadCollisionChecker(0.0);
+    loadCollisionChecker();
 
     // Run interface for loading rosparam settings into OMPL
     if (planner_name_ == BOLT)
@@ -304,7 +305,7 @@ public:
     }
 
     // Load from file or generate graph
-    if (!loadData() || create_spars_)
+    if (!loadData() || continue_spars_)
     {
       // Create SPARs graph
       switch (planner_name_)
@@ -509,11 +510,9 @@ public:
   }
 
   /**
-   * \brief Load cost map from file
-   * \param file path
-   * \param how much of the peaks of the mountains are considered obstacles
+   * \brief Load ppm image from file
    */
-  void loadCollisionChecker(double max_cost_threshold_percent = 0.4)
+  void loadCollisionChecker()
   {
     // Get image path based on package name
     std::string image_path = ros::package::getPath("bolt_2d");
@@ -523,7 +522,7 @@ public:
       ROS_ERROR("Unable to get OMPL Visual Tools package path ");
       return;
     }
-    //   image_num = ompl_visual_tools::OmplVisualTools::iRand(0, 4);
+    //   image_num = bolt_2d::OmplVisualTools::iRand(0, 4);
 
     switch (image_id_)
     {
@@ -556,51 +555,65 @@ public:
         break;
     }
 
-    // Load the cost map
-    cost_map_.reset(new ompl::base::CostMap2DOptimizationObjective(si_));
-    cost_map_->max_cost_threshold_percent_ = max_cost_threshold_percent;
-    cost_map_->loadImage(image_path);
+    loadImage(image_path);
 
     // Set the bounds for the R^2
     ob::RealVectorBounds bounds(dimensions_);
     bounds.setLow(0);                             // both dimensions start at 0
-    bounds.setHigh(0, cost_map_->image_->x - 1);  // allow for non-square images
-    bounds.setHigh(1, cost_map_->image_->y - 1);  // allow for non-square images
+    bounds.setHigh(0, ppm_.getWidth() - 1);  // allow for non-square images
+    bounds.setHigh(1, ppm_.getHeight() - 1);  // allow for non-square images
     if (dimensions_ == 3)
     {
-      bounds.setHigh(2, cost_map_->image_->y - 1);  // third dimension is now possible
+      bounds.setHigh(2, ppm_.getHeight() - 1);  // third dimension is now possible
       // bounds.setHigh(2, 2);                         // third dimension has three steps
     }
     space_->as<ob::RealVectorStateSpace>()->setBounds(bounds);
     space_->setup();
 
     // Set state validity checking for this space
-    validity_checker_.reset(new ob::ValidityChecker2D(si_, cost_map_->cost_, cost_map_->max_cost_threshold_));
+    validity_checker_.reset(new ob::ValidityChecker2D(si_, &ppm_));
     validity_checker_->setCheckingEnabled(collision_checking_enabled_);
-
     simple_setup_->setStateValidityChecker(validity_checker_);
 
     // The interval in which obstacles are checked for between states
     // seems that it default to 0.01 but doesn't do a good job at that level
     si_->setStateValidityCheckingResolution(0.005);
 
-    // Setup the optimization objective to use the 2d cost map
-    simple_setup_->setOptimizationObjective(cost_map_);
-
-    // Pass cost to visualizer
-    viz_bg_->setCostMap(cost_map_->cost_);
-
     // Align the text with the map
-    text_pose_.position.x = cost_map_->cost_->size1() / 2.0;
-    text_pose_.position.y = cost_map_->cost_->size1() / -20.0 * 0.9;  // scale to offset from base layer
-    text_pose_.position.z = cost_map_->cost_->size1() / 10.0;
+    text_pose_.position.x = ppm_.getHeight() / 2.0;
+    text_pose_.position.y = ppm_.getHeight() / -20.0 * 0.9;  // scale to offset from base layer
+    text_pose_.position.z = ppm_.getHeight() / 10.0;
     sub_text_pose_ = text_pose_;
 
     sub_text_pose_.position.x -= 10;  // move right
     sub_text_pose_.position.y -= 9;   // move up
 
-    publishCostMapImage();
+    publishPPMImage();
   }
+
+  void loadImage(std::string image_path)
+  {
+    bool ok = false;
+    try
+    {
+      ppm_.loadFile(image_path.c_str());
+      ok = true;
+    }
+    catch(ompl::Exception &ex)
+    {
+      ROS_ERROR_STREAM("Unable to load " << image_path);
+      return;
+    }
+
+    // Disallow non-square
+    if (ppm_.getWidth() != ppm_.getHeight())
+    {
+      ROS_ERROR("Does not currently support non-square images because of some weird bug. Feel free to fork and fix!");
+      return;
+    }
+
+    ROS_WARN_STREAM("Map Height: " << ppm_.getHeight() << " Map Width: " << ppm_.getWidth());
+  };
 
   /**
    * \brief Clear all markers displayed in Rviz
@@ -629,7 +642,7 @@ public:
 
   void loadVisualTools()
   {
-    using namespace ompl_visual_tools;
+    using namespace bolt_2d;
 
     const std::size_t NUM_VISUALS = 6;
     for (std::size_t i = 1; i <= NUM_VISUALS; ++i)
@@ -641,7 +654,7 @@ public:
       rviz_visual->enableBatchPublishing();
       ros::spinOnce();
 
-      ROSVizWindowPtr viz = ROSVizWindowPtr(new ROSVizWindow(rviz_visual, si_));
+      TwoDimVizWindowPtr viz = TwoDimVizWindowPtr(new TwoDimVizWindow(rviz_visual, si_));
       viz->getVisualTools()->setGlobalScale(global_scale_);
 
       // Calibrate the color scale for visualization
@@ -671,7 +684,7 @@ public:
     rviz_visual->enableBatchPublishing();
     ros::spinOnce();
 
-    viz_bg_.reset(new ROSVizWindow(rviz_visual, si_));
+    viz_bg_.reset(new TwoDimVizWindow(rviz_visual, si_));
     viz_bg_->getVisualTools()->setGlobalScale(global_scale_);
     viz_bg_->deleteAllMarkers();
 
@@ -729,20 +742,20 @@ public:
     remote_control_.waitForNextStep(msg);
   }
 
-  /** \brief Show 2d world costs */
-  void publishCostMapImage()
+  /** \brief Show 2d world image */
+  void publishPPMImage()
   {
-    ROS_INFO_STREAM_NAMED("publishCostMapImage", "Publishing cost map image...");
+    ROS_INFO_STREAM_NAMED("publishPPMImage", "Publishing background image...");
     const bool use_labels = false;
 
     viz_bg_->getVisualTools()->setBaseFrame("world_visual1");
     if (use_labels)
       viz_bg_->getVisualTools()->publishText(text_pose_, std::string("1 Sparse Graph"), rvt::BLACK, rvt::MEDIUM, false);
-    viz_bg_->publishCostMap(cost_map_->image_, false);
+    viz_bg_->publishPPMImage(ppm_, false);
     viz_bg_->getVisualTools()->setBaseFrame("world_visual2");
     if (use_labels)
       viz_bg_->getVisualTools()->publishText(text_pose_, std::string("2 "), rvt::BLACK, rvt::MEDIUM, false);
-    viz_bg_->publishCostMap(cost_map_->image_, false);
+    viz_bg_->publishPPMImage(ppm_, false);
     std::string message =
         "Nodes - black: coverage, orange: connectivity, pink: interface, blue: quality, green: discretized\n"
         "Edges - green: connectivity, yellow: interface, red: quality";
@@ -752,22 +765,22 @@ public:
     viz_bg_->getVisualTools()->setBaseFrame("world_visual3");
     if (use_labels)
       viz_bg_->getVisualTools()->publishText(text_pose_, std::string("3 "), rvt::BLACK, rvt::MEDIUM, false);
-    viz_bg_->publishCostMap(cost_map_->image_, false);
+    viz_bg_->publishPPMImage(ppm_, false);
 
     viz_bg_->getVisualTools()->setBaseFrame("world_visual4");
     if (use_labels)
       viz_bg_->getVisualTools()->publishText(text_pose_, std::string("4 AStar"), rvt::BLACK, rvt::MEDIUM, false);
-    viz_bg_->publishCostMap(cost_map_->image_, false);
+    viz_bg_->publishPPMImage(ppm_, false);
 
     viz_bg_->getVisualTools()->setBaseFrame("world_visual5");
     if (use_labels)
       viz_bg_->getVisualTools()->publishText(text_pose_, std::string("5 Raw Solution"), rvt::BLACK, rvt::MEDIUM, false);
-    viz_bg_->publishCostMap(cost_map_->image_, false);
+    viz_bg_->publishPPMImage(ppm_, false);
 
     viz_bg_->getVisualTools()->setBaseFrame("world_visual6");
     if (use_labels)
       viz_bg_->getVisualTools()->publishText(text_pose_, std::string("6 Solution"), rvt::BLACK, rvt::MEDIUM, false);
-    viz_bg_->publishCostMap(cost_map_->image_, false);
+    viz_bg_->publishPPMImage(ppm_, false);
 
     // Publish all
     viz_bg_->trigger();
@@ -790,11 +803,11 @@ public:
 
     // Create frame
     frame_pose = Eigen::Affine3d::Identity();
-    frame_pose.translation().x() = cost_map_->image_->x / 2.0 - 1;  // move frame slightly right for frame thickness
-    frame_pose.translation().y() = cost_map_->image_->y / 2.0;
+    frame_pose.translation().x() = ppm_.getWidth() / 2.0 - 1;  // move frame slightly right for frame thickness
+    frame_pose.translation().y() = ppm_.getHeight() / 2.0;
 
-    double width = cost_map_->image_->x + 2 * margin;
-    double height = cost_map_->image_->y + 2 * margin;
+    double width = ppm_.getWidth() + 2 * margin;
+    double height = ppm_.getHeight() + 2 * margin;
     for (std::size_t i = 1; i < 7; ++i)
     {
       viz_bg_->getVisualTools()->setBaseFrame("world_visual" + std::to_string(i));
@@ -1198,7 +1211,7 @@ public:
     return;  // TODO fix this
 
     geometry_msgs::Pose demo_pose;
-    demo_pose.position.x = cost_map_->cost_->size1() * 0.95;  // move to far left
+    demo_pose.position.x = ppm_.getHeight() * 0.95;  // move to far left
     demo_pose.position.y = -10;                               //-12;
     demo_pose.position.z = 0;
     demo_pose.orientation.x = 0;
@@ -1215,7 +1228,7 @@ public:
 
     // Visualize name of algorithm
     demo_pose.position.y = -10.0;
-    demo_pose.position.x = cost_map_->cost_->size1() * 0.6;    // move to left
+    demo_pose.position.x = ppm_.getHeight() * 0.6;    // move to left
     viz_bg_->getVisualTools()->setGlobalScale(global_scale_);  // change back to normal value
     viz_bg_->getVisualTools()->publishText(demo_pose, "BOLT", rvt::BLACK, rvt::XXXLARGE, false);
     viz_bg_->trigger();
@@ -1242,17 +1255,14 @@ private:
   ob::SpaceInformationPtr si_;
   ob::ValidityChecker2DPtr validity_checker_;
 
-  // Cost in 2D
-  ompl::base::CostMap2DOptimizationObjectivePtr cost_map_;
-
   // The visual tools for interfacing with Rviz
-  ompl_visual_tools::ROSVizWindowPtr viz1_;
-  ompl_visual_tools::ROSVizWindowPtr viz2_;
-  ompl_visual_tools::ROSVizWindowPtr viz3_;
-  ompl_visual_tools::ROSVizWindowPtr viz4_;
-  ompl_visual_tools::ROSVizWindowPtr viz5_;
-  ompl_visual_tools::ROSVizWindowPtr viz6_;
-  ompl_visual_tools::ROSVizWindowPtr viz_bg_;
+  bolt_2d::TwoDimVizWindowPtr viz1_;
+  bolt_2d::TwoDimVizWindowPtr viz2_;
+  bolt_2d::TwoDimVizWindowPtr viz3_;
+  bolt_2d::TwoDimVizWindowPtr viz4_;
+  bolt_2d::TwoDimVizWindowPtr viz5_;
+  bolt_2d::TwoDimVizWindowPtr viz6_;
+  bolt_2d::TwoDimVizWindowPtr viz_bg_;
 
   // The number of dimensions - always 2 for images
   std::size_t dimensions_ = 2;
@@ -1264,6 +1274,7 @@ private:
   // Modes
   bool run_problems_;
   bool create_spars_;
+  bool continue_spars_;
   bool eliminate_dense_disjoint_sets_;
   bool check_valid_vertices_;
   bool display_disjoint_sets_;
@@ -1295,7 +1306,7 @@ private:
   double visualize_time_between_plans_;
   bool visualize_wait_between_plans_;
   bool psychedelic_mode_;
-  double global_scale_ = 50;  // this is the width of the cost_map
+  double global_scale_ = 50;  // this is the width of the ppm image
 
   // Average planning time
   double total_duration_ = 0;
@@ -1316,6 +1327,9 @@ private:
   std::map<otb::SparseVertex, std_msgs::ColorRGBA> vertexToColor_;
   std::map<std::pair<double, double>, otb::SparseVertex> xyToVertex_;
   std::size_t vertex_reuse_;
+
+  // The RGB image data
+  ompl::PPM ppm_;
 
 };  // end of class
 

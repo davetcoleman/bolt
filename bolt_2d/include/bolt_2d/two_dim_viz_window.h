@@ -36,11 +36,11 @@
    Desc:   Tools for displaying OMPL components in Rviz
 */
 
-#ifndef OMPL_VISUAL_TOOLS__ROS_VIZ_WINDOW_
-#define OMPL_VISUAL_TOOLS__ROS_VIZ_WINDOW_
+#ifndef OMPL_VISUAL_TOOLS__2D_VIZ_WINDOW_
+#define OMPL_VISUAL_TOOLS__2D_VIZ_WINDOW_
 
 #include <ros/ros.h>
-//#include <ompl_visual_tools/ompl_visual_tools.h>
+//#include <bolt_2d/bolt_2d.h>
 #include <ompl/tools/debug/VizWindow.h>
 
 #include <visualization_msgs/Marker.h>
@@ -51,24 +51,22 @@
 #include <ompl/tools/debug/Visualizer.h>
 #include <ompl/geometric/PathGeometric.h>
 #include <ompl/base/ScopedState.h>
-
-// Custom validity checker that accounts for cost
-#include <ompl_visual_tools/costs/cost_map_2d_optimization_objective.h>
+#include <ompl/util/PPM.h> // For reading image files
 
 // Visualization
-#include <moveit_visual_tools/moveit_visual_tools.h>
+#include <rviz_visual_tools/rviz_visual_tools.h>
 
 namespace ob = ompl::base;
 namespace og = ompl::geometric;
 namespace bnu = boost::numeric::ublas;
 namespace rvt = rviz_visual_tools;
 
-namespace ompl_visual_tools
+namespace bolt_2d
 {
-class ROSVizWindow : public ompl::tools::VizWindow
+class TwoDimVizWindow : public ompl::tools::VizWindow
 {
 public:
-  ROSVizWindow(rviz_visual_tools::RvizVisualToolsPtr visuals, ompl::base::SpaceInformationPtr si);
+  TwoDimVizWindow(rviz_visual_tools::RvizVisualToolsPtr visuals, ompl::base::SpaceInformationPtr si);
 
   /** \brief Visualize a state during runtime, externally */
   void state(const ompl::base::State* state, ompl::tools::VizSizes size, ompl::tools::VizColors color,
@@ -108,22 +106,12 @@ public:
     return visuals_;
   }
 
-  // From ompl_visual_tools ------------------------------------------------------
-
-  /**
-   * \brief Optional cost map for 2D environments
-   */
-  void setCostMap(intMatrixPtr cost);
-
-  /**
-   * \brief Helper function for converting a point to the correct cost
-   */
-  double getCost(const geometry_msgs::Point& point);
+  // From bolt_2d ------------------------------------------------------
 
   /**
    * \brief Visualize Results
    */
-  bool publishCostMap(PPMImage* image, bool static_id = true);
+  bool publishPPMImage(ompl::PPM& ppm, bool static_id = true);
 
   /**
    * \brief Helper Function to display triangles
@@ -177,13 +165,6 @@ public:
   // Eigen::Vector3d stateToPoint(std::size_t vertex_id, ob::PlannerDataPtr planner_data);
   Eigen::Vector3d stateToPoint(const ob::ScopedState<> state);
   Eigen::Vector3d stateToPoint(const ob::State* state);
-
-  /**
-   * \brief Nat_Rounding helper function to make readings from cost map more accurate
-   * \param double
-   * \return rounded down number
-   */
-  static int natRound(double x);
 
   /**
    * \brief Display the start and goal states on the image map
@@ -249,10 +230,7 @@ private:
   /** \brief Remember what space we are working in */
   ompl::base::SpaceInformationPtr si_;
 
-  // From ompl_visual_tools ------------------------------------------------------
-
-  // Keep a pointer to an optional cost map
-  intMatrixPtr cost_;
+  // From bolt_2d ------------------------------------------------------
 
   // Cached Point object to reduce memory loading
   geometry_msgs::Point temp_point_;
@@ -272,9 +250,9 @@ private:
   double level_scale_ = 20.0;
 };
 
-typedef std::shared_ptr<ROSVizWindow> ROSVizWindowPtr;
-typedef std::shared_ptr<const ROSVizWindow> ROSVizWindowConstPtr;
+typedef std::shared_ptr<TwoDimVizWindow> TwoDimVizWindowPtr;
+typedef std::shared_ptr<const TwoDimVizWindow> TwoDimVizWindowConstPtr;
 
-}  // namespace ompl_visual_tools
+}  // namespace bolt_2d
 
-#endif  // OMPL_VISUAL_TOOLS__ROS_VIZ_WINDOW_
+#endif  // OMPL_VISUAL_TOOLS__2D_VIZ_WINDOW_

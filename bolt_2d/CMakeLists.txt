@@ -2,14 +2,15 @@ cmake_minimum_required(VERSION 2.8.3)
 project(bolt_2d)
 
 # C++ 11
-add_compile_options(-std=c++11) 
+add_compile_options(-std=c++11)
 
 # Load catkin and all dependencies required for this package
 find_package(catkin REQUIRED COMPONENTS
-  ompl_visual_tools
+  moveit_visual_tools
   roscpp
   rosparam_shortcuts
   bolt_core
+  moveit_ompl
 )
 
 find_package(ompl REQUIRED)
@@ -19,10 +20,11 @@ include_directories(${Boost_INCLUDE_DIRS} ${OMPL_INCLUDE_DIRS})
 
 catkin_package(
   CATKIN_DEPENDS
-    ompl_visual_tools
+    moveit_visual_tools
     roscpp
     rosparam_shortcuts
     bolt_core
+    moveit_ompl
   INCLUDE_DIRS include
 )
 
@@ -48,6 +50,7 @@ include_directories(
 # Bolt Demo
 add_executable(${PROJECT_NAME}
   src/bolt_2d.cpp
+  src/two_dim_viz_window.cpp
 )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}

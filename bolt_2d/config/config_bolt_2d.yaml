@@ -2,11 +2,12 @@
 # Main program
 bolt_2d:
   # run mode
-  benchmark_performance: false
+  benchmark_performance: true
   display_disjoint_sets: false
   eliminate_dense_disjoint_sets: false
   check_valid_vertices: false
-  create_spars: false # create more of the graph even if loaded graph from file
+  create_spars: true
+  continue_spars: false # even if a file has been saved, randomly sample for more coverage
   run_problems: false
 
   # run type
@@ -72,7 +73,7 @@ sparse_criteria:
 
 # ====================================================
 sparse_graph:
-  save_enabled: true
+  save_enabled: false
   super_debug: false # run more checks and tests that slow down speed
   obstacle_clearance: 1
   verbose:
