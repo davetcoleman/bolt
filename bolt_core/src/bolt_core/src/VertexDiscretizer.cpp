@@ -401,7 +401,7 @@ void VertexDiscretizer::createState(std::size_t threadID, std::vector<double> &v
     return;
   }
 
-  BOLT_GREEN_DEBUG(indent, vThread_, "Accepted, clearance: " << dist);
+  BOLT_GREEN(indent, vThread_, "Accepted, clearance: " << dist);
 
   // Add to graph
   {

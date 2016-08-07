@@ -56,6 +56,7 @@ sparse_criteria:
   use_clear_edges_near_vertex: true # When adding a quality vertex, remove nearby edges
   use_original_smoother: false # original is bad
   use_connectivy_criteria: false # if true, discretization does not work
+  use_quality_criteria: true # 4th criteria
   use_smoothed_path_rejection: true
   verbose:
     added_reason: false # debug criteria for adding vertices & edges
@@ -81,8 +82,8 @@ sparse_graph:
     add: false # debug when addVertex() and addEdge() are called
     search: false
   visualize:
-    spars_graph: false
-    spars_graph_speed: 0.0001 # if 0, does not animate but only single image draw
+    spars_graph: true
+    spars_graph_speed: 0.01 # if 0, does not animate but only single image draw
     database_vertices: true
     database_edges: true
     database_coverage: false # the grey circles around vertices representing sparse delta

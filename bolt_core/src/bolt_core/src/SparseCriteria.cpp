@@ -215,20 +215,20 @@ bool SparseCriteria::addStateToRoadmap(CandidateData &candidateD, VertexType &ad
   }
   else if (checkAddConnectivity(candidateD, indent + 2))
   {
-    BOLT_MAGENTA_DEBUG(indent, vAddedReason_, "Graph updated: CONNECTIVITY Fourth: " << useFourthCriteria_);
+    BOLT_MAGENTA(indent, vAddedReason_, "Graph updated: CONNECTIVITY Fourth: " << useFourthCriteria_);
 
     addReason = CONNECTIVITY;
     stateAdded = true;
   }
   else if (checkAddInterface(candidateD, indent + 4))
   {
-    BOLT_BLUE_DEBUG(indent, vAddedReason_, "Graph updated: INTERFACE Fourth: " << useFourthCriteria_);
+    BOLT_BLUE(indent, vAddedReason_, "Graph updated: INTERFACE Fourth: " << useFourthCriteria_);
     addReason = INTERFACE;
     stateAdded = true;
   }
   else if (checkAddQuality(candidateD, threadID, indent + 6))
   {
-    BOLT_GREEN_DEBUG(indent, vAddedReason_, "Graph updated: QUALITY Fourth: " << useFourthCriteria_);
+    BOLT_GREEN(indent, vAddedReason_, "Graph updated: QUALITY Fourth: " << useFourthCriteria_);
     addReason = QUALITY;
     stateAdded = true;
   }
@@ -1306,7 +1306,7 @@ bool SparseCriteria::distanceCheck(SparseVertex v, const base::State *q, SparseV
       // si_->distance(iData.getInterface1Inside(),
       // iData.getInterface2Inside()))
       {  // Distance with the new point is good, so set it.
-        BOLT_GREEN_DEBUG(indent, vQuality_, "setInterface1 UPDATED");
+        BOLT_GREEN(indent, vQuality_, "setInterface1 UPDATED");
         iData.setInterface1(q, qp, si_);
         updated = true;
       }
@@ -1340,7 +1340,7 @@ bool SparseCriteria::distanceCheck(SparseVertex v, const base::State *q, SparseV
       // si_->distance(iData.getInterface2Inside(),
       // iData.getInterface1Inside()))
       {  // Distance with the new point is good, so set it
-        BOLT_GREEN_DEBUG(indent, vQuality_, "setInterface2 UPDATED");
+        BOLT_GREEN(indent, vQuality_, "setInterface2 UPDATED");
         iData.setInterface2(q, qp, si_);
         updated = true;
       }

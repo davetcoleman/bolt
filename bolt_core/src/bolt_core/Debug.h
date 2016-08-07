@@ -111,10 +111,10 @@
 // BOLT_WARN()
 #define BOLT_WARN(indent, flag, stream) BOLT_COLOR_INFO(indent, flag, stream, ANSI_COLOR_YELLOW);
 
-#define BOLT_GREEN_DEBUG(indent, flag, stream) BOLT_COLOR_DEBUG(indent, flag, stream, ANSI_COLOR_GREEN);
-#define BOLT_BLUE_DEBUG(indent, flag, stream) BOLT_COLOR_DEBUG(indent, flag, stream, ANSI_COLOR_BLUE);
-#define BOLT_MAGENTA_DEBUG(indent, flag, stream) BOLT_COLOR_DEBUG(indent, flag, stream, ANSI_COLOR_MAGENTA);
-#define BOLT_CYAN_DEBUG(indent, flag, stream) BOLT_COLOR_DEBUG(indent, flag, stream, ANSI_COLOR_CYAN);
+#define BOLT_GREEN(indent, flag, stream) BOLT_COLOR_DEBUG(indent, flag, stream, ANSI_COLOR_GREEN);
+#define BOLT_BLUE(indent, flag, stream) BOLT_COLOR_DEBUG(indent, flag, stream, ANSI_COLOR_BLUE);
+#define BOLT_MAGENTA(indent, flag, stream) BOLT_COLOR_DEBUG(indent, flag, stream, ANSI_COLOR_MAGENTA);
+#define BOLT_CYAN(indent, flag, stream) BOLT_COLOR_DEBUG(indent, flag, stream, ANSI_COLOR_CYAN);
 // clang-format on
 
 #endif  // OMPL_TOOLS_BOLT_DEBUG_H

@@ -2,7 +2,7 @@ void addSamplesFromCache(std::size_t indent);
 
 void SparseCriteria::addSamplesFromCache(std::size_t indent)
 {
-  BOLT_CYAN_DEBUG(indent, vCriteria_, "addRandomSamplesFromCache()");
+  BOLT_CYAN(indent, vCriteria_, "addRandomSamplesFromCache()");
   indent += 2;
 
   if (denseCache_->getStateCacheSize() <= 1)

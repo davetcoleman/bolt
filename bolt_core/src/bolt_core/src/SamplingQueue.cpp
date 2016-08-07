@@ -162,7 +162,7 @@ void SamplingQueue::samplingThread(base::SpaceInformationPtr si, ClearanceSample
       OMPL_ERROR("Unable to find valid sample");
       exit(-1);  // this should never happen
     }
-    // BOLT_CYAN_DEBUG(0, true, time::seconds(time::now() - startTime) << " SamplingQueue, total queue: " <<
+    // BOLT_CYAN(0, true, time::seconds(time::now() - startTime) << " SamplingQueue, total queue: " <<
     // statesQueue_.size()); // Benchmark
 
     {

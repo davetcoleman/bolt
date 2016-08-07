@@ -519,7 +519,7 @@ bool BoltPlanner::lazyCollisionCheck(std::vector<TaskVertex> &vertexPath, Termin
       if (!si_->checkMotion(taskGraph_->getState(fromVertex), taskGraph_->getState(toVertex)))
       {
         // Path between (from, to) states not valid, disable the edge
-        // BOLT_GREEN_DEBUG(indent, verbose_, "LAZY CHECK: disabling edge from vertex " << fromVertex << " to vertex "
+        // BOLT_GREEN(indent, verbose_, "LAZY CHECK: disabling edge from vertex " << fromVertex << " to vertex "
         // << toVertex);
 
         // Disable edge

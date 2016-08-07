@@ -185,7 +185,7 @@ void CandidateQueue::generatingThread(std::size_t threadID, base::SpaceInformati
     // totalTime_ += time;
     // totalCandidates_ ++;
     // double average = totalTime_ / totalCandidates_;
-    // BOLT_MAGENTA_DEBUG(0, true,  time << " CandidateQueue, average: " << average << " queue: " << queue_.size()); //
+    // BOLT_MAGENTA(0, true,  time << " CandidateQueue, average: " << average << " queue: " << queue_.size()); //
     // Benchmark
 
     // Add to queue - thread-safe
@@ -220,7 +220,7 @@ void CandidateQueue::getNextState(base::State *&candidateState, ClearanceSampler
 
 CandidateData &CandidateQueue::getNextCandidate(std::size_t indent)
 {
-  BOLT_CYAN_DEBUG(indent, false, "CandidateQueue.getNextCanidate(): queue size: "
+  BOLT_CYAN(indent, false, "CandidateQueue.getNextCanidate(): queue size: "
                                      << queue_.size()
                                      << " num samples added: " << sparseGenerator_->getNumRandSamplesAdded());
   // This function is run in the parent thread

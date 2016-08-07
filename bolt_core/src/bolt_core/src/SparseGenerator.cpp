@@ -335,7 +335,7 @@ bool SparseGenerator::addRandomSamplesThreaded(std::size_t indent)
 
     // time::point startTime = time::now(); // Benchmark
     bool result = addSample(candidateD, threadID, usedState, indent);
-    // BOLT_GREEN_DEBUG(0, 1, time::seconds(time::now() - startTime) << " add sample"); // Benchmark
+    // BOLT_GREEN(0, 1, time::seconds(time::now() - startTime) << " add sample"); // Benchmark
 
     if (!result)
     {
@@ -425,7 +425,7 @@ bool SparseGenerator::addSample(CandidateData &candidateD, std::size_t threadID,
           }
           else
           {
-            BOLT_WARN(indent, true, "Quality termination progress: " << percentComplete << "%");
+            BOLT_GREEN(indent, true, "Quality termination progress: " << percentComplete << "%");
           }
           copyPasteState();
         }
@@ -440,19 +440,19 @@ bool SparseGenerator::addSample(CandidateData &candidateD, std::size_t threadID,
   // Check consecutive failures to determine if quality criteria needs to be enabled
   if (!sparseCriteria_->getUseFourthCriteria() && numConsecutiveFailures_ >= fourthCriteriaAfterFailures_)
   {
+    if (!sparseCriteria_->useQualityCriteria_)
+    {
+      BOLT_INFO(0, true, "---------------------------------------------------");
+      BOLT_WARN(0, true, "Fourth criteria (quality) is disabled");
+      return false;  // stop inserting states
+    }
+
     BOLT_INFO(0, true, "---------------------------------------------------");
     BOLT_INFO(0, true, "Starting to check for 4th quality criteria because "
                                 << numConsecutiveFailures_ << " consecutive failures have occured");
     BOLT_INFO(0, true, "");
 
-    bool disableFourth = false;
-    if (disableFourth)
-    {
-      OMPL_WARN("Disabled use fourth criteria");
-      return false;  // stop inserting states
-    }
-    else
-      sparseCriteria_->setUseFourthCriteria(true);
+    sparseCriteria_->setUseFourthCriteria(true);
 
     maxPercentComplete_ = 0;      // reset for new criteria
     numConsecutiveFailures_ = 0;  // reset for new criteria
@@ -614,7 +614,7 @@ bool SparseGenerator::checkSparseGraphOptimality(std::size_t indent)
       return false;
     }
     else
-      BOLT_GREEN_DEBUG(indent + 2, 1, "Asymptotic optimality guarantee maintained");
+      BOLT_GREEN(indent + 2, 1, "Asymptotic optimality guarantee maintained");
     BOLT_WARN(indent + 2, vGuarantees_, "Percent of max allowed:  " << percentOfMaxAllows << " %");
     BOLT_DEBUG(indent, vGuarantees_, "-----------------------------------------");
   }

@@ -228,7 +228,7 @@ bool Bolt::checkBoltPlannerOptimality(std::size_t indent)
     return false;
   }
   else
-    BOLT_GREEN_DEBUG(indent + 2, 1, "Asymptotic optimality guarantee maintained");
+    BOLT_GREEN(indent + 2, 1, "Asymptotic optimality guarantee maintained");
   BOLT_WARN(indent + 2, 1, "Percent of max allowed:  " << percentOfMaxAllows << " %");
   BOLT_DEBUG(indent, 1, "-----------------------------------------");
 

@@ -580,7 +580,7 @@ bool SparseGraph::smoothQualityPathOriginal(geometric::PathGeometric *path, std:
 
 bool SparseGraph::smoothQualityPath(geometric::PathGeometric *path, double clearance, bool debug, std::size_t indent)
 {
-  BOLT_FUNC(indent, visualizeQualityPathSimp_, "smoothQualityPath()");
+  BOLT_FUNC(indent, visualizeQualityPathSimp_, "smoothQualityPath() clearance: " << clearance);
 
   // TODO: only for testing
   base::State *startCopy = si_->cloneState(path->getState(0));
@@ -609,7 +609,7 @@ bool SparseGraph::smoothQualityPath(geometric::PathGeometric *path, double clear
   // Set the motion validator to use clearance, this way isValid() checks clearance before confirming valid
   base::DiscreteMotionValidator *dmv =
       dynamic_cast<base::DiscreteMotionValidator *>(si_->getMotionValidatorNonConst().get());
-  //dmv->setRequiredStateClearance(clearance);
+  dmv->setRequiredStateClearance(clearance);
 
   for (std::size_t i = 0; i < 3; ++i)
   {
@@ -646,7 +646,7 @@ bool SparseGraph::smoothQualityPath(geometric::PathGeometric *path, double clear
   }
 
   // Turn off the clearance requirement
-  //dmv->setRequiredStateClearance(0.0);
+  dmv->setRequiredStateClearance(0.0);
 
   pathSimplifier_->reduceVertices(*path, 1000, path->getStateCount() * 4);  //, /*rangeRatio*/ 0.33, indent);
   // std::cout << "path->getStateCount(): " << path->getStateCount() << std::endl;

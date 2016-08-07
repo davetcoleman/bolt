@@ -286,6 +286,7 @@ public:
   bool useClearEdgesNearVertex_ = true;
   bool useOriginalSmoother_ = false;
   bool useConnectivityCriteria_ = true;
+  bool useQualityCriteria_ = true;
   bool useSmoothedPathRejection_ = true;
 
   /** \brief Verbose flags */
