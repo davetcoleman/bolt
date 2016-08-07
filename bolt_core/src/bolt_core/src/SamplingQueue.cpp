@@ -82,8 +82,8 @@ void SamplingQueue::startSampling(std::size_t indent)
   si->setMotionValidator(si_->getMotionValidator());
 
   // Load minimum clearance state sampler
-  ob::MinimumClearanceValidStateSamplerPtr clearanceSampler =
-      ob::MinimumClearanceValidStateSamplerPtr(new ob::MinimumClearanceValidStateSampler(si.get()));
+  ClearanceSamplerPtr clearanceSampler =
+      ClearanceSamplerPtr(new ob::MinimumClearanceValidStateSampler(si.get()));
   clearanceSampler->setMinimumObstacleClearance(sg_->getObstacleClearance());
   si->getStateValidityChecker()->setClearanceSearchDistance(sg_->getObstacleClearance());
 

@@ -77,8 +77,7 @@ SparseGenerator::~SparseGenerator(void)
 bool SparseGenerator::setup(std::size_t indent)
 {
   // Load minimum clearance state sampler
-  // TODO: remove this if we stick to samplingQueue
-  clearanceSampler_ = ob::MinimumClearanceValidStateSamplerPtr(new ob::MinimumClearanceValidStateSampler(si_.get()));
+  clearanceSampler_ = ClearanceSamplerPtr(new ob::MinimumClearanceValidStateSampler(si_.get()));
   clearanceSampler_->setMinimumObstacleClearance(sg_->getObstacleClearance());
   si_->getStateValidityChecker()->setClearanceSearchDistance(sg_->getObstacleClearance());
 
@@ -131,9 +130,8 @@ void SparseGenerator::createSPARS()
   if (useRandomSamples_)
   {
     BOLT_INFO(indent, true, "Adding random samples states");
-    // addRandomSamples(indent);
     // addRandomSamplesOneThread(indent);
-    addRandomSamplesTwoThread(indent);
+    addRandomSamplesThreaded(indent);
   }
 
   // Profiler
@@ -262,9 +260,9 @@ void SparseGenerator::addDiscretizedStates(std::size_t indent)
   sg_->vAdd_ = vAdd;  // reset value
 }
 
-bool SparseGenerator::addRandomSamples(std::size_t indent)
+bool SparseGenerator::addRandomSamplesOneThread(std::size_t indent)
 {
-  BOLT_FUNC(indent, verbose_, "addRandomSamples()");
+  BOLT_FUNC(indent, verbose_, "addRandomSamplesOneThread()");
 
   // Clear stats
   numRandSamplesAdded_ = 0;
@@ -311,46 +309,9 @@ bool SparseGenerator::addRandomSamples(std::size_t indent)
   return true;  // program should never reach here
 }
 
-bool SparseGenerator::addRandomSamplesOneThread(std::size_t indent)
+bool SparseGenerator::addRandomSamplesThreaded(std::size_t indent)
 {
-  BOLT_FUNC(indent, verbose_, "addRandomSamplesOneThread()");
-
-  // Clear stats
-  numRandSamplesAdded_ = 0;
-  timeRandSamplesStarted_ = time::now();
-  maxConsecutiveFailures_ = 0;
-  maxPercentComplete_ = 0;
-
-  samplingQueue_->startSampling(indent);
-
-  base::State *candidateState;
-  const std::size_t threadID = 0;
-
-  while (true)
-  {
-    samplingQueue_->getNextState(candidateState, indent);
-
-    // Find nearby nodes
-    CandidateData candidateD(candidateState);
-    findGraphNeighbors(candidateD, threadID, indent);
-
-    bool usedState = false;
-    if (!addSample(candidateD, threadID, usedState, indent))
-    {
-      samplingQueue_->stopSampling(indent);
-      return true;  // no more states needed
-    }
-
-    // Tell other thread whether the state should be re-used
-    // samplingQueue_->setNextStateUsed(usedState);
-  }  // while(true) create random sample
-
-  return true;  // program should never reach here
-}
-
-bool SparseGenerator::addRandomSamplesTwoThread(std::size_t indent)
-{
-  BOLT_FUNC(indent, verbose_, "addRandomSamplesTwoThread()");
+  BOLT_FUNC(indent, verbose_, "addRandomSamplesThreaded()");
 
   // Clear stats
   numRandSamplesAdded_ = 0;
@@ -711,6 +672,131 @@ void SparseGenerator::stopCandidateQueueAndSave(std::size_t indent)
     candidateQueue_->startGenerating(indent);
   }
 }
+
+void SparseGenerator::benchmarkRandValidSampling()
+{
+  std::cout << "-------------------------------------------------------" << std::endl;
+  OMPL_INFORM("Running system performance benchmark");
+  base::State *candidateState = si_->getStateSpace()->allocState();
+
+  base::StateSamplerPtr sampler;
+  sampler = si_->allocStateSampler();
+
+  const std::size_t benchmarkRuns = 10000;
+  std::size_t debugIncrement = benchmarkRuns / 10;
+  std::size_t validCount = 0;
+
+  // Benchmark runtime
+  double totalDurationValid = 0;
+  time::point startTimeValid;
+  double totalDurationSampler = 0;
+  time::point startTimeSampler;
+  for (std::size_t i = 0; i < benchmarkRuns; ++i)
+  {
+    startTimeSampler = time::now();
+    sampler->sampleUniform(candidateState);
+
+    startTimeValid = time::now();
+    totalDurationSampler += time::seconds(startTimeValid - startTimeSampler);
+
+    validCount += si_->isValid(candidateState);
+    totalDurationValid += time::seconds(time::now() - startTimeValid);
+
+    if (i % debugIncrement == 0)
+      std::cout << "Progress: " << i / double(benchmarkRuns) * 100.0 << "%" << std::endl;
+  }
+  // Benchmark runtime
+  OMPL_INFORM("  isValid() took %f seconds (%f per run)", totalDurationValid, totalDurationValid / benchmarkRuns);
+  OMPL_INFORM("  sampleUniform() took %f seconds (%f per run)", totalDurationSampler,
+              totalDurationSampler / benchmarkRuns);
+  OMPL_INFORM("  Percent valid: %f", validCount / double(benchmarkRuns) * 100);
+  std::cout << "-------------------------------------------------------" << std::endl;
+  std::cout << std::endl;
+}
+
+void SparseGenerator::benchmarkVisualizeSampling()
+{
+  std::cout << "-------------------------------------------------------" << std::endl;
+  OMPL_INFORM("Running system performance benchmark");
+
+  ClearanceSamplerPtr clearanceSampler(new ob::MinimumClearanceValidStateSampler(si_.get()));
+  clearanceSampler->setMinimumObstacleClearance(sg_->getObstacleClearance());
+
+  base::StateSamplerPtr sampler;
+  sampler = si_->allocStateSampler();
+
+  const std::size_t benchmarkRuns = 100000;
+  std::size_t debugIncrement = std::max(benchmarkRuns, std::size_t(benchmarkRuns / 100.0));
+
+  // Pre-allocate state
+  std::vector<ompl::base::State *> stateMemory(debugIncrement);
+
+  for (base::State *&state : stateMemory)
+    state = si_->getStateSpace()->allocState();
+
+  std::vector<const ompl::base::State *> states;
+  states.reserve(debugIncrement);
+  std::vector<ot::VizColors> colors;
+  colors.reserve(debugIncrement);
+
+  // Allow time to reset image
+  visual_->viz1()->trigger();
+  usleep(0.1 * 1000000);
+
+  // Benchmark runtime
+  for (std::size_t i = 0; i < benchmarkRuns; ++i)
+  {
+    base::State *candidateState = stateMemory[i % debugIncrement];
+    clearanceSampler->sample(candidateState);
+
+    states.push_back(candidateState);
+    colors.push_back(tools::GREEN);
+
+    if ((i + 1) % debugIncrement == 0 || i == benchmarkRuns - 1)
+    {
+      visual_->viz1()->states(states, colors, tools::SMALL);
+      visual_->viz1()->trigger();
+      usleep(0.1 * 1000000);
+
+      states.clear();
+      colors.clear();
+      if (visual_->viz1()->shutdownRequested())
+        break;
+    }
+  }
+
+  for (base::State *state : stateMemory)
+    si_->freeState(state);
+
+  // Benchmark runtime
+  OMPL_INFORM("Done");
+  exit(0);
+  std::cout << "-------------------------------------------------------" << std::endl;
+  std::cout << std::endl;
+}
+
+void SparseGenerator::benchmarkSparseGraphGeneration()
+{
+  std::cout << "-------------------------------------------------------" << std::endl;
+  OMPL_INFORM("Running graph generation benchmark");
+  time::point startTime = time::now();  // Benchmark
+
+  // Create graph
+  createSPARS();
+
+  double time = time::seconds(time::now() - startTime);
+  OMPL_INFORM("Graph generation took %f seconds", time);  // Benchmark
+
+  // std::ofstream loggingFile;  // open to append
+  // // loggingFile.open(benchmarkFilePath_.c_str(), std::ios::out);  // no append
+  // loggingFile.open(benchmarkFilePath_.c_str(), std::ios::app);  // append
+  // loggingFile << time << ", " << sg_->getNumEdges() << ", " << sg_->getNumVertices() << std::endl;
+  // loggingFile.close();
+
+  std::cout << "-------------------------------------------------------" << std::endl;
+  std::cout << std::endl;
+}
+
 
 }  // namespace bolt
 }  // namespace tools

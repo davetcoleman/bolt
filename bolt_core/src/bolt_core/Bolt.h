@@ -172,18 +172,29 @@ public:
   virtual void setup(void);
 
   /** \brief Get a vector of all the planning data in the database */
-  void getAllPlannerDatas(std::vector<base::PlannerDataPtr> &plannerDatas) const;
+  void getAllPlannerDatas(std::vector<base::PlannerDataPtr> &plannerDatas) const {};
 
   /** \brief Get the total number of paths stored in the database */
-  std::size_t getExperiencesCount() const;
+  std::size_t getExperiencesCount() const
+  {
+       return sparseGraph_->getNumVertices();
+  }
 
-  /** \brief Convert PlannerData to PathGeometric. Assume ordering of verticies is order of path */
-  void convertPlannerData(const base::PlannerDataPtr plannerData, geometric::PathGeometric &path);
+  /** \brief Hook for getting access to common functions */
+  SparseGraphPtr getSparseGraph()
+  {
+    return sparseGraph_;
+  }
 
-  /** \brief Hook for getting access to sparse db */
-  SparseGraphPtr getSparseGraph();
-  TaskGraphPtr getTaskGraph();
-  SparseCriteriaPtr getSparseCriteria();
+  TaskGraphPtr getTaskGraph()
+  {
+    return taskGraph_;
+  }
+
+  SparseCriteriaPtr getSparseCriteria()
+  {
+    return sparseCriteria_;
+  }
 
   SparseGeneratorPtr getSparseGenerator()
   {
@@ -191,11 +202,8 @@ public:
   }
 
   /** \brief Allow accumlated experiences to be processed */
-  bool doPostProcessing();
+  //bool doPostProcessing();
 
-  void benchmarkRandValidSampling();
-  void benchmarkVisualizeSampling();
-  void benchmarkSparseGraphGeneration();
 
 protected:
   /**  The maintained experience planner instance */

@@ -407,6 +407,11 @@ public:
   /** \brief Verify graph is not in collision */
   bool verifyGraph(std::size_t indent);
 
+  bool superDebugEnabled()
+  {
+    return superDebug_;
+  }
+
 protected:
   /** \brief Short name of this class */
   const std::string name_ = "SparseGraph";

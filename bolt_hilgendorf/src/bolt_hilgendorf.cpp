@@ -274,8 +274,8 @@ void BoltHilgendorf::run()
   if (benchmark_performance_)
   {
     // testMotionValidator();
-    // bolt_->benchmarkSparseGraphGeneration();
-    bolt_->benchmarkRandValidSampling();
+    // bolt_->getSparseGenerator()->benchmarkSparseGraphGeneration();
+    bolt_->getSparseGenerator()->benchmarkRandValidSampling();
     ROS_INFO_STREAM_NAMED(name_, "Finished benchmarking");
     exit(0);
   }

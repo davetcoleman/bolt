@@ -177,8 +177,7 @@ bool SparseCriteria::setup(std::size_t indent)
   assert(sparseDelta_ > 0.000000001);  // Sanity check
 
   // Load minimum clearance state sampler
-  // TODO: remove this if we stick to samplingQueue
-  clearanceSampler_ = ob::MinimumClearanceValidStateSamplerPtr(new ob::MinimumClearanceValidStateSampler(si_.get()));
+  clearanceSampler_ = ClearanceSamplerPtr(new ob::MinimumClearanceValidStateSampler(si_.get()));
   clearanceSampler_->setMinimumObstacleClearance(sg_->getObstacleClearance());
   si_->getStateValidityChecker()->setClearanceSearchDistance(sg_->getObstacleClearance());
 
@@ -853,7 +852,7 @@ bool SparseCriteria::addQualityPath(SparseVertex v, SparseVertex vp, SparseVerte
     }
 
     // Check if new vertex has enough clearance
-    if (!sufficientClearance(state))
+    if (sg_->superDebugEnabled() && !checkSufficientClearance(state))
     {
       BOLT_WARN(indent + 2, vCriteria_, "Skipped adding vertex in new path b/c insufficient clearance");
       addEdgeEnabled = false;
@@ -1114,8 +1113,12 @@ void SparseCriteria::findCloseRepresentatives(const base::State *candidateState,
       BOLT_DEBUG(indent + 2, vQuality_, "Sampled state has no representative (is null) ");
 
       // It can't be seen by anybody, so we should take this opportunity to add it
-      // But first check for proper clearance
-      if (sufficientClearance(sampledState))
+      // Check for proper clearance if in superdebug mode
+      if (sg_->superDebugEnabled() && !checkSufficientClearance(sampledState))
+      {
+        BOLT_WARN(indent, true, "Skipping adding node for COVERAGE because improper clearance");
+      }
+      else
       {
         BOLT_DEBUG(indent + 2, vQuality_, "Adding node for COVERAGE");
         sg_->addVertex(si_->cloneState(sampledState), COVERAGE, indent + 2);
@@ -1610,7 +1613,7 @@ std::pair<std::size_t, std::size_t> SparseCriteria::getInterfaceStateStorageSize
   return std::pair<std::size_t, std::size_t>(numStates, numMissingInterfaces);
 }
 
-bool SparseCriteria::sufficientClearance(base::State *state)
+bool SparseCriteria::checkSufficientClearance(base::State *state)
 {
   // Check if new vertex has enough clearance
   double dist = si_->getStateValidityChecker()->clearance(state);

@@ -84,9 +84,8 @@ public:
   void addDiscretizedStates(std::size_t indent);
 
   /** \brief Randomly sample */
-  bool addRandomSamples(std::size_t indent);
   bool addRandomSamplesOneThread(std::size_t indent);
-  bool addRandomSamplesTwoThread(std::size_t indent);
+  bool addRandomSamplesThreaded(std::size_t indent);
 
   /**
    * \brief Add state to sparse graph
@@ -111,6 +110,10 @@ public:
   /** \brief Stop and reset the candidate queue because it uses the nearest neighbors and will have bad vertices stored
    */
   void stopCandidateQueueAndSave(std::size_t indent);
+
+  void benchmarkRandValidSampling();
+  void benchmarkVisualizeSampling();
+  void benchmarkSparseGraphGeneration();
 
   /** \brief Getter for vertexDiscretizer */
   VertexDiscretizerPtr &getVertexDiscretizer()
@@ -144,7 +147,7 @@ protected:
   VisualizerPtr visual_;
 
   /** \brief Sampler user for generating valid samples in the state space */
-  base::MinimumClearanceValidStateSamplerPtr clearanceSampler_;
+  ClearanceSamplerPtr clearanceSampler_;
 
   /** \brief Secondary thread for sampling and garbage collection */
   SamplingQueuePtr samplingQueue_;

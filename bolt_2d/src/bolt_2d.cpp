@@ -302,7 +302,7 @@ public:
     // Benchmark performance
     if (benchmark_performance_ && planner_name_ == BOLT)
     {
-      bolt_->benchmarkVisualizeSampling();
+      bolt_->getSparseGenerator()->benchmarkVisualizeSampling();
       ROS_INFO_STREAM_NAMED(name_, "Finished benchmarking");
       exit(0);
     }
@@ -588,7 +588,7 @@ public:
     simple_setup_->setStateValidityChecker(validity_checker_);
 
     // The interval in which obstacles are checked for between states
-    // seems that it default to 0.01 but doesn't do a good job at that level
+    // seems that it defaults to 0.01 but doesn't do a good job at that level
     si_->setStateValidityCheckingResolution(0.005);
 
     // Align the text with the map

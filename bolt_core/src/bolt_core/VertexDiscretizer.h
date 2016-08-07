@@ -109,19 +109,13 @@ public:
   {
     clearance_ = clearance;
 
-    double clearanceSearchDistance = si_->getStateValidityChecker()->getClearanceSearchDistance();
+    const double& clearanceSearchDistance = si_->getStateValidityChecker()->getClearanceSearchDistance();
     if (clearanceSearchDistance < clearance_)
     {
       OMPL_WARN("Desired clearance between vertices and obstacles (%f) is greater than the search distance (%f), will "
                 "not work properly",
                 clearance_, clearanceSearchDistance);
     }
-  }
-
-  /** \brief Get the minimum required distance of sample from nearest obstacle to be considered valid */
-  unsigned int getMinimumObstacleClearance() const
-  {
-    return clearance_;
   }
 
 private:

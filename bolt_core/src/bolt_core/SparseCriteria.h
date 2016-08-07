@@ -159,7 +159,7 @@ public:
   std::pair<std::size_t, std::size_t> getInterfaceStateStorageSize();
 
   /** \brief Return true if state is far enough away from nearest obstacle */
-  bool sufficientClearance(base::State* state);
+  bool checkSufficientClearance(base::State* state);
 
   double getSparseDelta()
   {
@@ -223,7 +223,7 @@ protected:
   VisualizerPtr visual_;
 
   /** \brief Sampler user for generating valid samples in the state space */
-  base::MinimumClearanceValidStateSamplerPtr clearanceSampler_;
+  ClearanceSamplerPtr clearanceSampler_;
 
   /** \brief Amount of sub-optimality allowed */
   double sparseDelta_;

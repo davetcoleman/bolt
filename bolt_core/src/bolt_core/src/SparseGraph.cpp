@@ -104,7 +104,11 @@ SparseGraph::SparseGraph(base::SpaceInformationPtr si, VisualizerPtr visual)
   nn_->setDistanceFunction(boost::bind(&otb::SparseGraph::distanceFunction, this, _1, _2));
 
   if (superDebug_)
-    OMPL_WARN("Superdebug mode is enabled - will run slower");
+  {
+    BOLT_WARN(0, true, "--------------------------------------------");
+    BOLT_WARN(0, true, "Superdebug mode is enabled - will run slower");
+    BOLT_WARN(0, true, "--------------------------------------------");
+  }
 }
 
 SparseGraph::~SparseGraph()
