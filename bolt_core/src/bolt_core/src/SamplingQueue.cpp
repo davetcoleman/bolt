@@ -123,7 +123,7 @@ bool SamplingQueue::getNextState(base::State *&state, std::size_t indent)
     }
     // waitForQueueNotEmpty(indent + 2);
 
-    boost::lock_guard<boost::shared_mutex> lock(sampleQueueMutex_);
+    boost::lock_guard<boost::shared_mutex> lock(samplingQueueMutex_);
     // Something changed before we got the mutex
     if (statesQueue_.empty())
     {
@@ -166,7 +166,7 @@ void SamplingQueue::samplingThread(base::SpaceInformationPtr si, ClearanceSample
     // statesQueue_.size()); // Benchmark
 
     {
-      boost::lock_guard<boost::shared_mutex> lock(sampleQueueMutex_);
+      boost::lock_guard<boost::shared_mutex> lock(samplingQueueMutex_);
       statesQueue_.push(candidateState);
     }
   }

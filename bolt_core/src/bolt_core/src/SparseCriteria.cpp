@@ -855,7 +855,7 @@ bool SparseCriteria::addQualityPath(SparseVertex v, SparseVertex vp, SparseVerte
     // Check if new vertex has enough clearance
     if (!sufficientClearance(state))
     {
-      BOLT_WARN(indent + 2, true, "Skipped adding vertex in new path b/c insufficient clearance");
+      BOLT_WARN(indent + 2, vCriteria_, "Skipped adding vertex in new path b/c insufficient clearance");
       addEdgeEnabled = false;
       continue;
     }

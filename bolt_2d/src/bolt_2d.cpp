@@ -95,6 +95,7 @@ public:
     // run mode
     error += !rosparam_shortcuts::get(name_, rpnh, "run_problems", run_problems_);
     error += !rosparam_shortcuts::get(name_, rpnh, "create_spars", create_spars_);
+    error += !rosparam_shortcuts::get(name_, rpnh, "load_spars", load_spars_);
     error += !rosparam_shortcuts::get(name_, rpnh, "continue_spars", continue_spars_);
     error += !rosparam_shortcuts::get(name_, rpnh, "eliminate_dense_disjoint_sets", eliminate_dense_disjoint_sets_);
     error += !rosparam_shortcuts::get(name_, rpnh, "check_valid_vertices", check_valid_vertices_);
@@ -296,16 +297,25 @@ public:
 
   void run()
   {
-    // deleteAllMarkers();
+    std::size_t indent = 0;
 
     // Benchmark performance
     if (benchmark_performance_ && planner_name_ == BOLT)
     {
       bolt_->benchmarkVisualizeSampling();
+      ROS_INFO_STREAM_NAMED(name_, "Finished benchmarking");
+      exit(0);
     }
 
-    // Load from file or generate graph
-    if (!loadData() || continue_spars_)
+    // Load from file
+    bool loaded = false;
+    if (load_spars_)
+    {
+      loaded = loadData();
+    }
+
+    // Create SPARS
+    if (create_spars_ && (!loaded || continue_spars_))
     {
       // Create SPARs graph
       switch (planner_name_)
@@ -321,25 +331,26 @@ public:
         case THUNDER:
           break;
         case SPARS2:
-        {
-          ompl::base::PlannerTerminationCondition ptc = ompl::base::plannerNonTerminatingCondition();
-          ROS_INFO_STREAM_NAMED(name_, "Constructing SPARS2 roadmap");
-          bool stopOnMaxFail = true;
-          sparse_two_->constructRoadmap(ptc, stopOnMaxFail);
-
-          // temp
-          std::cout << "done with roadmap " << std::endl;
-          exit(0);
-        }
-        break;
+          {
+            ompl::base::PlannerTerminationCondition ptc = ompl::base::plannerNonTerminatingCondition();
+            ROS_INFO_STREAM_NAMED(name_, "Constructing SPARS2 roadmap");
+            bool stopOnMaxFail = true;
+            sparse_two_->constructRoadmap(ptc, stopOnMaxFail);
+          }
+          break;
       }
+      loaded = true;
     }
-    else  // graph loaded fine and will not be modified
+
+    if (!loaded)
     {
-      ROS_INFO_STREAM_NAMED(name_, "Checking loaded graph for optimality");
-      std::size_t indent = 0;
-      bolt_->getSparseGenerator()->checkSparseGraphOptimality(indent);
+      ROS_WARN_STREAM_NAMED(name_, "Creating AND loading sparse graph disabled, no contents in graph");
     }
+    // else  // graph loaded fine and will not be modified
+    // {
+    //   ROS_INFO_STREAM_NAMED(name_, "Checking loaded graph for optimality");
+    //   bolt_->getSparseGenerator()->checkSparseGraphOptimality(indent);
+    // }
 
     // Display disconnected components
     if (display_disjoint_sets_ && planner_name_ == BOLT)
@@ -1275,6 +1286,7 @@ private:
   // Modes
   bool run_problems_;
   bool create_spars_;
+  bool load_spars_;
   bool continue_spars_;
   bool eliminate_dense_disjoint_sets_;
   bool check_valid_vertices_;

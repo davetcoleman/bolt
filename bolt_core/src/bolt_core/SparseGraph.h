@@ -506,6 +506,7 @@ public:  // user settings from other applications
   bool visualizeQualityPathSimp_ = false;
 
   /** \brief Change verbosity levels */
+  bool verbose_ = false;
   bool vVisualize_ = false;
   bool vAdd_ = false;  // message when adding edges and vertices
   bool vSearch_ = false;

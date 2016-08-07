@@ -165,6 +165,7 @@ protected:
 
 public:
   bool verbose_ = false;
+  bool vGuarantees_ = false;
 
   /** \brief Number of failed state insertion attempts before stopping the algorithm */
   std::size_t terminateAfterFailures_ = 1000;

@@ -72,7 +72,7 @@ CandidateQueue::~CandidateQueue()
 
 void CandidateQueue::startGenerating(std::size_t indent)
 {
-  BOLT_FUNC(indent, verbose_, "startGenerating() Starting candidate queue thread");
+  BOLT_FUNC(indent, true, "startGenerating() Starting candidate queue thread");
   if (threadsRunning_)
   {
     BOLT_ERROR(indent, true, "CandidateQueue already running");
@@ -147,7 +147,7 @@ void CandidateQueue::stopGenerating(std::size_t indent)
     queue_.pop();
   }
 
-  BOLT_FUNC(indent, true, "CandidateQueue.stopGenerating() Generating threads have stopped");
+  BOLT_FUNC(indent, true, "Generating threads have stopped");
 }
 
 void CandidateQueue::generatingThread(std::size_t threadID, base::SpaceInformationPtr si,

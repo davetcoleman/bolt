@@ -441,9 +441,13 @@ bool SparseGenerator::addSample(CandidateData &candidateD, std::size_t threadID,
 
       std::size_t percentComplete;
       if (!sparseCriteria_->getUseFourthCriteria())
-        percentComplete = ceil(maxConsecutiveFailures_ / double(fourthCriteriaAfterFailures_) / 2.0 * 100.0);
+      {
+        percentComplete = ceil(maxConsecutiveFailures_ / double(fourthCriteriaAfterFailures_) * 100.0);
+      }
       else
+      {
         percentComplete = ceil(maxConsecutiveFailures_ / double(terminateAfterFailures_) * 100.0);
+      }
 
       // Every time the whole number of percent compelete changes, show to user
       if (percentComplete > maxPercentComplete_)
@@ -454,7 +458,14 @@ bool SparseGenerator::addSample(CandidateData &candidateD, std::size_t threadID,
         static const std::size_t showEvery = std::max(1, int(12 - si_->getStateDimension() * 2));
         if (percentComplete % showEvery == 0)
         {
-          BOLT_WARN(indent, true, "Termination progress: " << percentComplete << "%");
+          if (!sparseCriteria_->getUseFourthCriteria())
+          {
+            BOLT_WARN(indent, true, "Discretization progress: " << percentComplete << "%");
+          }
+          else
+          {
+            BOLT_WARN(indent, true, "Quality termination progress: " << percentComplete << "%");
+          }
           copyPasteState();
         }
       }
@@ -468,8 +479,11 @@ bool SparseGenerator::addSample(CandidateData &candidateD, std::size_t threadID,
   // Check consecutive failures to determine if quality criteria needs to be enabled
   if (!sparseCriteria_->getUseFourthCriteria() && numConsecutiveFailures_ >= fourthCriteriaAfterFailures_)
   {
-    BOLT_INFO(indent, true, "Starting to check for 4th quality criteria because "
+    BOLT_INFO(0, true, "---------------------------------------------------");
+    BOLT_INFO(0, true, "Starting to check for 4th quality criteria because "
                                 << numConsecutiveFailures_ << " consecutive failures have occured");
+    BOLT_INFO(0, true, "");
+
     bool disableFourth = false;
     if (disableFourth)
     {
@@ -479,6 +493,7 @@ bool SparseGenerator::addSample(CandidateData &candidateD, std::size_t threadID,
     else
       sparseCriteria_->setUseFourthCriteria(true);
 
+    maxPercentComplete_ = 0;      // reset for new criteria
     numConsecutiveFailures_ = 0;  // reset for new criteria
     maxConsecutiveFailures_ = 0;  // reset for new criteria
 
@@ -539,7 +554,7 @@ bool SparseGenerator::checkSparseGraphOptimality(std::size_t indent)
 {
   BOLT_FUNC(indent, true, "checkSparseGraphOptimality()");
 
-  std::size_t numTests = 500;
+  std::size_t numTests = 50;
   std::size_t numFailedPlans = 0;
 
   // For each test
@@ -604,20 +619,18 @@ bool SparseGenerator::checkSparseGraphOptimality(std::size_t indent)
     visual_->viz2()->deleteAllMarkers();
     visual_->viz2()->path(&geometricSolution, tools::SMALL, tools::RED);
     visual_->viz2()->trigger();
-    usleep(0.001*1000000);
+    usleep(0.001 * 1000000);
 
     // Smooth path to find the "optimal" path
     geometric::PathGeometric smoothedPath = geometricSolution;
-    geometric::PathGeometric* smoothedPathPtr = &smoothedPath;
+    geometric::PathGeometric *smoothedPathPtr = &smoothedPath;
     geometric::PathSimplifier pathSimplifier(si_);
     sg_->smoothMax(smoothedPathPtr, indent);
-    BOLT_DEBUG(indent, true, "Final path->length() " << smoothedPathPtr->length());
-    BOLT_DEBUG(indent, true, "Final states: " << smoothedPathPtr->getStateCount());
 
-    //visual_->viz2()->deleteAllMarkers();
+    // visual_->viz2()->deleteAllMarkers();
     visual_->viz2()->path(smoothedPathPtr, tools::MEDIUM, tools::GREEN);
     visual_->viz2()->trigger();
-    usleep(0.001*1000000);
+    usleep(0.001 * 1000000);
 
     // Calculate theoretical guarantees
     double optimalLength = smoothedPathPtr->length();
@@ -625,13 +638,14 @@ bool SparseGenerator::checkSparseGraphOptimality(std::size_t indent)
     double theoryLength = sparseCriteria_->getStretchFactor() * optimalLength + 4 * sparseCriteria_->getSparseDelta();
     double percentOfMaxAllows = sparseLength / theoryLength * 100.0;
 
-    BOLT_DEBUG(indent, 1, "-----------------------------------------");
-    BOLT_DEBUG(indent, 1, "Checking Asymptotic Optimality Guarantees");
-    BOLT_DEBUG(indent + 2, 1, "Raw Path Length:         " << sparseLength);
-    BOLT_DEBUG(indent + 2, 1, "Smoothed Path Length:    " << optimalLength);
-    BOLT_DEBUG(indent + 2, 1, "Theoretical Path Length: " << theoryLength);
-    BOLT_DEBUG(indent + 2, 1, "Stretch Factor t:        " << sparseCriteria_->getStretchFactor());
-    BOLT_DEBUG(indent + 2, 1, "Sparse Delta:            " << sparseCriteria_->getSparseDelta());
+    BOLT_DEBUG(indent, vGuarantees_, "-----------------------------------------");
+    BOLT_DEBUG(indent, vGuarantees_, "Checking Asymptotic Optimality Guarantees");
+    BOLT_DEBUG(indent + 2, vGuarantees_, "Raw Path Length:         " << sparseLength);
+    BOLT_DEBUG(indent + 2, vGuarantees_, "Smoothed Path Length:    " << optimalLength);
+    BOLT_DEBUG(indent + 2, vGuarantees_, "Smoothed Path States:    " << smoothedPathPtr->getStateCount());
+    BOLT_DEBUG(indent + 2, vGuarantees_, "Theoretical Path Length: " << theoryLength);
+    BOLT_DEBUG(indent + 2, vGuarantees_, "Stretch Factor t:        " << sparseCriteria_->getStretchFactor());
+    BOLT_DEBUG(indent + 2, vGuarantees_, "Sparse Delta:            " << sparseCriteria_->getSparseDelta());
 
     if (sparseLength >= theoryLength)
     {
@@ -640,8 +654,8 @@ bool SparseGenerator::checkSparseGraphOptimality(std::size_t indent)
     }
     else
       BOLT_GREEN_DEBUG(indent + 2, 1, "Asymptotic optimality guarantee maintained");
-    BOLT_WARN(indent + 2, 1, "Percent of max allowed:  " << percentOfMaxAllows << " %");
-    BOLT_DEBUG(indent, 1, "-----------------------------------------");
+    BOLT_WARN(indent + 2, vGuarantees_, "Percent of max allowed:  " << percentOfMaxAllows << " %");
+    BOLT_DEBUG(indent, vGuarantees_, "-----------------------------------------");
   }
 
   // Summary

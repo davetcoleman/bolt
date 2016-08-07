@@ -270,8 +270,6 @@ bool BoltHilgendorf::loadData()
 
 void BoltHilgendorf::run()
 {
-  deleteAllMarkers();  // again, cause it seems broken
-
   // Benchmark performance
   if (benchmark_performance_)
   {

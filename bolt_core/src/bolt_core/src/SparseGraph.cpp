@@ -216,7 +216,7 @@ bool SparseGraph::saveIfChanged(std::size_t indent)
 
 bool SparseGraph::save(std::size_t indent)
 {
-  BOLT_FUNC(indent, true, "save()");
+  BOLT_FUNC(indent, verbose_, "save()");
 
   if (!hasUnsavedChanges_)
     OMPL_WARN("No need to save because hasUnsavedChanges_ is false, but saving anyway because requested");
@@ -627,8 +627,8 @@ bool SparseGraph::smoothQualityPath(geometric::PathGeometric *path, double clear
 
     pathSimplifier_->reduceVertices(*path, 1000, path->getStateCount() * 4);  // /*rangeRatio*/ 0.33, indent);
 
-    if (minStatesFound > path->getStateCount())
-      minStatesFound = path->getStateCount();
+    // if (minStatesFound > path->getStateCount())
+    //   minStatesFound = path->getStateCount();
 
     if (visualizeQualityPathSimp_)
     {
@@ -655,11 +655,11 @@ bool SparseGraph::smoothQualityPath(geometric::PathGeometric *path, double clear
     // visual_->waitForUserFeedback("finished quality path");
   }
 
-  if (minStatesFound < path->getStateCount())
-  {
-    BOLT_ERROR(indent, true, "Min states found is less than finished path");
-    visual_->waitForUserFeedback("min states found");
-  }
+  // if (minStatesFound < path->getStateCount())
+  // {
+  //   BOLT_ERROR(indent, true, "Min states found is less than finished path");
+  //   visual_->waitForUserFeedback("min states found");
+  // }
 
   std::pair<bool, bool> repairResult = path->checkAndRepair(100);
 
@@ -1099,7 +1099,7 @@ SparseVertex SparseGraph::addVertexFromFile(base::State *state, const VertexType
 
 void SparseGraph::removeVertex(SparseVertex v, std::size_t indent)
 {
-  BOLT_FUNC(indent, true, "removeVertex = " << v);
+  BOLT_FUNC(indent, verbose_, "removeVertex = " << v);
 
   // Remove from nearest neighbor
   {

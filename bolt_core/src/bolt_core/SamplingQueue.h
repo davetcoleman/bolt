@@ -128,7 +128,7 @@ private:
   bool threadRunning_ = false;
 
   /** \brief Mutex for only getting one sample at a time from the thread */
-  boost::shared_mutex sampleQueueMutex_;
+  boost::shared_mutex samplingQueueMutex_;
 
 public:
   bool verbose_ = false;
