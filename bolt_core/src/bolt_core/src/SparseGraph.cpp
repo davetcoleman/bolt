@@ -690,6 +690,13 @@ bool SparseGraph::smoothMax(geometric::PathGeometric *path, std::size_t indent)
   // Visualize path
   if (visualizeQualityPathSimp_)
   {
+    // Clear all windows
+    for (std::size_t i = 3; i <= 6; ++i)
+    {
+      visual_->viz(i)->deleteAllMarkers();
+      visual_->viz(i)->trigger();
+    }
+
     visual_->viz2()->deleteAllMarkers();
     visual_->viz2()->path(path, tools::SMALL, tools::BLUE);
     visual_->viz2()->trigger();
@@ -724,6 +731,9 @@ bool SparseGraph::smoothMax(geometric::PathGeometric *path, std::size_t indent)
       }
     }
 
+    if (path->getStateCount() < 3) // Can't smooth if only two points
+      break;
+
     // ------------------------------------------------------------------
     // try to collapse close-by vertices
     pathSimplifier_->collapseCloseVertices(*path);
@@ -737,6 +747,9 @@ bool SparseGraph::smoothMax(geometric::PathGeometric *path, std::size_t indent)
       BOLT_DEBUG(indent, true, "path->length() " << path->length());
       visual_->waitForUserFeedback("collapseCloseVertices");
     }
+
+    if (path->getStateCount() < 3) // Can't smooth if only two points
+      break;
 
     // ------------------------------------------------------------------
     // split path segments, not just vertices

@@ -207,7 +207,7 @@ void SparseGenerator::createSPARS()
     sg_->displayDatabase(true, indent);
 
   // Ensure the graph is valid
-  checkSparseGraphOptimality();
+  checkSparseGraphOptimality(indent);
 
   OMPL_INFORM("Finished creating sparse database");
 }
@@ -535,9 +535,10 @@ void SparseGenerator::findGraphNeighbors(CandidateData &candidateD, std::size_t 
                                     << " | Visible neighborhood: " << candidateD.visibleNeighborhood_.size());
 }
 
-bool SparseGenerator::checkSparseGraphOptimality()
+bool SparseGenerator::checkSparseGraphOptimality(std::size_t indent)
 {
-  std::size_t indent = 0;
+  BOLT_FUNC(indent, true, "checkSparseGraphOptimality()");
+
   std::size_t numTests = 500;
   std::size_t numFailedPlans = 0;
 

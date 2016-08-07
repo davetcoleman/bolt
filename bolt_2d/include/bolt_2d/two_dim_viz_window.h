@@ -40,7 +40,6 @@
 #define BOLT_2D__2D_VIZ_WINDOW_
 
 #include <ros/ros.h>
-//#include <bolt_2d/bolt_2d.h>
 #include <ompl/tools/debug/VizWindow.h>
 
 #include <visualization_msgs/Marker.h>

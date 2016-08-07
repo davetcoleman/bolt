@@ -337,7 +337,8 @@ public:
     else  // graph loaded fine and will not be modified
     {
       ROS_INFO_STREAM_NAMED(name_, "Checking loaded graph for optimality");
-      bolt_->getSparseGenerator()->checkSparseGraphOptimality();
+      std::size_t indent = 0;
+      bolt_->getSparseGenerator()->checkSparseGraphOptimality(indent);
     }
 
     // Display disconnected components

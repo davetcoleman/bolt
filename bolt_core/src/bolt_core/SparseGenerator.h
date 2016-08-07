@@ -104,7 +104,7 @@ public:
   /**
    * \brief Tests for ensuring the generated roadmap obeys the theoretical guarantees
    */
-  bool checkSparseGraphOptimality();
+  bool checkSparseGraphOptimality(std::size_t indent);
   bool convertVertexPathToStatePath(std::vector<SparseVertex> &vertexPath, const base::State *actualStart,
                                     const base::State *actualGoal, geometric::PathGeometric &geometricSolution);
 

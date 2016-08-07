@@ -2,7 +2,7 @@
 # Main program
 bolt_2d:
   # run mode
-  benchmark_performance: true
+  benchmark_performance: false
   display_disjoint_sets: false
   eliminate_dense_disjoint_sets: false
   check_valid_vertices: false
@@ -78,7 +78,7 @@ sparse_graph:
   obstacle_clearance: 1
   verbose:
     add: false # debug when addVertex() and addEdge() are called
-    search: true
+    search: false
   visualize:
     spars_graph: true
     spars_graph_speed: 0.01 # if 0, does not animate but only single image draw
