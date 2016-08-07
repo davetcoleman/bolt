@@ -90,7 +90,7 @@ public:
   /** \brief Return true if the state \e state is valid. Usually, this means at least collision checking. If it is
       possible that ompl::base::StateSpace::interpolate() or ompl::control::ControlSpace::propagate() return states that
       are outside of bounds, this function should also make a call to ompl::base::SpaceInformation::satisfiesBounds().
-     */
+  */
   virtual bool isValid(const ob::State *state) const
   {
     if (!enabled_)

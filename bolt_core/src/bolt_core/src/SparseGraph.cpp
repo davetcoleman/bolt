@@ -674,7 +674,7 @@ bool SparseGraph::smoothQualityPath(geometric::PathGeometric *path, double clear
   return true;
 }
 
-bool SparseGraph::smoothMax(geometric::PathGeometric *path, std::size_t indent)
+bool SparseGraph::smoothMax(geometric::PathGeometric* path, std::size_t indent)
 {
   BOLT_FUNC(indent, visualizeQualityPathSimp_, "smoothMax()");
 
@@ -698,7 +698,7 @@ bool SparseGraph::smoothMax(geometric::PathGeometric *path, std::size_t indent)
     }
 
     visual_->viz2()->deleteAllMarkers();
-    visual_->viz2()->path(path, tools::SMALL, tools::BLUE);
+    visual_->viz2()->path(path, tools::MEDIUM, tools::BLUE);
     visual_->viz2()->trigger();
     usleep(0.001 * 1000000);
   }
@@ -723,16 +723,16 @@ bool SparseGraph::smoothMax(geometric::PathGeometric *path, std::size_t indent)
       if (visualizeQualityPathSimp_)
       {
         visual_->viz3()->deleteAllMarkers();
-        visual_->viz3()->path(path, tools::SMALL, tools::ORANGE);
+        visual_->viz3()->path(path, tools::MEDIUM, tools::ORANGE);
         visual_->viz3()->trigger();
         usleep(0.1 * 1000000);
         BOLT_DEBUG(indent, true, "path->length() " << path->length());
         visual_->waitForUserFeedback("reduce vertices");
       }
-    }
 
-    if (path->getStateCount() < 3) // Can't smooth if only two points
-      break;
+      if (path->getStateCount() < 3) // Can't smooth if only two points
+        break;
+    }
 
     // ------------------------------------------------------------------
     // try to collapse close-by vertices
@@ -741,7 +741,7 @@ bool SparseGraph::smoothMax(geometric::PathGeometric *path, std::size_t indent)
     if (visualizeQualityPathSimp_)
     {
       visual_->viz4()->deleteAllMarkers();
-      visual_->viz4()->path(path, tools::SMALL, tools::ORANGE);
+      visual_->viz4()->path(path, tools::MEDIUM, tools::ORANGE);
       visual_->viz4()->trigger();
       usleep(0.1 * 1000000);
       BOLT_DEBUG(indent, true, "path->length() " << path->length());
@@ -758,7 +758,7 @@ bool SparseGraph::smoothMax(geometric::PathGeometric *path, std::size_t indent)
     if (visualizeQualityPathSimp_)
     {
       visual_->viz5()->deleteAllMarkers();
-      visual_->viz5()->path(path, tools::SMALL, tools::ORANGE);
+      visual_->viz5()->path(path, tools::MEDIUM, tools::ORANGE);
       visual_->viz5()->trigger();
       usleep(0.1 * 1000000);
       BOLT_DEBUG(indent, true, "path->length() " << path->length());
@@ -772,7 +772,7 @@ bool SparseGraph::smoothMax(geometric::PathGeometric *path, std::size_t indent)
     if (visualizeQualityPathSimp_)
     {
       visual_->viz6()->deleteAllMarkers();
-      visual_->viz6()->path(path, tools::SMALL, tools::ORANGE);
+      visual_->viz6()->path(path, tools::MEDIUM, tools::ORANGE);
       visual_->viz6()->trigger();
       usleep(0.1 * 1000000);
       BOLT_DEBUG(indent, true, "path->length() " << path->length());
@@ -1360,7 +1360,7 @@ void SparseGraph::clearEdgesNearVertex(SparseVertex vertex, std::size_t indent)
   if (visualizeSparseGraph_ && visualizeSparseGraphSpeed_ > std::numeric_limits<double>::epsilon())
   {
     // visual_->waitForUserFeedback("before clear edge near vertex");
-    displayDatabase(true, indent);
+    displayDatabase(true, true, 1, indent);
     // visual_->waitForUserFeedback("after clear edge near vertex");
   }
 }

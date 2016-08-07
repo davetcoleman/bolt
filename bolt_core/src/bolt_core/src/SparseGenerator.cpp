@@ -125,7 +125,7 @@ void SparseGenerator::createSPARS()
 
   // Only display database if enabled
   // if (sg_->visualizeSparseGraph_ && sg_->visualizeSparseGraphSpeed_ > std::numeric_limits<double>::epsilon())
-  //   sg_->displayDatabase(true, indent);
+  // sg_->displayDatabase(true, true, 1, indent);
 
   // Finish the graph with random samples
   if (useRandomSamples_)
@@ -204,7 +204,7 @@ void SparseGenerator::createSPARS()
   }
 
   if (!sg_->visualizeSparseGraph_)
-    sg_->displayDatabase(true, indent);
+    sg_->displayDatabase(true, true, 1, indent);
 
   // Ensure the graph is valid
   checkSparseGraphOptimality(indent);
@@ -598,19 +598,22 @@ bool SparseGenerator::checkSparseGraphOptimality(std::size_t indent)
     // If path found (same connected component) sum up total length
     geometric::PathGeometric geometricSolution(si_);
     convertVertexPathToStatePath(vertexPath, actualStart, actualGoal, geometricSolution);
-    // visual_->viz2()->deleteAllMarkers();
-    // visual_->viz2()->path(&geometricSolution, tools::SMALL, tools::RED);
-    // visual_->viz2()->trigger();
+    visual_->viz2()->deleteAllMarkers();
+    visual_->viz2()->path(&geometricSolution, tools::SMALL, tools::RED);
+    visual_->viz2()->trigger();
 
     // Smooth path to find the "optimal" path
     geometric::PathGeometric smoothedPath = geometricSolution;
+    geometric::PathGeometric* smoothedPathPtr = &smoothedPath;
     geometric::PathSimplifier pathSimplifier(si_);
-    sg_->smoothMax(&smoothedPath, indent);
-    visual_->viz2()->path(&smoothedPath, tools::SMALL, tools::GREEN);
+    sg_->smoothMax(smoothedPathPtr, indent);
+
+    visual_->viz2()->deleteAllMarkers();
+    visual_->viz2()->path(smoothedPathPtr, tools::SMALL, tools::GREEN);
     visual_->viz2()->trigger();
 
     // Calculate theoretical guarantees
-    double optimalLength = smoothedPath.length();
+    double optimalLength = smoothedPathPtr->length();
     double sparseLength = geometricSolution.length();
     double theoryLength = sparseCriteria_->getStretchFactor() * optimalLength + 4 * sparseCriteria_->getSparseDelta();
     double percentOfMaxAllows = sparseLength / theoryLength * 100.0;

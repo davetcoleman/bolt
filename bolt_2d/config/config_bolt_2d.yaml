@@ -73,15 +73,15 @@ sparse_criteria:
 
 # ====================================================
 sparse_graph:
-  save_enabled: false
+  save_enabled: true
   super_debug: false # run more checks and tests that slow down speed
   obstacle_clearance: 1
   verbose:
     add: false # debug when addVertex() and addEdge() are called
     search: false
   visualize:
-    spars_graph: true
-    spars_graph_speed: 0.01 # if 0, does not animate but only single image draw
+    spars_graph: false
+    spars_graph_speed: 0.0001 # if 0, does not animate but only single image draw
     database_vertices: true
     database_edges: true
     database_coverage: false # the grey circles around vertices representing sparse delta

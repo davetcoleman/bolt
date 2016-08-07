@@ -731,7 +731,7 @@ public:
   void displayWaitingState(bool waiting)
   {
     if (waiting)
-      publishViewFinderFrame(rvt::LARGE);
+      publishViewFinderFrame(rvt::XXLARGE);
     else
       publishViewFinderFrame(rvt::MEDIUM);
 

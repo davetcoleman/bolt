@@ -145,13 +145,6 @@ public:
    */
   // bool publishStates(std::vector<const ompl::base::State*> states);
 
-  /**
-   * \brief Display result path from a solver
-   * \return true on success
-   */
-  bool publishPath(const og::PathGeometric& path, const rviz_visual_tools::colors& color, const double thickness = 0.4,
-                   const std::string& ns = "result_path");
-
   bool publish2DPath(const og::PathGeometric& path, const rviz_visual_tools::colors& color,
                      const double thickness = 0.4, const std::string& ns = "result_path");
 

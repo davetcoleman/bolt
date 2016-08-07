@@ -222,12 +222,20 @@ void TwoDimVizWindow::path(ompl::geometric::PathGeometric* path, ompl::tools::Vi
 
   switch (type)
   {
-    case ompl::tools::SMALL:  // Basic black line with vertiices
+    case ompl::tools::SMALL:  // Basic line with vertiices
       publish2DPath(geometric_path, visuals_->intToRvizColor(color), min_edge_radius_);
       publishSpheres(geometric_path, visuals_->intToRvizColor(color), rvt::SMALL);
       break;
-    case ompl::tools::ROBOT:
-      // Playback motion for real robot, which is not applicable for this space
+    case ompl::tools::MEDIUM:  // Basic line with vertiices
+      publish2DPath(geometric_path, visuals_->intToRvizColor(color), (max_edge_radius_ - min_edge_radius_) / 2.0);
+      publishSpheres(geometric_path, visuals_->intToRvizColor(color), rvt::SMALL);
+      break;
+    case ompl::tools::LARGE:  // Basic line with vertiices
+      publish2DPath(geometric_path, visuals_->intToRvizColor(color), max_edge_radius_);
+      publishSpheres(geometric_path, visuals_->intToRvizColor(color), rvt::SMALL);
+      break;
+    case ompl::tools::ROBOT:  // Playback motion for real robot
+      // do nothing in this space
       break;
     default:
       ROS_ERROR_STREAM_NAMED(name_, "Invalid vizPath type value " << type);
@@ -375,13 +383,6 @@ bool TwoDimVizWindow::publishSpheres(const og::PathGeometric& path, const rvt::c
     points.push_back(visuals_->convertPoint(stateToPoint(path.getState(i))));
 
   return visuals_->publishSpheres(points, color, scale, ns);
-}
-
-// Deprecated
-bool TwoDimVizWindow::publishPath(const og::PathGeometric& path, const rvt::colors& color, const double thickness,
-                               const std::string& ns)
-{
-  return publish2DPath(path, color, thickness, ns);
 }
 
 bool TwoDimVizWindow::publish2DPath(const og::PathGeometric& path, const rvt::colors& color, const double thickness,

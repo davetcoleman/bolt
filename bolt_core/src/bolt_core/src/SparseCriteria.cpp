@@ -1478,7 +1478,7 @@ bool SparseCriteria::checkRemoveCloseVertices(SparseVertex v1, std::size_t inden
 
   // Only display database if enabled
   if (sg_->visualizeSparseGraph_ && sg_->visualizeSparseGraphSpeed_ > std::numeric_limits<double>::epsilon())
-    sg_->displayDatabase(true, indent + 2);
+    sg_->displayDatabase(true, true, 1, indent);
 
   // if (visualizeRemoveCloseVertices_)
   // visual_->waitForUserFeedback("finished moving vertex");
