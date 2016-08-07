@@ -605,7 +605,7 @@ bool SparseGraph::smoothQualityPath(geometric::PathGeometric *path, double clear
   // Set the motion validator to use clearance, this way isValid() checks clearance before confirming valid
   base::DiscreteMotionValidator *dmv =
       dynamic_cast<base::DiscreteMotionValidator *>(si_->getMotionValidatorNonConst().get());
-  dmv->setRequiredStateClearance(clearance);
+  //dmv->setRequiredStateClearance(clearance);
 
   for (std::size_t i = 0; i < 3; ++i)
   {
@@ -642,7 +642,7 @@ bool SparseGraph::smoothQualityPath(geometric::PathGeometric *path, double clear
   }
 
   // Turn off the clearance requirement
-  dmv->setRequiredStateClearance(0.0);
+  //dmv->setRequiredStateClearance(0.0);
 
   pathSimplifier_->reduceVertices(*path, 1000, path->getStateCount() * 4);  //, /*rangeRatio*/ 0.33, indent);
   // std::cout << "path->getStateCount(): " << path->getStateCount() << std::endl;
@@ -706,19 +706,21 @@ bool SparseGraph::smoothMax(geometric::PathGeometric* path, std::size_t indent)
   // Set the motion validator to use clearance, this way isValid() checks clearance before confirming valid
   base::DiscreteMotionValidator *dmv =
       dynamic_cast<base::DiscreteMotionValidator *>(si_->getMotionValidatorNonConst().get());
-  dmv->setRequiredStateClearance(obstacleClearance_);
+  //dmv->setRequiredStateClearance(obstacleClearance_);
 
-  for (std::size_t i = 0; i < 3; ++i)
+  double prevDistance = std::numeric_limits<double>::infinity();
+  std::size_t origStateCount = path->getStateCount();
+  std::size_t loops = 0;
+  // while path is improving and the state count hasn't gotten larger than 5x its original size
+  while (prevDistance > path->length() && path->getStateCount() < 5 * origStateCount && loops++ < 5)
   {
-    // ------------------------------------------------------------------
-    // try a randomized step of connecting vertices
+    prevDistance = path->length();
 
-    bool tryMore = true;
-    std::size_t times = 0;
-    while (tryMore && ++times <= 5)
+    // ------------------------------------------------------------------
+    // interpolate, but only once
+    if (loops == 1)
     {
-      tryMore =
-          pathSimplifier_->reduceVertices(*path, 1000, path->getStateCount() * 4);  // /*rangeRatio*/ 0.33, indent);
+      path->interpolate();
 
       if (visualizeQualityPathSimp_)
       {
@@ -726,9 +728,31 @@ bool SparseGraph::smoothMax(geometric::PathGeometric* path, std::size_t indent)
         visual_->viz3()->path(path, tools::MEDIUM, tools::ORANGE);
         visual_->viz3()->trigger();
         usleep(0.1 * 1000000);
-        BOLT_DEBUG(indent, true, "path->length() " << path->length());
-        visual_->waitForUserFeedback("reduce vertices");
+        //BOLT_DEBUG(indent, true, "path->length() " << path->length() << " states: " << path->getStateCount());
+        //visual_->waitForUserFeedback("interpolate");
       }
+    }
+
+    // ------------------------------------------------------------------
+    // try a randomized step of connecting vertices
+
+    bool tryMore = true;
+    std::size_t times = 0;
+    //while (tryMore && ++times <= 5)
+    while (tryMore)
+    {
+      tryMore =
+        pathSimplifier_->reduceVertices(*path, 1000, path->getStateCount() * 4);  // /*rangeRatio*/ 0.33, indent);
+
+      if (visualizeQualityPathSimp_)
+      {
+        visual_->viz4()->deleteAllMarkers();
+        visual_->viz4()->path(path, tools::MEDIUM, tools::ORANGE);
+        visual_->viz4()->trigger();
+        usleep(0.01 * 1000000);
+        //visual_->waitForUserFeedback("reduce vertices");
+      }
+      //BOLT_DEBUG(indent, true, "reduce vert: length: " << path->length() << " states: " << path->getStateCount());
 
       if (path->getStateCount() < 3) // Can't smooth if only two points
         break;
@@ -736,60 +760,78 @@ bool SparseGraph::smoothMax(geometric::PathGeometric* path, std::size_t indent)
 
     // ------------------------------------------------------------------
     // try to collapse close-by vertices
-    pathSimplifier_->collapseCloseVertices(*path);
+    // pathSimplifier_->collapseCloseVertices(*path);
 
-    if (visualizeQualityPathSimp_)
-    {
-      visual_->viz4()->deleteAllMarkers();
-      visual_->viz4()->path(path, tools::MEDIUM, tools::ORANGE);
-      visual_->viz4()->trigger();
-      usleep(0.1 * 1000000);
-      BOLT_DEBUG(indent, true, "path->length() " << path->length());
-      visual_->waitForUserFeedback("collapseCloseVertices");
-    }
+    // if (visualizeQualityPathSimp_)
+    // {
+    //   visual_->viz4()->deleteAllMarkers();
+    //   visual_->viz4()->path(path, tools::MEDIUM, tools::ORANGE);
+    //   visual_->viz4()->trigger();
+    //   usleep(0.01 * 1000000);
+    //   BOLT_DEBUG(indent, true, "length: " << path->length() << " states: " << path->getStateCount());
+    //   //visual_->waitForUserFeedback("collapseCloseVertices");
+    // }
 
-    if (path->getStateCount() < 3) // Can't smooth if only two points
-      break;
+    // if (path->getStateCount() < 3) // Can't smooth if only two points
+    //   break;
+
+    // // ------------------------------------------------------------------
+    // // split path segments, not just vertices
+    // pathSimplifier_->shortcutPath(*path);
+
+    // if (visualizeQualityPathSimp_)
+    // {
+    //   visual_->viz5()->deleteAllMarkers();
+    //   visual_->viz5()->path(path, tools::MEDIUM, tools::ORANGE);
+    //   visual_->viz5()->trigger();
+    //   usleep(0.01 * 1000000);
+    //   BOLT_DEBUG(indent, true, "length: " << path->length() << " states: " << path->getStateCount());
+    //   //visual_->waitForUserFeedback("shortcutPath");
+    // }
 
     // ------------------------------------------------------------------
-    // split path segments, not just vertices
-    pathSimplifier_->shortcutPath(*path);
+    // smooth the path with BSpline interpolation
+    pathSimplifier_->smoothBSpline(*path, 5, path->length() / 100.0);
 
     if (visualizeQualityPathSimp_)
     {
       visual_->viz5()->deleteAllMarkers();
       visual_->viz5()->path(path, tools::MEDIUM, tools::ORANGE);
       visual_->viz5()->trigger();
-      usleep(0.1 * 1000000);
-      BOLT_DEBUG(indent, true, "path->length() " << path->length());
-      visual_->waitForUserFeedback("shortcutPath");
+      usleep(0.01 * 1000000);
+
+      //visual_->waitForUserFeedback("smoothBSpline");
     }
+    //BOLT_DEBUG(indent, true, "smoothBSpline length: " << path->length() << " states: " << path->getStateCount());
 
-    // ------------------------------------------------------------------
-    // smooth the path with BSpline interpolation
-    pathSimplifier_->smoothBSpline(*path, 3, path->length() / 100.0);
-
-    if (visualizeQualityPathSimp_)
+    // Reduce vertices yet again
+    tryMore = true;
+    times = 0;
+    //while (tryMore && ++times <= 5 && path->getStateCount() > 2)
+    while (tryMore && path->getStateCount() > 2)
     {
-      visual_->viz6()->deleteAllMarkers();
-      visual_->viz6()->path(path, tools::MEDIUM, tools::ORANGE);
-      visual_->viz6()->trigger();
-      usleep(0.1 * 1000000);
-      BOLT_DEBUG(indent, true, "path->length() " << path->length());
-      visual_->waitForUserFeedback("smoothBSpline");
+      tryMore =
+        pathSimplifier_->reduceVertices(*path, 1000, path->getStateCount() * 4);  // /*rangeRatio*/ 0.33, indent);
+
+      if (visualizeQualityPathSimp_)
+      {
+        visual_->viz3()->deleteAllMarkers();
+        visual_->viz3()->path(path, tools::MEDIUM, tools::ORANGE);
+        visual_->viz3()->trigger();
+        usleep(0.01 * 1000000);
+
+        //visual_->waitForUserFeedback("reduce vertices");
+      }
+      //BOLT_DEBUG(indent, true, "reduce vert length: " << path->length() << " states: " << path->getStateCount());
+
+      if (path->getStateCount() < 3) // Can't smooth if only two points
+        break;
     }
   }
 
-  std::pair<bool, bool> repairResult = path->checkAndRepair(100);
+  BOLT_ASSERT(si_->equalStates(path->getState(0), startCopy), "Start state is no longer same");
+  BOLT_ASSERT(si_->equalStates(path->getState(path->getStateCount() - 1), goalCopy), "Goal state is no longer same");
 
-  BOLT_ASSERT(si_->equalStates(path->getState(0), startCopy), "Start state is no longer the same");
-  BOLT_ASSERT(si_->equalStates(path->getState(path->getStateCount() - 1), goalCopy), "Goal state is no longer the "
-                                                                                     "same");
-
-  if (!repairResult.second)  // Repairing was not successful
-  {
-    BOLT_ASSERT(true, "Check and repair failed");
-  }
   return true;
 }
 

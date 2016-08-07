@@ -661,7 +661,7 @@ public:
       // Calibrate the color scale for visualization
       const bool invert_colors = true;
       viz->setMinMaxEdgeCost(0, 110, invert_colors);
-      viz->setMinMaxEdgeRadius(0.1, 0.6);
+      viz->setMinMaxEdgeRadius(0.15, 0.6);
       viz->setMinMaxStateRadius(0.2, 1.4);
 
       // Copy pointers over

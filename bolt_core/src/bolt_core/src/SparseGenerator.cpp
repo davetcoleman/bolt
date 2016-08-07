@@ -545,6 +545,9 @@ bool SparseGenerator::checkSparseGraphOptimality(std::size_t indent)
   // For each test
   for (std::size_t i = 0; i < numTests; ++i)
   {
+    if (visual_->viz1()->shutdownRequested())
+      break;
+
     // Choose random start and goal state that has a nearest neighbor
     std::vector<CandidateData> endPoints(2);
 
@@ -601,16 +604,20 @@ bool SparseGenerator::checkSparseGraphOptimality(std::size_t indent)
     visual_->viz2()->deleteAllMarkers();
     visual_->viz2()->path(&geometricSolution, tools::SMALL, tools::RED);
     visual_->viz2()->trigger();
+    usleep(0.001*1000000);
 
     // Smooth path to find the "optimal" path
     geometric::PathGeometric smoothedPath = geometricSolution;
     geometric::PathGeometric* smoothedPathPtr = &smoothedPath;
     geometric::PathSimplifier pathSimplifier(si_);
     sg_->smoothMax(smoothedPathPtr, indent);
+    BOLT_DEBUG(indent, true, "Final path->length() " << smoothedPathPtr->length());
+    BOLT_DEBUG(indent, true, "Final states: " << smoothedPathPtr->getStateCount());
 
-    visual_->viz2()->deleteAllMarkers();
-    visual_->viz2()->path(smoothedPathPtr, tools::SMALL, tools::GREEN);
+    //visual_->viz2()->deleteAllMarkers();
+    visual_->viz2()->path(smoothedPathPtr, tools::MEDIUM, tools::GREEN);
     visual_->viz2()->trigger();
+    usleep(0.001*1000000);
 
     // Calculate theoretical guarantees
     double optimalLength = smoothedPathPtr->length();
@@ -635,9 +642,6 @@ bool SparseGenerator::checkSparseGraphOptimality(std::size_t indent)
       BOLT_GREEN_DEBUG(indent + 2, 1, "Asymptotic optimality guarantee maintained");
     BOLT_WARN(indent + 2, 1, "Percent of max allowed:  " << percentOfMaxAllows << " %");
     BOLT_DEBUG(indent, 1, "-----------------------------------------");
-
-    usleep(0.01 * 1000000);
-    visual_->waitForUserFeedback("next");
   }
 
   // Summary

@@ -228,11 +228,11 @@ void TwoDimVizWindow::path(ompl::geometric::PathGeometric* path, ompl::tools::Vi
       break;
     case ompl::tools::MEDIUM:  // Basic line with vertiices
       publish2DPath(geometric_path, visuals_->intToRvizColor(color), (max_edge_radius_ - min_edge_radius_) / 2.0);
-      publishSpheres(geometric_path, visuals_->intToRvizColor(color), rvt::SMALL);
+      publishSpheres(geometric_path, visuals_->intToRvizColor(color), rvt::MEDIUM);
       break;
     case ompl::tools::LARGE:  // Basic line with vertiices
       publish2DPath(geometric_path, visuals_->intToRvizColor(color), max_edge_radius_);
-      publishSpheres(geometric_path, visuals_->intToRvizColor(color), rvt::SMALL);
+      publishSpheres(geometric_path, visuals_->intToRvizColor(color), rvt::LARGE);
       break;
     case ompl::tools::ROBOT:  // Playback motion for real robot
       // do nothing in this space
