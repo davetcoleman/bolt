@@ -26,6 +26,7 @@ RUN apt-get update && \
       less \
       emacs \
       bash-completion \
+      valgrind \
       && \
     rosdep install -y --from-paths . --ignore-src --rosdistro ${ROS_DISTRO} --as-root=apt:false && \
     apt-get remove -y ros-${ROS_DISTRO}-ompl && \

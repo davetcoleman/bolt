@@ -8,6 +8,8 @@ Status:
 
  * [![Travis Build Status](https://travis-ci.org/davetcoleman/bolt.svg)](https://travis-ci.org/davetcoleman/bolt) Travis - Continuous Integration
 
+![](bolt_hilgendorf/resources/screenshot.png)
+
 ### Build from Source
 
 Currently tested for ROS Indigo. To build this package, create a [catkin workspace](http://wiki.ros.org/catkin/Tutorials/create_a_workspace).
