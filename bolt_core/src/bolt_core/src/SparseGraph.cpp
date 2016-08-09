@@ -121,6 +121,9 @@ void SparseGraph::clear()
   freeMemory();
   clearStatistics();
   resetDisjointSets();
+
+  // Add search states back
+  initializeQueryState();
 }
 
 void SparseGraph::freeMemory()

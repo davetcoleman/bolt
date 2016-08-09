@@ -127,6 +127,16 @@ public:
     // Error check
     BOLT_ASSERT(dimensions_ >= 2, "Must have at least 2 dimensions");
 
+    // Load potential maps
+    maps_.push_back("/resources/hard0.ppm");
+    maps_.push_back("/resources/hard1.ppm");
+    maps_.push_back("/resources/hard2.ppm");
+    maps_.push_back("/resources/hard3.ppm");
+    maps_.push_back("/resources/hard4.ppm");
+    maps_.push_back("/resources/blank.ppm");
+    maps_.push_back("/resources/sparse.ppm");
+    maps_.push_back("/resources/narrow.ppm");
+
     // Seed random
     if (seed_random_)
       srand(time(NULL));
@@ -322,28 +332,7 @@ public:
       switch (planner_name_)
       {
         case BOLT:
-          if (create_spars_)
-          {
-            // Ensure it is created at least once
-            if (create_spars_count_ == 0)
-              create_spars_count_ = 1;
-
-            for (std::size_t i = 0; i < create_spars_count_; ++i)
-            {
-              if (create_spars_count_ > 1)
-                BOLT_DEBUG(indent, true, "Creating spars graph, run " << i+1 << " out of " << create_spars_count_);
-
-              // Clear spars graph
-              if (i > 0)
-              {
-                bolt_->clear();
-              }
-
-              bolt_->getSparseGenerator()->createSPARS();
-            }
-          }
-          else
-            ROS_WARN_STREAM_NAMED(name_, "Creating sparse graph disabled, but no file loaded");
+          createBolt();
           break;
         case THUNDER:
           break;
@@ -406,6 +395,48 @@ public:
     {
       bolt_->saveIfChanged();
     }
+  }
+
+  /** \brief Create spars graph repeatidly */
+  void createBolt()
+  {
+    if (create_spars_)
+    {
+      // Ensure it is created at least once
+      if (create_spars_count_ == 0)
+        create_spars_count_ = 1;
+
+      for (std::size_t i = 0; i < create_spars_count_; ++i)
+      {
+        if (create_spars_count_ > 1)
+          BOLT_DEBUG(indent, true, "Creating spars graph, run " << i+1 << " out of " << create_spars_count_);
+
+        // Clear spars graph
+        if (i > 0)
+        {
+          bolt_->clear();
+          deleteAllMarkers(true);
+        }
+
+        // Increment up the list of possible images
+        if (true)
+        {
+          viz_bg_->deleteAllMarkers();
+          viz_bg_->trigger();
+          image_id_ = i % maps_.size();
+          std::cout << "image_id_: " << image_id_ << std::endl;
+          loadCollisionChecker();
+        }
+
+        // Create spars
+        bolt_->getSparseGenerator()->createSPARS();
+
+        if (!ros::ok())
+          break;
+      }
+    }
+    else
+      ROS_WARN_STREAM_NAMED(name_, "Creating sparse graph disabled, but no file loaded");
   }
 
   /** \brief Plan repeatidly */
@@ -551,38 +582,13 @@ public:
       ROS_ERROR("Unable to get OMPL Visual Tools package path ");
       return;
     }
-    //   image_num = bolt_2d::OmplVisualTools::iRand(0, 4);
 
-    switch (image_id_)
+    if (image_id_ > maps_.size() - 1)
     {
-      case 0:
-        image_path.append("/resources/hard0.ppm");
-        break;
-      case 1:
-        image_path.append("/resources/hard1.ppm");
-        break;
-      case 2:
-        image_path.append("/resources/hard2.ppm");
-        break;
-      case 3:
-        image_path.append("/resources/hard3.ppm");
-        break;
-      case 4:
-        image_path.append("/resources/hard4.ppm");
-        break;
-      case 5:
-        image_path.append("/resources/blank.ppm");
-        break;
-      case 6:
-        image_path.append("/resources/sparse.ppm");
-        break;
-      case 7:
-        image_path.append("/resources/narrow.ppm");
-        break;
-      default:
-        ROS_ERROR_STREAM_NAMED("main", "Random has no case " << image_id_);
-        break;
+      ROS_ERROR_STREAM_NAMED("main", "No image map for ID " << image_id_);
+      exit(0);
     }
+    image_path.append(maps_[image_id_]);
 
     loadImage(image_path);
 
@@ -1361,6 +1367,7 @@ private:
 
   // The RGB image data
   ompl::PPM ppm_;
+  std::vector<std::string> maps_;
 
 };  // end of class
 

@@ -46,7 +46,7 @@
 - git:
     local-name: ompl
     uri: https://github.com/davetcoleman/ompl.git
-    version: bolt_w_spars2_hooks
+    version: bolt
 
 - git:
     local-name: moveit

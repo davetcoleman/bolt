@@ -271,8 +271,7 @@ bool SparseCriteria::checkAddCoverage(CandidateData &candidateD, std::size_t ind
 
 bool SparseCriteria::checkAddConnectivity(CandidateData &candidateD, std::size_t indent)
 {
-  BOLT_FUNC(indent, vCriteria_, "checkAddConnectivity() Does this node connect "
-                                "two disconnected components?");
+  BOLT_FUNC(indent, vCriteria_, "checkAddConnectivity() Does this node connect two disconnected components?");
 
   if (!useConnectivityCriteria_)
   {
@@ -289,32 +288,42 @@ bool SparseCriteria::checkAddConnectivity(CandidateData &candidateD, std::size_t
   }
 
   // Identify visibile nodes around our new state that are unconnected (in
-  // different connected components)
-  // and connect them
+  // different connected components) and connect them
   std::set<SparseVertex> statesInDiffConnectedComponents;
 
   // For each neighbor
-  for (std::size_t i = 0; i < candidateD.visibleNeighborhood_.size(); ++i)
+  for (const SparseVertex& v1 : candidateD.visibleNeighborhood_)
+    //for (std::size_t i = 0; i < candidateD.visibleNeighborhood_.size(); ++i)
   {
     // For each other neighbor
-    for (std::size_t j = i + 1; j < candidateD.visibleNeighborhood_.size(); ++j)
+    for (const SparseVertex& v2 : candidateD.visibleNeighborhood_)
+    //for (std::size_t j = i + 1; j < candidateD.visibleNeighborhood_.size(); ++j)
     {
       // If they are in different components
-      if (!sg_->sameComponent(candidateD.visibleNeighborhood_[i], candidateD.visibleNeighborhood_[j]))
+      if (!sg_->sameComponent(v1, v2))
       {
-        BOLT_DEBUG(indent, vCriteria_, "Different connected component: " << candidateD.visibleNeighborhood_[i] << ", "
-                                                                         << candidateD.visibleNeighborhood_[j]);
+        BOLT_DEBUG(indent, vCriteria_, "Different connected component: " << v1 << ", " << v2);
 
-        if (visualizeConnectivity_)
+        if (visualizeConnectivity_) // Debug
         {
-          visual_->viz2()->state(sg_->getState(candidateD.visibleNeighborhood_[i]), tools::MEDIUM, tools::BLUE, 0);
-          visual_->viz2()->state(sg_->getState(candidateD.visibleNeighborhood_[j]), tools::MEDIUM, tools::BLUE, 0);
+          visual_->viz2()->state(sg_->getState(v1), tools::MEDIUM, tools::BLUE, 0);
+          visual_->viz2()->state(sg_->getState(v2), tools::MEDIUM, tools::BLUE, 0);
           visual_->viz2()->trigger();
           usleep(0.001 * 1000000);
         }
 
-        statesInDiffConnectedComponents.insert(candidateD.visibleNeighborhood_[i]);
-        statesInDiffConnectedComponents.insert(candidateD.visibleNeighborhood_[j]);
+        BOLT_ASSERT(!sg_->hasEdge(v1, v2), "Edge exist but not in same component");
+
+        // Can they be connected directly?
+        if (si_->checkMotion(sg_->getState(v1), sg_->getState(v2)))
+        {
+          sg_->addEdge(v1, v2, eCONNECTIVITY, indent);
+          return true;
+        }
+
+        // Add to potential list
+        statesInDiffConnectedComponents.insert(v1);
+        statesInDiffConnectedComponents.insert(v2);
       }
     }
   }
@@ -365,15 +374,10 @@ bool SparseCriteria::checkAddConnectivity(CandidateData &candidateD, std::size_t
     // loop
     if (!sg_->sameComponent(*vertexIt, candidateD.newVertex_))
     {
+      visual_->waitForUserFeedback("adding edge for connectivty");
       // Connect
       sg_->addEdge(candidateD.newVertex_, *vertexIt, eCONNECTIVITY, indent + 4);
-    }
-    else
-    {
-      // This is not a big deal
-      // OMPL_WARN("Two states that where not prev in the same component were
-      // joined during the same for "
-      //"loop");
+      visual_->waitForUserFeedback("done");
     }
   }
 

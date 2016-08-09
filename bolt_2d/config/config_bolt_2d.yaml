@@ -8,7 +8,7 @@ bolt_2d:
   check_valid_vertices: false
   load_spars: false
   create_spars: true
-  create_spars_count: 2 # create the spars graph multiple times
+  create_spars_count: 100 # create the spars graph multiple times
   continue_spars: false # even if a file has been saved, randomly sample for more coverage
   run_problems: false
 
@@ -16,7 +16,7 @@ bolt_2d:
   planning_runs: 10
   problem_type: 0 # 0 - random, 1 - static, 2 - static within sphere
   problem_id: 0 # which start/goal pair to use, if problem_type is static
-  image_id: 7 # 0 - hard0, 4 - hard4, 5 - blank, 6 - sparse, 7 - narrow
+  image_id: 0 # 0 - hard0, 4 - hard4, 5 - blank, 6 - smiley (sparse), 7 - narrow
   post_processing_interval: 20 # how often (in runs) to adjust the graphs
   use_experience: true
   experience_planner: bolt
@@ -56,11 +56,11 @@ sparse_criteria:
   use_check_remove_close_vertices: true # Experimental feature that allows very closeby vertices to be merged with newly added ones
   use_clear_edges_near_vertex: true # When adding a quality vertex, remove nearby edges
   use_original_smoother: false # original is bad
-  use_connectivy_criteria: false # if true, discretization does not work
+  use_connectivy_criteria: true # if true, discretization does not work
   use_quality_criteria: true # 4th criteria
   use_smoothed_path_rejection: true
   verbose:
-    added_reason: true # debug criteria for adding vertices & edges
+    added_reason: false # debug criteria for adding vertices & edges
     criteria: false
     quality: false
     quality_max_spanner: false
@@ -84,10 +84,10 @@ sparse_graph:
     search: false
   visualize:
     spars_graph: true
-    spars_graph_speed: 0.01 # if 0, does not animate but only single image draw
+    spars_graph_speed: 0.00001 # if 0, does not animate but only single image draw
     database_vertices: true
     database_edges: true
-    database_coverage: true # the grey circles around vertices representing sparse delta
+    database_coverage: true # the grey squares around vertices representing sparse delta
     projection: false
     graph_after_loading: true
     quality_path_simp: false # show smoothing simplification
@@ -99,7 +99,7 @@ sparse_graph:
 # ====================================================
 vertex_discretizer:
   verbose:
-    verbose: true
+    verbose: false
     thread: false
   visualize:
     grid_generation: false

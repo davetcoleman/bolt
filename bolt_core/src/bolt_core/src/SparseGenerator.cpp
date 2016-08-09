@@ -577,7 +577,7 @@ bool SparseGenerator::checkSparseGraphOptimality(std::size_t indent)
     if (!sg_->astarSearch(start, goal, vertexPath, distance, indent))
     {
       BOLT_ERROR(indent, true, "No path found through graph");
-      visual_->waitForUserFeedback("no path");
+      exit(0);
       numFailedPlans++;
       continue;
     }
@@ -604,27 +604,30 @@ bool SparseGenerator::checkSparseGraphOptimality(std::size_t indent)
     // Calculate theoretical guarantees
     double optimalLength = smoothedPathPtr->length();
     double sparseLength = geometricSolution.length();
-    double theoryLength = sparseCriteria_->getStretchFactor() * optimalLength + 4 * sparseCriteria_->getSparseDelta();
+    double theoryLength = sparseCriteria_->getStretchFactor() * optimalLength + std::numeric_limits<double>::epsilon(); // + 4 * sparseCriteria_->getSparseDelta();
     double percentOfMaxAllows = sparseLength / theoryLength * 100.0;
 
-    BOLT_DEBUG(indent, vGuarantees_, "-----------------------------------------");
-    BOLT_DEBUG(indent, vGuarantees_, "Checking Asymptotic Optimality Guarantees");
-    BOLT_DEBUG(indent + 2, vGuarantees_, "Raw Path Length:         " << sparseLength);
-    BOLT_DEBUG(indent + 2, vGuarantees_, "Smoothed Path Length:    " << optimalLength);
-    BOLT_DEBUG(indent + 2, vGuarantees_, "Smoothed Path States:    " << smoothedPathPtr->getStateCount());
-    BOLT_DEBUG(indent + 2, vGuarantees_, "Theoretical Path Length: " << theoryLength);
-    BOLT_DEBUG(indent + 2, vGuarantees_, "Stretch Factor t:        " << sparseCriteria_->getStretchFactor());
-    BOLT_DEBUG(indent + 2, vGuarantees_, "Sparse Delta:            " << sparseCriteria_->getSparseDelta());
+    bool show = sparseLength >= theoryLength || vGuarantees_;
+
+    BOLT_DEBUG(indent, show, "-----------------------------------------");
+    BOLT_DEBUG(indent, show, "Checking Asymptotic Optimality Guarantees");
+    BOLT_DEBUG(indent + 2, show, "Raw Path Length:         " << sparseLength);
+    BOLT_DEBUG(indent + 2, show, "Smoothed Path Length:    " << optimalLength);
+    BOLT_DEBUG(indent + 2, show, "Smoothed Path States:    " << smoothedPathPtr->getStateCount());
+    BOLT_DEBUG(indent + 2, show, "Theoretical Path Length: " << theoryLength);
+    BOLT_DEBUG(indent + 2, show, "Stretch Factor t:        " << sparseCriteria_->getStretchFactor());
+    BOLT_DEBUG(indent + 2, show, "Sparse Delta:            " << sparseCriteria_->getSparseDelta());
 
     if (sparseLength >= theoryLength)
     {
       BOLT_ERROR(indent + 2, true, "Asymptotic optimality guarantee VIOLATED");
+      exit(0);
       return false;
     }
     else
-      BOLT_GREEN(indent + 2, vGuarantees_, "Asymptotic optimality guarantee maintained");
-    BOLT_WARN(indent + 2, vGuarantees_, "Percent of max allowed:  " << percentOfMaxAllows << " %");
-    BOLT_DEBUG(indent, vGuarantees_, "-----------------------------------------");
+      BOLT_GREEN(indent + 2, show, "Asymptotic optimality guarantee maintained");
+    BOLT_WARN(indent + 2, show, "Percent of max allowed:  " << percentOfMaxAllows << " %");
+    BOLT_DEBUG(indent, show, "-----------------------------------------");
   }
 
   // Summary
@@ -644,10 +647,10 @@ bool SparseGenerator::convertVertexPathToStatePath(std::vector<SparseVertex> &ve
   BOLT_ASSERT(!vertexPath.empty(), "Vertex path is empty");
 
   // Add original start if it is different than the first state
-  if (!si_->getStateSpace()->equalStates(actualStart, sg_->getState(vertexPath.back())))
-  {
-    geometricSolution.append(actualStart);
-  }
+  // if (!si_->getStateSpace()->equalStates(actualStart, sg_->getState(vertexPath.back())))
+  // {
+  //   geometricSolution.append(actualStart);
+  // }
 
   // Reverse the vertexPath and convert to state path
   for (std::size_t i = vertexPath.size(); i > 0; --i)
@@ -656,10 +659,10 @@ bool SparseGenerator::convertVertexPathToStatePath(std::vector<SparseVertex> &ve
   }
 
   // Add original goal if it is different than the last state
-  if (!si_->getStateSpace()->equalStates(actualGoal, sg_->getState(vertexPath.front())))
-  {
-    geometricSolution.append(actualGoal);
-  }
+  // if (!si_->getStateSpace()->equalStates(actualGoal, sg_->getState(vertexPath.front())))
+  // {
+  //   geometricSolution.append(actualGoal);
+  // }
 
   return true;
 }
