@@ -68,12 +68,9 @@ public:
   /** \brief Initialize sparse parameters */
   bool setup(std::size_t indent);
 
-  void resetStats()
-  {
-    numVerticesMoved_ = 0;
+  void clear();
 
-    // TODO: move addVertex stats in SparseGraph here
-  }
+  void resetStats();
 
   /**
    * \brief Run various checks/criteria to determine if to keep TaskVertex in sparse graph
@@ -90,6 +87,8 @@ public:
   bool checkAddInterface(CandidateData& candidateD, std::size_t indent);
   bool checkAddQuality(CandidateData& candidateD, std::size_t threadID, std::size_t indent);
   void visualizeCheckAddQuality(base::State* candidateState, SparseVertex candidateRep);
+
+  bool checkPathLength(SparseVertex v1, SparseVertex v2, std::size_t indent);
 
   /* ----------------------------------------------------------------------------------------*/
   // 4th Criteria
@@ -237,17 +236,11 @@ protected:
   /** \brief Number of sample points to use when trying to detect interfaces. */
   std::size_t nearSamplePoints_;
 
-  /** \brief Show what nodes are added on top of the regular SPARS graph */
-  bool visualizeOverlayNodes_ = false;
-
   /** \brief Cache the maximum extent for later re-use */
   double maxExtent_;
 
   /** \brief Granuality of the discretized graph */
   double discretization_;
-
-  /** \brief Distance to the nearest possible vertex in the grid, referred to as z */
-  double nearestDiscretizedV_;
 
   bool useFourthCriteria_;
 

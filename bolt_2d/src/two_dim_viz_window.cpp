@@ -102,8 +102,16 @@ void TwoDimVizWindow::state(const ompl::base::State* state, ot::VizSizes size, o
       break;
     case ompl::tools::VARIABLE_SIZE:
       // Visual tools has a scaling feature that will mess up the exact scaling we desire, so we out-smart it
-      extra_data /= visuals_->getGlobalScale();
-      visuals_->publishSphere(point, visuals_->intToRvizColor(color), extra_data * 2);
+      //extra_data /= visuals_->getGlobalScale();
+      //visuals_->publishSphere(point, visuals_->intToRvizColor(color), extra_data * 2);
+      {
+        extra_data = sqrt(2*pow(extra_data,2));
+        Eigen::Affine3d pose = Eigen::Affine3d::Identity();
+        pose.translation() = point;
+        pose = pose * Eigen::AngleAxisd(M_PI/4.0, Eigen::Vector3d::UnitZ());
+
+        visuals_->publishCuboid(pose, extra_data, extra_data, extra_data, visuals_->intToRvizColor(color));
+      }
       break;
     case ompl::tools::SCALE:
     {

@@ -34,6 +34,12 @@
 
 /* Author: Dave Coleman <dave@dav.ee>
    Desc:   Near-asypmotically optimal roadmap datastructure
+
+   Future Improvements:
+     - Consolidate vertex data into single struct so memory is closer together
+     - Store state as non-pointer so memory is closer together
+     - Clear InterfaceData if an edge is added
+     - When an interface is found, optimize the accuracy by attempting to bring the two vertices (q,q') closer together
 */
 
 #ifndef OMPL_TOOLS_BOLT_SPARSE_GRAPH_
@@ -42,7 +48,6 @@
 #include <ompl/base/StateSpace.h>
 #include <ompl/geometric/PathGeometric.h>
 #include <ompl/geometric/PathSimplifier.h>
-//#include <bolt_core/PathSimplifier.h>
 
 #include <ompl/base/SpaceInformation.h>
 #include <ompl/datastructures/NearestNeighbors.h>
@@ -145,6 +150,9 @@ public:
   {
     return nearestNeighborMutex_;
   }
+
+  /** \brief Reset the whole class */
+  void clear();
 
   /** \brief Free all the memory allocated by the database */
   void freeMemory();
@@ -308,6 +316,7 @@ public:
   void visualizeDisjointSets(SparseDisjointSetsMap& disjointSets);
   std::size_t checkConnectedComponents();
   bool sameComponent(SparseVertex v1, SparseVertex v2);
+  void resetDisjointSets();
 
   /* ---------------------------------------------------------------------------------
    * Add/remove vertices, edges, states
@@ -329,21 +338,46 @@ public:
   SparseEdge addEdge(SparseVertex v1, SparseVertex v2, EdgeType type, std::size_t indent);
 
   /** \brief Check graph for edge existence */
-  bool hasEdge(SparseVertex v1, SparseVertex v2);
+  inline bool hasEdge(SparseVertex v1, SparseVertex v2)
+  {
+    return boost::edge(v1, v2, g_).second;
+  }
 
   /** \brief Helper for choosing an edge's display color based on type of edge */
   VizColors edgeTypeToColor(EdgeType edgeType);
 
   /** \brief Get the state of a vertex used for querying - i.e. vertices 0-11 for 12 thread system */
-  base::State*& getQueryStateNonConst(std::size_t threadID);
-  SparseVertex getQueryVertices(std::size_t threadID);
+  inline base::State*& getQueryStateNonConst(std::size_t threadID)
+  {
+    BOLT_ASSERT(threadID < queryVertices_.size(), "Attempted to request state of regular vertex using query "
+                "function");
+    return queryStates_[threadID];
+  }
+
+  inline SparseVertex getQueryVertices(std::size_t threadID)
+  {
+    BOLT_ASSERT(threadID < queryVertices_.size(), "Attempted to request vertex beyond threadID count");
+    return queryVertices_[threadID];
+  }
 
   /** \brief Shortcut function for getting the state of a vertex */
-  base::State*& getStateNonConst(SparseVertex v);
-  const base::State* getState(SparseVertex v) const;
+  inline base::State*& getStateNonConst(SparseVertex v)
+  {
+    BOLT_ASSERT(v >= queryVertices_.size(), "Attempted to request state of query vertex using wrong function");
+    return vertexStateProperty_[v];
+  }
+
+  inline const base::State *getState(SparseVertex v) const
+  {
+    BOLT_ASSERT(v >= queryVertices_.size(), "Attempted to request state of query vertex using wrong function");
+    return vertexStateProperty_[v];
+  }
 
   /** \brief Determine if a vertex has been deleted (but not fully removed yet) */
-  bool stateDeleted(SparseVertex v) const;
+  inline bool stateDeleted(SparseVertex v) const
+  {
+    return vertexStateProperty_[v] == nullptr;
+  }
 
   /** \brief Used for creating a voronoi diagram */
   SparseVertex getSparseRepresentative(base::State* state);
@@ -484,8 +518,6 @@ protected:
   // Multi-threading modifying graph
   std::mutex nearestNeighborMutex_;
   std::mutex modifyGraphMutex_;
-  time::point lastSampledModTime_;  // timestamp of the last graph modification - any sample taken before that is
-                                    // invalid
 
   /** \brief Instance of random number generator */
   RNG rng_;

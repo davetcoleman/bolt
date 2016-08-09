@@ -116,6 +116,13 @@ SparseGraph::~SparseGraph()
   freeMemory();
 }
 
+void SparseGraph::clear()
+{
+  freeMemory();
+  clearStatistics();
+  resetDisjointSets();
+}
+
 void SparseGraph::freeMemory()
 {
   foreach (SparseVertex v, boost::vertices(g_))
@@ -128,6 +135,8 @@ void SparseGraph::freeMemory()
 
   if (nn_)
     nn_->clear();
+
+  hasUnsavedChanges_ = false;
 }
 
 bool SparseGraph::setup()
@@ -149,6 +158,8 @@ void SparseGraph::clearStatistics()
   numSamplesAddedForConnectivity_ = 0;
   numSamplesAddedForInterface_ = 0;
   numSamplesAddedForQuality_ = 0;
+  numNodesOpened_ = 0;
+  numNodesClosed_ = 0;
 }
 
 void SparseGraph::initializeQueryState()
@@ -307,59 +318,73 @@ bool SparseGraph::astarSearch(const SparseVertex start, const SparseVertex goal,
   }
   catch (FoundGoalException &)
   {
-    distance = vertexDistances[goal];
-
-    // the custom exception from SparsestarVisitor
-    BOLT_DEBUG(indent, vSearch_, "AStar found solution. Distance to goal: " << vertexDistances[goal]);
-    BOLT_DEBUG(indent, vSearch_, "Number nodes opened: " << numNodesOpened_
-                                                         << ", Number nodes closed: " << numNodesClosed_);
-
-    if (isinf(vertexDistances[goal]))  // TODO(davetcoleman): test that this works
-    {
-      throw Exception(name_, "Distance to goal is infinity");
-      foundGoal = false;
-    }
-    else
-    {
-      // Only clear the vertexPath after we know we have a new solution, otherwise it might have a good
-      // previous one
-      vertexPath.clear();  // remove any old solutions
-
-      // Trace back the shortest path in reverse and only save the states
-      SparseVertex v;
-      for (v = goal; v != vertexPredecessors[v]; v = vertexPredecessors[v])
-      {
-        vertexPath.push_back(v);
-      }
-
-      // Add the start state to the path, unless this path is just one vertex long and the start==goal
-      if (v != goal)
-      {
-        vertexPath.push_back(v);
-      }
-
-      BOLT_ASSERT(vertexPath.size(), "Vertex path is empty! " << vertexPath.size());
-
-      if (!si_->getStateSpace()->equalStates(getState(vertexPath.back()), getState(start)))
-      {
-        BOLT_ERROR(indent, true, "Start states are not the same");
-        // Debug
-        for (auto v2 : vertexPath)
-          si_->printState(getState(v2));
-      }
-
-      // Ensure start and goal states are included in path
-      BOLT_ASSERT(si_->getStateSpace()->equalStates(getState(vertexPath.back()), getState(start)), "Start states are "
-                                                                                                   "not the same");
-      BOLT_ASSERT(si_->getStateSpace()->equalStates(getState(vertexPath.front()), getState(goal)), "Goal states are "
-                                                                                                   "not the same");
-
-      foundGoal = true;
-    }
+    foundGoal = true;
   }
 
+  // Search failed
   if (!foundGoal)
+  {
     BOLT_WARN(indent, vSearch_, "Did not find goal");
+
+    // Unload
+    delete[] vertexPredecessors;
+    delete[] vertexDistances;
+
+    // No solution found from start to goal
+    return false;
+  }
+
+  distance = vertexDistances[goal];
+
+  // the custom exception from SparsestarVisitor
+  BOLT_DEBUG(indent, vSearch_, "AStar found solution. Distance to goal: " << vertexDistances[goal]);
+  BOLT_DEBUG(indent, vSearch_, "Number nodes opened: " << numNodesOpened_
+             << ", Number nodes closed: " << numNodesClosed_);
+
+  if (isinf(vertexDistances[goal]))  // TODO(davetcoleman): test that this works
+  {
+    throw Exception(name_, "Distance to goal is infinity");
+    // Unload
+    delete[] vertexPredecessors;
+    delete[] vertexDistances;
+
+    return false;
+  }
+
+  // Only clear the vertexPath after we know we have a new solution, otherwise it might have a good
+  // previous one
+  vertexPath.clear();  // remove any old solutions
+
+  // Trace back the shortest path in reverse and only save the states
+  SparseVertex v;
+  for (v = goal; v != vertexPredecessors[v]; v = vertexPredecessors[v])
+  {
+    vertexPath.push_back(v);
+  }
+
+  // Add the start state to the path, unless this path is just one vertex long and the start==goal
+  if (v != goal)
+  {
+    vertexPath.push_back(v);
+  }
+
+  BOLT_ASSERT(vertexPath.size(), "Vertex path is empty! " << vertexPath.size());
+
+  // TODO: remove to speed up
+  if (!si_->getStateSpace()->equalStates(getState(vertexPath.back()), getState(start)))
+  {
+    BOLT_ERROR(indent, true, "Start states are not the same");
+    // Debug
+    for (auto v2 : vertexPath)
+      si_->printState(getState(v2));
+  }
+
+  // Ensure start and goal states are included in path
+  BOLT_ASSERT(si_->getStateSpace()->equalStates(getState(vertexPath.back()), getState(start)), "Start states are "
+              "not the same");
+  BOLT_ASSERT(si_->getStateSpace()->equalStates(getState(vertexPath.front()), getState(goal)), "Goal states are "
+              "not the same");
+  BOLT_ASSERT(vertexPath.size() >= 2, "Vertex path size is too small");
 
   // Show all predecessors
   if (visualizeAstar_)
@@ -381,8 +406,6 @@ bool SparseGraph::astarSearch(const SparseVertex start, const SparseVertex goal,
   // Unload
   delete[] vertexPredecessors;
   delete[] vertexDistances;
-
-  BOLT_ASSERT(vertexPath.size() >= 2, "Vertex path size is too small");
 
   // No solution found from start to goal
   return foundGoal;
@@ -507,8 +530,8 @@ double SparseGraph::distanceFunction(SparseVertex a, SparseVertex b) const
   // Error check
   if (superDebug_)
   {
-    assert(getState(a) != NULL);
-    assert(getState(b) != NULL);
+    assert(!stateDeleted(a));
+    assert(!stateDeleted(b));
   }
 
   return si_->distance(getState(a), getState(b));
@@ -1006,6 +1029,12 @@ bool SparseGraph::sameComponent(SparseVertex v1, SparseVertex v2)
   return boost::same_component(v1, v2, disjointSets_);
 }
 
+void SparseGraph::resetDisjointSets()
+{
+  disjointSets_ =
+    SparseDisjointSetType(boost::get(boost::vertex_rank, g_), boost::get(boost::vertex_predecessor, g_));
+}
+
 SparseVertex SparseGraph::addVertex(base::State *state, const VertexType &type, std::size_t indent)
 {
   // Create vertex
@@ -1113,7 +1142,7 @@ void SparseGraph::removeVertex(SparseVertex v, std::size_t indent)
 
   // Delete state
   si_->freeState(vertexStateProperty_[v]);
-  vertexStateProperty_[v] = NULL;
+  vertexStateProperty_[v] = nullptr;
 
   // TODO: disjointSets is now inaccurate
   // Our checkAddConnectivity() criteria is broken
@@ -1145,7 +1174,7 @@ void SparseGraph::removeDeletedVertices(std::size_t indent)
       continue;
     }
 
-    if (getState(*v) == NULL)  // Found vertex to delete
+    if (stateDeleted(*v))  // Found vertex to delete
     {
       BOLT_DEBUG(indent, verbose, "Removing SparseVertex " << *v << " state: " << getState(*v));
 
@@ -1172,8 +1201,7 @@ void SparseGraph::removeDeletedVertices(std::size_t indent)
 
   // Reset disjoint sets
   if (sparseCriteria_->useConnectivityCriteria_)
-    disjointSets_ =
-        SparseDisjointSetType(boost::get(boost::vertex_rank, g_), boost::get(boost::vertex_predecessor, g_));
+    resetDisjointSets();
 
   // Reinsert vertices into nearest neighbor
   foreach (SparseVertex v, boost::vertices(g_))
@@ -1279,11 +1307,6 @@ SparseEdge SparseGraph::addEdge(SparseVertex v1, SparseVertex v2, EdgeType type,
   return e;
 }
 
-bool SparseGraph::hasEdge(SparseVertex v1, SparseVertex v2)
-{
-  return boost::edge(v1, v2, g_).second;
-}
-
 VizColors SparseGraph::edgeTypeToColor(EdgeType edgeType)
 {
   switch (edgeType)
@@ -1307,36 +1330,6 @@ VizColors SparseGraph::edgeTypeToColor(EdgeType edgeType)
       throw Exception(name_, "Unknown edge type");
   }
   return ORANGE;  // dummy return value
-}
-
-base::State *&SparseGraph::getQueryStateNonConst(std::size_t threadID)
-{
-  BOLT_ASSERT(threadID < queryVertices_.size(), "Attempted to request state of regular vertex using query "
-                                                "function");
-  return queryStates_[threadID];
-}
-
-SparseVertex SparseGraph::getQueryVertices(std::size_t threadID)
-{
-  BOLT_ASSERT(threadID < queryVertices_.size(), "Attempted to request vertex beyond threadID count");
-  return queryVertices_[threadID];
-}
-
-base::State *&SparseGraph::getStateNonConst(SparseVertex v)
-{
-  BOLT_ASSERT(v >= queryVertices_.size(), "Attempted to request state of query vertex using wrong function");
-  return vertexStateProperty_[v];
-}
-
-const base::State *SparseGraph::getState(SparseVertex v) const
-{
-  BOLT_ASSERT(v >= queryVertices_.size(), "Attempted to request state of query vertex using wrong function");
-  return vertexStateProperty_[v];
-}
-
-bool SparseGraph::stateDeleted(SparseVertex v) const
-{
-  return vertexStateProperty_[v] == NULL;
 }
 
 SparseVertex SparseGraph::getSparseRepresentative(base::State *state)
@@ -1523,7 +1516,7 @@ tools::VizColors SparseGraph::vertexTypeToColor(VertexType type)
       return tools::PINK;
       break;
     case CARTESIAN:
-      return tools::PURPLE;
+      return tools::BROWN;
       break;
     case DISCRETIZED:
       return tools::CYAN;

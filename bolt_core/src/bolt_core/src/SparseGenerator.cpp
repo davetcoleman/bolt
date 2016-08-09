@@ -74,6 +74,17 @@ SparseGenerator::~SparseGenerator(void)
   clearanceSampler_.reset();
 }
 
+void SparseGenerator::clear()
+{
+  numRandSamplesAdded_ = 0;
+  numConsecutiveFailures_ = 0;
+  maxConsecutiveFailures_ = 0;
+  maxPercentComplete_ = 0;
+
+  samplingQueue_->clear();
+  candidateQueue_->clear();
+}
+
 bool SparseGenerator::setup(std::size_t indent)
 {
   // Load minimum clearance state sampler
@@ -130,8 +141,8 @@ void SparseGenerator::createSPARS()
   if (useRandomSamples_)
   {
     BOLT_INFO(indent, true, "Adding random samples states");
-    // addRandomSamplesOneThread(indent);
-    addRandomSamplesThreaded(indent);
+    addRandomSamplesOneThread(indent);
+    //addRandomSamplesThreaded(indent);
   }
 
   // Profiler
@@ -341,7 +352,6 @@ bool SparseGenerator::addRandomSamplesThreaded(std::size_t indent)
     {
       samplingQueue_->stopSampling(indent);
       candidateQueue_->stopGenerating(indent);
-
       return true;  // no more states needed
     }
 
@@ -476,8 +486,7 @@ bool SparseGenerator::addSample(CandidateData &candidateD, std::size_t threadID,
 
 void SparseGenerator::findGraphNeighbors(CandidateData &candidateD, std::size_t threadID, std::size_t indent)
 {
-  BOLT_FUNC(indent, verbose_, "findGraphNeighbors() within sparse delta " << sparseCriteria_->getSparseDelta());
-  const bool verbose = false;
+  BOLT_FUNC(indent, vFindGraphNeighbors_, "findGraphNeighbors() within sparse delta " << sparseCriteria_->getSparseDelta());
 
   // Search in thread-safe manner
   // Note that the main thread could be modifying the NN, so we have to lock it
@@ -499,15 +508,14 @@ void SparseGenerator::findGraphNeighbors(CandidateData &candidateD, std::size_t 
         continue;
       }
     }
-    else if (verbose)
+    else if (vFindGraphNeighbors_)
       std::cout << " ---- Skipping collision checking because same vertex " << std::endl;
 
     // The two are visible to each other!
     candidateD.visibleNeighborhood_.push_back(candidateD.graphNeighborhood_[i]);
   }
 
-  BOLT_DEBUG(indent, verbose_,
-             "Graph neighborhood: " << candidateD.graphNeighborhood_.size()
+  BOLT_DEBUG(indent, vFindGraphNeighbors_, "Graph neighborhood: " << candidateD.graphNeighborhood_.size()
                                     << " | Visible neighborhood: " << candidateD.visibleNeighborhood_.size());
 }
 
@@ -610,11 +618,11 @@ bool SparseGenerator::checkSparseGraphOptimality(std::size_t indent)
 
     if (sparseLength >= theoryLength)
     {
-      BOLT_ERROR(indent + 2, 1, "Asymptotic optimality guarantee VIOLATED");
+      BOLT_ERROR(indent + 2, true, "Asymptotic optimality guarantee VIOLATED");
       return false;
     }
     else
-      BOLT_GREEN(indent + 2, 1, "Asymptotic optimality guarantee maintained");
+      BOLT_GREEN(indent + 2, vGuarantees_, "Asymptotic optimality guarantee maintained");
     BOLT_WARN(indent + 2, vGuarantees_, "Percent of max allowed:  " << percentOfMaxAllows << " %");
     BOLT_DEBUG(indent, vGuarantees_, "-----------------------------------------");
   }

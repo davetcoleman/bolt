@@ -67,6 +67,9 @@ public:
 
   ~CandidateQueue();
 
+  /** \brief Reset class */
+  void clear();
+
   void startGenerating(std::size_t indent);
 
   void stopGenerating(std::size_t indent);
@@ -125,11 +128,11 @@ private:
   std::size_t totalCandidates_ = 0;
 
 public:
-  bool verbose_ = false;      // general program direction
-  bool vNeighbor_ = false;    // nearest neighbor search
-  bool vClear_ = false;       // when queue is being cleared because of change
+  bool verbose_ = true;      // general program direction
+  bool vNeighbor_ = true;    // nearest neighbor search
+  bool vClear_ = true;       // when queue is being cleared because of change
   bool vQueueFull_ = false;   // status of queue
-  bool vQueueEmpty_ = false;  // alert when queue is empty and holding up process
+  bool vQueueEmpty_ = true;  // alert when queue is empty and holding up process
   bool vThread_ = false;
 
 };  // end of class CandidateQueue

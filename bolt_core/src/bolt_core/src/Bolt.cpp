@@ -126,10 +126,11 @@ void Bolt::setup()
 
 void Bolt::clear(void)
 {
-  if (boltPlanner_)
-    boltPlanner_->clear();
-  if (pdef_)
-    pdef_->clearSolutionPaths();
+  sparseGraph_->clear();
+  sparseCriteria_->clear();
+  sparseGenerator_->clear();
+  boltPlanner_->clear();
+  pdef_->clearSolutionPaths();
 }
 
 void Bolt::setPlannerAllocator(const base::PlannerAllocator &pa)

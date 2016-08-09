@@ -79,6 +79,9 @@ public:
 
   ~SamplingQueue();
 
+  /** \brief Reset class */
+  void clear();
+
   void startSampling(std::size_t indent);
 
   void stopSampling(std::size_t indent);

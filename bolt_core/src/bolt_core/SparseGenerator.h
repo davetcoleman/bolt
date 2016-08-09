@@ -67,6 +67,9 @@ public:
   /** \brief Deconstructor */
   virtual ~SparseGenerator();
 
+  /** \brief Reset class */
+  void clear();
+
   /** \brief Give the sparse graph reference to the criteria, because sometimes it needs data from there */
   void setSparseCriteria(SparseCriteriaPtr sparseCriteria)
   {
@@ -169,6 +172,7 @@ protected:
 public:
   bool verbose_ = false;
   bool vGuarantees_ = false;
+  bool vFindGraphNeighbors_ = false;
 
   /** \brief Number of failed state insertion attempts before stopping the algorithm */
   std::size_t terminateAfterFailures_ = 1000;

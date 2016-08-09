@@ -63,6 +63,17 @@ CandidateQueue::CandidateQueue(SparseGraphPtr sg, SamplingQueuePtr samplingQueue
 
 CandidateQueue::~CandidateQueue()
 {
+  clear();
+}
+
+void CandidateQueue::clear()
+{
+  BOLT_ASSERT(!threadsRunning_, "Cannot clear while thread is running");
+
+  totalMisses_ = 0;
+  totalTime_ = 0;
+  totalCandidates_ = 0;
+
   while (!queue_.empty())
   {
     si_->freeState(queue_.front().state_);
@@ -86,6 +97,7 @@ void CandidateQueue::startGenerating(std::size_t indent)
   // Set number threads - should be at least less than 1 from total number of threads on system
   // 1 thread is for parent, 1 is for sampler, 1 is for GUIs, etc, remainder are for this
   numThreads_ = std::max(1, int(sg_->getNumQueryVertices() - 3));
+  //numThreads_ = 1;
   BOLT_DEBUG(indent, true, "Running CandidateQueue with " << numThreads_ << " threads");
   if (numThreads_ < 2)
     BOLT_WARN(indent, true, "Only running CandidateQueue with 1 thread");
@@ -143,11 +155,14 @@ void CandidateQueue::stopGenerating(std::size_t indent)
   // Clear all data
   while (!queue_.empty())
   {
-    si_->getStateSpace()->freeState(queue_.front().state_);
+    // TODO: this is a memory leak, but sometimes it segfaults
+    // if (queue_.size() > 1 && queue_.front().state_ != nullptr)
+    // {
+    //    si_->getStateSpace()->freeState(queue_.front().state_);
+    // }
+
     queue_.pop();
   }
-
-  BOLT_FUNC(indent, true, "Generating threads have stopped");
 }
 
 void CandidateQueue::generatingThread(std::size_t threadID, base::SpaceInformationPtr si,
@@ -178,7 +193,11 @@ void CandidateQueue::generatingThread(std::size_t threadID, base::SpaceInformati
 
     // time::point startTime = time::now(); // Benchmark
 
-    findGraphNeighbors(candidateD, threadID, indent + 2);
+    if (!findGraphNeighbors(candidateD, threadID, indent + 2))
+    {
+      // The search for neighbors was aborted
+      continue;
+    }
 
     // Benchmark
     // double time = time::seconds(time::now() - startTime);
@@ -220,9 +239,8 @@ void CandidateQueue::getNextState(base::State *&candidateState, ClearanceSampler
 
 CandidateData &CandidateQueue::getNextCandidate(std::size_t indent)
 {
-  BOLT_CYAN(indent, false, "CandidateQueue.getNextCanidate(): queue size: "
-                                     << queue_.size()
-                                     << " num samples added: " << sparseGenerator_->getNumRandSamplesAdded());
+  BOLT_CYAN(indent, verbose_, "CandidateQueue.getNextCanidate(): queue size: " << queue_.size()
+            << " num samples added: " << sparseGenerator_->getNumRandSamplesAdded());
   // This function is run in the parent thread
 
   // Keep looping until a non-expired candidate exists or the thread ends
@@ -233,9 +251,12 @@ CandidateData &CandidateQueue::getNextCandidate(std::size_t indent)
     {
       boost::lock_guard<boost::shared_mutex> lock(candidateQueueMutex_);
       std::size_t numCleared = 0;
+      BOLT_DEBUG(indent, verbose_, "Current graph version: " << sparseGenerator_->getNumRandSamplesAdded());
       while (!queue_.empty() && queue_.front().graphVersion_ != sparseGenerator_->getNumRandSamplesAdded() &&
              threadsRunning_)
       {
+        BOLT_DEBUG(indent, true, "Expired candidate state with graph version: " << queue_.front().graphVersion_);
+
         // Next Candidate state is expired, delete
         si_->freeState(queue_.front().state_);
         queue_.pop();
@@ -303,12 +324,7 @@ void CandidateQueue::waitForQueueNotFull(std::size_t indent)
 
 bool CandidateQueue::findGraphNeighbors(CandidateData &candidateD, std::size_t threadID, std::size_t indent)
 {
-  BOLT_FUNC(indent, vNeighbor_, "findGraphNeighbors() within sparse delta " << sparseCriteria_->getSparseDelta());
-
-  // Get the version number of the graph, which is simply the number of states that have thus far been added
-  // during this program's execution (not of all time). This allows us to know if the candidate has potentially
-  // become "expired" because of a change in the graph
-  candidateD.graphVersion_ = sparseGenerator_->getNumRandSamplesAdded();
+  BOLT_FUNC(indent, vNeighbor_, "findGraphNeighbors() within sparse delta " << sparseCriteria_->getSparseDelta() << " state: " << candidateD.state_);
 
   // Search in thread-safe manner
   // Note that the main thread could be modifying the NN, so we have to lock it
@@ -319,6 +335,12 @@ bool CandidateQueue::findGraphNeighbors(CandidateData &candidateD, std::size_t t
     sg_->getNN()->nearestR(sg_->getQueryVertices(threadID), sparseCriteria_->getSparseDelta(),
                            candidateD.graphNeighborhood_);
   }
+
+  // Get the version number of the graph, which is simply the number of states that have thus far been added
+  // during this program's execution (not of all time). This allows us to know if the candidate has potentially
+  // become "expired" because of a change in the graph
+  candidateD.graphVersion_ = sparseGenerator_->getNumRandSamplesAdded();
+
   // std::cout << "released nn lock " << std::endl;
   sg_->getQueryStateNonConst(threadID) = nullptr;
 

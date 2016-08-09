@@ -125,10 +125,6 @@ bool SparseCriteria::setup(std::size_t indent)
     BOLT_DEBUG(indent, 1, "Auto settings stretch factor because input value was 0");
 
     // 2D case without estimated interface amount - old
-    // nearestDiscretizedV_ = sqrt(dim * std::pow(0.5 * discretization_, 2));
-    // // z in my calculations
-    // stretchFactor_ = 2.0 * discretization_ / (nearestDiscretizedV_) +
-    // stretchFactor_;
 
     // N-D case - old
     // stretchFactor_ = discretization_ / (discretization_ - 2.0 * denseDelta_);
@@ -166,7 +162,6 @@ bool SparseCriteria::setup(std::size_t indent)
   BOLT_INFO(indent + 2, 1, "Near Sample Points      = " << nearSamplePoints_);
   BOLT_INFO(indent + 2, 1, "Pentrat. Overlap Frac   = " << penetrationOverlapFraction_);
   BOLT_INFO(indent + 2, 1, "Discret Penetration     = " << discretizePenetrationDist_);
-  BOLT_INFO(indent + 2, autoStretchFactor, "Nearest Discretized V   = " << nearestDiscretizedV_);
   BOLT_INFO(indent + 2, 1, "Stretch Factor          = " << stretchFactor_);
   BOLT_INFO(indent, 1, "--------------------------------------------------");
 
@@ -189,6 +184,18 @@ bool SparseCriteria::setup(std::size_t indent)
   return true;
 }
 
+void SparseCriteria::clear()
+{
+  resetStats();
+}
+
+void SparseCriteria::resetStats()
+{
+  numVerticesMoved_ = 0;
+  useFourthCriteria_ = false;
+  // TODO: move addVertex stats in SparseGraph here
+}
+
 bool SparseCriteria::addStateToRoadmap(CandidateData &candidateD, VertexType &addReason, std::size_t threadID,
                                        std::size_t indent)
 {
@@ -208,33 +215,33 @@ bool SparseCriteria::addStateToRoadmap(CandidateData &candidateD, VertexType &ad
   // Always add a node if no other nodes around it are visible (GUARD)
   if (checkAddCoverage(candidateD, indent))
   {
-    BOLT_DEBUG(indent, vAddedReason_, "Graph updated: COVERAGE Fourth: " << useFourthCriteria_);
+    BOLT_DEBUG(indent, vAddedReason_, "Graph updated: COVERAGE Fourth: " << useFourthCriteria_ << " State: " << candidateD.state_);
 
     addReason = COVERAGE;
     stateAdded = true;
   }
   else if (checkAddConnectivity(candidateD, indent + 2))
   {
-    BOLT_MAGENTA(indent, vAddedReason_, "Graph updated: CONNECTIVITY Fourth: " << useFourthCriteria_);
+    BOLT_MAGENTA(indent, vAddedReason_, "Graph updated: CONNECTIVITY Fourth: " << useFourthCriteria_ << " State: " << candidateD.state_);
 
     addReason = CONNECTIVITY;
     stateAdded = true;
   }
   else if (checkAddInterface(candidateD, indent + 4))
   {
-    BOLT_BLUE(indent, vAddedReason_, "Graph updated: INTERFACE Fourth: " << useFourthCriteria_);
+    BOLT_BLUE(indent, vAddedReason_, "Graph updated: INTERFACE Fourth: " << useFourthCriteria_ << " State: " << candidateD.state_);
     addReason = INTERFACE;
     stateAdded = true;
   }
   else if (checkAddQuality(candidateD, threadID, indent + 6))
   {
-    BOLT_GREEN(indent, vAddedReason_, "Graph updated: QUALITY Fourth: " << useFourthCriteria_);
+    BOLT_GREEN(indent, vAddedReason_, "Graph updated: QUALITY Fourth: " << useFourthCriteria_ << " State: " << candidateD.state_);
     addReason = QUALITY;
     stateAdded = true;
   }
   else
   {
-    BOLT_DEBUG(indent, vCriteria_, "Did NOT add state for any criteria ");
+    BOLT_DEBUG(indent, vCriteria_, "Did NOT add state for any criteria " << " State: " << candidateD.state_);
   }
 
   return stateAdded;
@@ -333,7 +340,7 @@ bool SparseCriteria::checkAddConnectivity(CandidateData &candidateD, std::size_t
   {
     BOLT_DEBUG(indent + 4, vCriteria_, "Loop: Adding vertex " << *vertexIt);
 
-    if (sg_->getState(*vertexIt) == NULL)
+    if (sg_->stateDeleted(*vertexIt))
     {
       BOLT_DEBUG(indent + 4, vCriteria_, "Skipping because vertex " << *vertexIt << " was removed (state marked as 0)");
       continue;
@@ -346,8 +353,7 @@ bool SparseCriteria::checkAddConnectivity(CandidateData &candidateD, std::size_t
       continue;  // skip this pairing
     }
 
-    // New vertex should not be connected to anything - there's no edge between
-    // the two states
+    // New vertex should not be connected to anything - there's no edge between the two states
     if (sg_->hasEdge(candidateD.newVertex_, *vertexIt))
     {
       BOLT_DEBUG(indent + 4, vCriteria_, "The new vertex " << candidateD.newVertex_ << " is already connected to old "
@@ -376,11 +382,9 @@ bool SparseCriteria::checkAddConnectivity(CandidateData &candidateD, std::size_t
 
 bool SparseCriteria::checkAddInterface(CandidateData &candidateD, std::size_t indent)
 {
-  BOLT_FUNC(indent, vCriteria_, "checkAddInterface() Does this node's "
-                                "neighbor's need it to better connect them?");
+  BOLT_FUNC(indent, vCriteria_, "checkAddInterface() Does this node's neighbor's need it to better connect them?");
 
-  // If there are less than two neighbors the interface property is not
-  // applicable, because requires
+  // If there are less than two neighbors the interface property is not applicable, because requires
   // two closest visible neighbots
   if (candidateD.visibleNeighborhood_.size() < 2)
   {
@@ -388,87 +392,101 @@ bool SparseCriteria::checkAddInterface(CandidateData &candidateD, std::size_t in
     return false;
   }
 
-  SparseVertex v1 = candidateD.visibleNeighborhood_[0];
-  SparseVertex v2 = candidateD.visibleNeighborhood_[1];
+  const SparseVertex &v1 = candidateD.visibleNeighborhood_[0];
+  const SparseVertex &v2 = candidateD.visibleNeighborhood_[1];
 
-  // If the two closest nodes are also visible
-  if (candidateD.graphNeighborhood_[0] == v1 && candidateD.graphNeighborhood_[1] == v2)
+  // Ensure the two closest nodes are also visible
+  if (!(candidateD.graphNeighborhood_[0] == v1 && candidateD.graphNeighborhood_[1] == v2))
   {
-    // If our two closest neighbors don't share an edge
-    if (!sg_->hasEdge(v1, v2))
+    BOLT_DEBUG(indent, vCriteria_, "NOT adding node for interface");
+    return false;
+  }
+
+  // Ensure two closest neighbors don't share an edge
+  if (sg_->hasEdge(v1, v2))
+  {
+    BOLT_DEBUG(indent, vCriteria_, "Two closest two neighbors already share an edge, not connecting them");
+    return false;
+  }
+
+  // If they can be directly connected
+  if (si_->checkMotion(sg_->getState(v1), sg_->getState(v2)))
+  {
+    BOLT_DEBUG(indent, vCriteria_, "INTERFACE: directly connected nodes");
+
+    if (!checkPathLength(v1, v2, indent))
+      return false;
+
+    // Connect them
+    sg_->addEdge(v1, v2, eINTERFACE, indent);
+
+    return true;
+  }
+
+  if (!checkPathLength(v1, v2, indent))
+    return false;
+
+  // They cannot be directly connected
+  // Add the new node to the graph, to bridge the interface
+  BOLT_DEBUG(indent, vCriteria_, "Adding node for INTERFACE");
+
+  candidateD.newVertex_ = sg_->addVertex(candidateD.state_, INTERFACE, indent);
+
+  // Check if there are really close vertices nearby which should be
+  // merged
+  if (checkRemoveCloseVertices(candidateD.newVertex_, indent))
+  {
+    // New vertex replaced a nearby vertex, we can continue no further
+    // because graph has been re-indexed
+    return true;
+  }
+
+  if (sg_->stateDeleted(v1))
+  {
+    BOLT_ERROR(indent + 3, 1, "Skipping edge 0 because vertex was removed");
+  }
+  else
+  {
+    sg_->addEdge(candidateD.newVertex_, v1, eINTERFACE, indent);
+  }
+
+  if (sg_->stateDeleted(v2))
+  {
+    BOLT_ERROR(indent + 3, 1, "Skipping edge 1 because vertex was removed");
+  }
+  else
+  {
+    sg_->addEdge(candidateD.newVertex_, v2, eINTERFACE, indent);
+  }
+
+  BOLT_DEBUG(indent, vCriteria_, "INTERFACE: connected two neighbors through new interface node");
+
+  // Report success
+  return true;
+}
+
+bool SparseCriteria::checkPathLength(SparseVertex v1, SparseVertex v2, std::size_t indent)
+{
+  const double SMALL_EPSILON = 0.0001;
+  double pathLength = 0;
+  if (sg_->astarSearchLength(v1, v2, pathLength, indent))
+  {
+    double newEdgeDist = si_->distance(sg_->getState(v1), sg_->getState(v2));
+    if (pathLength < newEdgeDist + SMALL_EPSILON)
     {
-      // If they can be directly connected
-      if (si_->checkMotion(sg_->getState(v1), sg_->getState(v2)))
-      {
-        BOLT_DEBUG(indent, vCriteria_, "INTERFACE: directly connected nodes");
+      BOLT_ERROR(indent, true, "New interface edge does not help enough");
 
-        // TODO(davetcoleman): remove this debug code
-        if (false && si_->getStateSpace()->equalStates(sg_->getState(v1), sg_->getState(v2)))
-        {
-          OMPL_ERROR("States are equal");
-          visualizeRemoveCloseVertices(v1, v2);
-
-          std::cout << "v1: " << v1 << " state1: " << sg_->getState(v1) << " state address: " << sg_->getState(v1)
-                    << " state: ";
-          sg_->debugState(sg_->getState(v1));
-          std::cout << "v2: " << v2 << " state2: " << sg_->getState(v2) << " state address: " << sg_->getState(v2)
-                    << " state: ";
-          sg_->debugState(sg_->getState(v2));
-        }
-
-        // Connect them
-        sg_->addEdge(v1, v2, eINTERFACE, indent);
-      }
-      else  // They cannot be directly connected
-      {
-        // Add the new node to the graph, to bridge the interface
-        BOLT_DEBUG(indent, vCriteria_, "Adding node for INTERFACE");
-
-        candidateD.newVertex_ = sg_->addVertex(candidateD.state_, INTERFACE, indent);
-
-        // Check if there are really close vertices nearby which should be
-        // merged
-        if (checkRemoveCloseVertices(candidateD.newVertex_, indent))
-        {
-          // New vertex replaced a nearby vertex, we can continue no further
-          // because graph has been re-indexed
-          return true;
-        }
-
-        if (sg_->getState(v1) == NULL)
-        {
-          BOLT_ERROR(indent + 3, 1, "Skipping edge 0 because vertex was removed");
-          visual_->waitForUserFeedback("skipping edge 0");
-        }
-        else
-        {
-          sg_->addEdge(candidateD.newVertex_, v1, eINTERFACE, indent);
-        }
-
-        if (sg_->getState(v2) == NULL)
-        {
-          BOLT_ERROR(indent + 3, 1, "Skipping edge 1 because vertex was removed");
-          visual_->waitForUserFeedback("skipping edge 2");
-        }
-        else
-        {
-          sg_->addEdge(candidateD.newVertex_, v2, eINTERFACE, indent);
-        }
-
-        BOLT_DEBUG(indent, vCriteria_, "INTERFACE: connected two neighbors through new interface node");
-      }
-
-      // Report success
-      return true;
+      visual_->viz4()->edge(sg_->getState(v1), sg_->getState(v2), tools::MEDIUM, tools::RED);
+      visual_->viz4()->trigger();
+      usleep(0.001*1000000);
+      return false;
     }
     else
     {
-      BOLT_DEBUG(indent, vCriteria_, "Two closest two neighbors already share "
-                                     "an edge, not connecting them");
+      BOLT_WARN(indent, true, "Interface edge qualifies - diff: " << (newEdgeDist + SMALL_EPSILON - pathLength));
     }
   }
-  BOLT_DEBUG(indent, vCriteria_, "NOT adding node for interface");
-  return false;
+  return true;
 }
 
 bool SparseCriteria::checkAddQuality(CandidateData &candidateD, std::size_t threadID, std::size_t indent)
@@ -1204,34 +1222,32 @@ double SparseCriteria::maxSpannerPath(SparseVertex v, SparseVertex vp, SparseVer
   BOLT_FUNC(indent, vQualityMaxSpanner_, "maxSpannerPath()");
 
   // Candidate x vertices as described in paper in Max_Spanner_Path
+  // From my diagram nomenclature:
+  // The algorithm compares the candidate edge length with all other spanner paths
+  // from [midpoint(v', v) = p'] to the interfaces of all neighbors of v which
+  // are not connected to v' but share an interface with v''
   std::vector<SparseVertex> qualifiedVertices;
 
   // Get nearby vertices 'x' that could also be used to find the path to v''
+  // TODO: original SPARS2 implementation used vpp to search for adjacent vertices,
+  // so I am also, but according to paper it should be v not vpp
   foreach (SparseVertex x, boost::adjacent_vertices(vpp, sg_->getGraph()))
   {
-    // Check if vertex is deleted
-    if (sg_->getState(x) == NULL)
-    {
-      BOLT_ERROR(indent, true, "State is deleted in maxSpannerPath!");
-      throw Exception(name_, "error");
-    }
+    BOLT_ASSERT(!sg_->stateDeleted(x), "State is deleted in maxSpannerPath");
 
     if (sg_->hasEdge(x, v) && !sg_->hasEdge(x, vp))
     {
-      InterfaceData &iData = sg_->getInterfaceData(v, vpp, x, indent + 2);
+      const InterfaceData &iData = sg_->getInterfaceData(v, vpp, x, indent + 2);
 
       // Check if we previously had found a pair of points that support this
       // interface
-      if ((vpp < x && iData.getInterface1Inside()) || (x < vpp && iData.getInterface2Inside()))
+      if (iData.getInsideInterfaceOfV1(vpp, x) != nullptr)
+      // if ((vpp < x && iData.getInterface1Inside()) || (x < vpp && iData.getInterface2Inside()))
       {
-        BOLT_WARN(indent, vQualityMaxSpanner_, "Found an additional qualified vertex " << x);
-        // This is a possible alternative path to v''
-        qualifiedVertices.push_back(x);
+        BOLT_DEBUG(indent, vQualityMaxSpanner_, "Found an additional qualified vertex " << x);
 
-        if (visualizeQualityCriteria_ && false)
-        {
-          visual_->viz5()->state(sg_->getState(x), tools::LARGE, tools::BLACK, 0);
-        }
+        // This is a possible alternative path to m(v,v')
+        qualifiedVertices.push_back(x);
       }
     }
   }

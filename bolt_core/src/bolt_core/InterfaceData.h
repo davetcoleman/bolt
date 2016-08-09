@@ -49,7 +49,7 @@ namespace tools
 {
 namespace bolt
 {
-class InterfaceData  // TODO move this into separate file?
+class InterfaceData
 {
 public:
   /** \brief Constructor */
@@ -139,18 +139,18 @@ public:
   }
 
   /** \brief Helper to determine wether interface 1 has been found */
-  bool hasInterface1()
+  bool hasInterface1() const
   {
     return interface1Inside_ != nullptr;
   }
 
   /** \brief Helper to determine wether interface 2 has been found */
-  bool hasInterface2()
+  bool hasInterface2() const
   {
     return interface2Inside_ != nullptr;
   }
 
-  base::State* getInsideInterfaceOfV1(std::size_t v1, std::size_t v2)
+  base::State* getInsideInterfaceOfV1(std::size_t v1, std::size_t v2) const
   {
     if (v1 < v2)
       return interface1Inside_;
@@ -161,7 +161,7 @@ public:
     return NULL;
   }
 
-  base::State* getInsideInterfaceOfV2(std::size_t v1, std::size_t v2)
+  base::State* getInsideInterfaceOfV2(std::size_t v1, std::size_t v2) const
   {
     if (v1 < v2)
       return interface2Inside_;
@@ -172,7 +172,7 @@ public:
     return NULL;
   }
 
-  base::State* getOutsideInterfaceOfV1(std::size_t v1, std::size_t v2)
+  base::State* getOutsideInterfaceOfV1(std::size_t v1, std::size_t v2) const
   {
     if (v1 < v2)
       return interface1Outside_;
@@ -183,7 +183,7 @@ public:
     return NULL;
   }
 
-  base::State* getOutsideInterfaceOfV2(std::size_t v1, std::size_t v2)
+  base::State* getOutsideInterfaceOfV2(std::size_t v1, std::size_t v2) const
   {
     if (v1 < v2)
       return interface2Outside_;

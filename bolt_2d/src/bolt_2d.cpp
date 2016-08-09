@@ -95,6 +95,7 @@ public:
     // run mode
     error += !rosparam_shortcuts::get(name_, rpnh, "run_problems", run_problems_);
     error += !rosparam_shortcuts::get(name_, rpnh, "create_spars", create_spars_);
+    error += !rosparam_shortcuts::get(name_, rpnh, "create_spars_count", create_spars_count_);
     error += !rosparam_shortcuts::get(name_, rpnh, "load_spars", load_spars_);
     error += !rosparam_shortcuts::get(name_, rpnh, "continue_spars", continue_spars_);
     error += !rosparam_shortcuts::get(name_, rpnh, "eliminate_dense_disjoint_sets", eliminate_dense_disjoint_sets_);
@@ -323,7 +324,23 @@ public:
         case BOLT:
           if (create_spars_)
           {
-            bolt_->getSparseGenerator()->createSPARS();
+            // Ensure it is created at least once
+            if (create_spars_count_ == 0)
+              create_spars_count_ = 1;
+
+            for (std::size_t i = 0; i < create_spars_count_; ++i)
+            {
+              if (create_spars_count_ > 1)
+                BOLT_DEBUG(indent, true, "Creating spars graph, run " << i+1 << " out of " << create_spars_count_);
+
+              // Clear spars graph
+              if (i > 0)
+              {
+                bolt_->clear();
+              }
+
+              bolt_->getSparseGenerator()->createSPARS();
+            }
           }
           else
             ROS_WARN_STREAM_NAMED(name_, "Creating sparse graph disabled, but no file loaded");
@@ -1286,6 +1303,7 @@ private:
   // Modes
   bool run_problems_;
   bool create_spars_;
+  std::size_t create_spars_count_;
   bool load_spars_;
   bool continue_spars_;
   bool eliminate_dense_disjoint_sets_;
