@@ -12,6 +12,11 @@ RUN cd .. && rm -rf src/ && mkdir src && cd src && \
     wstool merge https://raw.githubusercontent.com/davetcoleman/bolt/jade-devel/bolt.rosinstall && \
     wstool update
 
+# TEMPORARY until touch is added to moveit-jade-source
+RUN apt-get update && \
+    apt-get install -y wget && \
+    wget https://raw.githubusercontent.com/ros-gbp/ompl-release/debian/kinetic/xenial/ompl/package.xml -O ompl/package.xml
+
 # disable packages that do not have proper dependencies
 RUN touch robotiq/robotiq_action_server/CATKIN_IGNORE && \
     touch robotiq/robotiq_c_model_control/CATKIN_IGNORE && \
@@ -22,6 +27,7 @@ RUN touch robotiq/robotiq_action_server/CATKIN_IGNORE && \
 
 # update apt-get because osrf image clears this cache and download deps
 RUN apt-get update && \
+    apt-get remove -y ros-${ROS_DISTRO}-ompl && \
     apt-get install -y \
       less \
       emacs \

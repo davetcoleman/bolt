@@ -12,7 +12,7 @@ notifications:
       - dave@dav.ee
 env:
   matrix:
-    - ROS_DISTRO="jade"  ROS_REPO=ros-shadow-fixed UPSTREAM_WORKSPACE=https://raw.githubusercontent.com/davetcoleman/bolt/jade-devel/bolt.rosinstall
+    - ROS_DISTRO="jade"  ROS_REPO=ros-shadow-fixed UPSTREAM_WORKSPACE=https://raw.githubusercontent.com/davetcoleman/bolt/jade-devel/bolt.rosinstall BEFORE_SCRIPT='./bolt/.travis.before_script'
 before_script:
   - git clone -q https://github.com/ros-planning/moveit_ci.git .moveit_ci
 script:
