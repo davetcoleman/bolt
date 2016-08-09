@@ -38,7 +38,7 @@
 - git:
     local-name: bolt
     uri: https://github.com/davetcoleman/bolt.git
-    version: master
+    version: jade-devel
 - git:
     local-name: moveit_dashboard
     uri: https://github.com/davetcoleman/moveit_dashboard.git

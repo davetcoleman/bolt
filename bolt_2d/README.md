@@ -1,8 +1,6 @@
 # Bolt 2D
 
-## How to Build
-
-Clone into your [catkin workspace](http://wiki.ros.org/catkin/Tutorials/create_a_workspace) and rebuild.
+Two and three dimensional "toy problem" for testing Bolt
 
 ## Usage
 
