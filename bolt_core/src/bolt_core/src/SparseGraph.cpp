@@ -344,7 +344,7 @@ bool SparseGraph::astarSearch(const SparseVertex start, const SparseVertex goal,
   BOLT_DEBUG(indent, vSearch_, "Number nodes opened: " << numNodesOpened_
              << ", Number nodes closed: " << numNodesClosed_);
 
-  if (isinf(vertexDistances[goal]))  // TODO(davetcoleman): test that this works
+  if (std::isinf(vertexDistances[goal]))  // TODO(davetcoleman): test that this works
   {
     throw Exception(name_, "Distance to goal is infinity");
     // Unload
@@ -452,7 +452,7 @@ bool SparseGraph::astarSearchLength(SparseVertex start, SparseVertex goal, doubl
   {
     distance = vertexDistances[goal];
 
-    if (!isinf(vertexDistances[goal]))  // TODO(davetcoleman): test that this works
+    if (!std::isinf(vertexDistances[goal]))  // TODO(davetcoleman): test that this works
       foundGoal = true;
   }
 

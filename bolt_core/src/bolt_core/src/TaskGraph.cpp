@@ -205,7 +205,7 @@ bool TaskGraph::astarSearch(const TaskVertex start, const TaskVertex goal, std::
     BOLT_DEBUG(indent, vSearch_, "Number nodes opened: " << numNodesOpened_
                                                          << ", Number nodes closed: " << numNodesClosed_);
 
-    if (isinf(vertexDistances[goal]))  // TODO(davetcoleman): test that this works
+    if (std::isinf(vertexDistances[goal]))  // TODO(davetcoleman): test that this works
     {
       throw Exception(name_, "Distance to goal is infinity");
       foundGoal = false;

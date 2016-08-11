@@ -17,7 +17,7 @@ Currently tested for ROS Jade, also works with Kinetic but MoveIt! is not releas
     wstool init .
     wstool merge https://raw.githubusercontent.com/davetcoleman/bolt/${ROS_DISTRO}-devel/bolt.${ROS_DISTRO}.rosinstall
     wstool update
-    wget https://raw.githubusercontent.com/ros-gbp/ompl-release/debian/kinetic/xenial/ompl/package.xml ompl/
+    wget https://raw.githubusercontent.com/ros-gbp/ompl-release/debian/kinetic/xenial/ompl/package.xml -O ompl/package.xml
     sudo apt-get remove ros-${ROS_DISTRO}-ompl
     touch robotiq/robotiq_action_server/CATKIN_IGNORE
     touch robotiq/robotiq_c_model_control/CATKIN_IGNORE
