@@ -9,7 +9,7 @@ WORKDIR $CATKIN_WS/src
 # delete old source code, download bolt source
 RUN cd .. && rm -rf src/ && mkdir src && cd src && \
     wstool init && \
-    wstool merge https://raw.githubusercontent.com/davetcoleman/bolt/jade-devel/bolt.rosinstall && \
+    wstool merge https://raw.githubusercontent.com/davetcoleman/bolt/jade-devel/bolt.jade.rosinstall && \
     wstool update
 
 # TEMPORARY until touch is added to moveit-jade-source

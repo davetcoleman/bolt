@@ -15,7 +15,7 @@ Status:
 Currently tested for ROS Indigo. To build this package, create a [catkin workspace](http://wiki.ros.org/catkin/Tutorials/create_a_workspace).
 
     wstool init .
-    wstool merge https://raw.githubusercontent.com/davetcoleman/bolt/jade-devel/bolt.rosinstall
+    wstool merge https://raw.githubusercontent.com/davetcoleman/bolt/jade-devel/bolt.jade.rosinstall
     wstool update
     wget https://raw.githubusercontent.com/ros-gbp/ompl-release/debian/kinetic/xenial/ompl/package.xml ompl/
     sudo apt-get remove ros-jade-ompl
