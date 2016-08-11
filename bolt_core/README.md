@@ -7,9 +7,9 @@ Main planner based on SPARS2 using OMPL
 
 ## Architecture
 
-![](bolt_core/docs/generating_sparse_graph.png)
+![](docs/generating_sparse_graph.png)
 
-![](bolt_core/docs/planning_task_graph.png)
+![](docs/planning_task_graph.png)
 
 ## Developer Notes
 
