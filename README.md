@@ -15,19 +15,19 @@ Status:
 Currently tested for ROS Indigo. To build this package, create a [catkin workspace](http://wiki.ros.org/catkin/Tutorials/create_a_workspace).
 
     wstool init .
-    wstool merge https://raw.githubusercontent.com/davetcoleman/bolt/jade-devel/bolt.jade.rosinstall
+    wstool merge https://raw.githubusercontent.com/davetcoleman/bolt/${ROS_DISTRO}-devel/bolt.${ROS_DISTRO}.rosinstall
     wstool update
     wget https://raw.githubusercontent.com/ros-gbp/ompl-release/debian/kinetic/xenial/ompl/package.xml ompl/
-    sudo apt-get remove ros-jade-ompl
+    sudo apt-get remove ros-${ROS_DISTRO}-ompl
     touch robotiq/robotiq_action_server/CATKIN_IGNORE
     touch robotiq/robotiq_c_model_control/CATKIN_IGNORE
     touch robotiq/robotiq_ethercat/CATKIN_IGNORE
     touch robotiq/robotiq_s_model_control/CATKIN_IGNORE
     touch robotiq/robotiq_joint_state_publisher/CATKIN_IGNORE
     touch universal_robot/ur_gazebo/CATKIN_IGNORE
-    rosdep install -y --from-paths . --ignore-src --rosdistro jade
+    rosdep install -y --from-paths . --ignore-src --rosdistro ${ROS_DISTRO}
     cd ..
-    catkin config --extend /opt/ros/jade --cmake-args -DCMAKE_BUILD_TYPE=Release
+    catkin config --extend /opt/ros/${ROS_DISTRO} --cmake-args -DCMAKE_BUILD_TYPE=Release
     catkin build
 
 ## Run in Docker
