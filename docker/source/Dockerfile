@@ -23,7 +23,8 @@ RUN touch robotiq/robotiq_action_server/CATKIN_IGNORE && \
     touch robotiq/robotiq_ethercat/CATKIN_IGNORE && \
     touch robotiq/robotiq_s_model_control/CATKIN_IGNORE && \
     touch robotiq/robotiq_joint_state_publisher/CATKIN_IGNORE && \
-    touch universal_robot/ur_gazebo/CATKIN_IGNORE
+    touch universal_robot/ur_gazebo/CATKIN_IGNORE && \
+    touch moveit/moveit_planners/ompl/CATKIN_IGNORE
 
 # update apt-get because osrf image clears this cache and download deps
 RUN apt-get update && \

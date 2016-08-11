@@ -32,8 +32,18 @@ Currently tested for ROS Indigo. To build this package, create a [catkin workspa
 
 ## Run in Docker
 
+Run with just terminal:
 
     docker run -it davetcoleman/bolt:bolt-jade-build
+
+Run with GUI:
+
+    # This is not the safest way however, as you then compromise the access control to X server on your host
+    xhost +local:root # for the lazy and reckless
+    docker run -it --env="DISPLAY" --env="QT_X11_NO_MITSHM=1" --volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" davetcoleman/bolt:bolt-jade-build
+    export containerId=$(docker ps -l -q)
+    # Close security hole:
+    xhost -local:root
 
 ## Layout
 
