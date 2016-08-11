@@ -2,7 +2,12 @@
 
 Main planner based on SPARS2 using OMPL
 
- - Ability to discretize roadmap intelligently
+  - Ability to discretize roadmap intelligently
+  - Ability to plan over a discrete task dimension
+
+## Architecture
+
+
 
 ## Developer Notes
 

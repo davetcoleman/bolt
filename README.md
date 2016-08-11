@@ -30,6 +30,24 @@ Currently tested for ROS Indigo. To build this package, create a [catkin workspa
     catkin config --extend /opt/ros/jade --cmake-args -DCMAKE_BUILD_TYPE=Release
     catkin build
 
+## Run in Docker
+
+
+    docker run -it davetcoleman/bolt:bolt-jade-build
+
+## Layout
+
+- bolt_core: The core algorithm for sparse roadmap creation and multi-model task planning is locate
+- bolt_2d: A simple 2d/3d toy problem for testing bolt in a low dimensional space using Rviz
+- bolt_hilgendorf: A MoveIt!-based configuration space for single and dual arm motion planning using Bolt
+- bolt_ur5: a temporary package leftover from roscon_demo15 for Descartes. Should be merged into bolt\_hilgendorf or removed entirely
+- moveit_ompl: based on ``moveit_planners_ompl``, a simplified common interface for moveit and ompl that I've heavily customized
+- docker: just contains recipies for auto building docker images on Dockerhub
+
+## Usage
+
+There are currently two main applications for using bolt - 2d and hilgendorf. See the respective folders on how to use them.
+
 ## Testing and Linting
 
 To run [roslint](http://wiki.ros.org/roslint), use the following command with [catkin-tools](https://catkin-tools.readthedocs.org/):
