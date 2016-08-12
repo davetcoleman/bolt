@@ -10,21 +10,26 @@ bolt_2d:
   create_spars: true
   create_spars_count: 100 # create the spars graph multiple times
   continue_spars: false # even if a file has been saved, randomly sample for more coverage
-  run_problems: false
 
-  # run type
+  # environment info
+  image_id: 0 # 0 - hard0, 4 - hard4, 5 - blank, 6 - smiley (sparse), 7 - narrow
+  dimensions: 2 # can be 2 or 3
+  collision_checking_enabled: true
+
+  # solve planning problems
+  run_problems: false
   planning_runs: 10
   problem_type: 0 # 0 - random, 1 - static, 2 - static within sphere
   problem_id: 0 # which start/goal pair to use, if problem_type is static
-  image_id: 0 # 0 - hard0, 4 - hard4, 5 - blank, 6 - smiley (sparse), 7 - narrow
-  post_processing_interval: 20 # how often (in runs) to adjust the graphs
+  use_task_planning: true  # cartesian hybrid planning
+  seed_random: true
+
+  # solver type
   use_experience: true
   experience_planner: bolt
   #experience_planner: spars2
-  seed_random: true
-  dimensions: 2
-  use_task_planning: true  # cartesian hybrid planning
-  collision_checking_enabled: true
+
+  # debugging
   verbose:
     verbose: true
   visualize:
@@ -56,11 +61,11 @@ sparse_criteria:
   use_check_remove_close_vertices: true # Experimental feature that allows very closeby vertices to be merged with newly added ones
   use_clear_edges_near_vertex: true # When adding a quality vertex, remove nearby edges
   use_original_smoother: false # original is bad
-  use_connectivy_criteria: true # if true, discretization does not work
+  use_connectivy_criteria: false # if true, discretization does not work
   use_quality_criteria: true # 4th criteria
-  use_smoothed_path_rejection: true
+  use_smoothed_path_rejection: false
   verbose:
-    added_reason: false # debug criteria for adding vertices & edges
+    added_reason: true # debug criteria for adding vertices & edges
     criteria: false
     quality: false
     quality_max_spanner: false
@@ -68,10 +73,10 @@ sparse_criteria:
   visualize:
     attempted_states: false # show the current sampled state before its added
     connectivity: false # show states in different connected components for connectivity criteria
-    quality_criteria: false # window 5
-    quality_criteria_close_reps: false # window 3
+    quality_criteria: true # window 5
+    quality_criteria_close_reps: true # window 3
     quality_criteria_sampler: false
-    quality_criteria_astar: false # show results of astar test
+    quality_criteria_astar: true # show results of astar test
     remove_close_vertices: false
 
 # ====================================================

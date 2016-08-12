@@ -108,7 +108,6 @@ public:
     error += !rosparam_shortcuts::get(name_, rpnh, "experience_planner", experience_planner_);
     error += !rosparam_shortcuts::get(name_, rpnh, "problem_type", problem_type_);
     error += !rosparam_shortcuts::get(name_, rpnh, "problem_id", problem_id_);
-    error += !rosparam_shortcuts::get(name_, rpnh, "post_processing_interval", post_processing_interval_);
     error += !rosparam_shortcuts::get(name_, rpnh, "seed_random", seed_random_);
     error += !rosparam_shortcuts::get(name_, rpnh, "image_id", image_id_);
     error += !rosparam_shortcuts::get(name_, rpnh, "dimensions", dimensions_);
@@ -480,13 +479,6 @@ public:
         experience_setup_->saveDataLog(logging_file);
       logging_file.flush();
 
-      // Regenerate Sparse Graph
-      if (post_processing_ && run_id % post_processing_interval_ == 0 && run_id > 0)  // every x runs
-      {
-        ROS_INFO_STREAM_NAMED(name_, "Performing post processing every " << post_processing_interval_ << " intervals");
-        experience_setup_->doPostProcessing();
-      }
-
       if (visualize_wait_between_plans_)
         waitForNextStep("run next problem");
       else  // Main pause between planning instances - allows user to analyze
@@ -496,10 +488,6 @@ public:
       if (run_id < planning_runs_ - 1)
         deleteAllMarkers(false);
     }  // for each run
-
-    // Save experience
-    if (post_processing_)
-      experience_setup_->doPostProcessing();
 
     // Finishing up
     ROS_INFO_STREAM_NAMED(name_, "Saving experience db...");
@@ -1316,8 +1304,6 @@ private:
   bool check_valid_vertices_;
   bool display_disjoint_sets_;
   bool benchmark_performance_;
-  bool post_processing_;
-  int post_processing_interval_;
 
   // Type of planner
   std::string experience_planner_;
