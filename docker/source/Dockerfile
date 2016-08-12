@@ -33,6 +33,7 @@ RUN apt-get update && \
       less \
       emacs \
       bash-completion \
+      wmctrl \
       valgrind \
       gdb && \
     rosdep install -y --from-paths . --ignore-src --rosdistro ${ROS_DISTRO} --as-root=apt:false && \

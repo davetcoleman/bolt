@@ -14,6 +14,7 @@ Status:
 
 Currently tested for ROS Jade, also works with Kinetic but MoveIt! is not released yet so it takes some magic. Should also work fine with Indigo but I stopped testing for that and a new rosinstall would need to be made. To build this package, create a [catkin workspace](http://wiki.ros.org/catkin/Tutorials/create_a_workspace).
 
+    sudo apt-get install python-wstool python-catkin-tools wmctrl
     wstool init .
     wstool merge https://raw.githubusercontent.com/davetcoleman/bolt/${ROS_DISTRO}-devel/bolt.${ROS_DISTRO}.rosinstall
     wstool update
