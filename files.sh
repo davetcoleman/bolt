@@ -8,9 +8,6 @@
 /home/dave/ros/current/ws_swri/src/moveit_all/moveit_visual_tools/src/imarker_robot_state.cpp
 /home/dave/ros/current/ws_swri/src/moveit_all/moveit_visual_tools/include/moveit_visual_tools/imarker_robot_state.h
 
-
-
-
 /home/dave/ros/current/ws_swri/src/bolt/bolt_hilgendorf/include/bolt_hilgendorf/moveit_viz_window.h
 /home/dave/ros/current/ws_swri/src/bolt/bolt_hilgendorf/include/bolt_hilgendorf/projection_viz_window.h
 /home/dave/ros/current/ws_swri/src/bolt/bolt_hilgendorf/src/moveit_viz_window.cpp

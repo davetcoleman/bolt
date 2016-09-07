@@ -111,7 +111,7 @@ bool TaskGraph::setup()
   if (!pathSimplifier_)
   {
     pathSimplifier_.reset(new geometric::PathSimplifier(si_));
-    pathSimplifier_->freeStates(false);
+    pathSimplifier_->freeStates(true);
   }
 
   return true;

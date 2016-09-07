@@ -8,7 +8,7 @@ bolt_2d:
   check_valid_vertices: false
   load_spars: false
   create_spars: true
-  create_spars_count: 100 # create the spars graph multiple times
+  create_spars_count: 10 # create the spars graph multiple times
   continue_spars: false # even if a file has been saved, randomly sample for more coverage
 
   # environment info
@@ -73,8 +73,8 @@ sparse_criteria:
   visualize:
     attempted_states: false # show the current sampled state before its added
     connectivity: false # show states in different connected components for connectivity criteria
-    quality_criteria: true # window 5
-    quality_criteria_close_reps: true # window 3
+    quality_criteria: false # window 5
+    quality_criteria_close_reps: false # window 3
     quality_criteria_sampler: false
     quality_criteria_astar: true # show results of astar test
     remove_close_vertices: false
@@ -92,7 +92,7 @@ sparse_graph:
     spars_graph_speed: 0.00001 # if 0, does not animate but only single image draw
     database_vertices: true
     database_edges: true
-    database_coverage: true # the grey squares around vertices representing sparse delta
+    database_coverage: false # the grey squares around vertices representing sparse delta
     projection: false
     graph_after_loading: true
     quality_path_simp: false # show smoothing simplification

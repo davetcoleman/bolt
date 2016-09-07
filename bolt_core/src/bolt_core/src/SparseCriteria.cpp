@@ -413,22 +413,19 @@ bool SparseCriteria::checkAddInterface(CandidateData &candidateD, std::size_t in
     return false;
   }
 
+  if (!checkPathLength(v1, v2, indent))
+    return false;
+
   // If they can be directly connected
   if (si_->checkMotion(sg_->getState(v1), sg_->getState(v2)))
   {
     BOLT_DEBUG(indent, vCriteria_, "INTERFACE: directly connected nodes");
-
-    if (!checkPathLength(v1, v2, indent))
-      return false;
 
     // Connect them
     sg_->addEdge(v1, v2, eINTERFACE, indent);
 
     return true;
   }
-
-  if (!checkPathLength(v1, v2, indent))
-    return false;
 
   // They cannot be directly connected
   // Add the new node to the graph, to bridge the interface
@@ -478,7 +475,7 @@ bool SparseCriteria::checkPathLength(SparseVertex v1, SparseVertex v2, std::size
     double newEdgeDist = si_->distance(sg_->getState(v1), sg_->getState(v2));
     if (pathLength < newEdgeDist + SMALL_EPSILON)
     {
-      BOLT_ERROR(indent, true, "New interface edge does not help enough");
+      BOLT_ERROR(indent, true, "New interface edge does not help enough, newEdgeDist: " << fabs(newEdgeDist - pathLength));
 
       visual_->viz4()->edge(sg_->getState(v1), sg_->getState(v2), tools::MEDIUM, tools::RED);
       visual_->viz4()->trigger();
@@ -800,9 +797,10 @@ bool SparseCriteria::addQualityPath(SparseVertex v, SparseVertex vp, SparseVerte
 
   BOLT_WARN(indent, vQuality_, "Unable to connect directly - geometric path must be created for spanner");
 
+  // Carefully track memory allocations so there are no leacks...
   geometric::PathGeometric *path = new geometric::PathGeometric(si_);
 
-  // Populate path
+  // Populate path - memory is copied from original location
   if (vp < vpp)
   {
     path->append(sg_->getState(vp));
@@ -838,28 +836,35 @@ bool SparseCriteria::addQualityPath(SparseVertex v, SparseVertex vp, SparseVerte
   {
     BOLT_WARN(indent, vQuality_ || 1, "Smoothed path does not improve connectivity");
     // visual_->waitForUserFeedback("smoothed path");
+
+    // Free memory and delete path
+    for (auto state : path->getStates())
+      si_->freeState(state);
+    delete path;
+
     return false;
   }
 
   // Insert simplified path into graph
   SparseVertex prior = vp;
   SparseVertex newVertex;
-  std::vector<base::State *> &states = path->getStates();
 
   BOLT_DEBUG(indent + 2, vQuality_, "Shortcuted path now has " << path->getStateCount() << " states");
-  BOLT_ASSERT(states.size() > 2, "Somehow path has shrunk to less than three vertices");
 
-  bool addEdgeEnabled = true;                          // if a vertex is skipped, stop adding edges
-  for (std::size_t i = 1; i < states.size() - 1; ++i)  // first and last states are vp and vpp, don't sg_->addVertex()
+  // Free first state memory because its already in the graph
+  si_->freeState(path->getStates().front());
+
+  // first and last states are vp and vpp so don't get added
+  for (std::size_t i = 1; i < path->getStates().size() - 1; ++i)
   {
-    base::State *state = states[i];
+    const base::State *state = path->getStates()[i];
 
     // Check if this vertex already exists
     if (si_->distance(sg_->getState(v), state) < denseDelta_)  // TODO: is it ok to re-use this denseDelta var?
     {
-      BOLT_ERROR(indent + 2, vQuality_, "Add path state is too similar to v!");
+      BOLT_ERROR(indent + 2, vQuality_ || true, "Add path state is too similar to v!");
 
-      if (visualizeQualityCriteria_ && false)
+      if (visualizeQualityCriteria_ || true)
       {
         visual_->viz2()->deleteAllMarkers();
         visual_->viz2()->path(path, tools::SMALL, tools::RED);
@@ -869,59 +874,52 @@ bool SparseCriteria::addQualityPath(SparseVertex v, SparseVertex vp, SparseVerte
         visual_->waitForUserFeedback("Add path state is too similar to v");
       }
 
+      // Free remaining states, including current and last state, and delete path
+      for (std::size_t j = i; j < path->getStates().size(); ++j)
+        si_->freeState(path->getStates()[j]);
       delete path;
+
       return false;
     }
 
-    // Check if new vertex has enough clearance
-    if (sg_->superDebugEnabled() && !checkSufficientClearance(state))
-    {
-      BOLT_WARN(indent + 2, vCriteria_, "Skipped adding vertex in new path b/c insufficient clearance");
-      addEdgeEnabled = false;
-      continue;
-    }
-
-    // no need to clone state, since we will destroy p; we just copy the pointer
+    // We don't have to copy the state memory because we did already above and use smart unloading
     BOLT_DEBUG(indent + 2, vQuality_, "Adding node from shortcut path for QUALITY");
-    newVertex = sg_->addVertex(si_->cloneState(state), QUALITY, indent + 4);
+    newVertex = sg_->addVertex(state, QUALITY, indent + 4);
 
     // Check if there are really close vertices nearby which should be merged
     if (checkRemoveCloseVertices(newVertex, indent + 4))
     {
-      // New vertex replaced a nearby vertex, we can continue no further because
-      // graph has been re-indexed
+      // New vertex replaced a nearby vertex, we can continue no further because graph has been re-indexed
 
       // Remove all edges from all vertices near our new vertex
       sg_->clearEdgesNearVertex(newVertex, indent);
 
       // TODO should we clearEdgesNearVertex before return true ?
+
+      // Free remaining states, after current one, and delete path
+      for (std::size_t j = i + 1; j < path->getStates().size(); ++j)
+        si_->freeState(path->getStates()[j]);
       delete path;
+
       return true;
     }
 
     // Remove all edges from all vertices near our new vertex
     sg_->clearEdgesNearVertex(newVertex, indent);
 
-    if (addEdgeEnabled)
-    {
-      assert(prior != newVertex);
-      sg_->addEdge(prior, newVertex, eQUALITY, indent + 2);
-      prior = newVertex;
-    }
-  }
+    assert(prior != newVertex);
+    sg_->addEdge(prior, newVertex, eQUALITY, indent + 2);
+    prior = newVertex;
 
-  // clear the states, so memory is not freed twice
-  states.clear();
+  } // for each state in path
 
-  if (addEdgeEnabled)
-  {
-    assert(prior != vpp);
-    sg_->addEdge(prior, vpp, eQUALITY, indent + 2);
-  }
+  // Add last edge back onto graph
+  assert(prior != vpp);
+  sg_->addEdge(prior, vpp, eQUALITY, indent + 2);
 
+  // Free last state memory and delete path
+  si_->freeState(path->getStates().back());
   delete path;
-
-  // visual_->waitForUserFeedback("addQualityPath");
 
   return true;
 }
@@ -930,7 +928,7 @@ bool SparseCriteria::spannerTestOriginal(SparseVertex v, SparseVertex vp, Sparse
                                          double &shortestPathVpVpp, std::size_t indent)
 {
   BOLT_FUNC(indent, vQuality_, "spannerTestOriginal()");
-  // Computes all nodes which qualify as a candidate x for v, v', and v"
+  // Computes all nodes which qualify as a candidate x for v, v', and v" and get the length of the longest one
   double midpointPathLength = maxSpannerPath(v, vp, vpp, indent + 2);
 
   if (stretchFactor_ * iData.getLastDistance() < midpointPathLength)
@@ -1243,8 +1241,7 @@ double SparseCriteria::maxSpannerPath(SparseVertex v, SparseVertex vp, SparseVer
     {
       const InterfaceData &iData = sg_->getInterfaceData(v, vpp, x, indent + 2);
 
-      // Check if we previously had found a pair of points that support this
-      // interface
+      // Check if we previously had found a pair of points that support this interface
       if (iData.getInsideInterfaceOfV1(vpp, x) != nullptr)
       // if ((vpp < x && iData.getInterface1Inside()) || (x < vpp && iData.getInterface2Inside()))
       {

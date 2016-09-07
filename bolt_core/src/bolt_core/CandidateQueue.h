@@ -128,7 +128,7 @@ private:
   std::size_t totalCandidates_ = 0;
 
 public:
-  bool verbose_ = true;      // general program direction
+  bool verbose_ = false;      // general program direction
   bool vNeighbor_ = true;    // nearest neighbor search
   bool vClear_ = true;       // when queue is being cleared because of change
   bool vQueueFull_ = false;   // status of queue

@@ -130,14 +130,20 @@ void SparseGraph::freeMemory()
 {
   foreach (SparseVertex v, boost::vertices(g_))
   {
+    // Clear interface data
     foreach (InterfaceData &iData, vertexInterfaceProperty_[v] | boost::adaptors::map_values)
       iData.clear(si_);
+
+    // Free states memory
+    if (vertexStateProperty_[v] != nullptr)
+      si_->freeState(vertexStateProperty_[v]);
   }
 
+  // Clear vertices and edges
   g_.clear();
 
-  if (nn_)
-    nn_->clear();
+  // Clear nearest neighbor
+  nn_->clear();
 
   hasUnsavedChanges_ = false;
 }
@@ -149,7 +155,7 @@ bool SparseGraph::setup()
   {
     // pathSimplifier_.reset(new PathSimplifier(si_));
     pathSimplifier_.reset(new geometric::PathSimplifier(si_));
-    pathSimplifier_->freeStates(false);
+    pathSimplifier_->freeStates(true);
   }
 
   return true;
@@ -609,8 +615,17 @@ bool SparseGraph::smoothQualityPath(geometric::PathGeometric *path, double clear
   BOLT_FUNC(indent, visualizeQualityPathSimp_, "smoothQualityPath() clearance: " << clearance);
 
   // TODO: only for testing
-  base::State *startCopy = si_->cloneState(path->getState(0));
-  base::State *goalCopy = si_->cloneState(path->getState(path->getStateCount() - 1));
+  base::State *startCopy;
+  base::State *goalCopy;
+#ifdef NDEBUG
+  // nondebug
+  BOLT_ERROR(indent, true, "NOT IN DEBUG MODE");
+#else
+  // debug code
+  BOLT_ERROR(indent, true, "IN DEBUG MODE");
+  startCopy = si_->cloneState(path->getState(0));
+  goalCopy = si_->cloneState(path->getState(path->getStateCount() - 1));
+#endif
 
   // Visualize path
   if (visualizeQualityPathSimp_)
@@ -693,9 +708,15 @@ bool SparseGraph::smoothQualityPath(geometric::PathGeometric *path, double clear
 
   std::pair<bool, bool> repairResult = path->checkAndRepair(100);
 
+#ifdef NDEBUG
+  // nondebug
+  BOLT_ERROR(indent, true, "NOT IN DEBUG MODE");
+#else
+  // debug code
+  BOLT_ERROR(indent, true, "IN DEBUG MODE");
   BOLT_ASSERT(si_->equalStates(path->getState(0), startCopy), "Start state is no longer the same");
-  BOLT_ASSERT(si_->equalStates(path->getState(path->getStateCount() - 1), goalCopy), "Goal state is no longer the "
-                                                                                     "same");
+  BOLT_ASSERT(si_->equalStates(path->getState(path->getStateCount() - 1), goalCopy), "Goal state is not the same");
+#endif
 
   if (!repairResult.second)  // Repairing was not successful
   {
@@ -736,7 +757,7 @@ bool SparseGraph::smoothMax(geometric::PathGeometric* path, std::size_t indent)
   // Set the motion validator to use clearance, this way isValid() checks clearance before confirming valid
   base::DiscreteMotionValidator *dmv =
       dynamic_cast<base::DiscreteMotionValidator *>(si_->getMotionValidatorNonConst().get());
-  //dmv->setRequiredStateClearance(obstacleClearance_);
+  dmv->setRequiredStateClearance(0);
 
   double prevDistance = std::numeric_limits<double>::infinity();
   std::size_t origStateCount = path->getStateCount();
@@ -861,6 +882,8 @@ bool SparseGraph::smoothMax(geometric::PathGeometric* path, std::size_t indent)
 
   BOLT_ASSERT(si_->equalStates(path->getState(0), startCopy), "Start state is no longer same");
   BOLT_ASSERT(si_->equalStates(path->getState(path->getStateCount() - 1), goalCopy), "Goal state is no longer same");
+
+  dmv->setRequiredStateClearance(obstacleClearance_);
 
   return true;
 }
