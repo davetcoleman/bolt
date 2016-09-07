@@ -540,7 +540,7 @@ public:  // user settings from other applications
 
   /** \brief Visualization speed of astar search, num of seconds to show each vertex */
   double visualizeAstarSpeed_ = 0.1;
-  bool visualizeQualityPathSimp_ = false;
+  bool visualizeQualityPathSmoothing_ = false;
 
   /** \brief Change verbosity levels */
   bool verbose_ = false;

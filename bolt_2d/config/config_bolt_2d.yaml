@@ -18,7 +18,7 @@ bolt_2d:
 
   # solve planning problems
   run_problems: false
-  planning_runs: 10
+  planning_runs: 1
   problem_type: 0 # 0 - random, 1 - static, 2 - static within sphere
   problem_id: 0 # which start/goal pair to use, if problem_type is static
   use_task_planning: true  # cartesian hybrid planning
@@ -55,7 +55,7 @@ sparse_criteria:
   dense_delta_fraction: 0.01 #NOTE: this is not used anymore
   penetration_overlap_fraction: 0.01 #0.001
   near_sample_points_multiple: 2 # 2 is value used by SPARStwo
-  stretch_factor: 1.5    # 0 means auto set
+  stretch_factor: 0   # 0 means auto set
   use_edge_improvement_rule: true
   use_l2_norm: false # straight line distance
   use_check_remove_close_vertices: true # Experimental feature that allows very closeby vertices to be merged with newly added ones
@@ -65,7 +65,7 @@ sparse_criteria:
   use_quality_criteria: true # 4th criteria
   use_smoothed_path_rejection: false
   verbose:
-    added_reason: true # debug criteria for adding vertices & edges
+    added_reason: false # debug criteria for adding vertices & edges
     criteria: false
     quality: false
     quality_max_spanner: false
@@ -95,7 +95,7 @@ sparse_graph:
     database_coverage: false # the grey squares around vertices representing sparse delta
     projection: false
     graph_after_loading: true
-    quality_path_simp: false # show smoothing simplification
+    quality_path_smoothing: false # show smoothing simplification
     astar: false # show node expansions and openings
     astar_speed: 0.01 # how many seconds to wait between each visualization
     voronoi_diagram: false

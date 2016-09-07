@@ -475,16 +475,19 @@ bool SparseCriteria::checkPathLength(SparseVertex v1, SparseVertex v2, std::size
     double newEdgeDist = si_->distance(sg_->getState(v1), sg_->getState(v2));
     if (pathLength < newEdgeDist + SMALL_EPSILON)
     {
-      BOLT_ERROR(indent, true, "New interface edge does not help enough, newEdgeDist: " << fabs(newEdgeDist - pathLength));
+      if (false) // Debug
+      {
+        BOLT_ERROR(indent, true, "New interface edge does not help enough, difference between distances: " << fabs(newEdgeDist - pathLength));
+        visual_->viz4()->edge(sg_->getState(v1), sg_->getState(v2), tools::MEDIUM, tools::RED);
+        visual_->viz4()->trigger();
+        usleep(0.001*1000000);
+      }
 
-      visual_->viz4()->edge(sg_->getState(v1), sg_->getState(v2), tools::MEDIUM, tools::RED);
-      visual_->viz4()->trigger();
-      usleep(0.001*1000000);
       return false;
     }
     else
     {
-      BOLT_WARN(indent, true, "Interface edge qualifies - diff: " << (newEdgeDist + SMALL_EPSILON - pathLength));
+      BOLT_WARN(indent, false, "Interface edge qualifies - diff: " << (newEdgeDist + SMALL_EPSILON - pathLength));
     }
   }
   return true;
@@ -799,6 +802,7 @@ bool SparseCriteria::addQualityPath(SparseVertex v, SparseVertex vp, SparseVerte
 
   // Carefully track memory allocations so there are no leacks...
   geometric::PathGeometric *path = new geometric::PathGeometric(si_);
+  path->freeStates(false); // manually free the states in a more intelligent way
 
   // Populate path - memory is copied from original location
   if (vp < vpp)
@@ -857,30 +861,7 @@ bool SparseCriteria::addQualityPath(SparseVertex v, SparseVertex vp, SparseVerte
   // first and last states are vp and vpp so don't get added
   for (std::size_t i = 1; i < path->getStates().size() - 1; ++i)
   {
-    const base::State *state = path->getStates()[i];
-
-    // Check if this vertex already exists
-    if (si_->distance(sg_->getState(v), state) < denseDelta_)  // TODO: is it ok to re-use this denseDelta var?
-    {
-      BOLT_ERROR(indent + 2, vQuality_ || true, "Add path state is too similar to v!");
-
-      if (visualizeQualityCriteria_ || true)
-      {
-        visual_->viz2()->deleteAllMarkers();
-        visual_->viz2()->path(path, tools::SMALL, tools::RED);
-        visual_->viz2()->trigger();
-        usleep(0.001 * 1000000);
-
-        visual_->waitForUserFeedback("Add path state is too similar to v");
-      }
-
-      // Free remaining states, including current and last state, and delete path
-      for (std::size_t j = i; j < path->getStates().size(); ++j)
-        si_->freeState(path->getStates()[j]);
-      delete path;
-
-      return false;
-    }
+    base::State *state = path->getStates()[i];
 
     // We don't have to copy the state memory because we did already above and use smart unloading
     BOLT_DEBUG(indent + 2, vQuality_, "Adding node from shortcut path for QUALITY");

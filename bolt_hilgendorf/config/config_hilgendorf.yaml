@@ -60,7 +60,7 @@ sparse_graph:
     database_coverage: false # the grey circles around vertices, must have spars_graph enabled
     projection: true # show the joint space in a nD grid
     graph_after_loading: false
-    quality_path_simp: false # simplification
+    quality_path_smoothing: false # simplification
     astar: true # show node expansions and openings
     astar_speed: 0.01 # how many seconds to wait between each visualization
     voronoi_diagram: false

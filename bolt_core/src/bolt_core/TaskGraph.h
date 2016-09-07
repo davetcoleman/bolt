@@ -439,7 +439,7 @@ public:  // user settings from other applications
   /** \brief Visualization speed of astar search, num of seconds to show each vertex */
   bool visualizeAstar_ = false;
   double visualizeAstarSpeed_ = 0.1;
-  bool visualizeQualityPathSimp_ = false;
+  bool visualizeQualityPathSmoothing_ = false;
 
   /** \brief Change verbosity levels */
   bool vAdd_ = false;  // message when adding edges and vertices

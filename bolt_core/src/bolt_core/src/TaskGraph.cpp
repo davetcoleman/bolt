@@ -865,10 +865,10 @@ void TaskGraph::errorCheckDuplicateStates(std::size_t indent)
 
 bool TaskGraph::smoothQualityPathOriginal(geometric::PathGeometric *path, std::size_t indent)
 {
-  BOLT_ERROR(indent, visualizeQualityPathSimp_, "smoothQualityPathOriginal()");
+  BOLT_ERROR(indent, visualizeQualityPathSmoothing_, "smoothQualityPathOriginal()");
 
   // Visualize path
-  if (visualizeQualityPathSimp_)
+  if (visualizeQualityPathSmoothing_)
   {
     visual_->viz2()->deleteAllMarkers();
     visual_->viz2()->path(path, tools::SMALL, tools::BLUE);
@@ -876,9 +876,9 @@ bool TaskGraph::smoothQualityPathOriginal(geometric::PathGeometric *path, std::s
     usleep(0.001 * 1000000);
   }
 
-  BOLT_DEBUG(indent, visualizeQualityPathSimp_, "Created 'quality path' candidate with " << path->getStateCount()
+  BOLT_DEBUG(indent, visualizeQualityPathSmoothing_, "Created 'quality path' candidate with " << path->getStateCount()
                                                                                          << " states");
-  if (visualizeQualityPathSimp_)
+  if (visualizeQualityPathSmoothing_)
     visual_->waitForUserFeedback("path simplification");
 
   pathSimplifier_->reduceVertices(*path, 10);
@@ -895,10 +895,10 @@ bool TaskGraph::smoothQualityPathOriginal(geometric::PathGeometric *path, std::s
 
 bool TaskGraph::smoothQualityPath(geometric::PathGeometric *path, double clearance, std::size_t indent)
 {
-  BOLT_FUNC(indent, visualizeQualityPathSimp_, "TaskGraph.smoothQualityPath()");
+  BOLT_FUNC(indent, visualizeQualityPathSmoothing_, "TaskGraph.smoothQualityPath()");
 
   // Visualize path
-  if (visualizeQualityPathSimp_)
+  if (visualizeQualityPathSmoothing_)
   {
     visual_->viz2()->deleteAllMarkers();
     visual_->viz2()->path(path, tools::SMALL, tools::BLUE);
@@ -906,9 +906,9 @@ bool TaskGraph::smoothQualityPath(geometric::PathGeometric *path, double clearan
     usleep(0.001 * 1000000);
   }
 
-  BOLT_DEBUG(indent, visualizeQualityPathSimp_, "Created 'quality path' candidate with " << path->getStateCount()
+  BOLT_DEBUG(indent, visualizeQualityPathSmoothing_, "Created 'quality path' candidate with " << path->getStateCount()
                                                                                          << " states");
-  if (visualizeQualityPathSimp_)
+  if (visualizeQualityPathSmoothing_)
     visual_->waitForUserFeedback("path simplification");
 
   // Set the motion validator to use clearance, this way isValid() checks clearance before confirming valid
@@ -920,7 +920,7 @@ bool TaskGraph::smoothQualityPath(geometric::PathGeometric *path, double clearan
   {
     pathSimplifier_->simplifyMax(*path);
 
-    if (visualizeQualityPathSimp_)
+    if (visualizeQualityPathSmoothing_)
     {
       visual_->viz2()->deleteAllMarkers();
       visual_->viz2()->path(path, tools::SMALL, tools::ORANGE);
@@ -931,7 +931,7 @@ bool TaskGraph::smoothQualityPath(geometric::PathGeometric *path, double clearan
 
     pathSimplifier_->reduceVertices(*path, 1000, path->getStateCount() * 4);
 
-    if (visualizeQualityPathSimp_)
+    if (visualizeQualityPathSmoothing_)
     {
       visual_->viz2()->deleteAllMarkers();
       visual_->viz2()->path(path, tools::SMALL, tools::BLUE);
@@ -945,7 +945,7 @@ bool TaskGraph::smoothQualityPath(geometric::PathGeometric *path, double clearan
 
   pathSimplifier_->reduceVertices(*path, 1000, path->getStateCount() * 4);
 
-  if (visualizeQualityPathSimp_)
+  if (visualizeQualityPathSmoothing_)
   {
     visual_->viz2()->deleteAllMarkers();
     visual_->viz2()->path(path, tools::SMALL, tools::GREEN);

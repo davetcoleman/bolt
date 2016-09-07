@@ -100,7 +100,7 @@ void loadOMPLParameters(ros::NodeHandle nh, const std::string &name, ompl::tools
     error += !get(name, rpnh, "visualize/database_coverage", sparseGraph->visualizeDatabaseCoverage_);
     error += !get(name, rpnh, "visualize/projection", sparseGraph->visualizeProjection_);
     error += !get(name, rpnh, "visualize/graph_after_loading", sparseGraph->visualizeGraphAfterLoading_);
-    error += !get(name, rpnh, "visualize/quality_path_simp", sparseGraph->visualizeQualityPathSimp_);
+    error += !get(name, rpnh, "visualize/quality_path_smoothing", sparseGraph->visualizeQualityPathSmoothing_);
     error += !get(name, rpnh, "visualize/astar", sparseGraph->visualizeAstar_);
     error += !get(name, rpnh, "visualize/astar_speed", sparseGraph->visualizeAstarSpeed_);
     error += !get(name, rpnh, "visualize/voronoi_diagram", sparseGraph->visualizeVoronoiDiagram_);

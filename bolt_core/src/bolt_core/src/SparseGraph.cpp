@@ -582,10 +582,10 @@ void SparseGraph::errorCheckDuplicateStates(std::size_t indent)
 
 bool SparseGraph::smoothQualityPathOriginal(geometric::PathGeometric *path, std::size_t indent)
 {
-  BOLT_ERROR(indent, visualizeQualityPathSimp_, "smoothQualityPathOriginal()");
+  BOLT_ERROR(indent, visualizeQualityPathSmoothing_, "smoothQualityPathOriginal()");
 
   // Visualize path
-  if (visualizeQualityPathSimp_)
+  if (visualizeQualityPathSmoothing_)
   {
     visual_->viz2()->deleteAllMarkers();
     visual_->viz2()->path(path, tools::SMALL, tools::BLUE);
@@ -593,9 +593,9 @@ bool SparseGraph::smoothQualityPathOriginal(geometric::PathGeometric *path, std:
     usleep(0.001 * 1000000);
   }
 
-  BOLT_DEBUG(indent, visualizeQualityPathSimp_, "Created 'quality path' candidate with " << path->getStateCount()
+  BOLT_DEBUG(indent, visualizeQualityPathSmoothing_, "Created 'quality path' candidate with " << path->getStateCount()
                                                                                          << " states");
-  if (visualizeQualityPathSimp_)
+  if (visualizeQualityPathSmoothing_)
     visual_->waitForUserFeedback("path simplification");
 
   pathSimplifier_->reduceVertices(*path, 10);
@@ -605,18 +605,26 @@ bool SparseGraph::smoothQualityPathOriginal(geometric::PathGeometric *path, std:
 
   if (!repairResult.second)  // Repairing was not successful
   {
-    throw Exception(name_, "check and repair failed?");
+    // Visualize path
+    visual_->viz2()->deleteAllMarkers();
+    visual_->viz2()->path(path, tools::SMALL, tools::BLUE);
+    visual_->viz2()->trigger();
+    usleep(0.001 * 1000000);
+    visual_->waitForUserFeedback("path simplification");
+
+    throw Exception(name_, "check and repair failed");
   }
   return true;
 }
 
 bool SparseGraph::smoothQualityPath(geometric::PathGeometric *path, double clearance, bool debug, std::size_t indent)
 {
-  BOLT_FUNC(indent, visualizeQualityPathSimp_, "smoothQualityPath() clearance: " << clearance);
+  BOLT_FUNC(indent, visualizeQualityPathSmoothing_, "smoothQualityPath() clearance: " << clearance);
 
-  // TODO: only for testing
+  // These vars are only used when compiled in debug mode
   base::State *startCopy;
   base::State *goalCopy;
+
 #ifdef NDEBUG
   // nondebug
   BOLT_ERROR(indent, true, "NOT IN DEBUG MODE");
@@ -628,7 +636,7 @@ bool SparseGraph::smoothQualityPath(geometric::PathGeometric *path, double clear
 #endif
 
   // Visualize path
-  if (visualizeQualityPathSimp_)
+  if (visualizeQualityPathSmoothing_)
   {
     visual_->viz2()->deleteAllMarkers();
     visual_->viz3()->deleteAllMarkers();
@@ -642,9 +650,9 @@ bool SparseGraph::smoothQualityPath(geometric::PathGeometric *path, double clear
 
   // Ensure that the number of states always decreases
   std::size_t minStatesFound = path->getStateCount();
-  BOLT_DEBUG(indent, visualizeQualityPathSimp_, "Original quality path has " << minStatesFound << " states");
+  BOLT_DEBUG(indent, visualizeQualityPathSmoothing_, "Original quality path has " << minStatesFound << " states");
 
-  // if (visualizeQualityPathSimp_)
+  // if (visualizeQualityPathSmoothing_)
   //   visual_->waitForUserFeedback("path simplification");
 
   // Set the motion validator to use clearance, this way isValid() checks clearance before confirming valid
@@ -660,7 +668,7 @@ bool SparseGraph::smoothQualityPath(geometric::PathGeometric *path, double clear
 
     // std::cout << "path->getStateCount(): " << path->getStateCount() << std::endl;
 
-    if (visualizeQualityPathSimp_)
+    if (visualizeQualityPathSmoothing_)
     {
       // visual_->viz3()->deleteAllMarkers();
       visual_->viz3()->path(path, tools::SMALL, tools::ORANGE);
@@ -675,7 +683,7 @@ bool SparseGraph::smoothQualityPath(geometric::PathGeometric *path, double clear
     // if (minStatesFound > path->getStateCount())
     //   minStatesFound = path->getStateCount();
 
-    if (visualizeQualityPathSimp_)
+    if (visualizeQualityPathSmoothing_)
     {
       // visual_->viz4()->deleteAllMarkers();
       visual_->viz4()->path(path, tools::SMALL, tools::BLUE);
@@ -692,7 +700,7 @@ bool SparseGraph::smoothQualityPath(geometric::PathGeometric *path, double clear
   pathSimplifier_->reduceVertices(*path, 1000, path->getStateCount() * 4);  //, /*rangeRatio*/ 0.33, indent);
   // std::cout << "path->getStateCount(): " << path->getStateCount() << std::endl;
 
-  if (visualizeQualityPathSimp_)
+  if (visualizeQualityPathSmoothing_)
   {
     visual_->viz6()->deleteAllMarkers();
     visual_->viz6()->path(path, tools::SMALL, tools::GREEN);
@@ -727,7 +735,7 @@ bool SparseGraph::smoothQualityPath(geometric::PathGeometric *path, double clear
 
 bool SparseGraph::smoothMax(geometric::PathGeometric* path, std::size_t indent)
 {
-  BOLT_FUNC(indent, visualizeQualityPathSimp_, "smoothMax()");
+  BOLT_FUNC(indent, visualizeQualityPathSmoothing_, "smoothMax()");
 
   if (path->getStateCount() < 3)
     return true;
@@ -739,7 +747,7 @@ bool SparseGraph::smoothMax(geometric::PathGeometric* path, std::size_t indent)
   BOLT_ASSERT(goalCopy = si_->cloneState(path->getState(path->getStateCount() - 1)), "Only copy if in debug");
 
   // Visualize path
-  if (visualizeQualityPathSimp_)
+  if (visualizeQualityPathSmoothing_)
   {
     // Clear all windows
     for (std::size_t i = 3; i <= 6; ++i)
@@ -773,7 +781,7 @@ bool SparseGraph::smoothMax(geometric::PathGeometric* path, std::size_t indent)
     {
       path->interpolate();
 
-      if (visualizeQualityPathSimp_)
+      if (visualizeQualityPathSmoothing_)
       {
         visual_->viz3()->deleteAllMarkers();
         visual_->viz3()->path(path, tools::MEDIUM, tools::ORANGE);
@@ -795,7 +803,7 @@ bool SparseGraph::smoothMax(geometric::PathGeometric* path, std::size_t indent)
       tryMore =
         pathSimplifier_->reduceVertices(*path, 1000, path->getStateCount() * 4);  // /*rangeRatio*/ 0.33, indent);
 
-      if (visualizeQualityPathSimp_)
+      if (visualizeQualityPathSmoothing_)
       {
         visual_->viz4()->deleteAllMarkers();
         visual_->viz4()->path(path, tools::MEDIUM, tools::ORANGE);
@@ -813,7 +821,7 @@ bool SparseGraph::smoothMax(geometric::PathGeometric* path, std::size_t indent)
     // try to collapse close-by vertices
     // pathSimplifier_->collapseCloseVertices(*path);
 
-    // if (visualizeQualityPathSimp_)
+    // if (visualizeQualityPathSmoothing_)
     // {
     //   visual_->viz4()->deleteAllMarkers();
     //   visual_->viz4()->path(path, tools::MEDIUM, tools::ORANGE);
@@ -830,7 +838,7 @@ bool SparseGraph::smoothMax(geometric::PathGeometric* path, std::size_t indent)
     // // split path segments, not just vertices
     // pathSimplifier_->shortcutPath(*path);
 
-    // if (visualizeQualityPathSimp_)
+    // if (visualizeQualityPathSmoothing_)
     // {
     //   visual_->viz5()->deleteAllMarkers();
     //   visual_->viz5()->path(path, tools::MEDIUM, tools::ORANGE);
@@ -844,7 +852,7 @@ bool SparseGraph::smoothMax(geometric::PathGeometric* path, std::size_t indent)
     // smooth the path with BSpline interpolation
     pathSimplifier_->smoothBSpline(*path, 5, path->length() / 100.0);
 
-    if (visualizeQualityPathSimp_)
+    if (visualizeQualityPathSmoothing_)
     {
       visual_->viz5()->deleteAllMarkers();
       visual_->viz5()->path(path, tools::MEDIUM, tools::ORANGE);
@@ -864,7 +872,7 @@ bool SparseGraph::smoothMax(geometric::PathGeometric* path, std::size_t indent)
       tryMore =
         pathSimplifier_->reduceVertices(*path, 1000, path->getStateCount() * 4);  // /*rangeRatio*/ 0.33, indent);
 
-      if (visualizeQualityPathSimp_)
+      if (visualizeQualityPathSmoothing_)
       {
         visual_->viz3()->deleteAllMarkers();
         visual_->viz3()->path(path, tools::MEDIUM, tools::ORANGE);
