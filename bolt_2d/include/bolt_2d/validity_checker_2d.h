@@ -46,7 +46,6 @@
 // OMPL
 #include <ompl/base/StateValidityChecker.h>
 #include <ompl/base/spaces/RealVectorStateSpace.h>
-#include <ompl/tools/debug/Visualizer.h>
 
 // C++
 #include <limits>
@@ -82,9 +81,23 @@ public:
     : StateValidityChecker(si)
     , ppm_(ppm)
   {
+    // Set default value
+    clearanceSearchDistance_ = 1.0;
 
     // We can detect clearance
     specs_.clearanceComputationType = StateValidityCheckerSpecs::APPROXIMATE;
+  }
+
+  /** \brief Return true if the state \e state is valid. In addition, set \e dist to the distance to the
+   * nearest invalid state. */
+  virtual bool isValid(const State *state, double &dist) const
+  {
+    if (!isValid(state))
+      return false;
+
+    // Delay doing clearance check until we're sure its not in collision
+    dist = clearance(state);
+    return true;
   }
 
   /** \brief Return true if the state \e state is valid. Usually, this means at least collision checking. If it is
@@ -123,34 +136,23 @@ public:
       negative, the value of clearance is the penetration depth.*/
   virtual double clearance(const ob::State *state) const
   {
-    return clearance(state, NULL);
-  }
-
-  virtual double clearance(const ob::State *state, tools::VisualizerPtr visual) const
-  {
-    // Check if the starting point is in collision. If it is, just return that one
-    if (!isValid(state))
-    {
-      return 0;  // TODO(davetcoleman): we do not yet calculate penetration depth
-    }
-
     double discretization = 0.25;  // std::min(1.0, si_->getStateValidityCheckingResolution() * 10);
 
     // Copy the state so that we have the correct 3rd dimension if it exists
-    // si_->copyState(/*destination*/ work_state_, /*source*/ state);
     base::State *work_state = si_->cloneState(state);
 
     // Find the nearest invalid state
-    bool result = searchSpiralForState(discretization, work_state, visual);
+    bool result = spiralSearchCollisionState(discretization, work_state);
 
-    if (visual)
+    if (visual_ && false)
     {
-      visual->viz6()->trigger();
+      visual_->viz6()->trigger();
       usleep(0.1 * 1000000);
     }
 
     if (!result)
     {
+      std::cout << "did not find invalid state in spiral " << std::endl;
       // No invalid state found within clearanceSearchDistance_
       return std::numeric_limits<double>::infinity();  // indicates collision is very far away
     }
@@ -163,18 +165,6 @@ public:
     enabled_ = collision_checking_enabled;
   }
 
-  /** \brief Get class for managing various visualization features */
-  ompl::tools::VisualizerPtr getVisual()
-  {
-    return visual_;
-  }
-
-  /** \brief Set class for managing various visualization features */
-  void setVisual(ompl::tools::VisualizerPtr visual)
-  {
-    visual_ = visual;
-  }
-
 private:
   /**
    * \brief Search in spiral around starting state (xs, ys) for nearby state that is in collision
@@ -182,13 +172,16 @@ private:
    * \param state - seed state that will also be filled with the result
    * \return true if found invalid state, false if no state is invalid within clearanceSearchDistance_
    */
-  bool searchSpiralForState(double discretization, const ob::State *work_state, tools::VisualizerPtr visual) const
+  bool spiralSearchCollisionState(double discretization, const ob::State *work_state) const
   {
+    std::cout << "spiralSearchCollisionState() " << std::endl;
     double *state_values = work_state->as<ob::RealVectorStateSpace::StateType>()->values;
-    const bool show_growth = true;
-    if (visual)
+    static const bool VISUALIZE_SPIRAL = true;
+
+    if (visual_ && VISUALIZE_SPIRAL)
     {
-      visual->viz6()->state(work_state, tools::MEDIUM, tools::RED, 0);
+      std::cout << "visual " << std::endl;
+      visual_->viz6()->state(work_state, tools::MEDIUM, tools::RED, 0);
     }
 
     double xs = state_values[0];
@@ -204,8 +197,10 @@ private:
         // Point 1
         state_values[0] = xs - d + i;
         state_values[1] = ys - i;
-        if (visual && show_growth)
-          visual->viz6()->state(work_state, tools::SMALL, tools::BLUE, 0);
+        if (true) //visual_ && VISUALIZE_SPIRAL)
+        {
+          visual_->viz6()->state(work_state, tools::MEDIUM, tools::BLUE, 0);
+        }
 
         if (si_->satisfiesBounds(work_state))  // Check bounds
         {
@@ -217,8 +212,8 @@ private:
         // Point 2
         state_values[0] = xs + d - i;
         state_values[1] = ys + i;
-        if (visual && show_growth)
-          visual->viz6()->state(work_state, tools::SMALL, tools::BLUE, 0);
+        if (visual_ && VISUALIZE_SPIRAL)
+          visual_->viz6()->state(work_state, tools::SMALL, tools::BLUE, 0);
 
         if (si_->satisfiesBounds(work_state))  // Check bounds
         {
@@ -233,8 +228,8 @@ private:
         // Point 3
         state_values[0] = xs - i;
         state_values[1] = ys + d - i;
-        if (visual && show_growth)
-          visual->viz6()->state(work_state, tools::SMALL, tools::BLUE, 0);
+        if (visual_ && VISUALIZE_SPIRAL)
+          visual_->viz6()->state(work_state, tools::SMALL, tools::BLUE, 0);
 
         if (si_->satisfiesBounds(work_state))  // Check bounds
         {
@@ -246,8 +241,8 @@ private:
         // Point 4
         state_values[0] = xs + d - i;
         state_values[1] = ys - i;
-        if (visual && show_growth)
-          visual->viz6()->state(work_state, tools::SMALL, tools::BLUE, 0);
+        if (visual_ && VISUALIZE_SPIRAL)
+          visual_->viz6()->state(work_state, tools::SMALL, tools::BLUE, 0);
 
         if (si_->satisfiesBounds(work_state))  // Check bounds
         {
@@ -271,9 +266,6 @@ private:
   double max_threshold_;
 
   bool enabled_ = true;
-
-  /** \brief Class for managing various visualization features */
-  ompl::tools::VisualizerPtr visual_;
 
   // mutable boost::mutex vizMutex_;
 

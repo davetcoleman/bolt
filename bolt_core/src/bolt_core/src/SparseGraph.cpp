@@ -625,12 +625,8 @@ bool SparseGraph::smoothQualityPath(geometric::PathGeometric *path, double clear
   base::State *startCopy;
   base::State *goalCopy;
 
-#ifdef NDEBUG
-  // nondebug
-  BOLT_ERROR(indent, true, "NOT IN DEBUG MODE");
-#else
+#ifndef NDEBUG
   // debug code
-  BOLT_ERROR(indent, true, "IN DEBUG MODE");
   startCopy = si_->cloneState(path->getState(0));
   goalCopy = si_->cloneState(path->getState(path->getStateCount() - 1));
 #endif
@@ -716,12 +712,8 @@ bool SparseGraph::smoothQualityPath(geometric::PathGeometric *path, double clear
 
   std::pair<bool, bool> repairResult = path->checkAndRepair(100);
 
-#ifdef NDEBUG
-  // nondebug
-  BOLT_ERROR(indent, true, "NOT IN DEBUG MODE");
-#else
+#ifndef NDEBUG
   // debug code
-  BOLT_ERROR(indent, true, "IN DEBUG MODE");
   BOLT_ASSERT(si_->equalStates(path->getState(0), startCopy), "Start state is no longer the same");
   BOLT_ASSERT(si_->equalStates(path->getState(path->getStateCount() - 1), goalCopy), "Goal state is not the same");
 #endif

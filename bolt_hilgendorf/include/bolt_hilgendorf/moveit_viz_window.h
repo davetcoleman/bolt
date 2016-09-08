@@ -154,21 +154,21 @@ public:
    * kinematics
    * \return true on success
    */
-  RVIZ_VISUAL_TOOLS_DEPRECATED
-  bool publishRobotPath(const ompl::base::PlannerDataPtr& path, robot_model::JointModelGroup* jmg,
-                        const std::vector<const robot_model::LinkModel*>& tips, bool show_trajectory_animated)
-  {
-    return publishTrajectoryPath(path, jmg, tips, show_trajectory_animated);
-  }
+  // RVIZ_VISUAL_TOOLS_DEPRECATED
+  // bool publishRobotPath(const ompl::base::PlannerDataPtr& path, robot_model::JointModelGroup* jmg,
+  //                       const std::vector<const robot_model::LinkModel*>& tips, bool show_trajectory_animated)
+  // {
+  //   return publishTrajectoryPath(path, jmg, tips, show_trajectory_animated);
+  // }
 
-  RVIZ_VISUAL_TOOLS_DEPRECATED
-  bool publishRobotPath(const og::PathGeometric& path, const robot_model::JointModelGroup* jmg, const bool blocking)
-  {
-    return publishTrajectoryPath(path, jmg, blocking);
-  }
+  // RVIZ_VISUAL_TOOLS_DEPRECATED
+  // bool publishRobotPath(const og::PathGeometric& path, const robot_model::JointModelGroup* jmg, const bool blocking)
+  // {
+  //   return publishTrajectoryPath(path, jmg, blocking);
+  // }
 
-  bool publishTrajectoryPath(const ompl::base::PlannerDataPtr& path, robot_model::JointModelGroup* jmg,
-                             const std::vector<const robot_model::LinkModel*>& tips, bool show_trajectory_animated);
+  // bool publishTrajectoryPath(const ompl::base::PlannerDataPtr& path, robot_model::JointModelGroup* jmg,
+  //                            const std::vector<const robot_model::LinkModel*>& tips, bool show_trajectory_animated);
 
   bool publishTrajectoryPath(const og::PathGeometric& path, const robot_model::JointModelGroup* jmg,
                              const bool blocking);

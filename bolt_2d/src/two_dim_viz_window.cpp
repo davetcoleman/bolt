@@ -77,6 +77,7 @@ void TwoDimVizWindow::state(const ompl::base::State* state, ot::VizSizes size, o
   if (si_->getStateDimension() == 2)
     point.z() += 0.5;
 
+
   switch (size)
   {
     case ompl::tools::XXSMALL:

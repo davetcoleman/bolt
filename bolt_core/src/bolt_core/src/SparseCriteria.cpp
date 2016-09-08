@@ -1614,6 +1614,7 @@ std::pair<std::size_t, std::size_t> SparseCriteria::getInterfaceStateStorageSize
 bool SparseCriteria::checkSufficientClearance(base::State *state)
 {
   // Check if new vertex has enough clearance
+  // Note that it does not check for collision!
   double dist = si_->getStateValidityChecker()->clearance(state);
   return dist >= sg_->getObstacleClearance();
 }

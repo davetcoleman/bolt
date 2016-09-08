@@ -324,84 +324,84 @@ bool MoveItVizWindow::publishRobotState(const ompl::base::State* state)
   return visuals_->publishRobotState(visuals_->getSharedRobotState());
 }
 
-bool MoveItVizWindow::publishTrajectoryPath(const ompl::base::PlannerDataPtr& path, robot_model::JointModelGroup* jmg,
-                                            const std::vector<const robot_model::LinkModel*>& tips,
-                                            bool show_trajectory_animated)
-{
-  // Make sure a robot state is available
-  visuals_->loadSharedRobotState();
+// bool MoveItVizWindow::publishTrajectoryPath(const ompl::base::PlannerDataPtr& path, robot_model::JointModelGroup* jmg,
+//                                             const std::vector<const robot_model::LinkModel*>& tips,
+//                                             bool show_trajectory_animated)
+// {
+//   // Make sure a robot state is available
+//   visuals_->loadSharedRobotState();
 
-  // Vars
-  Eigen::Affine3d pose;
-  std::vector<std::vector<geometry_msgs::Point> > paths_msgs(tips.size());  // each tip has its own path of points
-  robot_trajectory::RobotTrajectoryPtr robot_trajectory;
+//   // Vars
+//   Eigen::Affine3d pose;
+//   std::vector<std::vector<geometry_msgs::Point> > paths_msgs(tips.size());  // each tip has its own path of points
+//   robot_trajectory::RobotTrajectoryPtr robot_trajectory;
 
-  moveit_ompl::ModelBasedStateSpacePtr mb_state_space =
-      std::static_pointer_cast<moveit_ompl::ModelBasedStateSpace>(si_->getStateSpace());
+//   moveit_ompl::ModelBasedStateSpacePtr mb_state_space =
+//       std::static_pointer_cast<moveit_ompl::ModelBasedStateSpace>(si_->getStateSpace());
 
-  // Optionally save the trajectory
-  if (show_trajectory_animated)
-  {
-    robot_trajectory.reset(new robot_trajectory::RobotTrajectory(visuals_->getRobotModel(), jmg->getName()));
-  }
+//   // Optionally save the trajectory
+//   if (show_trajectory_animated)
+//   {
+//     robot_trajectory.reset(new robot_trajectory::RobotTrajectory(visuals_->getRobotModel(), jmg->getName()));
+//   }
 
-  // Each state in the path
-  for (std::size_t state_id = 0; state_id < path->numVertices(); ++state_id)
-  {
-    // Check if program is shutting down
-    if (!ros::ok())
-      return false;
+//   // Each state in the path
+//   for (std::size_t state_id = 0; state_id < path->numVertices(); ++state_id)
+//   {
+//     // Check if program is shutting down
+//     if (!ros::ok())
+//       return false;
 
-    // Convert to robot state
-    mb_state_space->copyToRobotState(*visuals_->getSharedRobotState(), path->getVertex(state_id).getState());
-    ROS_WARN_STREAM_NAMED("temp", "updateStateWithFakeBase disabled");
-    // visuals_->getSharedRobotState()->updateStateWithFakeBase();
+//     // Convert to robot state
+//     mb_state_space->copyToRobotState(*visuals_->getSharedRobotState(), path->getVertex(state_id).getState());
+//     ROS_WARN_STREAM_NAMED("temp", "updateStateWithFakeBase disabled");
+//     // visuals_->getSharedRobotState()->updateStateWithFakeBase();
 
-    visuals_->publishRobotState(visuals_->getSharedRobotState());
+//     visuals_->publishRobotState(visuals_->getSharedRobotState());
 
-    // Each tip in the robot state
-    for (std::size_t tip_id = 0; tip_id < tips.size(); ++tip_id)
-    {
-      // Forward kinematics
-      pose = visuals_->getSharedRobotState()->getGlobalLinkTransform(tips[tip_id]);
+//     // Each tip in the robot state
+//     for (std::size_t tip_id = 0; tip_id < tips.size(); ++tip_id)
+//     {
+//       // Forward kinematics
+//       pose = visuals_->getSharedRobotState()->getGlobalLinkTransform(tips[tip_id]);
 
-      // Optionally save the trajectory
-      if (show_trajectory_animated)
-      {
-        robot_state::RobotState robot_state_copy = *visuals_->getSharedRobotState();
-        robot_trajectory->addSuffixWayPoint(robot_state_copy, 0.01);  // 1 second interval
-      }
+//       // Optionally save the trajectory
+//       if (show_trajectory_animated)
+//       {
+//         robot_state::RobotState robot_state_copy = *visuals_->getSharedRobotState();
+//         robot_trajectory->addSuffixWayPoint(robot_state_copy, 0.01);  // 1 second interval
+//       }
 
-      // Debug pose
-      // std::cout << "Pose: " << state_id << " of link " << tips[tip_id]->getName() << ": \n" << pose.translation() <<
-      // std::endl;
+//       // Debug pose
+//       // std::cout << "Pose: " << state_id << " of link " << tips[tip_id]->getName() << ": \n" << pose.translation() <<
+//       // std::endl;
 
-      paths_msgs[tip_id].push_back(visuals_->convertPose(pose).position);
+//       paths_msgs[tip_id].push_back(visuals_->convertPose(pose).position);
 
-      // Show goal state arrow
-      if (state_id == path->numVertices() - 1)
-      {
-        visuals_->publishArrow(pose, rvt::BLACK);
-      }
-    }
-  }  // for each state
+//       // Show goal state arrow
+//       if (state_id == path->numVertices() - 1)
+//       {
+//         visuals_->publishArrow(pose, rvt::BLACK);
+//       }
+//     }
+//   }  // for each state
 
-  for (std::size_t tip_id = 0; tip_id < tips.size(); ++tip_id)
-  {
-    visuals_->publishPath(paths_msgs[tip_id], rvt::RAND, rvt::SMALL);
-    ros::Duration(0.05).sleep();
-    visuals_->publishSpheres(paths_msgs[tip_id], rvt::ORANGE, rvt::SMALL);
-    ros::Duration(0.05).sleep();
-  }
+//   for (std::size_t tip_id = 0; tip_id < tips.size(); ++tip_id)
+//   {
+//     visuals_->publishPath(paths_msgs[tip_id], rvt::RAND, rvt::SMALL);
+//     ros::Duration(0.05).sleep();
+//     visuals_->publishSpheres(paths_msgs[tip_id], rvt::ORANGE, rvt::SMALL);
+//     ros::Duration(0.05).sleep();
+//   }
 
-  // Debugging - Convert to trajectory
-  if (show_trajectory_animated)
-  {
-    visuals_->publishTrajectoryPath(*robot_trajectory, true);
-  }
+//   // Debugging - Convert to trajectory
+//   if (show_trajectory_animated)
+//   {
+//     visuals_->publishTrajectoryPath(*robot_trajectory, true);
+//   }
 
-  return true;
-}
+//   return true;
+// }
 
 bool MoveItVizWindow::publishTrajectoryPath(const og::PathGeometric& path, const robot_model::JointModelGroup* jmg,
                                             const bool blocking)

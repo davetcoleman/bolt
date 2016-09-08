@@ -221,6 +221,10 @@ void VertexDiscretizer::generateVertices(std::size_t indent)
     si->setStateValidityChecker(si_->getStateValidityChecker());
     si->setMotionValidator(si_->getMotionValidator());
 
+    // TEMP
+    si->getStateValidityChecker()->setVisual(visual_);
+    std::cout << "si->getStateValidityChecker()->getClearanceSearchDistance(): " << si->getStateValidityChecker()->getClearanceSearchDistance() << std::endl;
+
     threads[i] = new boost::thread(
         boost::bind(&VertexDiscretizer::generateVerticesThread, this, i, startJointValue, endJointValue, si, indent));
 
@@ -380,6 +384,9 @@ void VertexDiscretizer::createState(std::size_t threadID, std::vector<double> &v
     return;
   }
 
+  visual_->viz6()->trigger();
+  usleep(0.001*1000000);
+
   if (dist < clearance_)
   {
     BOLT_WARN(indent, vThread_, "Rejected because of clearance " << dist << " required: " << clearance_);
@@ -401,7 +408,7 @@ void VertexDiscretizer::createState(std::size_t threadID, std::vector<double> &v
     return;
   }
 
-  BOLT_GREEN(indent, vThread_, "Accepted, clearance: " << dist);
+  BOLT_GREEN(indent, vThread_, "Accepted, actual distance to obstacle: " << dist);
 
   // Add to graph
   {
@@ -413,14 +420,15 @@ void VertexDiscretizer::createState(std::size_t threadID, std::vector<double> &v
   // Visualize
   if (visualizeGridGeneration_)
   {
-    visual_->viz1()->state(candidateState, LARGE, GREEN, 0);
-    visual_->viz1()->state(candidateState, ROBOT, GREEN, 0);
-    visual_->viz1()->trigger();
+    // Do not visualize because it should already be visualized in underlying class
+    //visual_->viz1()->state(candidateState, LARGE, ot::VizColors::GREEN, 0);
+    //visual_->viz1()->state(candidateState, ROBOT, GREEN, 0);
+    //visual_->viz1()->trigger();
 
     if (visualizeGridGenerationWait_)
       visual_->waitForUserFeedback("accepted");
-    else
-      usleep(0.01 * 1000000);
+    // else
+    //   usleep(0.01 * 1000000);
   }
 }
 

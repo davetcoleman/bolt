@@ -98,6 +98,15 @@ bool SparseGenerator::setup(std::size_t indent)
 
   // Configure vertex discretizer
   vertexDiscretizer_->setMinimumObstacleClearance(sg_->getObstacleClearance());
+
+  std::cout << "-------------------------------------------------------" << std::endl;
+  std::cout << "-------------------------------------------------------" << std::endl;
+  std::cout << "-------------------------------------------------------" << std::endl;
+  std::cout << "setMinimumObstacleClearance: " << sg_->getObstacleClearance() << std::endl;
+  std::cout << "-------------------------------------------------------" << std::endl;
+  std::cout << "-------------------------------------------------------" << std::endl;
+  std::cout << "-------------------------------------------------------" << std::endl;
+
   vertexDiscretizer_->setDiscretization(sparseCriteria_->getDiscretization());
 
   return true;
@@ -547,15 +556,19 @@ bool SparseGenerator::checkSparseGraphOptimality(std::size_t indent)
       // Find nearest neighbor
       findGraphNeighbors(point, 0 /*threadID*/, indent);
 
+      // Check if neighbor exists
+      if (point.visibleNeighborhood_.empty())  // first state is usually itself
+      {
+        BOLT_ERROR(indent, true, "Found sampled vertex with no neighbors");
+        exit(0);
+      }
+
       // Check if first state is same as input
       if (si_->getStateSpace()->equalStates(point.state_, sg_->getState(point.visibleNeighborhood_[0])))
       {
         BOLT_ERROR(indent, true, "first neighbor is itself");
+        exit(-1);
       }
-
-      // Check for neighbor
-      if (point.visibleNeighborhood_.size() < 1)  // first state is usually itself
-        throw Exception(name_, "Found vertex with no neighbors");
     }
 
     // Astar search through graph
@@ -574,6 +587,7 @@ bool SparseGenerator::checkSparseGraphOptimality(std::size_t indent)
 
     std::vector<SparseVertex> vertexPath;
     double distance;
+    std::cout << "astarSearch " << std::endl;
     if (!sg_->astarSearch(start, goal, vertexPath, distance, indent))
     {
       BOLT_ERROR(indent, true, "No path found through graph");
@@ -728,7 +742,7 @@ void SparseGenerator::benchmarkRandValidSampling()
 void SparseGenerator::benchmarkVisualizeSampling()
 {
   std::cout << "-------------------------------------------------------" << std::endl;
-  OMPL_INFORM("Running system performance benchmark");
+  OMPL_INFORM("Running system performance benchmark - benchmarkVisualizeSampling()");
 
   ClearanceSamplerPtr clearanceSampler(new ob::MinimumClearanceValidStateSampler(si_.get()));
   clearanceSampler->setMinimumObstacleClearance(sg_->getObstacleClearance());
@@ -736,7 +750,7 @@ void SparseGenerator::benchmarkVisualizeSampling()
   base::StateSamplerPtr sampler;
   sampler = si_->allocStateSampler();
 
-  const std::size_t benchmarkRuns = 100000;
+  const std::size_t benchmarkRuns = 1000000;
   std::size_t debugIncrement = std::max(benchmarkRuns, std::size_t(benchmarkRuns / 100.0));
 
   // Pre-allocate state

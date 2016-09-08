@@ -66,3 +66,13 @@ There are 6 visualization windows that are each used for multiple different thin
  - red:       quality
  - yellow:   cartesian
  - blue       discretized
+
+## Debug Mode
+
+Code can be added that only runs when compiled with the debug flag:
+
+    #ifdef NDEBUG
+      BOLT_ERROR(indent, true, "NOT IN DEBUG MODE");
+    #else
+      BOLT_ERROR(indent, true, "IN DEBUG MODE");
+    #endif

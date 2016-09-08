@@ -8,7 +8,7 @@ bolt_2d:
   check_valid_vertices: false
   load_spars: false
   create_spars: true
-  create_spars_count: 10 # create the spars graph multiple times
+  create_spars_count: 1 # create the spars graph multiple times
   continue_spars: false # even if a file has been saved, randomly sample for more coverage
 
   # environment info
@@ -18,7 +18,7 @@ bolt_2d:
 
   # solve planning problems
   run_problems: false
-  planning_runs: 1
+  planning_runs: 1 # also see create_spars_count
   problem_type: 0 # 0 - random, 1 - static, 2 - static within sphere
   problem_id: 0 # which start/goal pair to use, if problem_type is static
   use_task_planning: true  # cartesian hybrid planning
@@ -44,7 +44,7 @@ sparse_generator:
   fourth_criteria_after_failures: 5000 # mode change to 4th criteria after this many failures
   terminate_after_failures: 10000 # total failures, including 4th criteria
   use_discretized_samples: true
-  use_random_samples: true
+  use_random_samples: false
   save_interval: 10000 # how often to save, based on number of random samples added
   verbose:
     verbose: true
@@ -104,11 +104,11 @@ sparse_graph:
 # ====================================================
 vertex_discretizer:
   verbose:
-    verbose: false
-    thread: false
+    verbose: true
+    thread: true
   visualize:
-    grid_generation: false
-    grid_generation_wait: false
+    grid_generation: true
+    grid_generation_wait: true
 
 # ====================================================
 task_graph:
