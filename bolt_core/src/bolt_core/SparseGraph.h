@@ -547,6 +547,7 @@ public:  // user settings from other applications
   bool vVisualize_ = false;
   bool vAdd_ = false;  // message when adding edges and vertices
   bool vSearch_ = false;
+  bool vSmooth_ = false;
 
   /** \brief Run with extra safety checks */
   bool superDebug_ = false;

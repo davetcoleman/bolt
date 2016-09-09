@@ -591,6 +591,11 @@ public:
       // bounds.setHigh(2, 2);                         // third dimension has three steps
     }
     space_->as<ob::RealVectorStateSpace>()->setBounds(bounds);
+
+    // Change the discretization level for collision checking
+    //space_->setLongestValidSegmentFraction(0.005);
+    //space_->setLongestValidSegmentFraction(0.01); // this is the default value
+
     space_->setup();
 
     // Set state validity checking for this space

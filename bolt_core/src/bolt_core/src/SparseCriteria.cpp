@@ -273,7 +273,7 @@ bool SparseCriteria::checkAddConnectivity(CandidateData &candidateD, std::size_t
 {
   BOLT_FUNC(indent, vCriteria_, "checkAddConnectivity() Does this node connect two disconnected components?");
 
-  if (!useConnectivityCriteria_)
+  if (!useConnectivityCriteria_ || !useFourthCriteria_)
   {
     BOLT_DEBUG(indent, vCriteria_, "NOT adding node for connectivity - disabled ");
     return false;
@@ -657,6 +657,8 @@ bool SparseCriteria::checkAddPath(SparseVertex v, std::size_t indent)
     {
       BOLT_DEBUG(indent + 4, vQuality_, "Checking v'' = " << vpp);
 
+      BOLT_ASSERT(sg_->getState(vpp) != NULL, "Adjacent vertex found that is null");
+
       InterfaceData &iData = sg_->getInterfaceData(v, vp, vpp, indent + 6);
 
       double shortestPathVpVpp;  // remember what the shortest path is from astar
@@ -834,8 +836,7 @@ bool SparseCriteria::addQualityPath(SparseVertex v, SparseVertex vp, SparseVerte
   // Determine if this smoothed path actually helps improve connectivity
   if (useConnectivityCriteria_ && path->length() > shortestPathVpVpp)
   {
-    BOLT_WARN(indent, vQuality_ || 1, "Smoothed path does not improve connectivity");
-    // visual_->waitForUserFeedback("smoothed path");
+    BOLT_WARN(indent, vQuality_, "Smoothed path does not improve connectivity");
 
     // Free memory and delete path
     for (auto state : path->getStates())
@@ -1189,9 +1190,13 @@ void SparseCriteria::getAdjVerticesOfV1UnconnectedToV2(SparseVertex v1, SparseVe
 
   adjVerticesUnconnected.clear();
   foreach (SparseVertex adjVertex, boost::adjacent_vertices(v1, sg_->getGraph()))
+  {
+    BOLT_ASSERT(sg_->getState(adjVertex) != NULL, "Adjacent vertex found that is null");
+
     if (adjVertex != v2)
       if (!sg_->hasEdge(adjVertex, v2))
         adjVerticesUnconnected.push_back(adjVertex);
+  }
 
   BOLT_DEBUG(indent, vQuality_, "adjVerticesUnconnected size: " << adjVerticesUnconnected.size());
 }

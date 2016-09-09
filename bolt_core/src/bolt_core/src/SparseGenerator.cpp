@@ -651,6 +651,10 @@ bool SparseGenerator::checkSparseGraphOptimality(std::size_t indent)
       visual_->viz2()->trigger();
       usleep(0.001 * 1000000);
 
+      // Show database with visibility regions (coverage)
+      sg_->visualizeDatabaseCoverage_ = true;
+      sg_->displayDatabase();
+
       exit(0);
       return false;
     }
@@ -682,20 +686,21 @@ void SparseGenerator::debugNoNeighbors(CandidateData &point, std::size_t indent)
   visual_->viz3()->deleteAllMarkers();
   visual_->viz3()->state(point.state_, tools::LARGE, tools::RED, 0);
 
-  std::cout << "point.graphNeighborhood_.size() " << point.graphNeighborhood_.size() << std::endl;
+  BOLT_DEBUG(indent, true, "point.graphNeighborhood_.size() = " << point.graphNeighborhood_.size());
+
   for (auto v : point.graphNeighborhood_)
   {
-    std::cout << " - showing nearest neighbor " << v << std::endl;
+    BOLT_DEBUG(indent, true, " - showing nearest neighbor " << v);
     visual_->viz3()->state(sg_->getState(v), tools::LARGE, tools::ORANGE, 0);
     visual_->viz3()->edge(sg_->getState(v), point.state_, tools::MEDIUM, tools::BLUE);
 
-    std::cout << "   point.state_: " << point.state_ << std::endl;
-    std::cout << "   sg_->getState(v): " << sg_->getState(v) << std::endl;
+    BOLT_DEBUG(indent, true, " point.state_: " << point.state_);
+    BOLT_DEBUG(indent, true, " sg_->getState(v): " << sg_->getState(v));
 
     if (!si_->getMotionValidator()->checkMotion(point.state_, sg_->getState(v), visual_))
-      std::cout << "   in collision " << std::endl;
+      BOLT_DEBUG(indent, true, " in collision ");
     else
-      std::cout << "   not in collision " << std::endl;
+      BOLT_DEBUG(indent, true, " not in collision ");
 
     // Trigger after checkMotion
     visual_->viz2()->state(point.state_, tools::LARGE, tools::GREEN, 0); // show start
@@ -713,10 +718,14 @@ void SparseGenerator::debugNoNeighbors(CandidateData &point, std::size_t indent)
   }
   else
   {
-    std::cout << "not empty anymore! " << std::endl;
+    BOLT_DEBUG(indent, true, "not empty anymore! ");
 
     double dist = si_->distance(sg_->getState(point.visibleNeighborhood_.front()), point.state_);
-    std::cout << "distance to nearest vertex is " << dist << ", sparse delta = " << sparseCriteria_->getSparseDelta() << std::endl;
+    BOLT_DEBUG(indent, true, "distance to nearest vertex is " << dist << ", sparse delta = " << sparseCriteria_->getSparseDelta());
+
+    visual_->viz3()->edge(sg_->getState(point.visibleNeighborhood_.front()), point.state_, tools::SMALL, tools::RED);
+    visual_->viz3()->trigger();
+    usleep(0.001*1000000);
   }
 
   BOLT_ASSERT(false, "Found sampled vertex with no neighbors");

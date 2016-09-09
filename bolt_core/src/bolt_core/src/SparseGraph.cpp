@@ -595,8 +595,8 @@ bool SparseGraph::smoothQualityPathOriginal(geometric::PathGeometric *path, std:
 
   BOLT_DEBUG(indent, visualizeQualityPathSmoothing_, "Created 'quality path' candidate with " << path->getStateCount()
                                                                                          << " states");
-  if (visualizeQualityPathSmoothing_)
-    visual_->waitForUserFeedback("path simplification");
+  // if (visualizeQualityPathSmoothing_)
+  //   visual_->waitForUserFeedback("path simplification");
 
   pathSimplifier_->reduceVertices(*path, 10);
   pathSimplifier_->shortcutPath(*path, 50);
@@ -619,7 +619,7 @@ bool SparseGraph::smoothQualityPathOriginal(geometric::PathGeometric *path, std:
 
 bool SparseGraph::smoothQualityPath(geometric::PathGeometric *path, double clearance, bool debug, std::size_t indent)
 {
-  BOLT_FUNC(indent, visualizeQualityPathSmoothing_, "smoothQualityPath() clearance: " << clearance);
+  BOLT_FUNC(indent, vSmooth_, "smoothQualityPath() clearance: " << clearance);
 
   // These vars are only used when compiled in debug mode
   base::State *startCopy;
@@ -648,7 +648,7 @@ bool SparseGraph::smoothQualityPath(geometric::PathGeometric *path, double clear
   std::size_t minStatesFound = path->getStateCount();
   BOLT_DEBUG(indent, visualizeQualityPathSmoothing_, "Original quality path has " << minStatesFound << " states");
 
-  // if (visualizeQualityPathSmoothing_)
+  // if (vSmooth_)
   //   visual_->waitForUserFeedback("path simplification");
 
   // Set the motion validator to use clearance, this way isValid() checks clearance before confirming valid
@@ -659,10 +659,10 @@ bool SparseGraph::smoothQualityPath(geometric::PathGeometric *path, double clear
   for (std::size_t i = 0; i < 3; ++i)
   {
     ompl::base::PlannerTerminationCondition neverTerminate = base::plannerNonTerminatingCondition();
-    // pathSimplifier_->simplify(*path, neverTerminate, indent);
     pathSimplifier_->simplify(*path, neverTerminate);
 
-    // std::cout << "path->getStateCount(): " << path->getStateCount() << std::endl;
+    if (vSmooth_)
+      std::cout << "path->getStateCount(): " << path->getStateCount() << std::endl;
 
     if (visualizeQualityPathSmoothing_)
     {
@@ -675,9 +675,6 @@ bool SparseGraph::smoothQualityPath(geometric::PathGeometric *path, double clear
     }
 
     pathSimplifier_->reduceVertices(*path, 1000, path->getStateCount() * 4);  // /*rangeRatio*/ 0.33, indent);
-
-    // if (minStatesFound > path->getStateCount())
-    //   minStatesFound = path->getStateCount();
 
     if (visualizeQualityPathSmoothing_)
     {
@@ -694,7 +691,9 @@ bool SparseGraph::smoothQualityPath(geometric::PathGeometric *path, double clear
   dmv->setRequiredStateClearance(0.0);
 
   pathSimplifier_->reduceVertices(*path, 1000, path->getStateCount() * 4);  //, /*rangeRatio*/ 0.33, indent);
-  // std::cout << "path->getStateCount(): " << path->getStateCount() << std::endl;
+
+  if (vSmooth_)
+    std::cout << "path->getStateCount(): " << path->getStateCount() << std::endl;
 
   if (visualizeQualityPathSmoothing_)
   {
@@ -703,12 +702,6 @@ bool SparseGraph::smoothQualityPath(geometric::PathGeometric *path, double clear
     visual_->viz6()->trigger();
     // visual_->waitForUserFeedback("finished quality path");
   }
-
-  // if (minStatesFound < path->getStateCount())
-  // {
-  //   BOLT_ERROR(indent, true, "Min states found is less than finished path");
-  //   visual_->waitForUserFeedback("min states found");
-  // }
 
   std::pair<bool, bool> repairResult = path->checkAndRepair(100);
 
@@ -720,12 +713,12 @@ bool SparseGraph::smoothQualityPath(geometric::PathGeometric *path, double clear
 
   if (!repairResult.second)  // Repairing was not successful
   {
-  if (!visualizeQualityPathSmoothing_)
-  {
-  visual_->viz6()->deleteAllMarkers();
-  visual_->viz6()->path(path, tools::SMALL, tools::GREEN);
-  visual_->viz6()->trigger();
-}
+    if (!visualizeQualityPathSmoothing_)
+    {
+      visual_->viz6()->deleteAllMarkers();
+      visual_->viz6()->path(path, tools::SMALL, tools::GREEN);
+      visual_->viz6()->trigger();
+    }
 
     throw Exception(name_, "check and repair failed (v2)");
   }
@@ -734,7 +727,7 @@ bool SparseGraph::smoothQualityPath(geometric::PathGeometric *path, double clear
 
 bool SparseGraph::smoothMax(geometric::PathGeometric* path, std::size_t indent)
 {
-  BOLT_FUNC(indent, visualizeQualityPathSmoothing_, "smoothMax()");
+  BOLT_FUNC(indent, visualizeQualityPathSmoothing_ && false, "smoothMax()");
 
   if (path->getStateCount() < 3)
     return true;
