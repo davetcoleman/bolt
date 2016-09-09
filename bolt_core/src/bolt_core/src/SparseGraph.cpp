@@ -286,7 +286,7 @@ bool SparseGraph::astarSearch(const SparseVertex start, const SparseVertex goal,
   // Check if start and goal are the same
   if (si_->getStateSpace()->equalStates(getState(start), getState(goal)))
   {
-    BOLT_WARN(indent, true, "astarSearch: start and goal states are the same");
+    BOLT_DEBUG(indent, vSearch_, "astarSearch: start and goal states are the same");
 
     // Just add one vertex - this is the whole path
     vertexPath.push_back(start);

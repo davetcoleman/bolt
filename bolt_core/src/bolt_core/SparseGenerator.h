@@ -102,11 +102,16 @@ public:
    * \param indent - debugging tool
    */
   void findGraphNeighbors(CandidateData &candidateD, std::size_t threadID, std::size_t indent);
+  void findGraphNeighbors(CandidateData &candidateD, double distance, std::size_t threadID, std::size_t indent);
 
   /**
    * \brief Tests for ensuring the generated roadmap obeys the theoretical guarantees
    */
   bool checkSparseGraphOptimality(std::size_t indent);
+
+  /** \brief Helper for debugging specific issue */
+  void debugNoNeighbors(CandidateData &point, std::size_t indent);
+
   bool convertVertexPathToStatePath(std::vector<SparseVertex> &vertexPath, const base::State *actualStart,
                                     const base::State *actualGoal, geometric::PathGeometric &geometricSolution);
 

@@ -488,12 +488,17 @@ bool SparseGenerator::addSample(CandidateData &candidateD, std::size_t threadID,
 
 void SparseGenerator::findGraphNeighbors(CandidateData &candidateD, std::size_t threadID, std::size_t indent)
 {
+  findGraphNeighbors(candidateD, sparseCriteria_->getSparseDelta(), threadID, indent);
+}
+
+void SparseGenerator::findGraphNeighbors(CandidateData &candidateD, double distance, std::size_t threadID, std::size_t indent)
+{
   BOLT_FUNC(indent, vFindGraphNeighbors_, "findGraphNeighbors() within sparse delta " << sparseCriteria_->getSparseDelta());
 
   // Search in thread-safe manner
   // Note that the main thread could be modifying the NN, so we have to lock it
   sg_->getQueryStateNonConst(threadID) = candidateD.state_;
-  sg_->getNN()->nearestR(sg_->getQueryVertices(threadID), sparseCriteria_->getSparseDelta(),
+  sg_->getNN()->nearestR(sg_->getQueryVertices(threadID), distance,
                          candidateD.graphNeighborhood_);
   sg_->getQueryStateNonConst(threadID) = nullptr;
 
@@ -556,57 +561,11 @@ bool SparseGenerator::checkSparseGraphOptimality(std::size_t indent)
 
       // Check if neighbor exists - should always have at least one neighbor otherwise graph lacks coverage
       if (point.visibleNeighborhood_.empty())
-      {
-        BOLT_ERROR(indent, true, "Found sampled vertex with no neighbors");
-
-        // Clear Window 2
-        visual_->viz2()->deleteAllMarkers();
-        visual_->viz2()->trigger();
-
-        // Visualize
-        visual_->viz3()->deleteAllMarkers();
-        visual_->viz3()->state(point.state_, tools::LARGE, tools::RED, 0);
-
-        std::cout << "point.graphNeighborhood_.size() " << point.graphNeighborhood_.size() << std::endl;
-        for (auto v : point.graphNeighborhood_)
-        {
-          std::cout << " - showing nearest neighbor " << v << std::endl;
-          visual_->viz3()->state(sg_->getState(v), tools::LARGE, tools::ORANGE, 0);
-          visual_->viz3()->edge(sg_->getState(v), point.state_, tools::MEDIUM, tools::BLUE);
-
-          std::cout << "   point.state_: " << point.state_ << std::endl;
-          std::cout << "   sg_->getState(v): " << sg_->getState(v) << std::endl;
-
-          if (!si_->getMotionValidator()->checkMotion(point.state_, sg_->getState(v), visual_))
-            std::cout << "   in collision " << std::endl;
-          else
-            std::cout << "   not in collision " << std::endl;
-
-          // Trigger after checkMotion
-          visual_->viz2()->state(point.state_, tools::LARGE, tools::GREEN, 0); // show start
-          visual_->viz2()->trigger();
-        }
-        visual_->viz3()->trigger();
-        usleep(0.001*1000000);
-
-        // Find nearest neighbor - SECOND TRY
-        findGraphNeighbors(point, 0 /*threadID*/, indent);
-        if (point.visibleNeighborhood_.empty())
-          std::cout << "still empty " << std::endl;
-        else
-        {
-          std::cout << "not empty anymore! " << std::endl;
-          break;
-        }
-
-        BOLT_ASSERT(false, "Found sampled vertex with no neighbors");
-      }
+        debugNoNeighbors(point, indent);
 
       // Check if first state is same as input
       if (si_->getStateSpace()->equalStates(point.state_, sg_->getState(point.visibleNeighborhood_[0])))
-      {
         throw Exception(name_, "First neighbor is itself");
-      }
     }
 
     // Astar search through graph
@@ -615,19 +574,25 @@ bool SparseGenerator::checkSparseGraphOptimality(std::size_t indent)
     const SparseVertex start = endPoints.front().visibleNeighborhood_[0];
     const SparseVertex goal = endPoints.back().visibleNeighborhood_[0];
 
-    // Visualize actual and snapped states
-    visual_->viz3()->deleteAllMarkers();
-    visual_->viz3()->state(actualStart, tools::LARGE, tools::RED, 0);
-    visual_->viz3()->state(actualGoal, tools::LARGE, tools::GREEN, 0);
-    visual_->viz3()->state(sg_->getState(start), tools::LARGE, tools::BLACK, 0);
-    visual_->viz3()->state(sg_->getState(goal), tools::LARGE, tools::BLACK, 0);
-    visual_->viz3()->trigger();
-
     std::vector<SparseVertex> vertexPath;
     double distance;
     if (!sg_->astarSearch(start, goal, vertexPath, distance, indent))
     {
       BOLT_ERROR(indent, true, "No path found through graph");
+
+      // Clear out previous path for clarity
+      visual_->viz2()->deleteAllMarkers();
+      visual_->viz2()->trigger();
+      usleep(0.001 * 1000000);
+
+      // Visualize actual and snapped states
+      visual_->viz3()->deleteAllMarkers();
+      visual_->viz3()->state(actualStart, tools::LARGE, tools::RED, 0);
+      visual_->viz3()->state(actualGoal, tools::LARGE, tools::GREEN, 0);
+      visual_->viz3()->state(sg_->getState(start), tools::LARGE, tools::BLACK, 0);
+      visual_->viz3()->state(sg_->getState(goal), tools::LARGE, tools::BLACK, 0);
+      visual_->viz3()->trigger();
+
       exit(0);
       numFailedPlans++;
       continue;
@@ -636,10 +601,6 @@ bool SparseGenerator::checkSparseGraphOptimality(std::size_t indent)
     // If path found (same connected component) sum up total length
     geometric::PathGeometric geometricSolution(si_);
     convertVertexPathToStatePath(vertexPath, actualStart, actualGoal, geometricSolution);
-    visual_->viz2()->deleteAllMarkers();
-    visual_->viz2()->path(&geometricSolution, tools::SMALL, tools::RED);
-    visual_->viz2()->trigger();
-    usleep(0.001 * 1000000);
 
     // Smooth path to find the "optimal" path
     geometric::PathGeometric smoothedPath = geometricSolution;
@@ -647,10 +608,16 @@ bool SparseGenerator::checkSparseGraphOptimality(std::size_t indent)
     geometric::PathSimplifier pathSimplifier(si_);
     sg_->smoothMax(smoothedPathPtr, indent);
 
-    // visual_->viz2()->deleteAllMarkers();
-    visual_->viz2()->path(smoothedPathPtr, tools::MEDIUM, tools::GREEN);
-    visual_->viz2()->trigger();
-    usleep(0.001 * 1000000);
+    // Show the two paths
+    bool showEveryPath = false;
+    if (showEveryPath)
+    {
+      visual_->viz2()->deleteAllMarkers();
+      visual_->viz2()->path(&geometricSolution, tools::SMALL, tools::RED);
+      visual_->viz2()->path(smoothedPathPtr, tools::MEDIUM, tools::GREEN);
+      visual_->viz2()->trigger();
+      usleep(0.001 * 1000000);
+    }
 
     // Calculate theoretical guarantees
     double optimalLength = smoothedPathPtr->length();
@@ -672,6 +639,14 @@ bool SparseGenerator::checkSparseGraphOptimality(std::size_t indent)
     if (sparseLength >= theoryLength)
     {
       BOLT_ERROR(indent + 2, true, "Asymptotic optimality guarantee VIOLATED");
+
+      // Show the two paths
+      visual_->viz2()->deleteAllMarkers();
+      visual_->viz2()->path(&geometricSolution, tools::SMALL, tools::RED);
+      visual_->viz2()->path(smoothedPathPtr, tools::MEDIUM, tools::GREEN);
+      visual_->viz2()->trigger();
+      usleep(0.001 * 1000000);
+
       exit(0);
       return false;
     }
@@ -689,6 +664,51 @@ bool SparseGenerator::checkSparseGraphOptimality(std::size_t indent)
   BOLT_DEBUG(indent, 1, "-----------------------------------------");
 
   return true;
+}
+
+void SparseGenerator::debugNoNeighbors(CandidateData &point, std::size_t indent)
+{
+  BOLT_ERROR(indent, true, "Found sampled vertex with no neighbors");
+
+  // Clear Window 2
+  visual_->viz2()->deleteAllMarkers();
+  visual_->viz2()->trigger();
+
+  // Visualize
+  visual_->viz3()->deleteAllMarkers();
+  visual_->viz3()->state(point.state_, tools::LARGE, tools::RED, 0);
+
+  std::cout << "point.graphNeighborhood_.size() " << point.graphNeighborhood_.size() << std::endl;
+  for (auto v : point.graphNeighborhood_)
+  {
+    std::cout << " - showing nearest neighbor " << v << std::endl;
+    visual_->viz3()->state(sg_->getState(v), tools::LARGE, tools::ORANGE, 0);
+    visual_->viz3()->edge(sg_->getState(v), point.state_, tools::MEDIUM, tools::BLUE);
+
+    std::cout << "   point.state_: " << point.state_ << std::endl;
+    std::cout << "   sg_->getState(v): " << sg_->getState(v) << std::endl;
+
+    if (!si_->getMotionValidator()->checkMotion(point.state_, sg_->getState(v), visual_))
+      std::cout << "   in collision " << std::endl;
+    else
+      std::cout << "   not in collision " << std::endl;
+
+    // Trigger after checkMotion
+    visual_->viz2()->state(point.state_, tools::LARGE, tools::GREEN, 0); // show start
+    visual_->viz2()->trigger();
+  }
+  visual_->viz3()->trigger();
+  usleep(0.001*1000000);
+
+  // Find nearest neighbor - SECOND TRY
+  double dist = sparseCriteria_->getSparseDelta() * 1.5;
+  findGraphNeighbors(point, dist, 0 /*threadID*/, indent);
+  if (point.visibleNeighborhood_.empty())
+    std::cout << "still empty " << std::endl;
+  else
+    std::cout << "not empty anymore! " << std::endl;
+
+  BOLT_ASSERT(false, "Found sampled vertex with no neighbors");
 }
 
 bool SparseGenerator::convertVertexPathToStatePath(std::vector<SparseVertex> &vertexPath,
