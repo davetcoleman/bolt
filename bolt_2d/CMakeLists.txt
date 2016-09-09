@@ -11,6 +11,8 @@ find_package(catkin REQUIRED COMPONENTS
   rosparam_shortcuts
   bolt_core
   moveit_ompl
+  rostest
+  roslint
 )
 
 find_package(ompl REQUIRED)
@@ -73,3 +75,21 @@ target_link_libraries(${PROJECT_NAME}
 # target_link_libraries(spars_two_demo
 #   ${OMPL_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES}
 # )
+
+##########
+## TEST ##
+##########
+
+if(CATKIN_ENABLE_TESTING)
+
+  # add_rostest_gtest(2d_test test/2d_test.cpp)
+  # target_link_libraries(2d_test
+  #   ${PROJECT_NAME}
+  #   ${catkin_LIBRARIES}
+  #   ${Boost_LIBRARIES}
+  # )
+
+endif()
+
+## Test for correct C++ source code
+roslint_cpp()

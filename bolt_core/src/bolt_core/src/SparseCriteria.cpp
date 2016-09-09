@@ -293,11 +293,9 @@ bool SparseCriteria::checkAddConnectivity(CandidateData &candidateD, std::size_t
 
   // For each neighbor
   for (const SparseVertex& v1 : candidateD.visibleNeighborhood_)
-    //for (std::size_t i = 0; i < candidateD.visibleNeighborhood_.size(); ++i)
   {
     // For each other neighbor
     for (const SparseVertex& v2 : candidateD.visibleNeighborhood_)
-    //for (std::size_t j = i + 1; j < candidateD.visibleNeighborhood_.size(); ++j)
     {
       // If they are in different components
       if (!sg_->sameComponent(v1, v2))
@@ -374,10 +372,8 @@ bool SparseCriteria::checkAddConnectivity(CandidateData &candidateD, std::size_t
     // loop
     if (!sg_->sameComponent(*vertexIt, candidateD.newVertex_))
     {
-      //visual_->waitForUserFeedback("adding edge for connectivty");
       // Connect
       sg_->addEdge(candidateD.newVertex_, *vertexIt, eCONNECTIVITY, indent + 4);
-      //visual_->waitForUserFeedback("done");
     }
   }
 

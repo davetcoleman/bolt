@@ -18,11 +18,15 @@
 
   <depend>moveit_visual_tools</depend>
   <depend>roscpp</depend>
+  <depend>roslint</depend>
   <depend>ompl</depend>
   <depend>libgflags-dev</depend>
   <depend>rosparam_shortcuts</depend>
   <depend>bolt_core</depend>
   <depend>moveit_ompl</depend>
+
+  <test_depend>rostest</test_depend>
+  <test_depend>rosunit</test_depend>
 
   <export>
   </export>
