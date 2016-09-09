@@ -63,7 +63,7 @@ class CandidateQueue
 {
 public:
   /** \brief Constructor */
-  CandidateQueue(SparseGraphPtr sg, SamplingQueuePtr samplingQueue, SparseGeneratorPtr sparseGenerator);
+  CandidateQueue(SparseGraphPtr sg, SamplingQueuePtr samplingQueue, SparseGenerator* sparseGenerator);
 
   ~CandidateQueue();
 
@@ -99,7 +99,7 @@ private:
 
   SparseGraphPtr sg_;
   SparseCriteriaPtr sparseCriteria_;
-  SparseGeneratorPtr sparseGenerator_;
+  SparseGenerator* sparseGenerator_;
   SamplingQueuePtr samplingQueue_;
 
   /** \brief The created space information */

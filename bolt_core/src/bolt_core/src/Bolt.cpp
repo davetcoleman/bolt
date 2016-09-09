@@ -80,11 +80,11 @@ void Bolt::initialize()
   // Load criteria used to determine if samples are saved or rejected
   sparseCriteria_.reset(new SparseCriteria(sparseGraph_));
 
-  // Load the generator of sparse vertices and edges
-  sparseGenerator_.reset(new SparseGenerator(sparseGraph_));
-
   // Give the sparse graph reference to the criteria, because sometimes it needs data from there
   sparseGraph_->setSparseCriteria(sparseCriteria_);
+
+  // Load the generator of sparse vertices and edges, and give it reference to the criteria
+  sparseGenerator_.reset(new SparseGenerator(sparseGraph_));
   sparseGenerator_->setSparseCriteria(sparseCriteria_);
 
   // Load the task graph used for combining multiple layers of sparse graph

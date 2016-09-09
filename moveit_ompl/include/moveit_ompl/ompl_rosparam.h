@@ -60,13 +60,23 @@ void loadOMPLParameters(ros::NodeHandle nh, const std::string &name, ompl::tools
 {
   using namespace rosparam_shortcuts;
   std::size_t error = 0;
+
   ompl::tools::bolt::SparseGraphPtr sparseGraph = bolt->getSparseGraph();
+  BOLT_ASSERT(sparseGraph, "Sparse graph is not initialized");
   ompl::tools::bolt::TaskGraphPtr taskGraph = bolt->getTaskGraph();
+  BOLT_ASSERT(taskGraph, "Task graph is not initialized");
   ompl::tools::bolt::SparseCriteriaPtr sparseCriteria = bolt->getSparseCriteria();
+  BOLT_ASSERT(sparseCriteria, "Sparse criteria is not initialized");
   ompl::tools::bolt::SparseGeneratorPtr sparseGenerator = bolt->getSparseGenerator();
+  BOLT_ASSERT(sparseGenerator, "Sparse generator is not initialized");
   ompl::tools::bolt::BoltPlannerPtr boltPlanner = bolt->getBoltPlanner();
+  BOLT_ASSERT(boltPlanner, "boltPlanner is not initialized");
   ompl::tools::bolt::VertexDiscretizerPtr vertexDiscret = sparseGenerator->getVertexDiscretizer();
-  // ompl::tools::bolt::DenseCachePtr denseCache = sparseGraph->getDenseCache();
+  BOLT_ASSERT(vertexDiscret, "vertexDiscret is not initialized");
+  ompl::tools::bolt::CandidateQueuePtr candidateQueue = sparseGenerator->getCandidateQueue();
+  BOLT_ASSERT(candidateQueue, "candidateQueue is not initialized");
+  ompl::tools::bolt::SamplingQueuePtr samplingQueue = sparseGenerator->getSamplingQueue();
+  BOLT_ASSERT(samplingQueue, "samplingQueue is not initialized");
 
   // Bolt
   {
@@ -120,10 +130,10 @@ void loadOMPLParameters(ros::NodeHandle nh, const std::string &name, ompl::tools
     error += !get(name, rpnh, "use_edge_improvement_rule", sparseCriteria->useEdgeImprovementRule_);
     error += !get(name, rpnh, "use_check_remove_close_vertices", sparseCriteria->useCheckRemoveCloseVertices_);
     error += !get(name, rpnh, "use_clear_edges_near_vertex", sparseCriteria->useClearEdgesNearVertex_);
-    error += !get(name, rpnh, "use_original_smoother", sparseCriteria->useOriginalSmoother_);
+    error += !get(name, rpnh, "use_improved_smoother", sparseCriteria->useImprovedSmoother_);
     error += !get(name, rpnh, "use_connectivy_criteria", sparseCriteria->useConnectivityCriteria_);
     error += !get(name, rpnh, "use_quality_criteria", sparseCriteria->useQualityCriteria_);
-    error += !get(name, rpnh, "use_smoothed_path_rejection", sparseCriteria->useSmoothedPathRejection_);
+    //error += !get(name, rpnh, "use_smoothed_path_rejection", sparseCriteria->useSmoothedPathRejection_);
     error += !get(name, rpnh, "verbose/criteria", sparseCriteria->vCriteria_);
     error += !get(name, rpnh, "verbose/quality", sparseCriteria->vQuality_);
     error += !get(name, rpnh, "verbose/quality_max_spanner", sparseCriteria->vQualityMaxSpanner_);
@@ -172,14 +182,6 @@ void loadOMPLParameters(ros::NodeHandle nh, const std::string &name, ompl::tools
     shutdownIfError(name, error);
   }
 
-  // // Dense Cache
-  // {
-  //   ros::NodeHandle rpnh(nh, "dense_cache");
-  //   error += !get(name, rpnh, "disable_cache", denseCache->disableCache_);
-  //   error += !get(name, rpnh, "enable_cache_saving", denseCache->enableCacheSaving_);
-  //   error += !get(name, rpnh, "save_every_n_edges", denseCache->saveEveryNEdges_);
-  //   shutdownIfError(name, error);
-  // }
 
   // BoltPlanner
   {
@@ -187,6 +189,19 @@ void loadOMPLParameters(ros::NodeHandle nh, const std::string &name, ompl::tools
     error += !get(name, rpnh, "verbose/verbose", boltPlanner->verbose_);
     shutdownIfError(name, error);
   }
+
+  // CandidateQueue
+  {
+    ros::NodeHandle rpnh(nh, "candidate_queue");
+    error += !get(name, rpnh, "verbose/verbose", candidateQueue->verbose_);
+    error += !get(name, rpnh, "verbose/neighbor", candidateQueue->vNeighbor_);
+    error += !get(name, rpnh, "verbose/clear", candidateQueue->vClear_);
+    error += !get(name, rpnh, "verbose/queue_full", candidateQueue->vQueueFull_);
+    error += !get(name, rpnh, "verbose/queue_empty", candidateQueue->vQueueEmpty_);
+    error += !get(name, rpnh, "verbose/thread", candidateQueue->vThread_);
+    shutdownIfError(name, error);
+  }
+
 }
 
 /**

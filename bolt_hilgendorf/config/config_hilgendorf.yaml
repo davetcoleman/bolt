@@ -78,10 +78,10 @@ sparse_criteria:
   use_edge_improvement_rule: true
   use_check_remove_close_vertices: true # Experimental feature that allows very closeby vertices to be merged with newly added ones
   use_clear_edges_near_vertex: true # When adding a quality vertex, remove nearby edges
-  use_original_smoother: false # original is bad
+  use_improved_smoother: true
   use_connectivy_criteria: true
   use_quality_criteria: false # 4th criteria
-  use_smoothed_path_rejection: true
+  #use_smoothed_path_rejection: true
   verbose:
     added_reason: false # print when adding vertices & edges, and the reason why
     criteria: false # all criteria except 4th (quality)

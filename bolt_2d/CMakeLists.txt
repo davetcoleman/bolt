@@ -37,17 +37,13 @@ include_directories(
   ${OMPL_INCLUDE_DIRS}
 )
 
-## Build Library-----------------------
+# User debug code only if not release
+add_definitions(-DENABLE_DEBUG_MACRO)
 
-## Build Exexutables ------------------
 
-# Lightning
-# add_executable(lightning_demo
-#   src/lightning_demo.cpp
-# )
-# target_link_libraries(lightning_demo
-#   ${OMPL_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES}
-# )
+###########
+## Build ##
+###########
 
 # Bolt Demo
 add_executable(${PROJECT_NAME}
@@ -59,22 +55,6 @@ target_link_libraries(${PROJECT_NAME}
   ${OMPL_LIBRARIES}
   ${Boost_LIBRARIES}
 )
-
-# # Spars
-# add_executable(spars_demo
-#   src/spars_demo.cpp
-# )
-# target_link_libraries(spars_demo
-#   ${OMPL_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES}
-# )
-
-# # SPARS two
-# add_executable(spars_two_demo
-#   src/spars_two_demo.cpp
-# )
-# target_link_libraries(spars_two_demo
-#   ${OMPL_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES}
-# )
 
 ##########
 ## TEST ##

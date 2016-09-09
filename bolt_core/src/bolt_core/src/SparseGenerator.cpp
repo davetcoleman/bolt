@@ -68,6 +68,11 @@ SparseGenerator::SparseGenerator(SparseGraphPtr sg)
 {
   // Initialize discretizer
   vertexDiscretizer_.reset(new VertexDiscretizer(sg_));
+
+  // Initialize threading tools
+  // Speed up random sampling with these threads
+  samplingQueue_.reset(new SamplingQueue(sg_));
+  candidateQueue_.reset(new CandidateQueue(sg_, samplingQueue_, this));
 }
 
 SparseGenerator::~SparseGenerator(void)
@@ -82,7 +87,7 @@ void SparseGenerator::clear()
   maxConsecutiveFailures_ = 0;
   maxPercentComplete_ = 0;
 
-  samplingQueue_->clear();
+  samplingQueue_->clear(0 /* indent */);
   candidateQueue_->clear();
 }
 
@@ -93,13 +98,8 @@ bool SparseGenerator::setup(std::size_t indent)
   clearanceSampler_->setMinimumObstacleClearance(sg_->getObstacleClearance());
   si_->getStateValidityChecker()->setClearanceSearchDistance(sg_->getObstacleClearance());
 
-  // Speed up random sampling with these threads
-  samplingQueue_.reset(new SamplingQueue(sg_));
-  candidateQueue_.reset(new CandidateQueue(sg_, samplingQueue_, shared_from_this()));
-
   // Configure vertex discretizer
   vertexDiscretizer_->setMinimumObstacleClearance(sg_->getObstacleClearance());
-
   vertexDiscretizer_->setDiscretization(sparseCriteria_->getDiscretization());
 
   return true;
@@ -115,6 +115,12 @@ void SparseGenerator::createSPARS()
   {
     OMPL_WARN("Unable to create SPARS because both random sampling and discretized sampling is disabled");
     return;
+  }
+
+  if (!si_->isSetup())
+  {
+    OMPL_INFORM("Space information setup was not yet called. Calling now.");
+    si_->setup();
   }
 
   // Reset stats
@@ -243,7 +249,7 @@ void SparseGenerator::copyPasteState(std::size_t numSets)
             << useRandomSamples_ << ", "
             << sparseCriteria_->useCheckRemoveCloseVertices_ << ", "
             << sparseCriteria_->useClearEdgesNearVertex_ << ", "
-            << sparseCriteria_->useOriginalSmoother_ << ", "
+            << sparseCriteria_->useImprovedSmoother_ << ", "
             << sparseCriteria_->useEdgeImprovementRule_ << ", "
             << fourthCriteriaAfterFailures_ << ", "
             << terminateAfterFailures_ << ", "
@@ -397,7 +403,7 @@ bool SparseGenerator::addSample(CandidateData &candidateD, std::size_t threadID,
 
       double duration = time::seconds(time::now() - timeRandSamplesStarted_);
       BOLT_DEBUG(indent, true, "Adding samples at rate: " << numRandSamplesAdded_ / duration << " hz");
-      copyPasteState();
+      //copyPasteState();
     }
 
     // Increment statistics
@@ -449,7 +455,7 @@ bool SparseGenerator::addSample(CandidateData &candidateD, std::size_t threadID,
           {
             BOLT_GREEN(indent, true, "Quality termination progress: " << percentComplete << "%");
           }
-          copyPasteState();
+          //copyPasteState();
         }
       }
     }

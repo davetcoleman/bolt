@@ -51,7 +51,7 @@ namespace tools
 {
 namespace bolt
 {
-CandidateQueue::CandidateQueue(SparseGraphPtr sg, SamplingQueuePtr samplingQueue, SparseGeneratorPtr sparseGenerator)
+CandidateQueue::CandidateQueue(SparseGraphPtr sg, SamplingQueuePtr samplingQueue, SparseGenerator* sparseGenerator)
   : sg_(sg)
   , sparseCriteria_(sg_->getSparseCriteria())
   , sparseGenerator_(sparseGenerator)
@@ -255,7 +255,7 @@ CandidateData &CandidateQueue::getNextCandidate(std::size_t indent)
       while (!queue_.empty() && queue_.front().graphVersion_ != sparseGenerator_->getNumRandSamplesAdded() &&
              threadsRunning_)
       {
-        BOLT_DEBUG(indent, true, "Expired candidate state with graph version: " << queue_.front().graphVersion_);
+        BOLT_DEBUG(indent, verbose_, "Expired candidate state with graph version: " << queue_.front().graphVersion_);
 
         // Next Candidate state is expired, delete
         si_->freeState(queue_.front().state_);

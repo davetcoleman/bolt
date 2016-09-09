@@ -57,7 +57,7 @@ OMPL_CLASS_FORWARD(SparseGenerator);
 /** \class ompl::tools::bolt::::SparseGeneratorPtr
     \brief A boost shared pointer wrapper for ompl::tools::SparseGenerator */
 
-class SparseGenerator : public std::enable_shared_from_this<SparseGenerator>
+class SparseGenerator
 {
 public:
   /** \brief Constructor needs the state space used for planning.
@@ -138,6 +138,11 @@ public:
   SamplingQueuePtr getSamplingQueue()
   {
     return samplingQueue_;
+  }
+
+  CandidateQueuePtr getCandidateQueue()
+  {
+    return candidateQueue_;
   }
 
 protected:

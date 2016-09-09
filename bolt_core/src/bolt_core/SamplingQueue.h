@@ -80,7 +80,7 @@ public:
   ~SamplingQueue();
 
   /** \brief Reset class */
-  void clear();
+  void clear(std::size_t indent);
 
   void startSampling(std::size_t indent);
 

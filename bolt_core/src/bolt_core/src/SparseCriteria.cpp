@@ -273,9 +273,14 @@ bool SparseCriteria::checkAddConnectivity(CandidateData &candidateD, std::size_t
 {
   BOLT_FUNC(indent, vCriteria_, "checkAddConnectivity() Does this node connect two disconnected components?");
 
-  if (!useConnectivityCriteria_ || !useFourthCriteria_)
+  if (!useConnectivityCriteria_)
   {
     BOLT_DEBUG(indent, vCriteria_, "NOT adding node for connectivity - disabled ");
+    return false;
+  }
+  if (!useFourthCriteria_)
+  {
+    BOLT_DEBUG(indent, vCriteria_, "NOT adding node for connectivity - waiting until fourth criteria ");
     return false;
   }
 
@@ -657,11 +662,10 @@ bool SparseCriteria::checkAddPath(SparseVertex v, std::size_t indent)
     {
       BOLT_DEBUG(indent + 4, vQuality_, "Checking v'' = " << vpp);
 
-      // Check if by chance vpp was removed during addQualityPath()
+      // Check if by chance vpp was removed during addQualityPath() due to other optimization
       if (sg_->stateDeleted(vpp))
       {
         BOLT_INFO(indent, vQuality_ || true, "State vpp=" << vpp << " was deleted, skipping quality checks");
-        exit(-1);
         return spannerPropertyWasViolated;
       }
 
@@ -832,7 +836,7 @@ bool SparseCriteria::addQualityPath(SparseVertex v, SparseVertex vp, SparseVerte
   }
 
   // Create path and simplify
-  if (useOriginalSmoother_)
+  if (!useImprovedSmoother_)
   {
     if (!sg_->smoothQualityPathOriginal(path, indent + 4))
       return false;

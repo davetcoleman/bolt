@@ -52,9 +52,8 @@ sparse_criteria:
   use_l2_norm: false # straight line distance
   use_check_remove_close_vertices: false # Experimental feature that allows very closeby vertices to be merged with newly added ones
   use_clear_edges_near_vertex: false # When adding a quality vertex, remove nearby edges
-  use_original_smoother: true # original is bad
-  use_connectivy_criteria: false
-  use_smoothed_path_rejection: false
+  use_improved_smoother: true # original is bad
+  use_connectivy_criteria: true
   verbose:
     added_reason: false # debug criteria for adding vertices & edges
     criteria: false
@@ -95,7 +94,7 @@ sparse_graph:
 # ====================================================
 vertex_discretizer:
   verbose:
-    verbose: true
+    verbose: false
     thread: false
   visualize:
     grid_generation: false

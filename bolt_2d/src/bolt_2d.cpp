@@ -448,7 +448,15 @@ public:
       for (std::size_t i = 0; i < create_spars_count_; ++i)
       {
         if (create_spars_count_ > 1)
+        {
+          std::cout << std::endl;
+          std::cout << "-------------------------------------------------------" << std::endl;
+          std::size_t indent = 0;
           BOLT_DEBUG(indent, true, "Creating spars graph, run " << i+1 << " out of " << create_spars_count_);
+          //BOLT_WARN(indent, true, "Creating spars graph, run " << i+1 << " out of " << create_spars_count_);
+          std::cout << "-------------------------------------------------------" << std::endl;
+          std::cout << std::endl;
+        }
 
         // Clear spars graph
         if (i > 0)

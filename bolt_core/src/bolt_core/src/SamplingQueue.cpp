@@ -58,17 +58,17 @@ SamplingQueue::SamplingQueue(SparseGraphPtr sg)
 
 SamplingQueue::~SamplingQueue()
 {
-  clear();
+  clear(0 /* indent */);
 }
 
-void SamplingQueue::clear()
+void SamplingQueue::clear(std::size_t indent)
 {
   BOLT_ASSERT(!threadRunning_, "Cannot clear while thread is running");
 
   // Clear all left over states that weren't used
   while (!statesQueue_.empty())
   {
-    std::cout << "SAMPLING_QUEUE freeing " << statesQueue_.front() << std::endl;
+    BOLT_DEBUG(indent, verbose_, "SAMPLING_QUEUE freeing " << statesQueue_.front());
     si_->freeState(statesQueue_.front());
     statesQueue_.pop();
   }
