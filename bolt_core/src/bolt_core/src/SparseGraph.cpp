@@ -653,7 +653,7 @@ bool SparseGraph::smoothQualityPath(geometric::PathGeometric *path, double clear
 
   // Set the motion validator to use clearance, this way isValid() checks clearance before confirming valid
   base::DiscreteMotionValidator *dmv =
-      dynamic_cast<base::DiscreteMotionValidator *>(si_->getMotionValidatorNonConst().get());
+      dynamic_cast<base::DiscreteMotionValidator *>(si_->getMotionValidator().get());
   dmv->setRequiredStateClearance(clearance);
 
   for (std::size_t i = 0; i < 3; ++i)
@@ -690,7 +690,7 @@ bool SparseGraph::smoothQualityPath(geometric::PathGeometric *path, double clear
     }
   }
 
-  // Turn off the clearance requirement
+  // Turn off the clearance requirement - this is the default value that the DMV should remain in
   dmv->setRequiredStateClearance(0.0);
 
   pathSimplifier_->reduceVertices(*path, 1000, path->getStateCount() * 4);  //, /*rangeRatio*/ 0.33, indent);
@@ -756,8 +756,8 @@ bool SparseGraph::smoothMax(geometric::PathGeometric* path, std::size_t indent)
 
   // Set the motion validator to use clearance, this way isValid() checks clearance before confirming valid
   base::DiscreteMotionValidator *dmv =
-      dynamic_cast<base::DiscreteMotionValidator *>(si_->getMotionValidatorNonConst().get());
-  dmv->setRequiredStateClearance(0);
+      dynamic_cast<base::DiscreteMotionValidator *>(si_->getMotionValidator().get());
+  BOLT_ASSERT(dmv->getRequiredStateClearance() == 0, "Discrete motion validator should have clearance = 0");
 
   double prevDistance = std::numeric_limits<double>::infinity();
   std::size_t origStateCount = path->getStateCount();
@@ -882,8 +882,6 @@ bool SparseGraph::smoothMax(geometric::PathGeometric* path, std::size_t indent)
 
   BOLT_ASSERT(si_->equalStates(path->getState(0), startCopy), "Start state is no longer same");
   BOLT_ASSERT(si_->equalStates(path->getState(path->getStateCount() - 1), goalCopy), "Goal state is no longer same");
-
-  dmv->setRequiredStateClearance(obstacleClearance_);
 
   return true;
 }

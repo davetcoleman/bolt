@@ -281,7 +281,6 @@ public:
 
   double getObstacleClearance()
   {
-    BOLT_ERROR(0, true, "getObstacleClearance: " << obstacleClearance_);
     return obstacleClearance_;
   }
 

@@ -39,6 +39,7 @@
 // OMPL
 #include <bolt_core/SparseGenerator.h>
 #include <bolt_core/SparseCriteria.h>
+#include <ompl/base/DiscreteMotionValidator.h>
 
 // Boost
 #include <boost/foreach.hpp>
@@ -98,14 +99,6 @@ bool SparseGenerator::setup(std::size_t indent)
 
   // Configure vertex discretizer
   vertexDiscretizer_->setMinimumObstacleClearance(sg_->getObstacleClearance());
-
-  std::cout << "-------------------------------------------------------" << std::endl;
-  std::cout << "-------------------------------------------------------" << std::endl;
-  std::cout << "-------------------------------------------------------" << std::endl;
-  std::cout << "setMinimumObstacleClearance: " << sg_->getObstacleClearance() << std::endl;
-  std::cout << "-------------------------------------------------------" << std::endl;
-  std::cout << "-------------------------------------------------------" << std::endl;
-  std::cout << "-------------------------------------------------------" << std::endl;
 
   vertexDiscretizer_->setDiscretization(sparseCriteria_->getDiscretization());
 
@@ -532,8 +525,13 @@ bool SparseGenerator::checkSparseGraphOptimality(std::size_t indent)
 {
   BOLT_FUNC(indent, true, "checkSparseGraphOptimality()");
 
-  std::size_t numTests = 50;
+  std::size_t numTests = 1000;
   std::size_t numFailedPlans = 0;
+
+  // Set the motion validator to use clearance, this way isValid() checks clearance before confirming valid
+  base::DiscreteMotionValidator *dmv =
+      dynamic_cast<base::DiscreteMotionValidator *>(si_->getMotionValidator().get());
+  BOLT_ASSERT(dmv->getRequiredStateClearance() == 0, "Discrete motion validator should have clearance = 0");
 
   // For each test
   for (std::size_t i = 0; i < numTests; ++i)
@@ -556,18 +554,58 @@ bool SparseGenerator::checkSparseGraphOptimality(std::size_t indent)
       // Find nearest neighbor
       findGraphNeighbors(point, 0 /*threadID*/, indent);
 
-      // Check if neighbor exists
-      if (point.visibleNeighborhood_.empty())  // first state is usually itself
+      // Check if neighbor exists - should always have at least one neighbor otherwise graph lacks coverage
+      if (point.visibleNeighborhood_.empty())
       {
         BOLT_ERROR(indent, true, "Found sampled vertex with no neighbors");
-        exit(0);
+
+        // Clear Window 2
+        visual_->viz2()->deleteAllMarkers();
+        visual_->viz2()->trigger();
+
+        // Visualize
+        visual_->viz3()->deleteAllMarkers();
+        visual_->viz3()->state(point.state_, tools::LARGE, tools::RED, 0);
+
+        std::cout << "point.graphNeighborhood_.size() " << point.graphNeighborhood_.size() << std::endl;
+        for (auto v : point.graphNeighborhood_)
+        {
+          std::cout << " - showing nearest neighbor " << v << std::endl;
+          visual_->viz3()->state(sg_->getState(v), tools::LARGE, tools::ORANGE, 0);
+          visual_->viz3()->edge(sg_->getState(v), point.state_, tools::MEDIUM, tools::BLUE);
+
+          std::cout << "   point.state_: " << point.state_ << std::endl;
+          std::cout << "   sg_->getState(v): " << sg_->getState(v) << std::endl;
+
+          if (!si_->getMotionValidator()->checkMotion(point.state_, sg_->getState(v), visual_))
+            std::cout << "   in collision " << std::endl;
+          else
+            std::cout << "   not in collision " << std::endl;
+
+          // Trigger after checkMotion
+          visual_->viz2()->state(point.state_, tools::LARGE, tools::GREEN, 0); // show start
+          visual_->viz2()->trigger();
+        }
+        visual_->viz3()->trigger();
+        usleep(0.001*1000000);
+
+        // Find nearest neighbor - SECOND TRY
+        findGraphNeighbors(point, 0 /*threadID*/, indent);
+        if (point.visibleNeighborhood_.empty())
+          std::cout << "still empty " << std::endl;
+        else
+        {
+          std::cout << "not empty anymore! " << std::endl;
+          break;
+        }
+
+        BOLT_ASSERT(false, "Found sampled vertex with no neighbors");
       }
 
       // Check if first state is same as input
       if (si_->getStateSpace()->equalStates(point.state_, sg_->getState(point.visibleNeighborhood_[0])))
       {
-        BOLT_ERROR(indent, true, "first neighbor is itself");
-        exit(-1);
+        throw Exception(name_, "First neighbor is itself");
       }
     }
 
@@ -587,7 +625,6 @@ bool SparseGenerator::checkSparseGraphOptimality(std::size_t indent)
 
     std::vector<SparseVertex> vertexPath;
     double distance;
-    std::cout << "astarSearch " << std::endl;
     if (!sg_->astarSearch(start, goal, vertexPath, distance, indent))
     {
       BOLT_ERROR(indent, true, "No path found through graph");

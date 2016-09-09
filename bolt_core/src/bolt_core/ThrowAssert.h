@@ -79,7 +79,7 @@ public:
 
     if (!message.empty())
     {
-      outputStream << message << ": ";
+      outputStream << ANSI_COLOR_RED << message << ": ";
     }
 
     std::string expressionString = expression;
@@ -93,7 +93,7 @@ public:
       outputStream << "Assertion '" << expression << "'";
     }
 
-    outputStream << " failed in file '" << file << "' line " << line;
+    outputStream << ANSI_COLOR_RESET << " failed in file '" << file << "' line " << line;
     report = outputStream.str();
 
     LogError();

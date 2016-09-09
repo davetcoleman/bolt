@@ -175,6 +175,8 @@ public:
   /** \brief Request user to press next for each generated state */
   bool visualizeGridGenerationWait_ = false;
 
+  bool visualizeDistanceToCollision_ = false;
+
 };  // end of class VertexDiscretizer
 
 }  // namespace bolt

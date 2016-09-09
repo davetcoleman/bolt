@@ -913,7 +913,7 @@ bool TaskGraph::smoothQualityPath(geometric::PathGeometric *path, double clearan
 
   // Set the motion validator to use clearance, this way isValid() checks clearance before confirming valid
   base::DiscreteMotionValidator *dmv =
-      dynamic_cast<base::DiscreteMotionValidator *>(si_->getMotionValidatorNonConst().get());
+      dynamic_cast<base::DiscreteMotionValidator *>(si_->getMotionValidator().get());
   dmv->setRequiredStateClearance(clearance);
 
   for (std::size_t i = 0; i < 3; ++i)

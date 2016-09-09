@@ -221,9 +221,11 @@ void VertexDiscretizer::generateVertices(std::size_t indent)
     si->setStateValidityChecker(si_->getStateValidityChecker());
     si->setMotionValidator(si_->getMotionValidator());
 
-    // TEMP
-    si->getStateValidityChecker()->setVisual(visual_);
-    std::cout << "si->getStateValidityChecker()->getClearanceSearchDistance(): " << si->getStateValidityChecker()->getClearanceSearchDistance() << std::endl;
+    // Show distance to nearest collision search
+    if (visualizeDistanceToCollision_)
+    {
+      si->getStateValidityChecker()->setVisual(visual_);
+    }
 
     threads[i] = new boost::thread(
         boost::bind(&VertexDiscretizer::generateVerticesThread, this, i, startJointValue, endJointValue, si, indent));
@@ -384,8 +386,11 @@ void VertexDiscretizer::createState(std::size_t threadID, std::vector<double> &v
     return;
   }
 
-  visual_->viz6()->trigger();
-  usleep(0.001*1000000);
+  if (visualizeDistanceToCollision_)
+  {
+    visual_->viz6()->trigger();
+    usleep(0.001*1000000);
+  }
 
   if (dist < clearance_)
   {

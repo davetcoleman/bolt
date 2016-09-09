@@ -152,7 +152,6 @@ public:
 
     if (!result)
     {
-      std::cout << "did not find invalid state in spiral " << std::endl;
       // No invalid state found within clearanceSearchDistance_
       return std::numeric_limits<double>::infinity();  // indicates collision is very far away
     }
@@ -174,13 +173,11 @@ private:
    */
   bool spiralSearchCollisionState(double discretization, const ob::State *work_state) const
   {
-    std::cout << "spiralSearchCollisionState() " << std::endl;
     double *state_values = work_state->as<ob::RealVectorStateSpace::StateType>()->values;
     static const bool VISUALIZE_SPIRAL = true;
 
     if (visual_ && VISUALIZE_SPIRAL)
     {
-      std::cout << "visual " << std::endl;
       visual_->viz6()->state(work_state, tools::MEDIUM, tools::RED, 0);
     }
 
@@ -197,7 +194,8 @@ private:
         // Point 1
         state_values[0] = xs - d + i;
         state_values[1] = ys - i;
-        if (true) //visual_ && VISUALIZE_SPIRAL)
+
+        if (visual_ && VISUALIZE_SPIRAL) // Debug
         {
           visual_->viz6()->state(work_state, tools::MEDIUM, tools::BLUE, 0);
         }
@@ -212,7 +210,8 @@ private:
         // Point 2
         state_values[0] = xs + d - i;
         state_values[1] = ys + i;
-        if (visual_ && VISUALIZE_SPIRAL)
+
+        if (visual_ && VISUALIZE_SPIRAL) // Debug
           visual_->viz6()->state(work_state, tools::SMALL, tools::BLUE, 0);
 
         if (si_->satisfiesBounds(work_state))  // Check bounds
@@ -228,7 +227,8 @@ private:
         // Point 3
         state_values[0] = xs - i;
         state_values[1] = ys + d - i;
-        if (visual_ && VISUALIZE_SPIRAL)
+
+        if (visual_ && VISUALIZE_SPIRAL) // Debug
           visual_->viz6()->state(work_state, tools::SMALL, tools::BLUE, 0);
 
         if (si_->satisfiesBounds(work_state))  // Check bounds
@@ -241,7 +241,8 @@ private:
         // Point 4
         state_values[0] = xs + d - i;
         state_values[1] = ys - i;
-        if (visual_ && VISUALIZE_SPIRAL)
+
+        if (visual_ && VISUALIZE_SPIRAL) // Debug
           visual_->viz6()->state(work_state, tools::SMALL, tools::BLUE, 0);
 
         if (si_->satisfiesBounds(work_state))  // Check bounds

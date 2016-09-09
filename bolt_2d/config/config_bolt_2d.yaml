@@ -6,9 +6,11 @@ bolt_2d:
   display_disjoint_sets: false
   eliminate_dense_disjoint_sets: false
   check_valid_vertices: false
+
+  # create sparse graph
   load_spars: false
   create_spars: true
-  create_spars_count: 1 # create the spars graph multiple times
+  create_spars_count: 100 # create the spars graph multiple times
   continue_spars: false # even if a file has been saved, randomly sample for more coverage
 
   # environment info
@@ -44,7 +46,7 @@ sparse_generator:
   fourth_criteria_after_failures: 5000 # mode change to 4th criteria after this many failures
   terminate_after_failures: 10000 # total failures, including 4th criteria
   use_discretized_samples: true
-  use_random_samples: false
+  use_random_samples: true
   save_interval: 10000 # how often to save, based on number of random samples added
   verbose:
     verbose: true
@@ -76,7 +78,7 @@ sparse_criteria:
     quality_criteria: false # window 5
     quality_criteria_close_reps: false # window 3
     quality_criteria_sampler: false
-    quality_criteria_astar: true # show results of astar test
+    quality_criteria_astar: false # show results of astar test
     remove_close_vertices: false
 
 # ====================================================
@@ -104,11 +106,11 @@ sparse_graph:
 # ====================================================
 vertex_discretizer:
   verbose:
-    verbose: true
-    thread: true
+    verbose: false
+    thread: false
   visualize:
-    grid_generation: true
-    grid_generation_wait: true
+    grid_generation: false
+    grid_generation_wait: false
 
 # ====================================================
 task_graph:
