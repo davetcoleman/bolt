@@ -36,6 +36,7 @@ sparse_generator:
   terminate_after_failures: 100000 # total failures, including 4th criteria
   use_discretized_samples: false
   use_random_samples: true
+  verify_graph_properties: false
   save_interval: 100 # how often to save during random sampling
   verbose:
     verbose: true

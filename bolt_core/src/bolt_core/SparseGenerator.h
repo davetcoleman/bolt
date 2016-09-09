@@ -95,6 +95,7 @@ public:
    * \param stateID representing a pre-populate state
    * \return true if sparse graph is still accepting states, false if the sparse graph has completed
    */
+  bool addSample(ob::State* state, std::size_t threadID, bool &usedState, std::size_t indent);
   bool addSample(CandidateData &candidateD, std::size_t threadID, bool &usedState, std::size_t indent);
 
   /**
@@ -192,7 +193,7 @@ public:
   /** \brief Generate the Sparse graph with discretized and/or random samples */
   bool useDiscretizedSamples_;
   bool useRandomSamples_;
-
+  bool verifyGraphProperties_ = false;
 };  // end SparseGenerator
 
 }  // namespace bolt

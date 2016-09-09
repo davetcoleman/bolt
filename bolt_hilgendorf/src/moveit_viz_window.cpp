@@ -218,6 +218,12 @@ void MoveItVizWindow::deleteAllMarkers()
   visuals_->deleteAllMarkers();
 }
 
+void MoveItVizWindow::spin()
+{
+  std::cout << "Spinning ROS node... " << std::endl;
+  ros::spin();
+}
+
 bool MoveItVizWindow::shutdownRequested()
 {
   if (!ros::ok())

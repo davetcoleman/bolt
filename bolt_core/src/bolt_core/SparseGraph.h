@@ -298,8 +298,13 @@ public:
    * Smoothing
    * --------------------------------------------------------------------------------- */
 
-  /** \brief Path smoothing helpers */
+  /** \brief Path smoothing - original simple implementation */
   bool smoothQualityPathOriginal(geometric::PathGeometric* path, std::size_t indent);
+
+  /**
+   * \brief Path smoothing - improved Dave version
+   * \return true on success, false if something failed
+   */
   bool smoothQualityPath(geometric::PathGeometric* path, double clearance, bool debug, std::size_t indent);
 
   /** \brief For finding the optimal path */

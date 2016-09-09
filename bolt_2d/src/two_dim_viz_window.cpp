@@ -261,6 +261,12 @@ void TwoDimVizWindow::deleteAllMarkers()
   visuals_->deleteAllMarkers();
 }
 
+void TwoDimVizWindow::spin()
+{
+  std::cout << "Spinning ROS node... " << std::endl;
+  ros::spin();
+}
+
 bool TwoDimVizWindow::shutdownRequested()
 {
   if (!ros::ok())
@@ -321,12 +327,21 @@ bool TwoDimVizWindow::publishPPMImage(ompl::PPM& ppm, bool static_id)
     {
       ompl::PPM::Color& map_color = ppm.getPixel(x, y);
 
+      std_msgs::ColorRGBA color;
       if (map_color.red + map_color.green + map_color.blue >= MAX_COLOR)
-        continue;  // transparent, do not publish
+      {
+        //continue;  // transparent, do not publish
 
-      // set single color
-      std_msgs::ColorRGBA color = visuals_->getColor(rvt::DARK_GREY);
-      color.a = 1.0;
+        // set single color
+        color = visuals_->getColor(rvt::WHITE); // color doesn't matter since alpha is 0
+        color.a = 0.0;
+      }
+      else
+      {
+        // set single color
+        color = visuals_->getColor(rvt::DARK_GREY);
+        color.a = 1.0;
+      }
 
       // Make right and down triangle
       // Check that we are not on the far right or bottom

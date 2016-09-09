@@ -102,6 +102,9 @@ public:
   /** \brief Trigger visualizer to clear all graphics */
   void deleteAllMarkers();
 
+  /** \brief Pause process and only accept incoming ROS messages */
+  void spin();
+
   /** \brief Check if SIGINT has been called */
   bool shutdownRequested();
 

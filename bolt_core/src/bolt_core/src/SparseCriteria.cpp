@@ -657,7 +657,13 @@ bool SparseCriteria::checkAddPath(SparseVertex v, std::size_t indent)
     {
       BOLT_DEBUG(indent + 4, vQuality_, "Checking v'' = " << vpp);
 
-      BOLT_ASSERT(sg_->getState(vpp) != NULL, "Adjacent vertex found that is null");
+      // Check if by chance vpp was removed during addQualityPath()
+      if (sg_->stateDeleted(vpp))
+      {
+        BOLT_INFO(indent, vQuality_ || true, "State vpp=" << vpp << " was deleted, skipping quality checks");
+        exit(-1);
+        return spannerPropertyWasViolated;
+      }
 
       InterfaceData &iData = sg_->getInterfaceData(v, vp, vpp, indent + 6);
 
@@ -678,6 +684,7 @@ bool SparseCriteria::checkAddPath(SparseVertex v, std::size_t indent)
             return spannerPropertyWasViolated;
           }
 
+          // Check if by chance vp was removed during process
           if (sg_->stateDeleted(vp))
           {
             BOLT_INFO(indent, vQuality_, "State vp=" << vp << " was deleted, skipping quality checks");
@@ -826,11 +833,15 @@ bool SparseCriteria::addQualityPath(SparseVertex v, SparseVertex vp, SparseVerte
 
   // Create path and simplify
   if (useOriginalSmoother_)
-    sg_->smoothQualityPathOriginal(path, indent + 4);
+  {
+    if (!sg_->smoothQualityPathOriginal(path, indent + 4))
+      return false;
+  }
   else
   {
     const bool debug = false;
-    sg_->smoothQualityPath(path, sg_->getObstacleClearance(), debug, indent + 4);
+    if (!sg_->smoothQualityPath(path, sg_->getObstacleClearance(), debug, indent + 4))
+      return false;
   }
 
   // Determine if this smoothed path actually helps improve connectivity

@@ -40,6 +40,7 @@
 // ROS
 #include <ros/ros.h>
 #include <ros/package.h>  // for getting file path of package names
+#include <geometry_msgs/PointStamped.h>
 
 // Display in Rviz tool
 #include <bolt_2d/two_dim_viz_window.h>
@@ -84,6 +85,7 @@ enum PlannerName
 class ExperienceDemos
 {
 public:
+
   /**
    * \brief Constructor
    */
@@ -150,6 +152,9 @@ public:
       exit(-1);
     }
 
+    // Load subscriber from Rviz
+    clicked_point_sub_ = nh_.subscribe("/clicked_point", 1000, &ExperienceDemos::clickedCallback, this);
+
     // Run application
     run();
   }
@@ -159,6 +164,41 @@ public:
     // Free start and goal states
     space_->freeState(ompl_start_);
     space_->freeState(ompl_goal_);
+  }
+
+  void clickedCallback(const geometry_msgs::PointStamped::ConstPtr& msg)
+  {
+    //ROS_INFO_STREAM_NAMED(name_, "Clicked point:\n" << msg->point);
+    ROS_INFO_STREAM_NAMED(name_, "Clicked point");
+
+    ob::State* temp_state = space_->allocState();
+    ob::RealVectorStateSpace::StateType* real_state = static_cast<ob::RealVectorStateSpace::StateType*>(temp_state);
+    real_state->values[0] = msg->point.x;
+    real_state->values[1] = msg->point.y;
+    real_state->values[2] = msg->point.z;
+
+    // Show point
+    // experience_setup_->getVisual()->viz1()->state(temp_state, ompl::tools::MEDIUM, ompl::tools::BLUE, 0);
+    // experience_setup_->getVisual()->viz1()->trigger();
+    // usleep(0.001*1000000);
+
+    // Make SparseCriteria and SparseGraph verbose
+    bolt_->getSparseCriteria()->visualizeAttemptedStates_ = true;
+    bolt_->getSparseCriteria()->visualizeConnectivity_ = true;
+    bolt_->getSparseCriteria()->visualizeQualityCriteria_ = true;
+    bolt_->getSparseCriteria()->vCriteria_ = true;
+    bolt_->getSparseCriteria()->vQuality_ = true;
+    bolt_->getSparseCriteria()->vQualityMaxSpanner_ = true;
+    bolt_->getSparseCriteria()->vAddedReason_ = true;
+    bolt_->getSparseCriteria()->vRemoveClose_ = true;
+    bolt_->getSparseGraph()->visualizeSparseGraphSpeed_ = 0.0001;
+    bolt_->getSparseGraph()->visualizeSparseGraph_ = true;
+
+    // Add point to graph
+    const std::size_t threadID = 0;
+    bool usedState;
+    const std::size_t indent = 0;
+    bolt_->getSparseGenerator()->addSample(temp_state, threadID, usedState, indent);
   }
 
   bool loadOMPL()
@@ -1146,7 +1186,7 @@ public:
     std::size_t num_points = xsize * ysize * 6;
     marker.points.reserve(num_points);
     marker.colors.reserve(num_points);
-    xyToVertex_.clear();
+    xy_to_vertex_.clear();
     vertex_reuse_ = 0;
 
     for (double x = bounds.low[0]; x < bounds.high[0]; x += discretization)
@@ -1207,7 +1247,7 @@ public:
     otb::SparseVertex rep;
     std::pair<double, double> coordinates(x, y);
     // Search map
-    if (xyToVertex_.find(coordinates) == xyToVertex_.end())
+    if (xy_to_vertex_.find(coordinates) == xy_to_vertex_.end())
     {
       // Create temporary state
       temp_values_[0] = x;
@@ -1218,20 +1258,20 @@ public:
       // Find state's representative
       rep = bolt_->getSparseGraph()->getSparseRepresentative(temp_state_);
 
-      xyToVertex_[coordinates] = rep;
+      xy_to_vertex_[coordinates] = rep;
     }
     else
     {
       vertex_reuse_++;
-      rep = xyToVertex_[coordinates];
+      rep = xy_to_vertex_[coordinates];
     }
 
     // Search map
-    if (vertexToColor_.find(rep) == vertexToColor_.end())
-      vertexToColor_[rep] = viz_bg_->getVisualTools()->createRandColor();
+    if (vertex_to_color_.find(rep) == vertex_to_color_.end())
+      vertex_to_color_[rep] = viz_bg_->getVisualTools()->createRandColor();
 
     // Assign color
-    marker.colors.push_back(vertexToColor_[rep]);
+    marker.colors.push_back(vertex_to_color_[rep]);
   }
 
   void visualizeGUI()
@@ -1352,13 +1392,16 @@ private:
   geometry_msgs::Point temp_point_;
   ompl::base::State *temp_state_;
   std::vector<double> temp_values_;
-  std::map<otb::SparseVertex, std_msgs::ColorRGBA> vertexToColor_;
-  std::map<std::pair<double, double>, otb::SparseVertex> xyToVertex_;
+  std::map<otb::SparseVertex, std_msgs::ColorRGBA> vertex_to_color_;
+  std::map<std::pair<double, double>, otb::SparseVertex> xy_to_vertex_;
   std::size_t vertex_reuse_;
 
   // The RGB image data
   ompl::PPM ppm_;
   std::vector<std::string> maps_;
+
+  // Getting input from Rviz
+  ros::Subscriber clicked_point_sub_;
 
 };  // end of class
 

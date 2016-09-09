@@ -143,8 +143,8 @@ void SparseGenerator::createSPARS()
   if (useRandomSamples_)
   {
     BOLT_INFO(indent, true, "Adding random samples states");
-    addRandomSamplesOneThread(indent);
-    //addRandomSamplesThreaded(indent);
+    //addRandomSamplesOneThread(indent);
+    addRandomSamplesThreaded(indent);
   }
 
   // Profiler
@@ -209,16 +209,21 @@ void SparseGenerator::createSPARS()
   // Copy-paste data
   copyPasteState(numSets);
 
+#ifndef NDEBUG
+  // Ensure the graph is valid
   if (!sg_->verifyGraph(indent))
   {
     OMPL_ERROR("Sparse graph did not pass test");
   }
+#endif
 
+  // Visualize database if it was not visualized during construction
   if (sg_->visualizeSparseGraph_ && sg_->visualizeSparseGraphSpeed_ < std::numeric_limits<double>::epsilon())
     sg_->displayDatabase(true, true, 1, indent);
 
-  // Ensure the graph is valid
-  checkSparseGraphOptimality(indent);
+  // Check optimality of graph
+  if (verifyGraphProperties_)
+    checkSparseGraphOptimality(indent);
 
   OMPL_INFORM("Finished creating sparse database");
 }
@@ -302,12 +307,8 @@ bool SparseGenerator::addRandomSamplesOneThread(std::size_t indent)
       sg_->debugState(candidateState);
     }
 
-    // Find nearby nodes
-    CandidateData candidateD(candidateState);
-    findGraphNeighbors(candidateD, threadID, indent);
-
     bool usedState = false;
-    if (!addSample(candidateD, threadID, usedState, indent))
+    if (!addSample(candidateState, threadID, usedState, indent))
     {
       return true;  // no more states needed
     }
@@ -367,6 +368,15 @@ bool SparseGenerator::addRandomSamplesThreaded(std::size_t indent)
   }  // while(true) create random sample
 
   return true;  // program should never reach here
+}
+
+bool SparseGenerator::addSample(ob::State* state, std::size_t threadID, bool &usedState, std::size_t indent)
+{
+  // Find nearby nodes
+  CandidateData candidateD(state);
+  findGraphNeighbors(candidateD, threadID, indent);
+
+  return addSample(candidateD, threadID, usedState, indent);
 }
 
 bool SparseGenerator::addSample(CandidateData &candidateD, std::size_t threadID, bool &usedState, std::size_t indent)
@@ -556,8 +566,11 @@ bool SparseGenerator::checkSparseGraphOptimality(std::size_t indent)
       if (!clearanceSampler_->sample(point.state_))
         throw Exception(name_, "No valid sample found");
 
+      // Allow edges to be 5% longer than SparseDelta
+      const double dist = sparseCriteria_->getSparseDelta() * 1.05;
+
       // Find nearest neighbor
-      findGraphNeighbors(point, 0 /*threadID*/, indent);
+      findGraphNeighbors(point, dist, 0 /*threadID*/, indent);
 
       // Check if neighbor exists - should always have at least one neighbor otherwise graph lacks coverage
       if (point.visibleNeighborhood_.empty())
@@ -597,6 +610,7 @@ bool SparseGenerator::checkSparseGraphOptimality(std::size_t indent)
       sg_->visualizeDatabaseCoverage_ = true;
       sg_->displayDatabase();
 
+      visual_->viz1()->spin();
       exit(0);
       numFailedPlans++;
       continue;
@@ -728,7 +742,8 @@ void SparseGenerator::debugNoNeighbors(CandidateData &point, std::size_t indent)
     usleep(0.001*1000000);
   }
 
-  BOLT_ASSERT(false, "Found sampled vertex with no neighbors");
+  BOLT_ERROR(indent, false, "Found sampled vertex with no neighbors");
+  visual_->viz1()->spin();
 }
 
 bool SparseGenerator::convertVertexPathToStatePath(std::vector<SparseVertex> &vertexPath,

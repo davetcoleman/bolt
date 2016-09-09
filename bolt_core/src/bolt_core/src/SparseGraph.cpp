@@ -158,6 +158,10 @@ bool SparseGraph::setup()
     pathSimplifier_->freeStates(true);
   }
 
+  base::DiscreteMotionValidator *dmv =
+      dynamic_cast<base::DiscreteMotionValidator *>(si_->getMotionValidator().get());
+  dmv->setRequiredStateClearance(0.0);
+
   return true;
 }
 
@@ -703,6 +707,7 @@ bool SparseGraph::smoothQualityPath(geometric::PathGeometric *path, double clear
     // visual_->waitForUserFeedback("finished quality path");
   }
 
+  // TODO: very rarely a path is created that is out of bounds and can't be repaired - I don't know why but its super rare and I think the bug is inside of OMPL
   std::pair<bool, bool> repairResult = path->checkAndRepair(100);
 
 #ifndef NDEBUG
@@ -720,8 +725,12 @@ bool SparseGraph::smoothQualityPath(geometric::PathGeometric *path, double clear
       visual_->viz6()->trigger();
     }
 
-    throw Exception(name_, "check and repair failed (v2)");
+    BOLT_ERROR(indent, true, "Check and repair failed (v2)");
+    usleep(1*1000000);
+    return false;
   }
+
+  // Everything was successful
   return true;
 }
 

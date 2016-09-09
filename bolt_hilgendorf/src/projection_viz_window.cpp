@@ -234,6 +234,12 @@ void ProjectionVizWindow::deleteAllMarkers()
   visuals_->deleteAllMarkers();
 }
 
+void ProjectionVizWindow::spin()
+{
+  std::cout << "Spinning ROS node... " << std::endl;
+  ros::spin();
+}
+
 bool ProjectionVizWindow::shutdownRequested()
 {
   if (!ros::ok())

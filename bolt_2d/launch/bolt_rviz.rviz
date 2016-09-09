@@ -8,6 +8,7 @@ Panels:
         - /VizBG1/Namespaces1
         - /Viz21/Namespaces1
         - /Viz31/Namespaces1
+        - /Axes1
       Splitter Ratio: 0.582022
     Tree Height: 613
   - Class: rviz/Help
@@ -28,7 +29,7 @@ Visualization Manager:
       Name: VizBG
       Namespaces:
         Wireframe Rectangle: true
-        cost_map: true
+        background: true
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -36,6 +37,7 @@ Visualization Manager:
       Marker Topic: /ompl_visual1
       Name: Viz1
       Namespaces:
+        Cuboid: true
         Cylinder: true
         Sphere: true
         Spheres: true
@@ -46,8 +48,7 @@ Visualization Manager:
       Marker Topic: /ompl_visual2
       Name: Viz2
       Namespaces:
-        Cylinder: true
-        path_spheres: true
+        Sphere: true
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -56,7 +57,7 @@ Visualization Manager:
       Name: Viz3
       Namespaces:
         Cylinder: true
-        path_spheres: true
+        Sphere: true
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -64,8 +65,7 @@ Visualization Manager:
       Marker Topic: /ompl_visual4
       Name: Viz4
       Namespaces:
-        Cylinder: true
-        path_spheres: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -73,10 +73,7 @@ Visualization Manager:
       Marker Topic: /ompl_visual5
       Name: Viz5
       Namespaces:
-        Cylinder: true
-        Sphere: true
-        Spheres: true
-        path_spheres: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -89,12 +86,12 @@ Visualization Manager:
       Queue Size: 100
       Value: true
     - Class: rviz/Axes
-      Enabled: false
-      Length: 10
+      Enabled: true
+      Length: 5
       Name: Axes
-      Radius: 1
+      Radius: 0.5
       Reference Frame: world
-      Value: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 255; 255; 255
@@ -102,12 +99,14 @@ Visualization Manager:
     Frame Rate: 30
   Name: root
   Tools:
+    - Class: rviz/PublishPoint
+      Single click: true
+      Topic: /clicked_point
     - Class: moveit_dashboard/KeyTool
-    - Class: rviz/Measure
   Value: true
   Views:
     Current:
-      Angle: 3.14
+      Angle: 0
       Class: rviz/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
@@ -116,25 +115,25 @@ Visualization Manager:
         Value: false
       Name: Current View
       Near Clip Distance: 0.01
-      Scale: 7.77772
+      Scale: 7.74534
       Target Frame: <Fixed Frame>
       Value: TopDownOrtho (rviz)
-      X: 82.2613
-      Y: -8.57012
+      X: 84.0959
+      Y: -3.74788
     Saved: ~
 Window Geometry:
   Displays:
-    collapsed: true
+    collapsed: false
   Height: 1056
   Help:
     collapsed: false
-  Hide Left Dock: true
-  Hide Right Dock: false
+  Hide Left Dock: false
+  Hide Right Dock: true
   MoveItDashboard:
-    collapsed: true
-  QMainWindow State: 000000ff00000000fd0000000100000000000001bf000003dafc0200000004fb000000100044006900730070006c0061007900730000000028000002a6000000dd00fffffffb0000000800480065006c00700000000342000000bb0000007600fffffffb0000000a0056006900650077007300000002d4000000b0000000b000fffffffb0000001e004d006f007600650049007400440061007300680062006f006100720064000000038a000000780000007800ffffff00000780000003da00000001000000020000000100000002fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+    collapsed: false
+  QMainWindow State: 000000ff00000000fd0000000100000000000001bf000003dafc0200000004fb000000100044006900730070006c0061007900730100000028000002a6000000dd00fffffffb0000000800480065006c00700000000342000000bb0000007600fffffffb0000000a0056006900650077007301000002d4000000b0000000b000fffffffb0000001e004d006f007600650049007400440061007300680062006f006100720064010000038a000000780000007800ffffff000005bb000003da00000001000000020000000100000002fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Views:
-    collapsed: true
+    collapsed: false
   Width: 1920
   X: 764
   Y: 24
