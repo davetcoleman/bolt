@@ -214,7 +214,7 @@ void SparseGenerator::createSPARS()
     OMPL_ERROR("Sparse graph did not pass test");
   }
 
-  if (!sg_->visualizeSparseGraph_)
+  if (sg_->visualizeSparseGraph_ && sg_->visualizeSparseGraphSpeed_ < std::numeric_limits<double>::epsilon())
     sg_->displayDatabase(true, true, 1, indent);
 
   // Ensure the graph is valid
@@ -593,6 +593,10 @@ bool SparseGenerator::checkSparseGraphOptimality(std::size_t indent)
       visual_->viz3()->state(sg_->getState(goal), tools::LARGE, tools::BLACK, 0);
       visual_->viz3()->trigger();
 
+      // Show database with visibility regions (coverage)
+      sg_->visualizeDatabaseCoverage_ = true;
+      sg_->displayDatabase();
+
       exit(0);
       numFailedPlans++;
       continue;
@@ -668,7 +672,7 @@ bool SparseGenerator::checkSparseGraphOptimality(std::size_t indent)
 
 void SparseGenerator::debugNoNeighbors(CandidateData &point, std::size_t indent)
 {
-  BOLT_ERROR(indent, true, "Found sampled vertex with no neighbors");
+  BOLT_FUNC(indent, true, "Found sampled vertex with no neighbors");
 
   // Clear Window 2
   visual_->viz2()->deleteAllMarkers();
@@ -704,9 +708,16 @@ void SparseGenerator::debugNoNeighbors(CandidateData &point, std::size_t indent)
   double dist = sparseCriteria_->getSparseDelta() * 1.5;
   findGraphNeighbors(point, dist, 0 /*threadID*/, indent);
   if (point.visibleNeighborhood_.empty())
-    std::cout << "still empty " << std::endl;
+  {
+    BOLT_ERROR(indent, true, "still empty");
+  }
   else
+  {
     std::cout << "not empty anymore! " << std::endl;
+
+    double dist = si_->distance(sg_->getState(point.visibleNeighborhood_.front()), point.state_);
+    std::cout << "distance to nearest vertex is " << dist << ", sparse delta = " << sparseCriteria_->getSparseDelta() << std::endl;
+  }
 
   BOLT_ASSERT(false, "Found sampled vertex with no neighbors");
 }

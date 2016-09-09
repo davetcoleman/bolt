@@ -720,7 +720,14 @@ bool SparseGraph::smoothQualityPath(geometric::PathGeometric *path, double clear
 
   if (!repairResult.second)  // Repairing was not successful
   {
-    throw Exception(name_, "check and repair failed?");
+  if (!visualizeQualityPathSmoothing_)
+  {
+  visual_->viz6()->deleteAllMarkers();
+  visual_->viz6()->path(path, tools::SMALL, tools::GREEN);
+  visual_->viz6()->trigger();
+}
+
+    throw Exception(name_, "check and repair failed (v2)");
   }
   return true;
 }

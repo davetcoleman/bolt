@@ -43,7 +43,7 @@ bolt_2d:
 
 # ====================================================
 sparse_generator:
-  fourth_criteria_after_failures: 5000 # mode change to 4th criteria after this many failures
+  fourth_criteria_after_failures: 10000 # mode change to 4th criteria after this many failures
   terminate_after_failures: 20000 # total failures, including 4th criteria
   use_discretized_samples: true
   use_random_samples: true
@@ -63,7 +63,7 @@ sparse_criteria:
   use_check_remove_close_vertices: true # Experimental feature that allows very closeby vertices to be merged with newly added ones
   use_clear_edges_near_vertex: true # When adding a quality vertex, remove nearby edges
   use_original_smoother: false # original is bad
-  use_connectivy_criteria: false # if true, discretization does not work
+  use_connectivy_criteria: true # if true, discretization does not work
   use_quality_criteria: true # 4th criteria
   use_smoothed_path_rejection: false
   verbose:
@@ -91,7 +91,7 @@ sparse_graph:
     search: false
   visualize:
     spars_graph: true
-    spars_graph_speed: 0.00001 # if 0, does not animate but only single image draw
+    spars_graph_speed: 0 #0.00001 # if 0, does not animate but only single image draw
     database_vertices: true
     database_edges: true
     database_coverage: false # the grey squares around vertices representing sparse delta

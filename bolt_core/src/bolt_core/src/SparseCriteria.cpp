@@ -374,10 +374,10 @@ bool SparseCriteria::checkAddConnectivity(CandidateData &candidateD, std::size_t
     // loop
     if (!sg_->sameComponent(*vertexIt, candidateD.newVertex_))
     {
-      visual_->waitForUserFeedback("adding edge for connectivty");
+      //visual_->waitForUserFeedback("adding edge for connectivty");
       // Connect
       sg_->addEdge(candidateD.newVertex_, *vertexIt, eCONNECTIVITY, indent + 4);
-      visual_->waitForUserFeedback("done");
+      //visual_->waitForUserFeedback("done");
     }
   }
 
