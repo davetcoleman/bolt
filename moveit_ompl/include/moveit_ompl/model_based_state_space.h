@@ -111,7 +111,6 @@ public:
   virtual void interpolate(const ompl::base::State *from, const ompl::base::State *to, const double t,
                            ompl::base::State *state) const;
   virtual double distance(const ompl::base::State *state1, const ompl::base::State *state2) const;
-  virtual double distance2(const ompl::base::State *state1, const ompl::base::State *state2) const;
   virtual bool equalStates(const ompl::base::State *state1, const ompl::base::State *state2) const;
   virtual double getMaximumExtent() const;
   virtual double getMeasure() const;

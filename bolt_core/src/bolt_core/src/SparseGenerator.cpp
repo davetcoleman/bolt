@@ -364,16 +364,16 @@ bool SparseGenerator::addRandomSamplesThreaded(std::size_t indent)
   {
     // time::point startTime2 = time::now(); // Benchmark
 
-    // Find nearby nodes
+    // Get next state and its corresponding neighbors
     CandidateData &candidateD = candidateQueue_->getNextCandidate(indent);
 
     bool usedState = false;
 
     // time::point startTime = time::now(); // Benchmark
-    bool result = addSample(candidateD, threadID, usedState, indent);
+    bool sparseGraphNotCompleted = addSample(candidateD, threadID, usedState, indent);
     // BOLT_GREEN(0, 1, time::seconds(time::now() - startTime) << " add sample"); // Benchmark
 
-    if (!result)
+    if (!sparseGraphNotCompleted)
     {
       candidateQueue_->stopGenerating(indent);
       return true;  // no more states needed
@@ -382,7 +382,7 @@ bool SparseGenerator::addRandomSamplesThreaded(std::size_t indent)
     // BOLT_DEBUG(indent, true, "SparseGenerator: used: " << usedState << " numRandSamplesAdded: " <<
     // numRandSamplesAdded_);
 
-    // Tell other thread whether the candidate was used
+    // Tell other threads whether the candidate was used - this unloads the memory
     candidateQueue_->setCandidateUsed(usedState, indent);
 
     // BOLT_DEBUG(0, 1, time::seconds(time::now() - startTime2) << " whole sampling loop"); // Benchmark

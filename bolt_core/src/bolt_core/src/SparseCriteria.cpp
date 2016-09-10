@@ -238,6 +238,10 @@ bool SparseCriteria::addStateToRoadmap(CandidateData &candidateD, VertexType &ad
     BOLT_GREEN(indent, vAddedReason_, "Graph updated: QUALITY Fourth: " << useFourthCriteria_ << " State: " << candidateD.state_);
     addReason = QUALITY;
     stateAdded = true;
+
+    // We return true (state was used to improve graph) but we didn't actually use
+    // the state, so we much manually free the memory
+    si_->freeState(candidateD.state_);
   }
   else
   {
@@ -321,6 +325,11 @@ bool SparseCriteria::checkAddConnectivity(CandidateData &candidateD, std::size_t
         if (si_->checkMotion(sg_->getState(v1), sg_->getState(v2)))
         {
           sg_->addEdge(v1, v2, eCONNECTIVITY, indent);
+
+          // We return true (state was used to improve graph) but we didn't actually use
+          // the state, so we much manually free the memory
+          si_->freeState(candidateD.state_);
+
           return true;
         }
 
@@ -401,7 +410,7 @@ bool SparseCriteria::checkAddInterface(CandidateData &candidateD, std::size_t in
   const SparseVertex &v2 = candidateD.visibleNeighborhood_[1];
 
   // SKIP: Ensure the two closest nodes are also visible
-  if (false && !(candidateD.graphNeighborhood_[0] == v1 && candidateD.graphNeighborhood_[1] == v2))
+  if (!(candidateD.graphNeighborhood_[0] == v1 && candidateD.graphNeighborhood_[1] == v2))
   {
     BOLT_DEBUG(indent, vCriteria_, "NOT adding because two closest nodes are not visible to each other");
 
@@ -435,6 +444,10 @@ bool SparseCriteria::checkAddInterface(CandidateData &candidateD, std::size_t in
 
     // Connect them
     sg_->addEdge(v1, v2, eINTERFACE, indent);
+
+    // We return true (state was used to improve graph) but we didn't actually use
+    // the state, so we much manually free the memory
+    si_->freeState(candidateD.state_);
 
     return true;
   }
@@ -583,6 +596,15 @@ bool SparseCriteria::checkAddQuality(CandidateData &candidateD, std::size_t thre
   if (!updated)
   {
     BOLT_DEBUG(indent, vQuality_, "No representatives were updated, so not calling checkAddPath()");
+
+    // Free memory before returning
+    for (std::map<SparseVertex, base::State *>::iterator it = closeRepresentatives.begin();
+         it != closeRepresentatives.end(); ++it)
+    {
+      // Delete state that was allocated and sampled within this function
+      si_->freeState(it->second);
+    }
+
     return false;
   }
 
@@ -821,9 +843,7 @@ bool SparseCriteria::addQualityPath(SparseVertex v, SparseVertex vp, SparseVerte
 
   BOLT_WARN(indent, vQuality_, "Unable to connect directly - geometric path must be created for spanner");
 
-  // Carefully track memory allocations so there are no leacks...
   geometric::PathGeometric *path = new geometric::PathGeometric(si_);
-  path->freeStates(false); // manually free the states in a more intelligent way
 
   // Populate path - memory is copied from original location
   if (vp < vpp)
@@ -851,25 +871,28 @@ bool SparseCriteria::addQualityPath(SparseVertex v, SparseVertex vp, SparseVerte
   if (!useImprovedSmoother_)
   {
     if (!sg_->getSparseSmoother()->smoothQualityPathOriginal(path, indent + 4))
+    {
+      BOLT_ERROR(indent, true, "Smoother failed");
+      delete path;
       return false;
+    }
   }
   else
   {
     const bool debug = false;
     if (!sg_->getSparseSmoother()->smoothQualityPath(path, sg_->getObstacleClearance(), debug, indent + 4))
+    {
+      BOLT_ERROR(indent, true, "Smoother failed");
+      delete path;
       return false;
+    }
   }
 
   // Determine if this smoothed path actually helps improve connectivity
   if (useConnectivityCriteria_ && path->length() > shortestPathVpVpp)
   {
     BOLT_WARN(indent, vQuality_, "Smoothed path does not improve connectivity");
-
-    // Free memory and delete path
-    for (auto state : path->getStates())
-      si_->freeState(state);
     delete path;
-
     return false;
   }
 
@@ -879,9 +902,6 @@ bool SparseCriteria::addQualityPath(SparseVertex v, SparseVertex vp, SparseVerte
 
   BOLT_DEBUG(indent + 2, vQuality_, "Shortcuted path now has " << path->getStateCount() << " states");
 
-  // Free first state memory because its already in the graph
-  si_->freeState(path->getStates().front());
-
   // first and last states are vp and vpp so don't get added
   for (std::size_t i = 1; i < path->getStates().size() - 1; ++i)
   {
@@ -889,7 +909,7 @@ bool SparseCriteria::addQualityPath(SparseVertex v, SparseVertex vp, SparseVerte
 
     // We don't have to copy the state memory because we did already above and use smart unloading
     BOLT_DEBUG(indent + 2, vQuality_, "Adding node from shortcut path for QUALITY");
-    newVertex = sg_->addVertex(state, QUALITY, indent + 4);
+    newVertex = sg_->addVertex(si_->getStateSpace()->cloneState(state), QUALITY, indent + 4);
 
     // Check if there are really close vertices nearby which should be merged
     if (checkRemoveCloseVertices(newVertex, indent + 4))
@@ -900,12 +920,7 @@ bool SparseCriteria::addQualityPath(SparseVertex v, SparseVertex vp, SparseVerte
       sg_->clearEdgesNearVertex(newVertex, indent);
 
       // TODO should we clearEdgesNearVertex before return true ?
-
-      // Free remaining states, after current one, and delete path
-      for (std::size_t j = i + 1; j < path->getStates().size(); ++j)
-        si_->freeState(path->getStates()[j]);
       delete path;
-
       return true;
     }
 
@@ -922,10 +937,7 @@ bool SparseCriteria::addQualityPath(SparseVertex v, SparseVertex vp, SparseVerte
   assert(prior != vpp);
   sg_->addEdge(prior, vpp, eQUALITY, indent + 2);
 
-  // Free last state memory and delete path
-  si_->freeState(path->getStates().back());
   delete path;
-
   return true;
 }
 

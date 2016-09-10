@@ -19,6 +19,7 @@
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/SparseCriteria.h
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/SparseGenerator.h
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/SparseStorage.h
+/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/SparseSmoother.h
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/TaskGraph.h
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/VertexDiscretizer.h
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/BoltPlanner.h
@@ -26,18 +27,21 @@
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/Debug.h
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/CandidateQueue.h
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/SamplingQueue.h
+/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/InterfaceData.h
 
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/src/Bolt.cpp
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/src/SparseGraph.cpp
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/src/SparseCriteria.cpp
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/src/SparseGenerator.cpp
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/src/SparseStorage.cpp
+/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/src/SparseSmoother.cpp
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/src/TaskGraph.cpp
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/src/VertexDiscretizer.cpp
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/src/BoltPlanner.cpp
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/src/DenseCache.cpp
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/src/CandidateQueue.cpp
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/src/SamplingQueue.cpp
+
 
 /home/dave/ros/current/ws_swri/src/ompl/src/ompl/tools/debug/Visualizer.h
 /home/dave/ros/current/ws_swri/src/ompl/src/ompl/geometric/PathGeometric.h

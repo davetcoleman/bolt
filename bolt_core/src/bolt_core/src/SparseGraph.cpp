@@ -137,7 +137,10 @@ void SparseGraph::freeMemory()
   {
     // Clear interface data
     foreach (InterfaceData &iData, vertexInterfaceProperty_[v] | boost::adaptors::map_values)
+    {
+      std::cout << "clearing iData for  " << v << std::endl;
       iData.clear(si_);
+    }
 
     // Free states memory
     if (vertexStateProperty_[v] != nullptr)
@@ -853,7 +856,7 @@ SparseVertex SparseGraph::addVertexFromFile(base::State *state, const VertexType
 
 void SparseGraph::removeVertex(SparseVertex v, std::size_t indent)
 {
-  BOLT_FUNC(indent, verbose_, "removeVertex = " << v);
+  BOLT_FUNC(indent, verbose_ || true, "removeVertex = " << v);
 
   // Remove from nearest neighbor
   {
@@ -864,6 +867,10 @@ void SparseGraph::removeVertex(SparseVertex v, std::size_t indent)
   // Delete state
   si_->freeState(vertexStateProperty_[v]);
   vertexStateProperty_[v] = nullptr;
+
+  // Clear interface data
+  foreach (InterfaceData &iData, vertexInterfaceProperty_[v] | boost::adaptors::map_values)
+    iData.clear(si_);
 
   // TODO: disjointSets is now inaccurate
   // Our checkAddConnectivity() criteria is broken

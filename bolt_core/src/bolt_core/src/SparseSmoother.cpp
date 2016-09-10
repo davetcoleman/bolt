@@ -49,11 +49,9 @@ namespace tools
 {
 namespace bolt
 {
-
-SparseSmoother::SparseSmoother(base::SpaceInformationPtr si, VisualizerPtr visual)
-  : si_(si)
-  , visual_(visual)
-{}
+SparseSmoother::SparseSmoother(base::SpaceInformationPtr si, VisualizerPtr visual) : si_(si), visual_(visual)
+{
+}
 
 void SparseSmoother::setup()
 {
@@ -79,7 +77,7 @@ bool SparseSmoother::smoothQualityPathOriginal(geometric::PathGeometric *path, s
   }
 
   BOLT_DEBUG(indent, visualizeQualityPathSmoothing_, "Created 'quality path' candidate with " << path->getStateCount()
-             << " states");
+                                                                                              << " states");
   // if (visualizeQualityPathSmoothing_)
   //   visual_->waitForUserFeedback("path simplification");
 
@@ -137,8 +135,7 @@ bool SparseSmoother::smoothQualityPath(geometric::PathGeometric *path, double cl
   //   visual_->waitForUserFeedback("path simplification");
 
   // Set the motion validator to use clearance, this way isValid() checks clearance before confirming valid
-  base::DiscreteMotionValidator *dmv =
-    dynamic_cast<base::DiscreteMotionValidator *>(si_->getMotionValidator().get());
+  base::DiscreteMotionValidator *dmv = dynamic_cast<base::DiscreteMotionValidator *>(si_->getMotionValidator().get());
   dmv->setRequiredStateClearance(clearance);
 
   for (std::size_t i = 0; i < 3; ++i)
@@ -188,13 +185,17 @@ bool SparseSmoother::smoothQualityPath(geometric::PathGeometric *path, double cl
     // visual_->waitForUserFeedback("finished quality path");
   }
 
-  // TODO: very rarely a path is created that is out of bounds and can't be repaired - I don't know why but its super rare and I think the bug is inside of OMPL
+  // TODO: very rarely a path is created that is out of bounds and can't be repaired - I don't know why but its super
+  // rare and I think the bug is inside of OMPL
   std::pair<bool, bool> repairResult = path->checkAndRepair(100);
 
 #ifndef NDEBUG
   // debug code
   BOLT_ASSERT(si_->equalStates(path->getState(0), startCopy), "Start state is no longer the same");
   BOLT_ASSERT(si_->equalStates(path->getState(path->getStateCount() - 1), goalCopy), "Goal state is not the same");
+  si_->freeState(startCopy);
+  si_->freeState(goalCopy);
+  visual_->waitForUserFeedback("Freed test assert in SparseSmoother");
 #endif
 
   if (!repairResult.second)  // Repairing was not successful
@@ -207,7 +208,7 @@ bool SparseSmoother::smoothQualityPath(geometric::PathGeometric *path, double cl
     }
 
     BOLT_ERROR(indent, true, "Check and repair failed (v2)");
-    usleep(1*1000000);
+    usleep(1 * 1000000);
     return false;
   }
 
@@ -215,7 +216,7 @@ bool SparseSmoother::smoothQualityPath(geometric::PathGeometric *path, double cl
   return true;
 }
 
-bool SparseSmoother::smoothMax(geometric::PathGeometric* path, std::size_t indent)
+bool SparseSmoother::smoothMax(geometric::PathGeometric *path, std::size_t indent)
 {
   BOLT_FUNC(indent, visualizeQualityPathSmoothing_ && false, "smoothMax()");
 
@@ -245,8 +246,7 @@ bool SparseSmoother::smoothMax(geometric::PathGeometric* path, std::size_t inden
   }
 
   // Set the motion validator to use clearance, this way isValid() checks clearance before confirming valid
-  base::DiscreteMotionValidator *dmv =
-    dynamic_cast<base::DiscreteMotionValidator *>(si_->getMotionValidator().get());
+  base::DiscreteMotionValidator *dmv = dynamic_cast<base::DiscreteMotionValidator *>(si_->getMotionValidator().get());
   BOLT_ASSERT(dmv->getRequiredStateClearance() == 0, "Discrete motion validator should have clearance = 0");
 
   double prevDistance = std::numeric_limits<double>::infinity();
@@ -269,8 +269,8 @@ bool SparseSmoother::smoothMax(geometric::PathGeometric* path, std::size_t inden
         visual_->viz3()->path(path, tools::MEDIUM, tools::ORANGE);
         visual_->viz3()->trigger();
         usleep(0.1 * 1000000);
-        //BOLT_DEBUG(indent, true, "path->length() " << path->length() << " states: " << path->getStateCount());
-        //visual_->waitForUserFeedback("interpolate");
+        // BOLT_DEBUG(indent, true, "path->length() " << path->length() << " states: " << path->getStateCount());
+        // visual_->waitForUserFeedback("interpolate");
       }
     }
 
@@ -279,11 +279,11 @@ bool SparseSmoother::smoothMax(geometric::PathGeometric* path, std::size_t inden
 
     bool tryMore = true;
     std::size_t times = 0;
-    //while (tryMore && ++times <= 5)
+    // while (tryMore && ++times <= 5)
     while (tryMore)
     {
       tryMore =
-        pathSimplifier_->reduceVertices(*path, 1000, path->getStateCount() * 4);  // /*rangeRatio*/ 0.33, indent);
+          pathSimplifier_->reduceVertices(*path, 1000, path->getStateCount() * 4);  // /*rangeRatio*/ 0.33, indent);
 
       if (visualizeQualityPathSmoothing_)
       {
@@ -291,11 +291,11 @@ bool SparseSmoother::smoothMax(geometric::PathGeometric* path, std::size_t inden
         visual_->viz4()->path(path, tools::MEDIUM, tools::ORANGE);
         visual_->viz4()->trigger();
         usleep(0.01 * 1000000);
-        //visual_->waitForUserFeedback("reduce vertices");
+        // visual_->waitForUserFeedback("reduce vertices");
       }
-      //BOLT_DEBUG(indent, true, "reduce vert: length: " << path->length() << " states: " << path->getStateCount());
+      // BOLT_DEBUG(indent, true, "reduce vert: length: " << path->length() << " states: " << path->getStateCount());
 
-      if (path->getStateCount() < 3) // Can't smooth if only two points
+      if (path->getStateCount() < 3)  // Can't smooth if only two points
         break;
     }
 
@@ -341,18 +341,18 @@ bool SparseSmoother::smoothMax(geometric::PathGeometric* path, std::size_t inden
       visual_->viz5()->trigger();
       usleep(0.01 * 1000000);
 
-      //visual_->waitForUserFeedback("smoothBSpline");
+      // visual_->waitForUserFeedback("smoothBSpline");
     }
-    //BOLT_DEBUG(indent, true, "smoothBSpline length: " << path->length() << " states: " << path->getStateCount());
+    // BOLT_DEBUG(indent, true, "smoothBSpline length: " << path->length() << " states: " << path->getStateCount());
 
     // Reduce vertices yet again
     tryMore = true;
     times = 0;
-    //while (tryMore && ++times <= 5 && path->getStateCount() > 2)
+    // while (tryMore && ++times <= 5 && path->getStateCount() > 2)
     while (tryMore && path->getStateCount() > 2)
     {
       tryMore =
-        pathSimplifier_->reduceVertices(*path, 1000, path->getStateCount() * 4);  // /*rangeRatio*/ 0.33, indent);
+          pathSimplifier_->reduceVertices(*path, 1000, path->getStateCount() * 4);  // /*rangeRatio*/ 0.33, indent);
 
       if (visualizeQualityPathSmoothing_)
       {
@@ -361,11 +361,11 @@ bool SparseSmoother::smoothMax(geometric::PathGeometric* path, std::size_t inden
         visual_->viz3()->trigger();
         usleep(0.01 * 1000000);
 
-        //visual_->waitForUserFeedback("reduce vertices");
+        // visual_->waitForUserFeedback("reduce vertices");
       }
-      //BOLT_DEBUG(indent, true, "reduce vert length: " << path->length() << " states: " << path->getStateCount());
+      // BOLT_DEBUG(indent, true, "reduce vert length: " << path->length() << " states: " << path->getStateCount());
 
-      if (path->getStateCount() < 3) // Can't smooth if only two points
+      if (path->getStateCount() < 3)  // Can't smooth if only two points
         break;
     }
   }

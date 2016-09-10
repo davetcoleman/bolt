@@ -482,6 +482,9 @@ public:
         else
           viz1_->deleteAllMarkers(); // delete them, but do not trigger
 
+        if (trial_id > 0 || map_id > 0)
+          waitForNextStep("cleared data - memory should be low");
+
         // Load the map
         std::string image_path = package_path_ + "/resources/trial_set/";
         image_path.append(trial_maps[map_id] + ".ppm");
