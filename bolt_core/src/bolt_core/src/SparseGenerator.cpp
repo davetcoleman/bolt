@@ -237,29 +237,29 @@ void SparseGenerator::createSPARS()
 void SparseGenerator::copyPasteState(std::size_t numSets)
 {
   double duration = time::seconds(time::now() - timeDiscretizeAndRandomStarted_);
-
   std::stringstream line;
+
   // clang-format off
   line << "=SPLIT(\"Bolt, "
-            << map_name_ << ", "
-            << sparseCriteria_->sparseDeltaFraction_ << ", "
-            << sparseCriteria_->getSparseDelta() << ", "
-            << sparseCriteria_->getDiscretization() << ", "
-            << sparseCriteria_->getStretchFactor() << ", "
-            << sparseCriteria_->getNearSamplePointsMultiple() << ", "
-            << useDiscretizedSamples_ << ", "
-            << useRandomSamples_ << ", "
-            << sparseCriteria_->useCheckRemoveCloseVertices_ << ", "
-            << sparseCriteria_->useClearEdgesNearVertex_ << ", "
-            << sparseCriteria_->useImprovedSmoother_ << ", "
-            << sparseCriteria_->useEdgeImprovementRule_ << ", "
-            << fourthCriteriaAfterFailures_ << ", "
-            << terminateAfterFailures_ << ", "
-            << maxConsecutiveFailures_ << ", "
-            << sg_->getNumRealVertices() << ", "
-            << sg_->getNumEdges() << ", "
-            << numSets << ", "
-            << duration << "\", \",\")";
+       << map_name_ << ", "
+       << sparseCriteria_->sparseDeltaFraction_ << ", "
+       << sparseCriteria_->getSparseDelta() << ", "
+       << sparseCriteria_->getDiscretization() << ", "
+       << sparseCriteria_->getStretchFactor() << ", "
+       << sparseCriteria_->getNearSamplePointsMultiple() << ", "
+       << useDiscretizedSamples_ << ", "
+       << useRandomSamples_ << ", "
+       << sparseCriteria_->useCheckRemoveCloseVertices_ << ", "
+       << sparseCriteria_->useClearEdgesNearVertex_ << ", "
+       << sparseCriteria_->useImprovedSmoother_ << ", "
+       << sparseCriteria_->useEdgeImprovementRule_ << ", "
+       << fourthCriteriaAfterFailures_ << ", "
+       << terminateAfterFailures_ << ", "
+       << maxConsecutiveFailures_ << ", "
+       << sg_->getNumRealVertices() << ", "
+       << sg_->getNumEdges() << ", "
+       << numSets << ", "
+       << duration << "\", \",\")";
   // clang-format on
 
   // Save log

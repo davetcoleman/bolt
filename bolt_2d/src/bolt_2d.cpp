@@ -441,14 +441,14 @@ public:
     trial_maps.push_back("level5");
 
     // Config
-    const std::size_t TRIALS_PER_MAP = 10;
+    const std::size_t TRIALS_PER_MAP = 3; //10;
 
     // For each map
     for (std::size_t map_id = 0; map_id < trial_maps.size(); ++map_id)
     {
       // Begin statistics
-      double total_edges = 0;
-      double total_vertices = 0;
+      // double total_edges = 0;
+      // double total_vertices = 0;
 
       // For each trial
       for (std::size_t trial_id = 0; trial_id < TRIALS_PER_MAP; ++trial_id)
@@ -461,25 +461,37 @@ public:
         // Clear spars graph
         viz_bg_->deleteAllMarkers();
         viz_bg_->trigger();
-        bolt_->clear();
+        simple_setup_->clear();
         deleteAllMarkers(true);
 
         // Load the map
         std::string image_path = package_path_ + "/resources/trial_set/";
         image_path.append(trial_maps[map_id] + ".ppm");
-        bolt_->getSparseGenerator()->setMapName(trial_maps[map_id]);
+        if (planner_name_ == BOLT)
+          bolt_->getSparseGenerator()->setMapName(trial_maps[map_id]);
+        else
+          sparse_two_->setMapName(trial_maps[map_id]);
+
         loadMapAndCollisionChecker(image_path);
 
         // Create spars
-        bolt_->getSparseGenerator()->createSPARS();
+        if (planner_name_ == BOLT)
+          bolt_->getSparseGenerator()->createSPARS();
+        else
+        {
+          ompl::base::PlannerTerminationCondition ptc = ompl::base::plannerNonTerminatingCondition();
+          ROS_INFO_STREAM_NAMED(name_, "Constructing SPARS2 roadmap");
+          bool stopOnMaxFail = true;
+          sparse_two_->constructRoadmap(ptc, stopOnMaxFail);
+        }
 
         // Collect stats
-        total_edges += bolt_->getSparseGraph()->getNumEdges();
-        total_vertices += bolt_->getSparseGraph()->getNumRealVertices();
-        double avg_edges = total_edges / (trial_id + 1);
-        double avg_vertices = total_vertices / (trial_id + 1);
-        BOLT_DEBUG(indent + 2, true, "Average edges: " << avg_edges);
-        BOLT_DEBUG(indent + 2, true, "Average vertices: " << avg_vertices);
+        // total_edges += bolt_->getSparseGraph()->getNumEdges();
+        // total_vertices += bolt_->getSparseGraph()->getNumRealVertices();
+        // double avg_edges = total_edges / (trial_id + 1);
+        // double avg_vertices = total_vertices / (trial_id + 1);
+        // BOLT_DEBUG(indent + 2, true, "Average edges: " << avg_edges);
+        // BOLT_DEBUG(indent + 2, true, "Average vertices: " << avg_vertices);
 
         if (!ros::ok())
           break;
@@ -488,7 +500,10 @@ public:
         // Output log
       BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
       BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
-      bolt_->getSparseGenerator()->dumpLog();
+      if (planner_name_ == BOLT)
+        bolt_->getSparseGenerator()->dumpLog();
+      else
+        sparse_two_->dumpLog();
       BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
       BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
       waitForNextStep("copy data");
