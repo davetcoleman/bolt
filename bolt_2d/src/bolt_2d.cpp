@@ -53,7 +53,7 @@
 #include <bolt_core/Bolt.h>
 #include <ompl/geometric/SimpleSetup.h>
 #include <ompl/base/PlannerTerminationCondition.h>
-#include <ompl/geometric/planners/prm/SPARStwo.h>
+#include <spars2/SPARS2.h>
 #include <ompl/util/PPM.h> // For reading image files
 
 // Interface for loading rosparam settings into OMPL
@@ -207,7 +207,7 @@ public:
     if (planner_name_ == SPARS2)
     {
       std::cout << "spars2 2 " << std::endl;
-      sparse_two_ = og::SPARStwoPtr(new og::SPARStwo(si_));
+      sparse_two_ = og::SPARS2Ptr(new og::SPARS2(si_));
       simple_setup_->setPlanner(sparse_two_);
     }
 
@@ -281,25 +281,30 @@ public:
     using namespace rosparam_shortcuts;
     std::size_t error = 0;
 
-    ros::NodeHandle rpnh(nh_, "sparse_criteria");
-    double temp;
-    error += !get(name_, rpnh, "sparse_delta_fraction", temp);
-    sparse_two_->setSparseDeltaFraction(temp);
+    {
+      ros::NodeHandle rpnh(nh_, "sparse_criteria");
+      double temp;
+      error += !get(name_, rpnh, "sparse_delta_fraction", temp);
+      sparse_two_->setSparseDeltaFraction(temp);
 
-    error += !get(name_, rpnh, "dense_delta_fraction", temp);
-    sparse_two_->setDenseDeltaFraction(temp);
+      error += !get(name_, rpnh, "dense_delta_fraction", temp);
+      sparse_two_->setDenseDeltaFraction(temp);
+    }
 
     // error += !get(name_, rpnh2, "stretch_factor", temp);
-    sparse_two_->setStretchFactor(2.82843);  // manually copied from auto calculation for 2D world
+    OMPL_WARN("Manually setting stretch factor for SPARS2 - hard coded in! ");
+    sparse_two_->setStretchFactor(2.50633);  // manually copied from auto calculation for 2D world
 
-    ros::NodeHandle rpnh2(nh_, "sparse_generator");
-    std::size_t tempt, total_failures;
-    error += !get(name_, rpnh2, "terminate_after_failures", tempt);
-    total_failures = tempt;
-    error += !get(name_, rpnh2, "fourth_criteria_after_failures", tempt);
-    total_failures += tempt;
-    std::cout << "total_failures " << total_failures << std::endl;
-    sparse_two_->setMaxFailures(total_failures);
+    {
+      ros::NodeHandle rpnh(nh_, "sparse_generator");
+      std::size_t temp, total_failures;
+      error += !get(name_, rpnh, "terminate_after_failures", temp);
+      total_failures = temp;
+      error += !get(name_, rpnh, "fourth_criteria_after_failures", temp);
+      total_failures += temp;
+      std::cout << " Found total failures: " << total_failures << std::endl;
+      sparse_two_->setMaxFailures(total_failures);
+    }
 
     shutdownIfError(name_, error);
   }
@@ -434,7 +439,7 @@ public:
     BOLT_FUNC(indent, true, "createBoltSweepMaps()");
 
     std::vector<std::string> trial_maps;
-    //trial_maps.push_back("level1");
+    trial_maps.push_back("level1");
     trial_maps.push_back("level2");
     trial_maps.push_back("level3");
     trial_maps.push_back("level4");
@@ -509,7 +514,7 @@ public:
         sparse_two_->dumpLog();
       BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
       BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
-      //waitForNextStep("copy data");
+      waitForNextStep("copy data");
 
     } // for each map
   }
@@ -1389,7 +1394,7 @@ private:
   ot::ExperienceSetupPtr experience_setup_;
   og::SimpleSetupPtr simple_setup_;
   otb::BoltPtr bolt_;
-  og::SPARStwoPtr sparse_two_;
+  og::SPARS2Ptr sparse_two_;
 
   // Configuration space
   ob::StateSpacePtr space_;

@@ -63,6 +63,8 @@ void loadOMPLParameters(ros::NodeHandle nh, const std::string &name, ompl::tools
 
   ompl::tools::bolt::SparseGraphPtr sparseGraph = bolt->getSparseGraph();
   BOLT_ASSERT(sparseGraph, "Sparse graph is not initialized");
+  ompl::tools::bolt::SparseSmootherPtr sparseSmoother = sparseGraph->getSparseSmoother();
+  BOLT_ASSERT(sparseSmoother, "Sparse smoothing is not initialized");
   ompl::tools::bolt::TaskGraphPtr taskGraph = bolt->getTaskGraph();
   BOLT_ASSERT(taskGraph, "Task graph is not initialized");
   ompl::tools::bolt::SparseCriteriaPtr sparseCriteria = bolt->getSparseCriteria();
@@ -110,11 +112,17 @@ void loadOMPLParameters(ros::NodeHandle nh, const std::string &name, ompl::tools
     error += !get(name, rpnh, "visualize/database_coverage", sparseGraph->visualizeDatabaseCoverage_);
     error += !get(name, rpnh, "visualize/projection", sparseGraph->visualizeProjection_);
     error += !get(name, rpnh, "visualize/graph_after_loading", sparseGraph->visualizeGraphAfterLoading_);
-    error += !get(name, rpnh, "visualize/quality_path_smoothing", sparseGraph->visualizeQualityPathSmoothing_);
     error += !get(name, rpnh, "visualize/astar", sparseGraph->visualizeAstar_);
     error += !get(name, rpnh, "visualize/astar_speed", sparseGraph->visualizeAstarSpeed_);
     error += !get(name, rpnh, "visualize/voronoi_diagram", sparseGraph->visualizeVoronoiDiagram_);
     error += !get(name, rpnh, "visualize/voronoi_diagram_animated", sparseGraph->visualizeVoronoiDiagramAnimated_);
+    shutdownIfError(name, error);
+  }
+
+  // SparseSmoother
+  {
+    ros::NodeHandle rpnh(nh, "sparse_smoother");
+    error += !get(name, rpnh, "visualize/quality_path_smoothing", sparseSmoother->visualizeQualityPathSmoothing_);
     shutdownIfError(name, error);
   }
 

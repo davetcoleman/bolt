@@ -73,5 +73,5 @@
 /home/dave/ros/current/ws_swri/src/bolt/bolt_hilgendorf/config/config_hilgendorf.yaml
 /home/dave/ros/current/ws_swri/src/bolt/bolt_hilgendorf/include/curie_demos/path_loader.h
 
-/home/dave/ros/current/ws_swri/src/ompl/src/ompl/geometric/planners/prm/src/SPARStwo.cpp
-/home/dave/ros/current/ws_swri/src/ompl/src/ompl/geometric/planners/prm/SPARStwo.h
+/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/spars2/src/SPARS2.cpp
+/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/spars2/SPARS2.h

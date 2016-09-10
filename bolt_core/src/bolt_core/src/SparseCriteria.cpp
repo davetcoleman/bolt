@@ -850,13 +850,13 @@ bool SparseCriteria::addQualityPath(SparseVertex v, SparseVertex vp, SparseVerte
   // Create path and simplify
   if (!useImprovedSmoother_)
   {
-    if (!sg_->smoothQualityPathOriginal(path, indent + 4))
+    if (!sg_->getSparseSmoother()->smoothQualityPathOriginal(path, indent + 4))
       return false;
   }
   else
   {
     const bool debug = false;
-    if (!sg_->smoothQualityPath(path, sg_->getObstacleClearance(), debug, indent + 4))
+    if (!sg_->getSparseSmoother()->smoothQualityPath(path, sg_->getObstacleClearance(), debug, indent + 4))
       return false;
   }
 

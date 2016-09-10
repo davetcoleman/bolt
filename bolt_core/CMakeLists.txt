@@ -55,6 +55,8 @@ add_library(${PROJECT_NAME}
   src/bolt_core/src/VertexDiscretizer.cpp
   src/bolt_core/src/SamplingQueue.cpp
   src/bolt_core/src/CandidateQueue.cpp
+  src/bolt_core/src/SparseSmoother.cpp
+  src/spars2/src/SPARS2.cpp
 )
 
 # Specify libraries to link a library or executable target against

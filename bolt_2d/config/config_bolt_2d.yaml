@@ -98,11 +98,15 @@ sparse_graph:
     database_coverage: false # the grey squares around vertices representing sparse delta
     projection: false
     graph_after_loading: true
-    quality_path_smoothing: false # show smoothing simplification
     astar: false # show node expansions and openings
     astar_speed: 0.01 # how many seconds to wait between each visualization
     voronoi_diagram: false
     voronoi_diagram_animated: false
+
+# ====================================================
+sparse_smoother:
+  visualize:
+    quality_path_smoothing: false # show smoothing simplification
 
 # ====================================================
 vertex_discretizer:

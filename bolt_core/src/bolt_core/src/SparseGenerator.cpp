@@ -649,7 +649,7 @@ bool SparseGenerator::checkSparseGraphOptimality(std::size_t indent)
     // Smooth path to find the "optimal" path
     geometric::PathGeometric smoothedPath = geometricSolution;
     geometric::PathGeometric *smoothedPathPtr = &smoothedPath;
-    sg_->smoothMax(smoothedPathPtr, indent);
+    sg_->getSparseSmoother()->smoothMax(smoothedPathPtr, indent);
 
     // Show the two paths
     bool showEveryPath = false;

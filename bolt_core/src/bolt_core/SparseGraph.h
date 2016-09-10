@@ -38,17 +38,14 @@
    Future Improvements:
      - Consolidate vertex data into single struct so memory is closer together
      - Store state as non-pointer so memory is closer together
-     - Clear InterfaceData if an edge is added
-     - When an interface is found, optimize the accuracy by attempting to bring the two vertices (q,q') closer together
 */
 
 #ifndef OMPL_TOOLS_BOLT_SPARSE_GRAPH_
 #define OMPL_TOOLS_BOLT_SPARSE_GRAPH_
 
+// OMPL
 #include <ompl/base/StateSpace.h>
 #include <ompl/geometric/PathGeometric.h>
-#include <ompl/geometric/PathSimplifier.h>
-
 #include <ompl/base/SpaceInformation.h>
 #include <ompl/datastructures/NearestNeighbors.h>
 
@@ -58,6 +55,7 @@
 #include <bolt_core/Debug.h>
 #include <bolt_core/VertexDiscretizer.h>
 #include <bolt_core/SparseStorage.h>
+#include <bolt_core/SparseSmoother.h>
 
 // Boost
 #include <boost/function.hpp>
@@ -295,22 +293,6 @@ public:
   void errorCheckDuplicateStates(std::size_t indent);
 
   /* ---------------------------------------------------------------------------------
-   * Smoothing
-   * --------------------------------------------------------------------------------- */
-
-  /** \brief Path smoothing - original simple implementation */
-  bool smoothQualityPathOriginal(geometric::PathGeometric* path, std::size_t indent);
-
-  /**
-   * \brief Path smoothing - improved Dave version
-   * \return true on success, false if something failed
-   */
-  bool smoothQualityPath(geometric::PathGeometric* path, double clearance, bool debug, std::size_t indent);
-
-  /** \brief For finding the optimal path */
-  bool smoothMax(geometric::PathGeometric* path, std::size_t indent);
-
-  /* ---------------------------------------------------------------------------------
    * Disjoint Sets
    * --------------------------------------------------------------------------------- */
 
@@ -451,6 +433,12 @@ public:
     return superDebug_;
   }
 
+  /** \brief Get class for smoothing paths in ideal way for SPARS criteria */
+  SparseSmootherPtr getSparseSmoother()
+  {
+    return sparseSmoother_;
+  }
+
 protected:
   /** \brief Short name of this class */
   const std::string name_ = "SparseGraph";
@@ -466,6 +454,9 @@ protected:
 
   /** \brief For saving and loading to file */
   SparseStoragePtr sparseStorage_;
+
+  /** \brief Class for smoothing paths in ideal way for SPARS criteria */
+  SparseSmootherPtr sparseSmoother_;
 
   /** \brief Nearest neighbors data structure */
   std::shared_ptr<NearestNeighbors<SparseVertex> > nn_;
@@ -500,9 +491,6 @@ protected:
 
   /** \brief Data structure that maintains the connected components */
   SparseDisjointSetType disjointSets_;
-
-  /** \brief A path simplifier used to simplify dense paths added to S */
-  geometric::PathSimplifierPtr pathSimplifier_;
 
   /** \brief Track where to load/save datastructures */
   std::string filePath_;
@@ -545,14 +533,12 @@ public:  // user settings from other applications
 
   /** \brief Visualization speed of astar search, num of seconds to show each vertex */
   double visualizeAstarSpeed_ = 0.1;
-  bool visualizeQualityPathSmoothing_ = false;
 
   /** \brief Change verbosity levels */
   bool verbose_ = false;
   bool vVisualize_ = false;
   bool vAdd_ = false;  // message when adding edges and vertices
   bool vSearch_ = false;
-  bool vSmooth_ = false;
 
   /** \brief Run with extra safety checks */
   bool superDebug_ = false;
