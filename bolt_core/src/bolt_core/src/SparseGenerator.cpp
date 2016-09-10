@@ -569,7 +569,7 @@ bool SparseGenerator::checkSparseGraphOptimality(std::size_t indent)
   std::size_t numTests = 1000;
   std::size_t numFailedPlans = 0;
 
-  // Set the motion validator to use clearance, this way isValid() checks clearance before confirming valid
+  // Make sure motion validator is set to zero clearance
   base::DiscreteMotionValidator *dmv =
       dynamic_cast<base::DiscreteMotionValidator *>(si_->getMotionValidator().get());
   BOLT_ASSERT(dmv->getRequiredStateClearance() == 0, "Discrete motion validator should have clearance = 0");
@@ -649,7 +649,6 @@ bool SparseGenerator::checkSparseGraphOptimality(std::size_t indent)
     // Smooth path to find the "optimal" path
     geometric::PathGeometric smoothedPath = geometricSolution;
     geometric::PathGeometric *smoothedPathPtr = &smoothedPath;
-    geometric::PathSimplifier pathSimplifier(si_);
     sg_->smoothMax(smoothedPathPtr, indent);
 
     // Show the two paths
