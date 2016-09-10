@@ -138,7 +138,6 @@ void SparseGraph::freeMemory()
     // Clear interface data
     foreach (InterfaceData &iData, vertexInterfaceProperty_[v] | boost::adaptors::map_values)
     {
-      std::cout << "clearing iData for  " << v << std::endl;
       iData.clear(si_);
     }
 
@@ -856,7 +855,7 @@ SparseVertex SparseGraph::addVertexFromFile(base::State *state, const VertexType
 
 void SparseGraph::removeVertex(SparseVertex v, std::size_t indent)
 {
-  BOLT_FUNC(indent, verbose_ || true, "removeVertex = " << v);
+  BOLT_FUNC(indent, verbose_, "removeVertex = " << v);
 
   // Remove from nearest neighbor
   {
@@ -1205,7 +1204,7 @@ void SparseGraph::displayDatabase(bool showVertices, bool showEdges, std::size_t
 
 void SparseGraph::visualizeVertex(SparseVertex v, const VertexType &type)
 {
-  tools::VizColors color = vertexTypeToColor(type);
+  const VizColors color = vertexTypeToColor(type);
 
   // Show visibility region around vertex
   if (visualizeDatabaseCoverage_)
@@ -1213,7 +1212,7 @@ void SparseGraph::visualizeVertex(SparseVertex v, const VertexType &type)
                            sparseCriteria_->getSparseDelta());
 
   // Show vertex
-  visual_->viz1()->state(getState(v), vertexSize_, color, 0);
+  visual_->viz1()->state(getState(v), vertexSize_, std::move(color), 0);
 
   if (visualizeProjection_)  // For joint-space robots: project to 2D space
   {

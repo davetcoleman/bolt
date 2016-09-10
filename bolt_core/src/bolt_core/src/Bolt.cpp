@@ -72,7 +72,7 @@ void Bolt::initialize()
 
   recallEnabled_ = true;
   scratchEnabled_ = true;
-  filePath_ = "unloaded";
+  filePath_ = std::move("unloaded");
 
   // Load the sparse graph datastructure
   sparseGraph_.reset(new SparseGraph(si_, visual_));

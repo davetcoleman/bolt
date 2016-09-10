@@ -64,6 +64,7 @@
 /home/dave/ros/current/ws_swri/src/bolt/bolt_2d/README.md
 /home/dave/ros/current/ws_swri/src/bolt/bolt_2d/config/config_bolt_2d.yaml
 /home/dave/ros/current/ws_swri/src/bolt/bolt_2d/include/bolt_2d/two_dim_viz_window.h
+/home/dave/ros/current/ws_swri/src/bolt/bolt_2d/include/bolt_2d/validity_checker_2d.h
 
 /home/dave/ros/current/ws_swri/src/bolt/bolt_hilgendorf/src/curie_demos.cpp
 /home/dave/ros/current/ws_swri/src/bolt/bolt_hilgendorf/src/curie_demos_main.cpp

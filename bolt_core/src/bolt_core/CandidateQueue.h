@@ -116,7 +116,7 @@ private:
 
   std::queue<CandidateData> queue_;
 
-  std::size_t targetQueueSize_ = 10;
+  std::size_t targetQueueSize_ = 20;
 
   std::vector<boost::thread *> generatorThreads_;
 

@@ -82,14 +82,14 @@ enum PlannerName
 /**
  * \brief Experience Planning Class
  */
-class ExperienceDemos
+class Bolt2D
 {
 public:
 
   /**
    * \brief Constructor
    */
-  ExperienceDemos() : nh_("~"), remote_control_(nh_), psychedelic_mode_(true)
+  Bolt2D() : nh_("~"), remote_control_(nh_), psychedelic_mode_(true)
   {
     // Load rosparams
     ros::NodeHandle rpnh(nh_, name_);
@@ -152,7 +152,7 @@ public:
       srand(time(NULL));
 
     // Set remote_control
-    remote_control_.setDisplayWaitingState(boost::bind(&ExperienceDemos::displayWaitingState, this, _1));
+    remote_control_.setDisplayWaitingState(boost::bind(&Bolt2D::displayWaitingState, this, _1));
 
     // Load planning
     if (!loadOMPL())
@@ -162,13 +162,13 @@ public:
     }
 
     // Load subscriber from Rviz
-    clicked_point_sub_ = nh_.subscribe("/clicked_point", 1000, &ExperienceDemos::clickedCallback, this);
+    clicked_point_sub_ = nh_.subscribe("/clicked_point", 1000, &Bolt2D::clickedCallback, this);
 
     // Run application
     run();
   }
 
-  ~ExperienceDemos()
+  ~Bolt2D()
   {
     // Free start and goal states
     space_->freeState(ompl_start_);
@@ -270,8 +270,8 @@ public:
     visual->setVizWindow(7, viz6_);  // TODO: this is really hacky
 
     // Set other hooks
-    visual->setWaitForUserFeedback(boost::bind(&ExperienceDemos::waitForNextStep, this, _1));
-    visual->setVizVoronoiDiagram(boost::bind(&ExperienceDemos::voronoiDiagram, this));
+    visual->setWaitForUserFeedback(boost::bind(&Bolt2D::waitForNextStep, this, _1));
+    visual->setVizVoronoiDiagram(boost::bind(&Bolt2D::voronoiDiagram, this));
 
     return true;
   }
@@ -440,11 +440,11 @@ public:
     BOLT_FUNC(indent, true, "createBoltSweepMaps()");
 
     std::vector<std::string> trial_maps;
-    //trial_maps.push_back("level1");
-    //trial_maps.push_back("level2");
-    trial_maps.push_back("level3");
-    trial_maps.push_back("level4");
-    trial_maps.push_back("level5");
+    //trial_maps.push_back(std::move("level1"));
+    //trial_maps.push_back(std::move("level2"));
+    trial_maps.push_back(std::move("level3"));
+    trial_maps.push_back(std::move("level4"));
+    trial_maps.push_back(std::move("level5"));
 
     // Config
     const std::size_t TRIALS_PER_MAP = 10;
@@ -482,8 +482,8 @@ public:
         else
           viz1_->deleteAllMarkers(); // delete them, but do not trigger
 
-        if (trial_id > 0 || map_id > 0)
-          waitForNextStep("cleared data - memory should be low");
+        // if (trial_id > 0 || map_id > 0)
+        //   waitForNextStep("cleared data - memory should be low");
 
         // Load the map
         std::string image_path = package_path_ + "/resources/trial_set/";
@@ -530,13 +530,17 @@ public:
         // Output log
       BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
       BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
+      BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
+      BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
       if (planner_name_ == BOLT)
         bolt_->getSparseGenerator()->dumpLog();
       else
         sparse_two_->dumpLog();
       BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
       BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
-      waitForNextStep("copy data");
+      BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
+      BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
+      //waitForNextStep("copy data");
 
       if (!ros::ok())
         break;
@@ -1529,7 +1533,7 @@ int main(int argc, char **argv)
   spinner.start();
 
   // Create the demo
-  bolt_2d::ExperienceDemos demo;
+  bolt_2d::Bolt2D application;
 
   // Wait to let anything still being published finish
   ros::spinOnce();

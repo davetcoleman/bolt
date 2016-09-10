@@ -81,25 +81,25 @@ void TwoDimVizWindow::state(const ompl::base::State* state, ot::VizSizes size, o
   switch (size)
   {
     case ompl::tools::XXSMALL:
-      visuals_->publishSphere(point, visuals_->intToRvizColor(color), rvt::XXXSMALL);
+      visuals_->publishSphere(std::move(point), visuals_->intToRvizColor(color), rvt::XXXSMALL);
       break;
     case ompl::tools::XSMALL:
-      visuals_->publishSphere(point, visuals_->intToRvizColor(color), rvt::XXSMALL);
+      visuals_->publishSphere(std::move(point), visuals_->intToRvizColor(color), rvt::XXSMALL);
       break;
     case ompl::tools::SMALL:
-      visuals_->publishSphere(point, visuals_->intToRvizColor(color), rvt::XSMALL);
+      visuals_->publishSphere(std::move(point), visuals_->intToRvizColor(color), rvt::XSMALL);
       break;
     case ompl::tools::MEDIUM:
-      visuals_->publishSphere(point, visuals_->intToRvizColor(color), rvt::SMALL);
+      visuals_->publishSphere(std::move(point), visuals_->intToRvizColor(color), rvt::SMALL);
       break;
     case ompl::tools::LARGE:
-      visuals_->publishSphere(point, visuals_->intToRvizColor(color), rvt::MEDIUM);
+      visuals_->publishSphere(std::move(point), visuals_->intToRvizColor(color), rvt::MEDIUM);
       break;
     case ompl::tools::XLARGE:
-      visuals_->publishSphere(point, visuals_->intToRvizColor(color), rvt::LARGE);
+      visuals_->publishSphere(std::move(point), visuals_->intToRvizColor(color), rvt::LARGE);
       break;
     case ompl::tools::XXLARGE:
-      visuals_->publishSphere(point, visuals_->intToRvizColor(color), rvt::XLARGE);
+      visuals_->publishSphere(std::move(point), visuals_->intToRvizColor(color), rvt::XLARGE);
       break;
     case ompl::tools::VARIABLE_SIZE:
       // Visual tools has a scaling feature that will mess up the exact scaling we desire, so we out-smart it
@@ -164,7 +164,7 @@ void TwoDimVizWindow::states(std::vector<const ompl::base::State*> states, std::
   }
 
   // Publish - TwoDimVizWindow scales are one smaller than MoveItVizWindow
-  visuals_->publishSpheres(sphere_points, sphere_colors, visuals_->intToRvizScale(size - 1));
+  visuals_->publishSpheres(std::move(sphere_points), std::move(sphere_colors), visuals_->intToRvizScale(size - 1));
 }
 
 void TwoDimVizWindow::edge(const ompl::base::State* stateA, const ompl::base::State* stateB, ot::VizSizes size,

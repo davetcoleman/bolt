@@ -464,7 +464,7 @@ bool SparseGenerator::addSample(CandidateData &candidateD, std::size_t threadID,
         {
           if (!sparseCriteria_->getUseFourthCriteria())
           {
-            BOLT_WARN(indent, true, "Discretization progress: " << percentComplete << "%");
+            BOLT_WARN(indent, true, "Pre-quality progress: " << percentComplete << "%");
           }
           else
           {
@@ -631,8 +631,8 @@ bool SparseGenerator::checkSparseGraphOptimality(std::size_t indent)
       sg_->visualizeDatabaseCoverage_ = true;
       sg_->displayDatabase();
 
-      visual_->viz1()->spin();
-      exit(0);
+      // visual_->viz1()->spin();
+      // exit(0);
       numFailedPlans++;
       continue;
     }

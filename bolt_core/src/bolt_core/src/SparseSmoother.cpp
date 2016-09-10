@@ -195,7 +195,6 @@ bool SparseSmoother::smoothQualityPath(geometric::PathGeometric *path, double cl
   BOLT_ASSERT(si_->equalStates(path->getState(path->getStateCount() - 1), goalCopy), "Goal state is not the same");
   si_->freeState(startCopy);
   si_->freeState(goalCopy);
-  visual_->waitForUserFeedback("Freed test assert in SparseSmoother");
 #endif
 
   if (!repairResult.second)  // Repairing was not successful

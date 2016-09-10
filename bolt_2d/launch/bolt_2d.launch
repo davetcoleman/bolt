@@ -6,13 +6,18 @@
   <arg unless="$(arg debug)" name="launch_prefix" value="" />
   <arg     if="$(arg debug)" name="launch_prefix" value="gdb --ex run --args" />
 
+  <!-- Callgrind Arguments -->
+  <arg name="callgrind" default="false" />
+  <arg unless="$(arg callgrind)" name="launch_prefix2" value="" />
+  <arg     if="$(arg callgrind)" name="launch_prefix2" value="valgrind --tool=callgrind --collect-atstart=no" />
+
   <!-- Valgrind Arguments -->
   <arg name="valgrind" default="false" />
-  <arg unless="$(arg valgrind)" name="launch_prefix2" value="" />
-  <arg     if="$(arg valgrind)" name="launch_prefix2" value="valgrind --tool=callgrind --collect-atstart=no" />
+  <arg unless="$(arg valgrind)" name="launch_prefix3" value="" />
+  <arg     if="$(arg valgrind)" name="launch_prefix3" value="valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all" />
 
   <!-- Launch main node -->
-  <node name="bolt_2d" launch-prefix="$(arg launch_prefix) $(arg launch_prefix2)" pkg="bolt_2d" type="bolt_2d" respawn="false" output="screen">
+  <node name="bolt_2d" launch-prefix="$(arg launch_prefix) $(arg launch_prefix2) $(arg launch_prefix3)" pkg="bolt_2d" type="bolt_2d" respawn="false" output="screen">
 
     <!-- Robot-specific settings -->
     <rosparam file="$(find bolt_2d)/config/config_bolt_2d.yaml" command="load"/>

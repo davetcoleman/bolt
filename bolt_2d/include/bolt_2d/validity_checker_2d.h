@@ -136,13 +136,13 @@ public:
       negative, the value of clearance is the penetration depth.*/
   virtual double clearance(const ob::State *state) const
   {
-    double discretization = 0.25;  // std::min(1.0, si_->getStateValidityCheckingResolution() * 10);
+    static const double DISCRETIZATION = 0.25;  // std::min(1.0, si_->getStateValidityCheckingResolution() * 10);
 
     // Copy the state so that we have the correct 3rd dimension if it exists
     base::State *work_state = si_->cloneState(state);
 
     // Find the nearest invalid state
-    bool result = spiralSearchCollisionState(discretization, work_state);
+    bool result = spiralSearchCollisionState(DISCRETIZATION, work_state);
 
     if (visual_ && false)
     {
@@ -153,10 +153,14 @@ public:
     if (!result)
     {
       // No invalid state found within clearanceSearchDistance_
+      si_->freeState(work_state);
       return std::numeric_limits<double>::infinity();  // indicates collision is very far away
     }
 
-    return si_->distance(state, work_state);
+    const double dist = si_->distance(state, work_state);
+    si_->freeState(work_state);
+
+    return dist;
   }
 
   void setCheckingEnabled(bool collision_checking_enabled)
