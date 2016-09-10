@@ -104,6 +104,7 @@ public:
     error += !rosparam_shortcuts::get(name_, rpnh, "check_valid_vertices", check_valid_vertices_);
     error += !rosparam_shortcuts::get(name_, rpnh, "display_disjoint_sets", display_disjoint_sets_);
     error += !rosparam_shortcuts::get(name_, rpnh, "benchmark_performance", benchmark_performance_);
+    error += !rosparam_shortcuts::get(name_, rpnh, "sweep_spars_maps", sweep_spars_maps_);
 
     // run type
     error += !rosparam_shortcuts::get(name_, rpnh, "planning_runs", planning_runs_);
@@ -138,6 +139,14 @@ public:
     maps_.push_back("/resources/sparse.ppm");
     maps_.push_back("/resources/narrow.ppm");
 
+    // Get image path based on package name
+    package_path_ = ros::package::getPath("bolt_2d");
+    if (package_path_.empty())
+    {
+      ROS_ERROR("Unable to get OMPL Visual Tools package path ");
+      exit(-1);
+    }
+
     // Seed random
     if (seed_random_)
       srand(time(NULL));
@@ -164,41 +173,6 @@ public:
     // Free start and goal states
     space_->freeState(ompl_start_);
     space_->freeState(ompl_goal_);
-  }
-
-  void clickedCallback(const geometry_msgs::PointStamped::ConstPtr& msg)
-  {
-    //ROS_INFO_STREAM_NAMED(name_, "Clicked point:\n" << msg->point);
-    ROS_INFO_STREAM_NAMED(name_, "Clicked point");
-
-    ob::State* temp_state = space_->allocState();
-    ob::RealVectorStateSpace::StateType* real_state = static_cast<ob::RealVectorStateSpace::StateType*>(temp_state);
-    real_state->values[0] = msg->point.x;
-    real_state->values[1] = msg->point.y;
-    real_state->values[2] = msg->point.z;
-
-    // Show point
-    // experience_setup_->getVisual()->viz1()->state(temp_state, ompl::tools::MEDIUM, ompl::tools::BLUE, 0);
-    // experience_setup_->getVisual()->viz1()->trigger();
-    // usleep(0.001*1000000);
-
-    // Make SparseCriteria and SparseGraph verbose
-    bolt_->getSparseCriteria()->visualizeAttemptedStates_ = true;
-    bolt_->getSparseCriteria()->visualizeConnectivity_ = true;
-    bolt_->getSparseCriteria()->visualizeQualityCriteria_ = true;
-    bolt_->getSparseCriteria()->vCriteria_ = true;
-    bolt_->getSparseCriteria()->vQuality_ = true;
-    bolt_->getSparseCriteria()->vQualityMaxSpanner_ = true;
-    bolt_->getSparseCriteria()->vAddedReason_ = true;
-    bolt_->getSparseCriteria()->vRemoveClose_ = true;
-    bolt_->getSparseGraph()->visualizeSparseGraphSpeed_ = 0.0001;
-    bolt_->getSparseGraph()->visualizeSparseGraph_ = true;
-
-    // Add point to graph
-    const std::size_t threadID = 0;
-    bool usedState;
-    const std::size_t indent = 0;
-    bolt_->getSparseGenerator()->addSample(temp_state, threadID, usedState, indent);
   }
 
   bool loadOMPL()
@@ -254,7 +228,7 @@ public:
     loadVisualTools();
 
     // Load collision checker
-    loadCollisionChecker();
+    loadMapByID();
 
     // Run interface for loading rosparam settings into OMPL
     if (planner_name_ == BOLT)
@@ -364,6 +338,14 @@ public:
       loaded = loadData();
     }
 
+    // Sweet maps
+    if (sweep_spars_maps_)
+    {
+      createBoltSweepMaps(indent);
+      std::cout << "Done sweeping spars maps " << std::endl;
+      exit(0);
+    }
+
     // Create SPARS
     if (create_spars_ && (!loaded || continue_spars_))
     {
@@ -436,54 +418,82 @@ public:
     }
   }
 
-  /** \brief Create spars graph repeatidly */
+  /** \brief Create spars graph once */
   void createBolt()
   {
-    if (create_spars_)
-    {
-      // Ensure it is created at least once
-      if (create_spars_count_ == 0)
-        create_spars_count_ = 1;
+    // Ensure it is created at least once
+    BOLT_ASSERT(create_spars_count_ == 1, "Create spars count is not 1");
 
-      for (std::size_t i = 0; i < create_spars_count_; ++i)
+    // Create spars
+    bolt_->getSparseGenerator()->createSPARS();
+  }
+
+  /** \brief Create spars graph repeatidly */
+  void createBoltSweepMaps(std::size_t indent)
+  {
+    BOLT_FUNC(indent, true, "createBoltSweepMaps()");
+
+    std::vector<std::string> trial_maps;
+    trial_maps.push_back("level1");
+    trial_maps.push_back("level2");
+    trial_maps.push_back("level3");
+    trial_maps.push_back("level4");
+    trial_maps.push_back("level5");
+
+    // Config
+    const std::size_t TRIALS_PER_MAP = 10;
+
+    // For each map
+    for (std::size_t map_id = 0; map_id < trial_maps.size(); ++map_id)
+    {
+      // Begin statistics
+      double total_edges = 0;
+      double total_vertices = 0;
+
+      // For each trial
+      for (std::size_t trial_id = 0; trial_id < TRIALS_PER_MAP; ++trial_id)
       {
-        if (create_spars_count_ > 1)
-        {
-          std::cout << std::endl;
-          std::cout << "-------------------------------------------------------" << std::endl;
-          std::size_t indent = 0;
-          BOLT_DEBUG(indent, true, "Creating spars graph, run " << i+1 << " out of " << create_spars_count_);
-          //BOLT_WARN(indent, true, "Creating spars graph, run " << i+1 << " out of " << create_spars_count_);
-          std::cout << "-------------------------------------------------------" << std::endl;
-          std::cout << std::endl;
-        }
+        // Debug
+        BOLT_DEBUG(indent + 2, true, "----------------------------------------------------------------------------");
+        BOLT_DEBUG(indent + 2, true, "Creating spars graph, trial " << trial_id+1 << " out of " << TRIALS_PER_MAP << " for map " << map_id);
+        BOLT_DEBUG(indent + 2, true, "----------------------------------------------------------------------------");
 
         // Clear spars graph
-        if (i > 0)
-        {
-          bolt_->clear();
-          deleteAllMarkers(true);
-        }
+        viz_bg_->deleteAllMarkers();
+        viz_bg_->trigger();
+        bolt_->clear();
+        deleteAllMarkers(true);
 
-        // Increment up the list of possible images
-        if (true)
-        {
-          viz_bg_->deleteAllMarkers();
-          viz_bg_->trigger();
-          image_id_ = i % maps_.size();
-          std::cout << "image_id_: " << image_id_ << std::endl;
-          loadCollisionChecker();
-        }
+        // Load the map
+        std::string image_path = package_path_ + "/resources/trial_set/";
+        image_path.append(trial_maps[map_id] + ".ppm");
+        bolt_->getSparseGenerator()->setMapName(trial_maps[map_id]);
+        loadMapAndCollisionChecker(image_path);
 
         // Create spars
         bolt_->getSparseGenerator()->createSPARS();
 
+        // Collect stats
+        total_edges += bolt_->getSparseGraph()->getNumEdges();
+        total_vertices += bolt_->getSparseGraph()->getNumRealVertices();
+        double avg_edges = total_edges / (trial_id + 1);
+        double avg_vertices = total_vertices / (trial_id + 1);
+        BOLT_DEBUG(indent + 2, true, "Average edges: " << avg_edges);
+        BOLT_DEBUG(indent + 2, true, "Average vertices: " << avg_vertices);
+
         if (!ros::ok())
           break;
-      }
-    }
-    else
-      ROS_WARN_STREAM_NAMED(name_, "Creating sparse graph disabled, but no file loaded");
+      } // for each trial
+
+        // Output log
+      BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
+      BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
+      bolt_->getSparseGenerator()->dumpLog();
+      BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
+      BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
+      waitForNextStep("copy data");
+
+    } // for each map
   }
 
   /** \brief Plan repeatidly */
@@ -608,16 +618,10 @@ public:
   /**
    * \brief Load ppm image from file
    */
-  void loadCollisionChecker()
+  void loadMapByID()
   {
     // Get image path based on package name
-    std::string image_path = ros::package::getPath("bolt_2d");
-
-    if (image_path.empty())
-    {
-      ROS_ERROR("Unable to get OMPL Visual Tools package path ");
-      return;
-    }
+    std::string image_path = package_path_;
 
     if (image_id_ > maps_.size() - 1)
     {
@@ -626,6 +630,11 @@ public:
     }
     image_path.append(maps_[image_id_]);
 
+    loadMapAndCollisionChecker(image_path);
+  }
+
+  void loadMapAndCollisionChecker(const std::string& image_path)
+  {
     loadImage(image_path);
 
     // Set the bounds for the R^2
@@ -688,7 +697,7 @@ public:
       return;
     }
 
-    ROS_WARN_STREAM("Map Height: " << ppm_.getHeight() << " Map Width: " << ppm_.getWidth());
+    ROS_INFO_STREAM("Map Height: " << ppm_.getHeight() << " Map Width: " << ppm_.getWidth());
   };
 
   /**
@@ -1310,6 +1319,44 @@ public:
     viz_bg_->trigger();
   }
 
+  void clickedCallback(const geometry_msgs::PointStamped::ConstPtr& msg)
+  {
+    //ROS_INFO_STREAM_NAMED(name_, "Clicked point:\n" << msg->point);
+    ROS_INFO_STREAM_NAMED(name_, "Clicked point");
+
+    ob::State* temp_state = space_->allocState();
+    ob::RealVectorStateSpace::StateType* real_state = static_cast<ob::RealVectorStateSpace::StateType*>(temp_state);
+    real_state->values[0] = msg->point.x;
+    real_state->values[1] = msg->point.y;
+    real_state->values[2] = msg->point.z;
+
+    // Show point
+    if (false)
+    {
+      experience_setup_->getVisual()->viz1()->state(temp_state, ompl::tools::MEDIUM, ompl::tools::BLUE, 0);
+      experience_setup_->getVisual()->viz1()->trigger();
+      usleep(0.001*1000000);
+    }
+
+    // Make SparseCriteria and SparseGraph verbose
+    bolt_->getSparseCriteria()->visualizeAttemptedStates_ = true;
+    bolt_->getSparseCriteria()->visualizeConnectivity_ = true;
+    bolt_->getSparseCriteria()->visualizeQualityCriteria_ = true;
+    bolt_->getSparseCriteria()->vCriteria_ = true;
+    bolt_->getSparseCriteria()->vQuality_ = true;
+    bolt_->getSparseCriteria()->vQualityMaxSpanner_ = true;
+    bolt_->getSparseCriteria()->vAddedReason_ = true;
+    bolt_->getSparseCriteria()->vRemoveClose_ = true;
+    bolt_->getSparseGraph()->visualizeSparseGraphSpeed_ = 0.0001;
+    bolt_->getSparseGraph()->visualizeSparseGraph_ = true;
+
+    // Add point to graph
+    const std::size_t threadID = 0;
+    bool usedState;
+    const std::size_t indent = 0;
+    bolt_->getSparseGenerator()->addSample(temp_state, threadID, usedState, indent);
+  }
+
 private:
   // A shared node handle
   ros::NodeHandle nh_;
@@ -1357,6 +1404,7 @@ private:
   bool check_valid_vertices_;
   bool display_disjoint_sets_;
   bool benchmark_performance_;
+  bool sweep_spars_maps_;
 
   // Type of planner
   std::string experience_planner_;
@@ -1407,6 +1455,7 @@ private:
   // The RGB image data
   ompl::PPM ppm_;
   std::vector<std::string> maps_;
+  std::string package_path_;
 
   // Getting input from Rviz
   ros::Subscriber clicked_point_sub_;

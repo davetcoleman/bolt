@@ -83,6 +83,12 @@ public:
   void createSPARS();
 
   void copyPasteState(std::size_t numSets = 0);
+  void dumpLog();
+
+  void setMapName(std::string map_name)
+  {
+    map_name_ = map_name;
+  }
 
   void addDiscretizedStates(std::size_t indent);
 
@@ -179,6 +185,9 @@ protected:
   std::size_t numRandSamplesAdded_ = 0;
   time::point timeRandSamplesStarted_;  // calculate rate at which the graph is being built
   time::point timeDiscretizeAndRandomStarted_;
+
+  std::vector<std::string> stringLog_;
+  std::string map_name_; // meta data for the logging
 
 public:
   bool verbose_ = false;

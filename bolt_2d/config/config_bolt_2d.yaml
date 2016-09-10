@@ -12,6 +12,7 @@ bolt_2d:
   create_spars: true
   create_spars_count: 10 # create the spars graph multiple times
   continue_spars: false # even if a file has been saved, randomly sample for more coverage
+  sweep_spars_maps: true
 
   # environment info
   image_id: 0 # 0 - hard0, 4 - hard4, 5 - blank, 6 - smiley (sparse), 7 - narrow

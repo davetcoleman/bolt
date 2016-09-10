@@ -238,8 +238,10 @@ void SparseGenerator::copyPasteState(std::size_t numSets)
 {
   double duration = time::seconds(time::now() - timeDiscretizeAndRandomStarted_);
 
+  std::stringstream line;
   // clang-format off
-  std::cout << "=SPLIT(\"Bolt, "
+  line << "=SPLIT(\"Bolt, "
+            << map_name_ << ", "
             << sparseCriteria_->sparseDeltaFraction_ << ", "
             << sparseCriteria_->getSparseDelta() << ", "
             << sparseCriteria_->getDiscretization() << ", "
@@ -257,8 +259,26 @@ void SparseGenerator::copyPasteState(std::size_t numSets)
             << sg_->getNumRealVertices() << ", "
             << sg_->getNumEdges() << ", "
             << numSets << ", "
-            << duration << "\", \",\")" << std::endl;
+            << duration << "\", \",\")";
   // clang-format on
+
+  // Save log
+  stringLog_.push_back(line.str());
+
+  if (stringLog_.size() > 1000)
+    BOLT_WARN(0, true, "Copy Paste Log is getting big: " << stringLog_.size());
+
+  // Output to console
+  std::cout << stringLog_.back() << std::endl;
+}
+
+void SparseGenerator::dumpLog()
+{
+  // Dump to console
+  for (auto line : stringLog_)
+    std::cout << line << std::endl;
+
+  stringLog_.clear();
 }
 
 void SparseGenerator::addDiscretizedStates(std::size_t indent)
@@ -675,6 +695,7 @@ bool SparseGenerator::checkSparseGraphOptimality(std::size_t indent)
       sg_->visualizeDatabaseCoverage_ = true;
       sg_->displayDatabase();
 
+      visual_->viz1()->spin();
       exit(0);
       return false;
     }

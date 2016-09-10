@@ -393,17 +393,27 @@ bool SparseCriteria::checkAddInterface(CandidateData &candidateD, std::size_t in
   // two closest visible neighbots
   if (candidateD.visibleNeighborhood_.size() < 2)
   {
-    BOLT_DEBUG(indent, vCriteria_, "NOT adding node for interface (less than 2 visible neighbors)");
+    BOLT_DEBUG(indent, vCriteria_, "NOT adding node (less than 2 visible neighbors)");
     return false;
   }
 
   const SparseVertex &v1 = candidateD.visibleNeighborhood_[0];
   const SparseVertex &v2 = candidateD.visibleNeighborhood_[1];
 
-  // Ensure the two closest nodes are also visible
-  if (!(candidateD.graphNeighborhood_[0] == v1 && candidateD.graphNeighborhood_[1] == v2))
+  // SKIP: Ensure the two closest nodes are also visible
+  if (false && !(candidateD.graphNeighborhood_[0] == v1 && candidateD.graphNeighborhood_[1] == v2))
   {
-    BOLT_DEBUG(indent, vCriteria_, "NOT adding node for interface");
+    BOLT_DEBUG(indent, vCriteria_, "NOT adding because two closest nodes are not visible to each other");
+
+    // TEMP
+    if (vCriteria_)
+    {
+      visual_->viz1()->edge(sg_->getState(candidateD.graphNeighborhood_[0]), candidateD.state_, tools::SMALL, tools::BLUE);
+      visual_->viz1()->edge(sg_->getState(candidateD.graphNeighborhood_[1]), candidateD.state_, tools::SMALL, tools::BLUE);
+      visual_->viz1()->trigger();
+      usleep(0.001*1000000);
+    }
+
     return false;
   }
 
@@ -414,6 +424,7 @@ bool SparseCriteria::checkAddInterface(CandidateData &candidateD, std::size_t in
     return false;
   }
 
+  // Don't add an interface edge if dist between the two verticies on graph are already the minimum in L1 space
   if (!checkPathLength(v1, v2, indent))
     return false;
 
@@ -469,7 +480,8 @@ bool SparseCriteria::checkAddInterface(CandidateData &candidateD, std::size_t in
 
 bool SparseCriteria::checkPathLength(SparseVertex v1, SparseVertex v2, std::size_t indent)
 {
-  const double SMALL_EPSILON = 0.0001;
+  static const double SMALL_EPSILON = 0.0001;
+
   double pathLength = 0;
   if (sg_->astarSearchLength(v1, v2, pathLength, indent))
   {
