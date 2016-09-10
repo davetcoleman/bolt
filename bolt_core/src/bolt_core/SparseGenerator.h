@@ -41,7 +41,6 @@
 
 // OMPL
 #include <bolt_core/SparseGraph.h>
-#include <bolt_core/SamplingQueue.h>
 #include <bolt_core/CandidateQueue.h>
 
 namespace ompl
@@ -101,7 +100,7 @@ public:
    * \param stateID representing a pre-populate state
    * \return true if sparse graph is still accepting states, false if the sparse graph has completed
    */
-  bool addSample(ob::State* state, std::size_t threadID, bool &usedState, std::size_t indent);
+  bool addSample(base::State* state, std::size_t threadID, bool &usedState, std::size_t indent);
   bool addSample(CandidateData &candidateD, std::size_t threadID, bool &usedState, std::size_t indent);
 
   /**
@@ -141,11 +140,6 @@ public:
     return numRandSamplesAdded_;
   }
 
-  SamplingQueuePtr getSamplingQueue()
-  {
-    return samplingQueue_;
-  }
-
   CandidateQueuePtr getCandidateQueue()
   {
     return candidateQueue_;
@@ -168,9 +162,6 @@ protected:
 
   /** \brief Sampler user for generating valid samples in the state space */
   ClearanceSamplerPtr clearanceSampler_;
-
-  /** \brief Secondary thread for sampling and garbage collection */
-  SamplingQueuePtr samplingQueue_;
 
   /** \brief Multiple threads for finding nearest neighbors from samples */
   CandidateQueuePtr candidateQueue_;

@@ -77,8 +77,8 @@ void loadOMPLParameters(ros::NodeHandle nh, const std::string &name, ompl::tools
   BOLT_ASSERT(vertexDiscret, "vertexDiscret is not initialized");
   ompl::tools::bolt::CandidateQueuePtr candidateQueue = sparseGenerator->getCandidateQueue();
   BOLT_ASSERT(candidateQueue, "candidateQueue is not initialized");
-  ompl::tools::bolt::SamplingQueuePtr samplingQueue = sparseGenerator->getSamplingQueue();
-  BOLT_ASSERT(samplingQueue, "samplingQueue is not initialized");
+  // ompl::tools::bolt::SamplingQueuePtr samplingQueue = sparseGenerator->getSamplingQueue();
+  // BOLT_ASSERT(samplingQueue, "samplingQueue is not initialized");
 
   // Bolt
   {

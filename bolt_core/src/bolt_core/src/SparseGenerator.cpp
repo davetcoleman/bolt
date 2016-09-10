@@ -71,8 +71,7 @@ SparseGenerator::SparseGenerator(SparseGraphPtr sg)
 
   // Initialize threading tools
   // Speed up random sampling with these threads
-  samplingQueue_.reset(new SamplingQueue(sg_));
-  candidateQueue_.reset(new CandidateQueue(sg_, samplingQueue_, this));
+  candidateQueue_.reset(new CandidateQueue(sg_, this));
 }
 
 SparseGenerator::~SparseGenerator(void)
@@ -87,7 +86,6 @@ void SparseGenerator::clear()
   maxConsecutiveFailures_ = 0;
   maxPercentComplete_ = 0;
 
-  samplingQueue_->clear(0 /* indent */);
   candidateQueue_->clear();
 }
 
@@ -359,8 +357,6 @@ bool SparseGenerator::addRandomSamplesThreaded(std::size_t indent)
   maxConsecutiveFailures_ = 0;
   maxPercentComplete_ = 0;
 
-  samplingQueue_->startSampling(indent);
-
   candidateQueue_->startGenerating(indent);
 
   const std::size_t threadID = 0;
@@ -379,7 +375,6 @@ bool SparseGenerator::addRandomSamplesThreaded(std::size_t indent)
 
     if (!result)
     {
-      samplingQueue_->stopSampling(indent);
       candidateQueue_->stopGenerating(indent);
       return true;  // no more states needed
     }

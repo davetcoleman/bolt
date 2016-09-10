@@ -29,8 +29,8 @@ bolt_2d:
 
   # solver type
   use_experience: true
-  #experience_planner: bolt
-  experience_planner: spars2
+  experience_planner: bolt
+  #experience_planner: spars2
 
   # debugging
   verbose:

@@ -42,7 +42,13 @@
 // OMPL
 #include <ompl/base/SpaceInformation.h>
 #include <bolt_core/BoostGraphHeaders.h>
-#include <bolt_core/SamplingQueue.h>
+
+// BOLT
+#include <bolt_core/SparseGraph.h>
+
+// Boost
+#include <boost/thread/shared_mutex.hpp>
+#include <boost/thread.hpp>
 
 // C++
 #include <queue>
@@ -63,7 +69,7 @@ class CandidateQueue
 {
 public:
   /** \brief Constructor */
-  CandidateQueue(SparseGraphPtr sg, SamplingQueuePtr samplingQueue, SparseGenerator* sparseGenerator);
+  CandidateQueue(SparseGraphPtr sg, SparseGenerator* sparseGenerator);
 
   ~CandidateQueue();
 
@@ -73,9 +79,6 @@ public:
   void startGenerating(std::size_t indent);
 
   void stopGenerating(std::size_t indent);
-
-  /** \brief If SamplingQueue is full just make state in this thread. This is useful at beginning of graph generation */
-  void getNextState(base::State *&candidateState, ClearanceSamplerPtr clearanceSampler, std::size_t indent);
 
   /** \brief This function is called from the parent thread */
   CandidateData &getNextCandidate(std::size_t indent);
@@ -94,13 +97,16 @@ private:
 
   /** \brief Do not add more states if queue is full */
   void waitForQueueNotFull(std::size_t indent);
+  void waitForQueueNotEmpty(std::size_t indent);
 
   bool findGraphNeighbors(CandidateData &candidateD, std::size_t threadID, std::size_t indent);
+
+  /** \brief Short name of this class */
+  const std::string name_ = "CandidateQueue";
 
   SparseGraphPtr sg_;
   SparseCriteriaPtr sparseCriteria_;
   SparseGenerator* sparseGenerator_;
-  SamplingQueuePtr samplingQueue_;
 
   /** \brief The created space information */
   base::SpaceInformationPtr si_;
@@ -114,7 +120,7 @@ private:
 
   std::vector<boost::thread *> generatorThreads_;
 
-  /** \brief Mutex for  */
+  /** \brief Mutex for adding to the queue */
   boost::shared_mutex candidateQueueMutex_;
 
   /** \brief Flag indicating generator is active */

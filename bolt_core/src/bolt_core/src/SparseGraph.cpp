@@ -37,12 +37,14 @@
 */
 
 // OMPL
-#include <bolt_core/SparseGraph.h>
-#include <bolt_core/SparseCriteria.h>
 #include <ompl/util/Console.h>
 #include <ompl/datastructures/NearestNeighborsGNAT.h>
 #include <ompl/datastructures/NearestNeighborsGNATNoThreadSafety.h>
 #include <ompl/base/DiscreteMotionValidator.h>
+
+// Bolt
+#include <bolt_core/SparseGraph.h>
+#include <bolt_core/SparseCriteria.h>
 
 // Boost
 #include <boost/graph/incremental_components.hpp>

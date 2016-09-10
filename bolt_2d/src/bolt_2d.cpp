@@ -440,8 +440,8 @@ public:
     BOLT_FUNC(indent, true, "createBoltSweepMaps()");
 
     std::vector<std::string> trial_maps;
-    trial_maps.push_back("level1");
-    trial_maps.push_back("level2");
+    //trial_maps.push_back("level1");
+    //trial_maps.push_back("level2");
     trial_maps.push_back("level3");
     trial_maps.push_back("level4");
     trial_maps.push_back("level5");
@@ -534,6 +534,9 @@ public:
       BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
       BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
       waitForNextStep("copy data");
+
+      if (!ros::ok())
+        break;
 
     } // for each map
   }
