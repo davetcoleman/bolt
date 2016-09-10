@@ -894,8 +894,6 @@ ompl::geometric::SPARS2::Vertex ompl::geometric::SPARS2::addGuard(base::State *s
 {
     // Visualize vertex
     visual_->viz1()->state(state, tools::LARGE, tools::BLACK, 0);
-    visual_->viz1()->trigger();
-    usleep(0.000001*1000000);
 
     //std::lock_guard<std::mutex> _(graphMutex_);
 
@@ -923,8 +921,6 @@ void ompl::geometric::SPARS2::connectGuards(Vertex v, Vertex vp)
 
     // Visualize edge
     visual_->viz1()->edge(stateProperty_[v], stateProperty_[vp], tools::MEDIUM, tools::ORANGE);
-    visual_->viz1()->trigger();
-    usleep(0.000001*1000000);
 
     //std::lock_guard<std::mutex> _(graphMutex_);
     boost::add_edge(v, vp, properties, g_);

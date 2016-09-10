@@ -293,7 +293,8 @@ public:
 
     // error += !get(name_, rpnh2, "stretch_factor", temp);
     OMPL_WARN("Manually setting stretch factor for SPARS2 - hard coded in! ");
-    sparse_two_->setStretchFactor(2.50633);  // manually copied from auto calculation for 2D world
+    //sparse_two_->setStretchFactor(2.50633);  // manually copied from auto calculation for 2D world
+    sparse_two_->setStretchFactor(4.31387);  // manually copied from auto calculation for 3D world
 
     {
       ros::NodeHandle rpnh(nh_, "sparse_generator");
@@ -447,6 +448,15 @@ public:
 
     // Config
     const std::size_t TRIALS_PER_MAP = 10;
+    bool showGrownLive = false;
+    if (planner_name_ == BOLT)
+    {
+      if (bolt_->getSparseGraph()->visualizeSparseGraph_ &&
+          bolt_->getSparseGraph()->visualizeSparseGraphSpeed_ > std::numeric_limits<double>::epsilon())
+      {
+        showGrownLive = true; // visualization will occur as it grows
+      }
+    }
 
     // For each map
     for (std::size_t map_id = 0; map_id < trial_maps.size(); ++map_id)
@@ -467,7 +477,10 @@ public:
         viz_bg_->deleteAllMarkers();
         viz_bg_->trigger();
         simple_setup_->clear();
-        deleteAllMarkers(true);
+        if (showGrownLive)
+          deleteAllMarkers(true); // trigger now
+        else
+          viz1_->deleteAllMarkers(); // delete them, but do not trigger
 
         // Load the map
         std::string image_path = package_path_ + "/resources/trial_set/";
@@ -488,6 +501,12 @@ public:
           ROS_INFO_STREAM_NAMED(name_, "Constructing SPARS2 roadmap");
           bool stopOnMaxFail = true;
           sparse_two_->constructRoadmap(ptc, stopOnMaxFail);
+
+          if (!showGrownLive)
+          {
+            viz1_->trigger();
+            usleep(0.1*1000000);
+          }
 
           if (!sparse_two_->checkSparseGraphOptimality())
             OMPL_ERROR("SPARS2 failed optimality check");

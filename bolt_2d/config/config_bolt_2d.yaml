@@ -16,7 +16,7 @@ bolt_2d:
 
   # environment info
   image_id: 0 # 0 - hard0, 4 - hard4, 5 - blank, 6 - smiley (sparse), 7 - narrow
-  dimensions: 2 # can be 2 or 3
+  dimensions: 3 # can be 2 or 3
   collision_checking_enabled: true
 
   # solve planning problems
@@ -92,7 +92,7 @@ sparse_graph:
     search: false
   visualize:
     spars_graph: true
-    spars_graph_speed: 0.00001 # if 0, does not animate but only single image draw
+    spars_graph_speed: 0 #0.00001 # if 0, does not animate but only single image draw
     database_vertices: true
     database_edges: true
     database_coverage: false # the grey squares around vertices representing sparse delta
