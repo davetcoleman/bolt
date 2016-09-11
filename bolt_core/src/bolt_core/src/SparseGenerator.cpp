@@ -798,7 +798,7 @@ void SparseGenerator::stopCandidateQueueAndSave(std::size_t indent)
 {
   BOLT_FUNC(indent, true, "stopCandidateQueueAndSave()");
 
-  if (sg_->hasUnsavedChanges())
+  if (sg_->getSavingEnabled() && sg_->hasUnsavedChanges())
   {
     // Stop and reset the candidate queue because it uses the nearest neighbors and will have bad vertices stored
     candidateQueue_->stopGenerating(indent);

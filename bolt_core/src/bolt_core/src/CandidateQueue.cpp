@@ -73,7 +73,8 @@ void CandidateQueue::clear()
   totalTime_ = 0;
   totalCandidates_ = 0;
 
-  // TODO: is it possible the front item in the queue is being used elsewhere and setCandidateUsed() was not called yet?
+  // TODO: is it possible the front item in the queue is being used elsewhere and setCandidateUsed()
+  // was not called yet?
   while (!queue_.empty())
   {
     si_->freeState(queue_.front().state_);
@@ -150,18 +151,30 @@ void CandidateQueue::stopGenerating(std::size_t indent)
 
   BOLT_DEBUG(indent, true, "CandidateQueue.stopGenerating() joined");
 
-  // Clear all data
+  // Clear the first state in the queue without freeing the memory
+  // TODO: this is a memory leak, but sometimes it segfaults because perhaps that state was already
+  // freed somewhere in the main thread (SparseCritera) and it was never reflected back here
+  if (!queue_.empty())
+  {
+    // skip freeing
+    queue_.pop();
+  }
+
+  // Clear remaining data
   while (!queue_.empty())
   {
-    // TODO: this is a memory leak, but sometimes it segfaults
-    // Do not free the state of the last item on the queue, because it is used somewhere else (?)
-    if (queue_.size() > 1 && queue_.front().state_ != nullptr)
+    std::cout << "Queue num " << queue_.size() << ": queue_.front().state_: " << queue_.front().state_;
+
+    if (queue_.front().state_ == nullptr)
     {
-      std::cout << queue_.size() << ": queue_.front().state_: " << queue_.front().state_ << std::endl;
-
+      std::cout << std::endl;
+      BOLT_WARN(indent, true, "Found state in queue that is null!");
+    }
+    else
+    {
+      // Do not free the state of the last item on the queue, because it is used somewhere else (?)
       si_->getStateSpace()->freeState(queue_.front().state_);
-
-      std::cout << "freed " << std::endl;
+      std::cout << "... freed " << std::endl;
     }
 
     queue_.pop();
@@ -190,14 +203,16 @@ void CandidateQueue::generatingThread(std::size_t threadID, base::SpaceInformati
 
     // Sample randomly
     if (!clearanceSampler->sample(candidateState))
-    {
       throw Exception(name_, "Unable to find valid sample");
-    }
 
     BOLT_DEBUG(indent + 2, vThread_, "New candidateState: " << candidateState << " on thread " << threadID);
 
     if (!threadsRunning_)  // Check for thread ending
-      break;
+    {
+      BOLT_DEBUG(indent + 2, vThread_ || true, "Thread ended, freeing memory");
+      si_->freeState(candidateState);
+      return;
+    }
 
     // Find nearby nodes
     CandidateData candidateD(candidateState);
@@ -218,7 +233,6 @@ void CandidateQueue::generatingThread(std::size_t threadID, base::SpaceInformati
     // double average = totalTime_ / totalCandidates_;
     // BOLT_MAGENTA(0, true,  time << " CandidateQueue, average: " << average << " queue: " << queue_.size()); //
     // Benchmark
-
 
     // Ensure this candidate is still valid
     if (candidateD.graphVersion_ != sparseGenerator_->getNumRandSamplesAdded())

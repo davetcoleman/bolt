@@ -45,6 +45,7 @@
 
 /home/dave/ros/current/ws_swri/src/ompl/src/ompl/tools/debug/Visualizer.h
 /home/dave/ros/current/ws_swri/src/ompl/src/ompl/geometric/PathGeometric.h
+/home/dave/ros/current/ws_swri/src/ompl/src/ompl/geometric/PathSimplifier.h
 /home/dave/ros/current/ws_swri/src/ompl/src/ompl/geometric/SimpleSetup.h
 /home/dave/ros/current/ws_swri/src/ompl/src/ompl/base/Planner.h
 /home/dave/ros/current/ws_swri/src/ompl/src/ompl/base/SpaceInformation.h

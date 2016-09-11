@@ -439,6 +439,11 @@ public:
     return sparseSmoother_;
   }
 
+  bool getSavingEnabled()
+  {
+    return savingEnabled_;
+  }
+
 protected:
   /** \brief Short name of this class */
   const std::string name_ = "SparseGraph";

@@ -253,6 +253,7 @@ bool SparseGraph::save(std::size_t indent)
   // Disabled
   if (!savingEnabled_)
   {
+    OMPL_INFORM("Saving is disabled");
     return false;
   }
 

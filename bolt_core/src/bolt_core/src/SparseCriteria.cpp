@@ -699,7 +699,7 @@ bool SparseCriteria::checkAddPath(SparseVertex v, std::size_t indent)
       // Check if by chance vpp was removed during addQualityPath() due to other optimization
       if (sg_->stateDeleted(vpp))
       {
-        BOLT_INFO(indent, vQuality_ || true, "State vpp=" << vpp << " was deleted, skipping quality checks");
+        BOLT_INFO(indent, vQuality_, "State vpp=" << vpp << " was deleted, skipping quality checks");
         return spannerPropertyWasViolated;
       }
 
