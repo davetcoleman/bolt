@@ -244,7 +244,7 @@ bool ompl::geometric::SPARS2::reachedTerminationCriterion() const
 
 void ompl::geometric::SPARS2::copyPasteState(std::size_t numSets)
 {
-    double duration = time::seconds(time::now() - timeDiscretizeAndRandomStarted_);
+    lastGraphGenerationTime_ = time::seconds(time::now() - timeDiscretizeAndRandomStarted_);
     std::stringstream line;
 
     // clang-format off
@@ -267,7 +267,7 @@ void ompl::geometric::SPARS2::copyPasteState(std::size_t numSets)
          << milestoneCount() << ", "
          << getNumEdges() << ", "
          << 0 << ", "
-         << duration << "\", \",\")";
+         << lastGraphGenerationTime_ << "\", \",\")";
     // clang-format on
 
     // Save log

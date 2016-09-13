@@ -38,6 +38,7 @@
 
 // OMPL
 #include <bolt_core/SparseCriteria.h>
+#include <bolt_core/SparseFormula.h>
 
 // Boost
 #include <boost/foreach.hpp>
@@ -82,90 +83,19 @@ SparseCriteria::~SparseCriteria(void)
 
 bool SparseCriteria::setup(std::size_t indent)
 {
-  // Dimensions / joints
-  std::size_t dim = si_->getStateDimension();
+  SparseFormula formulas;
+  formulas.calc(si_, stretchFactor_, sparseDeltaFraction_, penetrationOverlapFraction_, nearSamplePointsMultiple_,
+                useL2Norm_);
+  // Copy values back
+  maxExtent_ = formulas.maxExtent_;
+  sparseDelta_ = formulas.sparseDelta_;
+  denseDelta_ = formulas.denseDelta_;
+  discretizePenetrationDist_ = formulas.discretizePenetrationDist_;
+  nearSamplePoints_ = formulas.nearSamplePoints_;
+  discretization_ = formulas.discretization_;
+  stretchFactor_ = formulas.stretchFactor_;
 
-  // Max distance across configuration space
-  maxExtent_ = si_->getMaximumExtent();
-
-  // Vertex visibility region size
-  sparseDelta_ = sparseDeltaFraction_ * maxExtent_;
-
-  // Sampling for interfaces visibility size
-  // denseDelta_ = denseDeltaFraction_;
-  denseDelta_ = sparseDeltaFraction_ * 0.1 * maxExtent_;
-
-  // How much overlap should the discretization factor provide for ensuring edge connection
-  // TODO: test simply making this machine epsilon. will that affect creating edges?
-  discretizePenetrationDist_ = penetrationOverlapFraction_ * sparseDelta_;
-
-  // Number of points to test for interfaces around a sample for the quality criterion
-  nearSamplePoints_ = nearSamplePointsMultiple_ * si_->getStateDimension();
-
-  // Discretization for initial input into sparse graph
-  if (useL2Norm_)  // this is for the 2D world
-  {
-    BOLT_WARN(indent, true, "Using L2 Norm for discretization");
-
-    // const double discFactor = 2 * sparseDelta_;
-    // discretization_ = sqrt(std::pow(discFactor, 2) / dim) -
-    // discretizePenetrationDist_;
-    discretization_ = sparseDelta_ - discretizePenetrationDist_;
-  }
-  else  // this is for joint space
-  {
-    BOLT_DEBUG(indent, true, "Using L1 Norm for discretization");
-    // L1 Norm
-    discretization_ = 2 * sparseDelta_ / dim - discretizePenetrationDist_;
-  }
-
-  // Calculate optimum stretch factor
-  bool autoStretchFactor = stretchFactor_ < std::numeric_limits<double>::epsilon();
-  if (autoStretchFactor)  // if stretchFactor is zero, auto set it
-  {
-    BOLT_DEBUG(indent, 1, "Auto settings stretch factor because input value was 0");
-
-    // 2D case without estimated interface amount - old
-
-    // N-D case - old
-    // stretchFactor_ = discretization_ / (discretization_ - 2.0 * denseDelta_);
-    // // N-D case
-
-    // 2D: New version July 30th
-    // stretchFactor_ = 2.0*discretization_/(discretization_ - 2*denseDelta_);
-
-    // 3D: New version July 30th
-    // stretchFactor_ = 3 * discretization_ / (discretization_ - 2 *
-    // denseDelta_);
-
-    // ND: August 4th
-    std::cout << "dim: " << dim << std::endl;
-    stretchFactor_ = dim * discretization_ / (discretization_ - 2 * denseDelta_);
-  }
-
-  // Estimate size of graph
-  ob::RealVectorBounds bounds = si_->getStateSpace()->getBounds();
-  const std::size_t jointID = 0;
-  const double range = bounds.high[jointID] - bounds.low[jointID];
-  const std::size_t jointIncrements = floor(range / discretization_);
-  const std::size_t maxStatesCount = pow(jointIncrements, dim);
-  BOLT_INFO(indent, 1, "--------------------------------------------------");
-  BOLT_INFO(indent, 1, "SparseCriteria Setup:");
-  BOLT_INFO(indent + 2, 1, "Dimensions              = " << dim);
-  BOLT_INFO(indent + 2, 1, "Max Extent              = " << maxExtent_);
-  BOLT_INFO(indent + 2, 1, "Sparse Delta            = " << sparseDelta_);
-  BOLT_INFO(indent + 2, 1, "Sparse Delta Fraction   = " << sparseDeltaFraction_);
-  BOLT_INFO(indent + 2, 1, "Dense Delta             = " << denseDelta_);
-  BOLT_INFO(indent + 2, 1, "State Dimension         = " << dim);
-  BOLT_INFO(indent + 2, 1, "Discretization          = " << discretization_);
-  BOLT_INFO(indent + 2, 1, "Joint Increments        = " << jointIncrements);
-  BOLT_INFO(indent + 2, 1, "Max States Count        = " << maxStatesCount);
-  BOLT_INFO(indent + 2, 1, "Near Sample Points      = " << nearSamplePoints_);
-  BOLT_INFO(indent + 2, 1, "Pentrat. Overlap Frac   = " << penetrationOverlapFraction_);
-  BOLT_INFO(indent + 2, 1, "Discret Penetration     = " << discretizePenetrationDist_);
-  BOLT_INFO(indent + 2, 1, "Stretch Factor          = " << stretchFactor_);
-  BOLT_INFO(indent, 1, "--------------------------------------------------");
-
+  // Check
   assert(maxExtent_ > 0);
   assert(denseDelta_ > 0);
   assert(nearSamplePoints_ > 0);

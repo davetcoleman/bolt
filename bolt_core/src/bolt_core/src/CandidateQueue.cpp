@@ -108,11 +108,7 @@ void CandidateQueue::startGenerating(std::size_t indent)
   }
   if (totalResets_ > 0)
   {
-    std::cout << "-------------------------------------------------------" << std::endl;
-    std::cout << "-------------------------------------------------------" << std::endl;
-    std::cout << "AVERAGE CandidateQueue MISSES: " << totalMissesOverAllResets_ / totalResets_ << std::endl;
-    std::cout << "-------------------------------------------------------" << std::endl;
-    std::cout << "-------------------------------------------------------" << std::endl;
+    BOLT_INFO(indent, true, "Average CandidateQueue misses: " << totalMissesOverAllResets_ / totalResets_);
   }
 
   // Stats

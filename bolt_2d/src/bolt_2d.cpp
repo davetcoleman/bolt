@@ -55,6 +55,7 @@
 #include <ompl/base/PlannerTerminationCondition.h>
 #include <spars2/SPARS2.h>
 #include <ompl/util/PPM.h> // For reading image files
+#include <bolt_core/SparseFormula.h>
 
 // Interface for loading rosparam settings into OMPL
 #include <moveit_ompl/ompl_rosparam.h>
@@ -281,21 +282,30 @@ public:
     using namespace rosparam_shortcuts;
     std::size_t error = 0;
 
+    double sparseDeltaFraction_;
+    double denseDeltaFraction_;
+    double nearSamplePointsMultiple_;
+    double stretchFactor_;
+    double penetrationOverlapFraction_;
+    bool useL2Norm_;
     {
       ros::NodeHandle rpnh(nh_, "sparse_criteria");
-      double temp;
-      error += !get(name_, rpnh, "sparse_delta_fraction", temp);
-      sparse_two_->setSparseDeltaFraction(temp);
-
-      error += !get(name_, rpnh, "dense_delta_fraction", temp);
-      sparse_two_->setDenseDeltaFraction(temp);
+      error += !get(name_, rpnh, "sparse_delta_fraction", sparseDeltaFraction_);
+      error += !get(name_, rpnh, "dense_delta_fraction", denseDeltaFraction_);
+      error += !get(name_, rpnh, "near_sample_points_multiple", nearSamplePointsMultiple_);
+      error += !get(name_, rpnh, "stretch_factor", stretchFactor_);
+      error += !get(name_, rpnh, "penetration_overlap_fraction", penetrationOverlapFraction_);
+      error += !get(name_, rpnh, "use_l2_norm", useL2Norm_);
     }
 
-    // error += !get(name_, rpnh2, "stretch_factor", temp);
-    OMPL_WARN("Manually setting stretch factor for SPARS2 - hard coded in! TODO: do not hard code");
-    //sparse_two_->setStretchFactor(2.50633);  // manually copied from auto calculation for 2D world
-    //sparse_two_->setStretchFactor(4.31387);  // manually copied from auto calculation for 3D world
-    sparse_two_->setStretchFactor(6.76);  // manually copied from auto calculation for 4D world
+    // Mimmic bolt method for calculating
+    ompl::tools::bolt::SparseFormula formulas;
+    formulas.calc(si_, stretchFactor_, sparseDeltaFraction_, penetrationOverlapFraction_, nearSamplePointsMultiple_,
+                  useL2Norm_);
+
+    sparse_two_->setSparseDeltaFraction(sparseDeltaFraction_);
+    sparse_two_->setDenseDeltaFraction(denseDeltaFraction_);
+    sparse_two_->setStretchFactor(formulas.stretchFactor_); // uses same method as Bolt to calculate
 
     {
       ros::NodeHandle rpnh(nh_, "sparse_generator");
@@ -444,8 +454,8 @@ public:
     trial_maps.push_back(std::move("level1"));
     trial_maps.push_back(std::move("level2"));
     trial_maps.push_back(std::move("level3"));
-    // trial_maps.push_back(std::move("level4"));
-    // trial_maps.push_back(std::move("level5"));
+    trial_maps.push_back(std::move("level4"));
+    trial_maps.push_back(std::move("level5"));
 
     // Config
     const std::size_t TRIALS_PER_MAP = 10;
@@ -520,9 +530,18 @@ public:
         }
 
         // Collect stats
-        total_edges.push_back(bolt_->getSparseGraph()->getNumEdges());
-        total_vertices.push_back(bolt_->getSparseGraph()->getNumRealVertices());
-        total_times.push_back(bolt_->getSparseGenerator()->getLastGraphGenerationTime());
+        if (planner_name_ == BOLT)
+        {
+          total_edges.push_back(bolt_->getSparseGraph()->getNumEdges());
+          total_vertices.push_back(bolt_->getSparseGraph()->getNumRealVertices());
+          total_times.push_back(bolt_->getSparseGenerator()->getLastGraphGenerationTime());
+        }
+        else // SPARS2
+        {
+          total_edges.push_back(sparse_two_->getNumEdges());
+          total_vertices.push_back(sparse_two_->milestoneCount());
+          total_times.push_back(sparse_two_->getLastGraphGenerationTime());
+        }
 
         if (!ros::ok())
           break;
@@ -538,18 +557,16 @@ public:
       // Create high level log entry
       std::stringstream line;
 
-      std::cout << std::endl;
-      std::cout << "edge_data " << std::endl;
       std::pair<double,double> edge_data = getMeanStdDev(total_edges);
-      std::cout << std::endl;
-      std::cout << "vertex_data " << std::endl;
       std::pair<double,double> vertex_data = getMeanStdDev(total_vertices);
-      std::cout << std::endl;
-      std::cout << "time_data " << std::endl;
       std::pair<double,double> time_data = getMeanStdDev(total_times);
 
+      std::string planner_name = "Spars2";
+      if (planner_name_ == BOLT)
+        planner_name = "Bolt";
+
       // clang-format off
-      line << "=SPLIT(\"Bolt, "
+      line << "=SPLIT(\"" << planner_name << ", "
            << trial_maps[map_id] << ", "
            << edge_data.first << ", "
            << edge_data.second << ", "
