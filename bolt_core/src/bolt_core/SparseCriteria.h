@@ -143,11 +143,6 @@ public:
   bool distanceCheck(SparseVertex v, const base::State* q, SparseVertex vp, const base::State* qp, SparseVertex vpp,
                      std::size_t indent);
 
-  /** \brief After adding a new vertex, check if there is a really close nearby vertex that can be merged with this one
-   */
-  bool checkRemoveCloseVertices(SparseVertex v1, std::size_t indent = 0);
-  void visualizeRemoveCloseVertices(SparseVertex v1, SparseVertex v2);
-
   void visualizeInterfaces(SparseVertex v, std::size_t indent);
   void visualizeAllInterfaces(std::size_t indent);
 

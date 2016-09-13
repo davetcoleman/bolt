@@ -129,16 +129,19 @@ private:
   std::size_t numThreads_ = 1;
   std::size_t totalMisses_ = 0;
 
+  std::size_t totalMissesOverAllResets_ = 0;
+  std::size_t totalResets_ = 0;
+
   // Compute average time to do candidate queue
   double totalTime_ = 0;
   std::size_t totalCandidates_ = 0;
 
 public:
   bool verbose_ = false;      // general program direction
-  bool vNeighbor_ = true;     // nearest neighbor search
-  bool vClear_ = true;        // when queue is being cleared because of change
-  bool vQueueFull_ = true;    // alert when queue is full and waiting
-  bool vQueueEmpty_ = true;   // alert when queue is empty and holding up process
+  bool vNeighbor_ = false;     // nearest neighbor search
+  bool vClear_ = false;        // when queue is being cleared because of change
+  bool vQueueFull_ = false;    // alert when queue is full and waiting
+  bool vQueueEmpty_ = false;   // alert when queue is empty and holding up process
   bool vThread_ = false;
 
 };  // end of class CandidateQueue

@@ -444,8 +444,8 @@ public:
     trial_maps.push_back(std::move("level1"));
     trial_maps.push_back(std::move("level2"));
     trial_maps.push_back(std::move("level3"));
-    trial_maps.push_back(std::move("level4"));
-    trial_maps.push_back(std::move("level5"));
+    // trial_maps.push_back(std::move("level4"));
+    // trial_maps.push_back(std::move("level5"));
 
     // Config
     const std::size_t TRIALS_PER_MAP = 10;

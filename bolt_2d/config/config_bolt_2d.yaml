@@ -16,7 +16,7 @@ bolt_2d:
 
   # environment info
   image_id: 0 # 0 - hard0, 4 - hard4, 5 - blank, 6 - smiley (sparse), 7 - narrow
-  dimensions: 2 # can be 2 or 3
+  dimensions: 2
   collision_checking_enabled: true
 
   # solve planning problems
@@ -64,7 +64,7 @@ sparse_criteria:
   stretch_factor: 0   # 0 means auto set
   use_edge_improvement_rule: true
   use_l2_norm: false # straight line distance
-  use_check_remove_close_vertices: true # Experimental feature that allows very closeby vertices to be merged with newly added ones
+  use_check_remove_close_vertices: false # Experimental feature that allows very closeby vertices to be merged with newly added ones
   use_clear_edges_near_vertex: true # When adding a quality vertex, remove nearby edges
   use_improved_smoother: true
   use_connectivy_criteria: true # if true, discretization does not work

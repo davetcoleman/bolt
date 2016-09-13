@@ -69,6 +69,14 @@ void CandidateQueue::clear()
 {
   BOLT_ASSERT(!threadsRunning_, "Cannot clear while thread is running");
 
+  // Add up all misses before resetting
+  if (totalMisses_ > 0)
+  {
+    totalMissesOverAllResets_ += totalMisses_;
+    totalResets_++;
+  }
+
+  // Clear
   totalMisses_ = 0;
   totalTime_ = 0;
   totalCandidates_ = 0;
@@ -92,13 +100,44 @@ void CandidateQueue::startGenerating(std::size_t indent)
   }
   threadsRunning_ = true;
 
+  // Add up all misses before resetting
+  if (totalMisses_ > 0)
+  {
+    totalMissesOverAllResets_ += totalMisses_;
+    totalResets_++;
+  }
+  if (totalResets_ > 0)
+  {
+    std::cout << "-------------------------------------------------------" << std::endl;
+    std::cout << "-------------------------------------------------------" << std::endl;
+    std::cout << "AVERAGE CandidateQueue MISSES: " << totalMissesOverAllResets_ / totalResets_ << std::endl;
+    std::cout << "-------------------------------------------------------" << std::endl;
+    std::cout << "-------------------------------------------------------" << std::endl;
+  }
+
   // Stats
   totalMisses_ = 0;
 
   // Set number threads - should be at least less than 1 from total number of threads on system
   // 1 thread is for parent, 1 is for sampler, 1 is for GUIs, etc, remainder are for this
   //numThreads_ = std::max(1, int(sg_->getNumQueryVertices() - 3));
-  numThreads_ = 1;
+
+  // TODO: how to choose this number best to minimize queue misses?
+  /* For 2D environment test data...
+     Threads:
+     2 AVERAGE CandidateQueue MISSES: 447
+     3 AVERAGE CandidateQueue MISSES: 432
+     4 AVERAGE CandidateQueue MISSES: 385
+     5 AVERAGE CandidateQueue MISSES: 398
+
+     For 3D environment test data...
+     4 AVERAGE CandidateQueue MISSES: 2621
+     5 AVERAGE CandidateQueue MISSES: 2429
+     6 AVERAGE CandidateQueue MISSES: 2493
+
+     so we choose 5.
+  */
+  numThreads_ = 5;
   BOLT_DEBUG(indent, true, "Running CandidateQueue with " << numThreads_ << " threads");
   if (numThreads_ < 2)
     BOLT_WARN(indent, true, "Only running CandidateQueue with 1 thread");
@@ -326,8 +365,7 @@ void CandidateQueue::waitForQueueNotEmpty(std::size_t indent)
   {
     if (oneTimeFlag)
     {
-      BOLT_WARN(indent, vQueueEmpty_, "CandidateQueue: Queue is empty, waiting for next generated "
-                "CandidateData");
+      BOLT_WARN(indent, vQueueEmpty_, "CandidateQueue: Queue is empty, waiting for next generated CandidateData");
       oneTimeFlag = false;
     }
     usleep(100);
