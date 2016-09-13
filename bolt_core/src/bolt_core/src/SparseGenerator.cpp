@@ -234,12 +234,12 @@ void SparseGenerator::createSPARS()
 
 void SparseGenerator::copyPasteState(std::size_t numSets)
 {
-  double duration = time::seconds(time::now() - timeDiscretizeAndRandomStarted_);
+  lastGraphGenerationTime_ = time::seconds(time::now() - timeDiscretizeAndRandomStarted_);
   std::stringstream line;
 
   // clang-format off
   line << "=SPLIT(\"Bolt, "
-       << map_name_ << ", "
+       << mapName_ << ", "
        << sparseCriteria_->sparseDeltaFraction_ << ", "
        << sparseCriteria_->getSparseDelta() << ", "
        << sparseCriteria_->getDiscretization() << ", "
@@ -247,7 +247,7 @@ void SparseGenerator::copyPasteState(std::size_t numSets)
        << sparseCriteria_->getNearSamplePointsMultiple() << ", "
        << useDiscretizedSamples_ << ", "
        << useRandomSamples_ << ", "
-       << sparseCriteria_->useCheckRemoveCloseVertices_ << ", "
+       << 0 << ", "
        << sparseCriteria_->useClearEdgesNearVertex_ << ", "
        << sparseCriteria_->useImprovedSmoother_ << ", "
        << sparseCriteria_->useEdgeImprovementRule_ << ", "
@@ -257,7 +257,7 @@ void SparseGenerator::copyPasteState(std::size_t numSets)
        << sg_->getNumRealVertices() << ", "
        << sg_->getNumEdges() << ", "
        << numSets << ", "
-       << duration << "\", \",\")";
+       << lastGraphGenerationTime_ << "\", \",\")";
   // clang-format on
 
   // Save log

@@ -84,9 +84,14 @@ public:
   void copyPasteState(std::size_t numSets = 0);
   void dumpLog();
 
-  void setMapName(std::string map_name)
+  void setMapName(std::string mapName)
   {
-    map_name_ = map_name;
+    mapName_ = mapName;
+  }
+
+  double getLastGraphGenerationTime()
+  {
+    return lastGraphGenerationTime_;
   }
 
   void addDiscretizedStates(std::size_t indent);
@@ -178,7 +183,8 @@ protected:
   time::point timeDiscretizeAndRandomStarted_;
 
   std::vector<std::string> stringLog_;
-  std::string map_name_; // meta data for the logging
+  std::string mapName_; // meta data for the logging
+  double lastGraphGenerationTime_ = 0; // store how long it took to generate the last SPARS2 graph
 
 public:
   bool verbose_ = false;

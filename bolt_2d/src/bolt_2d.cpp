@@ -71,13 +71,13 @@ namespace bolt_2d
 static const std::string BASE_FRAME = "/world";
 
 enum PlannerName
-{
-  BOLT,
-  THUNDER,
-  SPARS,
-  SPARS2,
-  PRM
-};
+  {
+    BOLT,
+    THUNDER,
+    SPARS,
+    SPARS2,
+    PRM
+  };
 
 /**
  * \brief Experience Planning Class
@@ -459,12 +459,15 @@ public:
       }
     }
 
+    std::vector<std::string> high_level_log;
+
     // For each map
     for (std::size_t map_id = 0; map_id < trial_maps.size(); ++map_id)
     {
       // Begin statistics
-      // double total_edges = 0;
-      // double total_vertices = 0;
+      std::vector<double> total_edges;
+      std::vector<double> total_vertices;
+      std::vector<double> total_times;
 
       // For each trial
       for (std::size_t trial_id = 0; trial_id < TRIALS_PER_MAP; ++trial_id)
@@ -517,36 +520,80 @@ public:
         }
 
         // Collect stats
-        // total_edges += bolt_->getSparseGraph()->getNumEdges();
-        // total_vertices += bolt_->getSparseGraph()->getNumRealVertices();
-        // double avg_edges = total_edges / (trial_id + 1);
-        // double avg_vertices = total_vertices / (trial_id + 1);
-        // BOLT_DEBUG(indent + 2, true, "Average edges: " << avg_edges);
-        // BOLT_DEBUG(indent + 2, true, "Average vertices: " << avg_vertices);
+        total_edges.push_back(bolt_->getSparseGraph()->getNumEdges());
+        total_vertices.push_back(bolt_->getSparseGraph()->getNumRealVertices());
+        total_times.push_back(bolt_->getSparseGenerator()->getLastGraphGenerationTime());
 
         if (!ros::ok())
           break;
       } // for each trial
 
         // Output log
-      BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
-      BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
-      BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
-      BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
       if (planner_name_ == BOLT)
         bolt_->getSparseGenerator()->dumpLog();
       else
         sparse_two_->dumpLog();
-      BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
-      BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
-      BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
-      BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
       //waitForNextStep("copy data");
+
+      // Create high level log entry
+      std::stringstream line;
+
+      std::cout << std::endl;
+      std::cout << "edge_data " << std::endl;
+      std::pair<double,double> edge_data = getMeanStdDev(total_edges);
+      std::cout << std::endl;
+      std::cout << "vertex_data " << std::endl;
+      std::pair<double,double> vertex_data = getMeanStdDev(total_vertices);
+      std::cout << std::endl;
+      std::cout << "time_data " << std::endl;
+      std::pair<double,double> time_data = getMeanStdDev(total_times);
+
+      // clang-format off
+      line << "=SPLIT(\"Bolt, "
+           << trial_maps[map_id] << ", "
+           << edge_data.first << ", "
+           << edge_data.second << ", "
+           << vertex_data.first << ", "
+           << vertex_data.second << ", "
+           << time_data.first << ", "
+           << time_data.second << "\", \",\")";
+      // clang-format on
+
+      // Save log
+      high_level_log.push_back(line.str());
+
+      // Output to console
+      BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
+      BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
+      BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
+      BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
+      std::cout << high_level_log.back() << std::endl;
+      BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
+      BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
+      BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
+      BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
 
       if (!ros::ok())
         break;
 
     } // for each map
+
+    // Done experiment... dump to console
+    for (auto line : high_level_log)
+      std::cout << line << std::endl;
+  }
+
+  std::pair<double,double> getMeanStdDev(const std::vector<double>& data)
+  {
+    double sum = std::accumulate(data.begin(), data.end(), 0.0);
+    double mean = sum / data.size();
+
+    std::vector<double> diff(data.size());
+    std::transform(data.begin(), data.end(), diff.begin(), [mean](double x) { return x - mean; });
+    double sq_sum = std::inner_product(diff.begin(), diff.end(), diff.begin(), 0.0);
+    double stdev = std::sqrt(sq_sum / data.size());
+
+    return std::pair<double,double>(mean, stdev);
   }
 
   /** \brief Plan repeatidly */
@@ -785,8 +832,8 @@ public:
     for (std::size_t i = 1; i <= NUM_VISUALS; ++i)
     {
       rviz_visual_tools::RvizVisualToolsPtr rviz_visual =
-          rviz_visual_tools::RvizVisualToolsPtr(new rviz_visual_tools::RvizVisualTools(
-              "/world_visual" + std::to_string(i), "/ompl_visual" + std::to_string(i)));
+        rviz_visual_tools::RvizVisualToolsPtr(new rviz_visual_tools::RvizVisualTools(
+                                                                                     "/world_visual" + std::to_string(i), "/ompl_visual" + std::to_string(i)));
       rviz_visual->loadMarkerPub();
       rviz_visual->enableBatchPublishing();
       ros::spinOnce();
@@ -816,7 +863,7 @@ public:
 
     // Load background visualizer
     rviz_visual_tools::RvizVisualToolsPtr rviz_visual =
-        rviz_visual_tools::RvizVisualToolsPtr(new rviz_visual_tools::RvizVisualTools("/world", "/ompl_background"));
+      rviz_visual_tools::RvizVisualToolsPtr(new rviz_visual_tools::RvizVisualTools("/world", "/ompl_background"));
     rviz_visual->loadMarkerPub();
     rviz_visual->enableBatchPublishing();
     ros::spinOnce();
@@ -894,8 +941,8 @@ public:
       viz_bg_->getVisualTools()->publishText(text_pose_, std::string("2 "), rvt::BLACK, rvt::MEDIUM, false);
     viz_bg_->publishPPMImage(ppm_, false);
     std::string message =
-        "Nodes - black: coverage, orange: connectivity, pink: interface, blue: quality, green: discretized\n"
-        "Edges - green: connectivity, yellow: interface, red: quality";
+      "Nodes - black: coverage, orange: connectivity, pink: interface, blue: quality, green: discretized\n"
+      "Edges - green: connectivity, yellow: interface, red: quality";
     if (use_labels)
       viz_bg_->getVisualTools()->publishText(sub_text_pose_, message, rvt::BLACK, rvt::SMALL, false);
 
@@ -962,84 +1009,84 @@ public:
     switch (problem_type_)
     {
       case 0:  // random
-      {
-        findRandValidState(start);
-        findRandValidState(goal);
-
-        // Debug
-        if (verbose)
         {
-          std::cout << "Random Problem " << std::setprecision(5) << std::endl;
-          std::cout << "  Start: ";
-          si_->printState(start, std::cout);
-          std::cout << "  Goal:  ";
-          si_->printState(goal, std::cout);
+          findRandValidState(start);
+          findRandValidState(goal);
+
+          // Debug
+          if (verbose)
+          {
+            std::cout << "Random Problem " << std::setprecision(5) << std::endl;
+            std::cout << "  Start: ";
+            si_->printState(start, std::cout);
+            std::cout << "  Goal:  ";
+            si_->printState(goal, std::cout);
+          }
         }
-      }
-      break;
+        break;
       case 1:  // static
-      {
-        ob::RealVectorStateSpace::StateType *real_start = static_cast<ob::RealVectorStateSpace::StateType *>(start);
-        ob::RealVectorStateSpace::StateType *real_goal = static_cast<ob::RealVectorStateSpace::StateType *>(goal);
-        getStaticStartGoal(problem_id_, real_start, real_goal);
-      }
-      break;
-      case 2:  // Randomly sample around two states
-      {
-        ROS_INFO_STREAM_NAMED("experience_setup", "Sampling start and goal around two center points");
-
-        // Create new states to be the 'near' states
-        ob::ScopedState<> near_start(space_);
-        ob::ScopedState<> near_goal(space_);
-        ob::RealVectorStateSpace::StateType *real_near_start =
-            static_cast<ob::RealVectorStateSpace::StateType *>(near_start.get());
-        ob::RealVectorStateSpace::StateType *real_near_goal =
-            static_cast<ob::RealVectorStateSpace::StateType *>(near_goal.get());
-        getStaticStartGoal(problem_id_, real_near_start, real_near_goal);
-
-        // Check these hard coded values against varying image sizes
-        if (!space_->satisfiesBounds(real_near_start) || !space_->satisfiesBounds(real_near_goal))
         {
-          ROS_ERROR_STREAM_NAMED("chooseStartGoal:", "State does not satisfy bounds");
+          ob::RealVectorStateSpace::StateType *real_start = static_cast<ob::RealVectorStateSpace::StateType *>(start);
+          ob::RealVectorStateSpace::StateType *real_goal = static_cast<ob::RealVectorStateSpace::StateType *>(goal);
+          getStaticStartGoal(problem_id_, real_start, real_goal);
+        }
+        break;
+      case 2:  // Randomly sample around two states
+        {
+          ROS_INFO_STREAM_NAMED("experience_setup", "Sampling start and goal around two center points");
+
+          // Create new states to be the 'near' states
+          ob::ScopedState<> near_start(space_);
+          ob::ScopedState<> near_goal(space_);
+          ob::RealVectorStateSpace::StateType *real_near_start =
+            static_cast<ob::RealVectorStateSpace::StateType *>(near_start.get());
+          ob::RealVectorStateSpace::StateType *real_near_goal =
+            static_cast<ob::RealVectorStateSpace::StateType *>(near_goal.get());
+          getStaticStartGoal(problem_id_, real_near_start, real_near_goal);
+
+          // Check these hard coded values against varying image sizes
+          if (!space_->satisfiesBounds(real_near_start) || !space_->satisfiesBounds(real_near_goal))
+          {
+            ROS_ERROR_STREAM_NAMED("chooseStartGoal:", "State does not satisfy bounds");
+
+            // Debug
+            if (verbose)
+            {
+              std::cout << "Start: " << std::setprecision(5);
+              si_->printState(near_start.get(), std::cout);
+              std::cout << "Goal:  ";
+              si_->printState(near_goal.get(), std::cout);
+            }
+
+            exit(-1);
+            return;
+          }
+
+          // Choose the distance to sample around
+          double maxExtent = si_->getMaximumExtent();
+          double distance = maxExtent * 0.1;
+          ROS_INFO_STREAM_NAMED("experience_setup", "Distance is " << distance << " from max extent " << maxExtent);
+
+          // Sample near the target states
+          findRandValidState(start, real_near_start, distance);
+          findRandValidState(goal, real_near_goal, distance);
 
           // Debug
           if (verbose)
           {
             std::cout << "Start: " << std::setprecision(5);
-            si_->printState(near_start.get(), std::cout);
-            std::cout << "Goal:  ";
-            si_->printState(near_goal.get(), std::cout);
+            si_->printState(start, std::cout);
+            std::cout << "Goal: ";
+            si_->printState(goal, std::cout);
           }
-
-          exit(-1);
-          return;
+          // Show the sample regions
+          if (false)
+          {
+            viz5_->publishSampleRegion(near_start, distance);
+            viz5_->publishSampleRegion(near_goal, distance);
+          }
         }
-
-        // Choose the distance to sample around
-        double maxExtent = si_->getMaximumExtent();
-        double distance = maxExtent * 0.1;
-        ROS_INFO_STREAM_NAMED("experience_setup", "Distance is " << distance << " from max extent " << maxExtent);
-
-        // Sample near the target states
-        findRandValidState(start, real_near_start, distance);
-        findRandValidState(goal, real_near_goal, distance);
-
-        // Debug
-        if (verbose)
-        {
-          std::cout << "Start: " << std::setprecision(5);
-          si_->printState(start, std::cout);
-          std::cout << "Goal: ";
-          si_->printState(goal, std::cout);
-        }
-        // Show the sample regions
-        if (false)
-        {
-          viz5_->publishSampleRegion(near_start, distance);
-          viz5_->publishSampleRegion(near_goal, distance);
-        }
-      }
-      break;
+        break;
       default:
         ROS_ERROR_STREAM_NAMED(name_, "Invalid problem type");
     }

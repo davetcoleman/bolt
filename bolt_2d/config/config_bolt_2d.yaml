@@ -64,7 +64,6 @@ sparse_criteria:
   stretch_factor: 0   # 0 means auto set
   use_edge_improvement_rule: true
   use_l2_norm: false # straight line distance
-  use_check_remove_close_vertices: false # Experimental feature that allows very closeby vertices to be merged with newly added ones
   use_clear_edges_near_vertex: true # When adding a quality vertex, remove nearby edges
   use_improved_smoother: true
   use_connectivy_criteria: true # if true, discretization does not work

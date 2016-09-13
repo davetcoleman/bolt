@@ -270,7 +270,6 @@ public:
   bool useEdgeImprovementRule_ = true;
 
   /** \brief Experimental feature that allows very closeby vertices to be merged with newly added ones */
-  bool useCheckRemoveCloseVertices_ = true;
   bool useClearEdgesNearVertex_ = true;
   bool useImprovedSmoother_ = true;
   bool useConnectivityCriteria_ = true;
