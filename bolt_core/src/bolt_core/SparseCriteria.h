@@ -105,7 +105,7 @@ public:
                       const double shortestPathVpVpp, std::size_t indent);
 
   /** \brief As described in paper */
-  bool spannerTestOriginal(SparseVertex v, SparseVertex vp, SparseVertex vpp, InterfaceData& iData,
+  bool spannerTest(SparseVertex v, SparseVertex vp, SparseVertex vpp, InterfaceData& iData,
                            double& shortestPathVpVpp, std::size_t indent);
 
   /** \brief Get shortest path between two vertices */

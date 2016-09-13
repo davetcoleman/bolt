@@ -292,9 +292,10 @@ public:
     }
 
     // error += !get(name_, rpnh2, "stretch_factor", temp);
-    OMPL_WARN("Manually setting stretch factor for SPARS2 - hard coded in! ");
+    OMPL_WARN("Manually setting stretch factor for SPARS2 - hard coded in! TODO: do not hard code");
     //sparse_two_->setStretchFactor(2.50633);  // manually copied from auto calculation for 2D world
-    sparse_two_->setStretchFactor(4.31387);  // manually copied from auto calculation for 3D world
+    //sparse_two_->setStretchFactor(4.31387);  // manually copied from auto calculation for 3D world
+    sparse_two_->setStretchFactor(6.76);  // manually copied from auto calculation for 4D world
 
     {
       ros::NodeHandle rpnh(nh_, "sparse_generator");
@@ -440,10 +441,10 @@ public:
     BOLT_FUNC(indent, true, "createBoltSweepMaps()");
 
     std::vector<std::string> trial_maps;
-    //trial_maps.push_back(std::move("level1"));
-    //trial_maps.push_back(std::move("level2"));
-    // trial_maps.push_back(std::move("level3"));
-    // trial_maps.push_back(std::move("level4"));
+    trial_maps.push_back(std::move("level1"));
+    trial_maps.push_back(std::move("level2"));
+    trial_maps.push_back(std::move("level3"));
+    trial_maps.push_back(std::move("level4"));
     trial_maps.push_back(std::move("level5"));
 
     // Config
@@ -470,7 +471,7 @@ public:
       {
         // Debug
         BOLT_DEBUG(indent + 2, true, "----------------------------------------------------------------------------");
-        BOLT_DEBUG(indent + 2, true, "Creating spars graph, trial " << trial_id+1 << " out of " << TRIALS_PER_MAP << " for map " << map_id);
+        BOLT_DEBUG(indent + 2, true, "Creating spars graph, trial " << trial_id+1 << " out of " << TRIALS_PER_MAP << " for map " << trial_maps[map_id] << ".ppm");
         BOLT_DEBUG(indent + 2, true, "----------------------------------------------------------------------------");
 
         // Clear spars graph
@@ -693,11 +694,10 @@ public:
     ob::RealVectorBounds bounds(dimensions_);
     bounds.setLow(0);                             // both dimensions start at 0
     bounds.setHigh(0, ppm_.getWidth() - 1);  // allow for non-square images
-    bounds.setHigh(1, ppm_.getHeight() - 1);  // allow for non-square images
-    if (dimensions_ == 3)
+    // Allow arbitrary number of dimensions
+    for (std::size_t i = 1; i < dimensions_; ++i)
     {
-      bounds.setHigh(2, ppm_.getHeight() - 1);  // third dimension is now possible
-      // bounds.setHigh(2, 2);                         // third dimension has three steps
+      bounds.setHigh(i, ppm_.getHeight() - 1);  // allow for non-square images
     }
     space_->as<ob::RealVectorStateSpace>()->setBounds(bounds);
 

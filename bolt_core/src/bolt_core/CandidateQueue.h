@@ -135,10 +135,10 @@ private:
 
 public:
   bool verbose_ = false;      // general program direction
-  bool vNeighbor_ = true;    // nearest neighbor search
-  bool vClear_ = true;       // when queue is being cleared because of change
-  bool vQueueFull_ = false;   // status of queue
-  bool vQueueEmpty_ = true;  // alert when queue is empty and holding up process
+  bool vNeighbor_ = true;     // nearest neighbor search
+  bool vClear_ = true;        // when queue is being cleared because of change
+  bool vQueueFull_ = true;    // alert when queue is full and waiting
+  bool vQueueEmpty_ = true;   // alert when queue is empty and holding up process
   bool vThread_ = false;
 
 };  // end of class CandidateQueue

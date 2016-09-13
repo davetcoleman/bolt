@@ -96,6 +96,7 @@ bool SparseCriteria::setup(std::size_t indent)
   denseDelta_ = sparseDeltaFraction_ * 0.1 * maxExtent_;
 
   // How much overlap should the discretization factor provide for ensuring edge connection
+  // TODO: test simply making this machine epsilon. will that affect creating edges?
   discretizePenetrationDist_ = penetrationOverlapFraction_ * sparseDelta_;
 
   // Number of points to test for interfaces around a sample for the quality criterion
@@ -708,7 +709,7 @@ bool SparseCriteria::checkAddPath(SparseVertex v, std::size_t indent)
       double shortestPathVpVpp;  // remember what the shortest path is from astar
 
       // Check if we need to actually add path
-      if (spannerTestOriginal(v, vp, vpp, iData, shortestPathVpVpp, indent + 2))
+      if (spannerTest(v, vp, vpp, iData, shortestPathVpVpp, indent + 2))
       {
         // Actually add the vertices and possibly edges
         if (addQualityPath(v, vp, vpp, iData, shortestPathVpVpp, indent + 6))
@@ -872,7 +873,6 @@ bool SparseCriteria::addQualityPath(SparseVertex v, SparseVertex vp, SparseVerte
   {
     if (!sg_->getSparseSmoother()->smoothQualityPathOriginal(path, indent + 4))
     {
-      BOLT_ERROR(indent, true, "Smoother failed");
       delete path;
       return false;
     }
@@ -882,14 +882,13 @@ bool SparseCriteria::addQualityPath(SparseVertex v, SparseVertex vp, SparseVerte
     const bool debug = false;
     if (!sg_->getSparseSmoother()->smoothQualityPath(path, sg_->getObstacleClearance(), debug, indent + 4))
     {
-      BOLT_ERROR(indent, true, "Smoother failed");
       delete path;
       return false;
     }
   }
 
   // Determine if this smoothed path actually helps improve connectivity
-  if (useConnectivityCriteria_ && path->length() > shortestPathVpVpp)
+  if (path->length() > shortestPathVpVpp)
   {
     BOLT_WARN(indent, vQuality_, "Smoothed path does not improve connectivity");
     delete path;
@@ -941,10 +940,10 @@ bool SparseCriteria::addQualityPath(SparseVertex v, SparseVertex vp, SparseVerte
   return true;
 }
 
-bool SparseCriteria::spannerTestOriginal(SparseVertex v, SparseVertex vp, SparseVertex vpp, InterfaceData &iData,
+bool SparseCriteria::spannerTest(SparseVertex v, SparseVertex vp, SparseVertex vpp, InterfaceData &iData,
                                          double &shortestPathVpVpp, std::size_t indent)
 {
-  BOLT_FUNC(indent, vQuality_, "spannerTestOriginal()");
+  BOLT_FUNC(indent, vQuality_, "spannerTest()");
   // Computes all nodes which qualify as a candidate x for v, v', and v" and get the length of the longest one
   double midpointPathLength = maxSpannerPath(v, vp, vpp, indent + 2);
 
@@ -1429,6 +1428,7 @@ bool SparseCriteria::checkRemoveCloseVertices(SparseVertex v1, std::size_t inden
     return false;
   }
 
+  // TODO: the following line assumes the first neighbor is itself, but I don't think this is always true
   SparseVertex v2 = graphNeighbors[1];
 
   // Error check: Do not remove itself
@@ -1438,8 +1438,7 @@ bool SparseCriteria::checkRemoveCloseVertices(SparseVertex v1, std::size_t inden
     exit(-1);
   }
 
-  // Check that nearest neighbor is not an quality node - these should not be
-  // moved
+  // Check that nearest neighbor is not an quality node - these should not be moved
   if (sg_->getVertexTypeProperty(v2) == QUALITY)
   {
     if (visualizeRemoveCloseVertices_)
@@ -1453,8 +1452,7 @@ bool SparseCriteria::checkRemoveCloseVertices(SparseVertex v1, std::size_t inden
   // Check if nearest neighbor is within distance threshold
   if (sg_->distanceFunction(v1, v2) > sparseDelta_ * sparseDeltaFractionCheck_)
   {
-    // BOLT_DEBUG(indent, vRemoveClose_, "Distance " <<
-    // sg_->distanceFunction(v1, v2) << " is greater than max "
+    // BOLT_DEBUG(indent, vRemoveClose_, "Distance " << sg_->distanceFunction(v1, v2) << " is greater than max "
     //<< sparseDelta_ * sparseDeltaFractionCheck_);
     return false;
   }

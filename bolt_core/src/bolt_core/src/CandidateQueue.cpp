@@ -97,8 +97,8 @@ void CandidateQueue::startGenerating(std::size_t indent)
 
   // Set number threads - should be at least less than 1 from total number of threads on system
   // 1 thread is for parent, 1 is for sampler, 1 is for GUIs, etc, remainder are for this
-  numThreads_ = std::max(1, int(sg_->getNumQueryVertices() - 3));
-  //numThreads_ = 1;
+  //numThreads_ = std::max(1, int(sg_->getNumQueryVertices() - 3));
+  numThreads_ = 1;
   BOLT_DEBUG(indent, true, "Running CandidateQueue with " << numThreads_ << " threads");
   if (numThreads_ < 2)
     BOLT_WARN(indent, true, "Only running CandidateQueue with 1 thread");
@@ -163,7 +163,7 @@ void CandidateQueue::stopGenerating(std::size_t indent)
   // Clear remaining data
   while (!queue_.empty())
   {
-    std::cout << "Queue num " << queue_.size() << ": queue_.front().state_: " << queue_.front().state_;
+    //std::cout << "Queue num " << queue_.size() << ": queue_.front().state_: " << queue_.front().state_;
 
     if (queue_.front().state_ == nullptr)
     {
@@ -174,7 +174,7 @@ void CandidateQueue::stopGenerating(std::size_t indent)
     {
       // Do not free the state of the last item on the queue, because it is used somewhere else (?)
       si_->getStateSpace()->freeState(queue_.front().state_);
-      std::cout << "... freed " << std::endl;
+      //std::cout << "... freed " << std::endl;
     }
 
     queue_.pop();
@@ -209,7 +209,7 @@ void CandidateQueue::generatingThread(std::size_t threadID, base::SpaceInformati
 
     if (!threadsRunning_)  // Check for thread ending
     {
-      BOLT_DEBUG(indent + 2, vThread_ || true, "Thread ended, freeing memory");
+      BOLT_DEBUG(indent + 2, vThread_, "Thread ended, freeing memory");
       si_->freeState(candidateState);
       return;
     }

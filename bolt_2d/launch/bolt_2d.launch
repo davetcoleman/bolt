@@ -17,7 +17,7 @@
   <arg     if="$(arg valgrind)" name="launch_prefix3" value="valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all" />
 
   <!-- Launch main node -->
-  <node name="bolt_2d" launch-prefix="$(arg launch_prefix) $(arg launch_prefix2) $(arg launch_prefix3)" pkg="bolt_2d" type="bolt_2d" respawn="false" output="screen">
+  <node name="$(anon bolt_2d)" launch-prefix="$(arg launch_prefix) $(arg launch_prefix2) $(arg launch_prefix3)" pkg="bolt_2d" type="bolt_2d" respawn="false" output="screen">
 
     <!-- Robot-specific settings -->
     <rosparam file="$(find bolt_2d)/config/config_bolt_2d.yaml" command="load"/>

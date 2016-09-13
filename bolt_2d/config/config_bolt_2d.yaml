@@ -16,7 +16,7 @@ bolt_2d:
 
   # environment info
   image_id: 0 # 0 - hard0, 4 - hard4, 5 - blank, 6 - smiley (sparse), 7 - narrow
-  dimensions: 3 # can be 2 or 3
+  dimensions: 2 # can be 2 or 3
   collision_checking_enabled: true
 
   # solve planning problems

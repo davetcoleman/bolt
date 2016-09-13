@@ -796,19 +796,19 @@ bool SparseGenerator::convertVertexPathToStatePath(std::vector<SparseVertex> &ve
 
 void SparseGenerator::stopCandidateQueueAndSave(std::size_t indent)
 {
-  BOLT_FUNC(indent, true, "stopCandidateQueueAndSave()");
+  if (!(sg_->getSavingEnabled() && sg_->hasUnsavedChanges()))
+    return;
 
-  if (sg_->getSavingEnabled() && sg_->hasUnsavedChanges())
-  {
-    // Stop and reset the candidate queue because it uses the nearest neighbors and will have bad vertices stored
-    candidateQueue_->stopGenerating(indent);
+  BOLT_FUNC(indent, verbose_, "stopCandidateQueueAndSave()");
 
-    // Save
-    sg_->saveIfChanged(indent);
+  // Stop and reset the candidate queue because it uses the nearest neighbors and will have bad vertices stored
+  candidateQueue_->stopGenerating(indent);
 
-    // Restart the queue
-    candidateQueue_->startGenerating(indent);
-  }
+  // Save
+  sg_->saveIfChanged(indent);
+
+  // Restart the queue
+  candidateQueue_->startGenerating(indent);
 }
 
 void SparseGenerator::benchmarkRandValidSampling()
