@@ -314,8 +314,17 @@ public:
       total_failures = temp;
       error += !get(name_, rpnh, "fourth_criteria_after_failures", temp);
       total_failures += temp;
+      //total_failures *= 2; // Because SPARS2 keeps failing the optimiality test with "no neighbors found"
       std::cout << " Found total failures: " << total_failures << std::endl;
       sparse_two_->setMaxFailures(total_failures);
+    }
+
+    // Clearance
+    {
+      ros::NodeHandle rpnh(nh_, "sparse_graph");
+      double clearance;
+      error += !get(name_, rpnh, "obstacle_clearance", clearance);
+      sparse_two_->setClearance(clearance);
     }
 
     shutdownIfError(name_, error);

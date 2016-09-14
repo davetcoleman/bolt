@@ -16,7 +16,7 @@ bolt_2d:
 
   # environment info
   image_id: 0 # 0 - hard0, 4 - hard4, 5 - blank, 6 - smiley (sparse), 7 - narrow
-  dimensions: 2
+  dimensions: 3
   collision_checking_enabled: true
 
   # solve planning problems
@@ -44,8 +44,6 @@ bolt_2d:
 
 # ====================================================
 sparse_generator:
-  # fourth_criteria_after_failures: 100 # mode change to 4th criteria after this many failures
-  # terminate_after_failures: 100 # total failures, including 4th criteria
   fourth_criteria_after_failures: 5000 # mode change to 4th criteria after this many failures
   terminate_after_failures: 10000 # total failures, including 4th criteria
   use_discretized_samples: true

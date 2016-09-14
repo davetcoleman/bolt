@@ -399,6 +399,11 @@ namespace ompl
               return lastGraphGenerationTime_;
             }
 
+          void setClearance(double clearance)
+          {
+            clearance_ = clearance;
+          }
+
         protected:
             /** \brief Free all the memory allocated by the planner */
             void freeMemory();
@@ -594,6 +599,7 @@ namespace ompl
             std::string map_name_; // meta data for the logging
 
             double lastGraphGenerationTime_ = 0; // store how long it took to generate the last SPARS2 graph
+            double clearance_ = 0;
 
             /** \brief Class for smoothing paths in ideal way for SPARS criteria */
             ompl::tools::bolt::SparseSmootherPtr sparseSmoother_;

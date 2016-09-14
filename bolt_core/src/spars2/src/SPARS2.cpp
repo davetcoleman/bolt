@@ -320,13 +320,11 @@ void ompl::geometric::SPARS2::constructRoadmap(const base::PlannerTerminationCon
         setup();
     if (!sampler_)
     {
-        double clearance = 1;
-        OMPL_WARN("set clearance TODO");
-
         // Load minimum clearance state sampler
+        assert(clearance_ > std::numeric_limits<double>::epsilon());
         sampler_ = base::MinimumClearanceValidStateSamplerPtr(new base::MinimumClearanceValidStateSampler(si_.get()));
-        sampler_->setMinimumObstacleClearance(clearance);
-        si_->getStateValidityChecker()->setClearanceSearchDistance(clearance);
+        sampler_->setMinimumObstacleClearance(clearance_);
+        si_->getStateValidityChecker()->setClearanceSearchDistance(clearance_);
     }
 
     base::State *qNew = si_->allocState();
@@ -647,8 +645,7 @@ bool ompl::geometric::SPARS2::checkAddPath(Vertex v)
 
                     // Smoothing path - new method
                     const bool debug = false;
-                    double clearance = 1;
-                    if (!sparseSmoother_->smoothQualityPath(p.get(), clearance, debug, 0 /*indent*/))
+                    if (!sparseSmoother_->smoothQualityPath(p.get(), clearance_, debug, 0 /*indent*/))
                       return false; // unable to smooth
 
                     if (p->checkAndRepair(100).second)
@@ -1066,8 +1063,14 @@ bool ompl::geometric::SPARS2::checkSparseGraphOptimality()
 
             // Check if neighbor exists - should always have at least one neighbor otherwise graph lacks coverage
             if (visibleNeighborhood[i].empty())
-                throw Exception(name_, "No neighbors!");
-            // debugNoNeighbors(point, indent);
+            {
+              for (std::size_t i = 0; i < 5; ++i)
+                OMPL_ERROR("-----------------------------------------");
+              OMPL_ERROR("No neighbors");
+              for (std::size_t i = 0; i < 5; ++i)
+                OMPL_ERROR("-----------------------------------------");
+              return false;
+            }
 
             // Check if first state is same as input
             if (si_->getStateSpace()->equalStates(state, stateProperty_[visibleNeighborhood[i][0]]))
