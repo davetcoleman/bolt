@@ -340,6 +340,7 @@ bool TwoDimVizWindow::publishPPMImage(ompl::PPM& ppm, bool static_id)
       {
         // set single color
         color = visuals_->getColor(rvt::DARK_GREY);
+        //color = visuals_->getColor(rvt::BLACK);
         color.a = 1.0;
       }
 

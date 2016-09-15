@@ -106,6 +106,8 @@ public:
     error += !rosparam_shortcuts::get(name_, rpnh, "display_disjoint_sets", display_disjoint_sets_);
     error += !rosparam_shortcuts::get(name_, rpnh, "benchmark_performance", benchmark_performance_);
     error += !rosparam_shortcuts::get(name_, rpnh, "sweep_spars_maps", sweep_spars_maps_);
+    error += !rosparam_shortcuts::get(name_, rpnh, "sweep_map_start", sweep_map_start_);
+    error += !rosparam_shortcuts::get(name_, rpnh, "sweep_map_end", sweep_map_end_);
 
     // run type
     error += !rosparam_shortcuts::get(name_, rpnh, "planning_runs", planning_runs_);
@@ -402,7 +404,7 @@ public:
     // else  // graph loaded fine and will not be modified
     // {
     //   ROS_INFO_STREAM_NAMED(name_, "Checking loaded graph for optimality");
-    //   bolt_->getSparseGenerator()->checkSparseGraphOptimality(indent);
+    //   bolt_->getSparseGenerator()->checkGraphOptimality(indent);
     // }
 
     // Display disconnected components
@@ -465,6 +467,8 @@ public:
     trial_maps.push_back(std::move("level3"));
     trial_maps.push_back(std::move("level4"));
     trial_maps.push_back(std::move("level5"));
+    BOLT_ASSERT(sweep_map_start_ > 0, "Invalid start");
+    BOLT_ASSERT(sweep_map_end_ <= trial_maps.size(), "Invalid end");
 
     // Config
     const std::size_t TRIALS_PER_MAP = 10;
@@ -481,12 +485,15 @@ public:
     std::vector<std::string> high_level_log;
 
     // For each map
-    for (std::size_t map_id = 0; map_id < trial_maps.size(); ++map_id)
+    //for (std::size_t map_id = 0; map_id < trial_maps.size(); ++map_id)
+    for (std::size_t map_id = sweep_map_start_ - 1; map_id < sweep_map_end_; ++map_id)
     {
       // Begin statistics
       std::vector<double> total_edges;
       std::vector<double> total_vertices;
-      std::vector<double> total_times;
+      std::vector<double> total_gen_times;
+      std::vector<double> total_avg_plan_times;
+      std::vector<double> total_avg_path_quality;
 
       // For each trial
       for (std::size_t trial_id = 0; trial_id < TRIALS_PER_MAP; ++trial_id)
@@ -534,7 +541,7 @@ public:
             usleep(0.1*1000000);
           }
 
-          if (!sparse_two_->checkSparseGraphOptimality())
+          if (!sparse_two_->checkGraphOptimality())
             OMPL_ERROR("SPARS2 failed optimality check");
         }
 
@@ -543,13 +550,17 @@ public:
         {
           total_edges.push_back(bolt_->getSparseGraph()->getNumEdges());
           total_vertices.push_back(bolt_->getSparseGraph()->getNumRealVertices());
-          total_times.push_back(bolt_->getSparseGenerator()->getLastGraphGenerationTime());
+          total_gen_times.push_back(bolt_->getSparseGenerator()->getLastGraphGenerationTime());
+          total_avg_plan_times.push_back(bolt_->getSparseGenerator()->getAvgPlanTime());
+          total_avg_path_quality.push_back(bolt_->getSparseGenerator()->getAvgPathQuality());
         }
         else // SPARS2
         {
           total_edges.push_back(sparse_two_->getNumEdges());
           total_vertices.push_back(sparse_two_->milestoneCount());
-          total_times.push_back(sparse_two_->getLastGraphGenerationTime());
+          total_gen_times.push_back(sparse_two_->getLastGraphGenerationTime());
+          total_avg_plan_times.push_back(sparse_two_->getAvgPlanTime());
+          total_avg_path_quality.push_back(sparse_two_->getAvgPathQuality());
         }
 
         if (!ros::ok())
@@ -568,7 +579,9 @@ public:
 
       std::pair<double,double> edge_data = getMeanStdDev(total_edges);
       std::pair<double,double> vertex_data = getMeanStdDev(total_vertices);
-      std::pair<double,double> time_data = getMeanStdDev(total_times);
+      std::pair<double,double> gen_time_data = getMeanStdDev(total_gen_times);
+      std::pair<double,double> avg_plan_time_data = getMeanStdDev(total_avg_plan_times);
+      std::pair<double,double> avg_path_quality_data = getMeanStdDev(total_avg_path_quality);
 
       std::string planner_name = "Spars2";
       if (planner_name_ == BOLT)
@@ -581,8 +594,12 @@ public:
            << edge_data.second << ", "
            << vertex_data.first << ", "
            << vertex_data.second << ", "
-           << time_data.first << ", "
-           << time_data.second << "\", \",\")";
+           << gen_time_data.first << ", "
+           << gen_time_data.second << ", "
+           << avg_plan_time_data.first << ", "
+           << avg_plan_time_data.second << ", "
+           << avg_path_quality_data.first << ", "
+           << avg_path_quality_data.second << "\", \",\")";
       // clang-format on
 
       // Save log
@@ -591,6 +608,7 @@ public:
       // Output to console
       BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
       BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
+      BOLT_CYAN(0, true, "High Level Log:");
       BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
       BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
       std::cout << high_level_log.back() << std::endl;
@@ -1530,6 +1548,8 @@ private:
   bool display_disjoint_sets_;
   bool benchmark_performance_;
   bool sweep_spars_maps_;
+  std::size_t sweep_map_start_;
+  std::size_t sweep_map_end_;
 
   // Type of planner
   std::string experience_planner_;

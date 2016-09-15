@@ -227,7 +227,7 @@ void SparseGenerator::createSPARS()
 
   // Check optimality of graph
   if (verifyGraphProperties_)
-    checkSparseGraphOptimality(indent);
+    checkGraphOptimality(indent);
 
   OMPL_INFORM("Finished creating sparse database");
 }
@@ -536,7 +536,7 @@ void SparseGenerator::findGraphNeighbors(CandidateData &candidateD, double dista
   // Now that we got the neighbors from the NN, we must remove any we can't see
   for (std::size_t i = 0; i < candidateD.graphNeighborhood_.size(); ++i)
   {
-    SparseVertex v2 = candidateD.graphNeighborhood_[i];
+    const SparseVertex &v2 = candidateD.graphNeighborhood_[i];
 
     // Don't collision check if they are the same state
     if (candidateD.state_ != sg_->getState(v2))
@@ -557,9 +557,9 @@ void SparseGenerator::findGraphNeighbors(CandidateData &candidateD, double dista
                                     << " | Visible neighborhood: " << candidateD.visibleNeighborhood_.size());
 }
 
-bool SparseGenerator::checkSparseGraphOptimality(std::size_t indent)
+bool SparseGenerator::checkGraphOptimality(std::size_t indent)
 {
-  BOLT_FUNC(indent, true, "checkSparseGraphOptimality()");
+  BOLT_FUNC(indent, true, "checkGraphOptimality()");
 
   std::size_t numTests = 1000;
   std::size_t numFailedPlans = 0;
@@ -574,6 +574,8 @@ bool SparseGenerator::checkSparseGraphOptimality(std::size_t indent)
   {
     if (visual_->viz1()->shutdownRequested())
       break;
+
+    time::point startTime = time::now(); // Benchmark
 
     // Choose random start and goal state that has a nearest neighbor
     std::vector<CandidateData> endPoints(2);
@@ -631,11 +633,15 @@ bool SparseGenerator::checkSparseGraphOptimality(std::size_t indent)
       sg_->visualizeDatabaseCoverage_ = true;
       sg_->displayDatabase();
 
-      // visual_->viz1()->spin();
+      visual_->viz1()->spin();
       // exit(0);
       numFailedPlans++;
       continue;
     }
+
+    double duration = time::seconds(time::now() - startTime);
+    //OMPL_INFORM("PLANNING took %f seconds", duration); // Benchmark
+    avgPlanTime_.push_back(duration);
 
     // If path found (same connected component) sum up total length
     geometric::PathGeometric geometricSolution(si_);
@@ -650,6 +656,14 @@ bool SparseGenerator::checkSparseGraphOptimality(std::size_t indent)
     bool showEveryPath = false;
     if (showEveryPath)
     {
+      // Visualize actual and snapped states
+      visual_->viz3()->deleteAllMarkers();
+      visual_->viz3()->state(actualStart, tools::LARGE, tools::RED, 0);
+      visual_->viz3()->state(actualGoal, tools::LARGE, tools::GREEN, 0);
+      visual_->viz3()->state(sg_->getState(start), tools::LARGE, tools::BLACK, 0);
+      visual_->viz3()->state(sg_->getState(goal), tools::LARGE, tools::BLACK, 0);
+      visual_->viz3()->trigger();
+
       visual_->viz2()->deleteAllMarkers();
       visual_->viz2()->path(&geometricSolution, tools::SMALL, tools::RED);
       visual_->viz2()->path(smoothedPathPtr, tools::MEDIUM, tools::GREEN);
@@ -660,11 +674,17 @@ bool SparseGenerator::checkSparseGraphOptimality(std::size_t indent)
     // Calculate theoretical guarantees
     double optimalLength = smoothedPathPtr->length();
     double sparseLength = geometricSolution.length();
-    double theoryLength = sparseCriteria_->getStretchFactor() * optimalLength + std::numeric_limits<double>::epsilon(); // + 4 * sparseCriteria_->getSparseDelta();
+    double theoryLength = sparseCriteria_->getStretchFactor() * optimalLength
+      + 4 * sparseCriteria_->getSparseDelta();
     double percentOfMaxAllows = sparseLength / theoryLength * 100.0;
 
-    bool show = sparseLength >= theoryLength || vGuarantees_;
+    // Save path quality
+    double pathQuality = optimalLength / sparseLength;
+    //BOLT_DEBUG(indent, true, "pathQuality: " << pathQuality << " optimalLength: " << optimalLength << " sparseLength: " << sparseLength);
+    avgPathQuality_.push_back(pathQuality);
 
+    // Output to console
+    bool show = sparseLength >= theoryLength || vGuarantees_;
     BOLT_DEBUG(indent, show, "-----------------------------------------");
     BOLT_DEBUG(indent, show, "Checking Asymptotic Optimality Guarantees");
     BOLT_DEBUG(indent + 2, show, "Raw Path Length:         " << sparseLength);
@@ -673,6 +693,8 @@ bool SparseGenerator::checkSparseGraphOptimality(std::size_t indent)
     BOLT_DEBUG(indent + 2, show, "Theoretical Path Length: " << theoryLength);
     BOLT_DEBUG(indent + 2, show, "Stretch Factor t:        " << sparseCriteria_->getStretchFactor());
     BOLT_DEBUG(indent + 2, show, "Sparse Delta:            " << sparseCriteria_->getSparseDelta());
+
+    BOLT_ASSERT(sparseLength > std::numeric_limits<double>::epsilon(), "Path is zero length");
 
     if (sparseLength >= theoryLength)
     {
@@ -697,6 +719,8 @@ bool SparseGenerator::checkSparseGraphOptimality(std::size_t indent)
       BOLT_GREEN(indent + 2, show, "Asymptotic optimality guarantee maintained");
     BOLT_WARN(indent + 2, show, "Percent of max allowed:  " << percentOfMaxAllows << " %");
     BOLT_DEBUG(indent, show, "-----------------------------------------");
+
+    //visual_->waitForUserFeedback("next problem");
   }
 
   // Summary
@@ -773,11 +797,7 @@ bool SparseGenerator::convertVertexPathToStatePath(std::vector<SparseVertex> &ve
 {
   BOLT_ASSERT(!vertexPath.empty(), "Vertex path is empty");
 
-  // Add original start if it is different than the first state
-  // if (!si_->getStateSpace()->equalStates(actualStart, sg_->getState(vertexPath.back())))
-  // {
-  //   geometricSolution.append(actualStart);
-  // }
+  geometricSolution.append(actualStart);
 
   // Reverse the vertexPath and convert to state path
   for (std::size_t i = vertexPath.size(); i > 0; --i)
@@ -785,11 +805,7 @@ bool SparseGenerator::convertVertexPathToStatePath(std::vector<SparseVertex> &ve
     geometricSolution.append(sg_->getState(vertexPath[i - 1]));
   }
 
-  // Add original goal if it is different than the last state
-  // if (!si_->getStateSpace()->equalStates(actualGoal, sg_->getState(vertexPath.front())))
-  // {
-  //   geometricSolution.append(actualGoal);
-  // }
+  geometricSolution.append(actualGoal);
 
   return true;
 }

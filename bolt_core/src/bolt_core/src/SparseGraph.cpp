@@ -87,7 +87,7 @@ SparseGraph::SparseGraph(base::SpaceInformationPtr si, VisualizerPtr visual)
   , vertexStateProperty_(boost::get(vertex_state_t(), g_))
   , vertexTypeProperty_(boost::get(vertex_type_t(), g_))
   , vertexInterfaceProperty_(boost::get(vertex_interface_data_t(), g_))
-  , vertexPopularity_(boost::get(vertex_popularity_t(), g_))
+    //, vertexPopularity_(boost::get(vertex_popularity_t(), g_))
   // Disjoint set accessors
   , disjointSets_(boost::get(boost::vertex_rank, g_), boost::get(boost::vertex_predecessor, g_))
 {
@@ -308,9 +308,11 @@ bool SparseGraph::astarSearch(const SparseVertex start, const SparseVertex goal,
   bool foundGoal = false;
   double *vertexDistances = new double[getNumVertices()];
 
+#ifndef NDEBUG
   // Reset statistics
   numNodesOpened_ = 0;
   numNodesClosed_ = 0;
+#endif
 
   if (visualizeAstar_)
   {
@@ -319,14 +321,14 @@ bool SparseGraph::astarSearch(const SparseVertex start, const SparseVertex goal,
 
   try
   {
-    double popularityBias = 0;
-    bool popularityBiasEnabled = false;
+    //double popularityBias = 0;
+    //bool popularityBiasEnabled = false;
     boost::astar_search(g_,                                                              // graph
                         start,                                                           // start state
                         boost::bind(&otb::SparseGraph::astarHeuristic, this, _1, goal),  // the heuristic
                         // ability to disable edges (set cost to inifinity):
-                        boost::weight_map(SparseEdgeWeightMap(g_, edgeCollisionStatePropertySparse_, popularityBias,
-                                                              popularityBiasEnabled))
+                        boost::weight_map(SparseEdgeWeightMap(g_, edgeCollisionStatePropertySparse_))
+                        //popularityBias, popularityBiasEnabled))
                             .predecessor_map(vertexPredecessors)
                             .distance_map(&vertexDistances[0])
                             .visitor(SparsestarVisitor(goal, this)));
@@ -351,20 +353,24 @@ bool SparseGraph::astarSearch(const SparseVertex start, const SparseVertex goal,
 
   distance = vertexDistances[goal];
 
+#ifndef NDEBUG
   // the custom exception from SparsestarVisitor
   BOLT_DEBUG(indent, vSearch_, "AStar found solution. Distance to goal: " << vertexDistances[goal]);
+
   BOLT_DEBUG(indent, vSearch_, "Number nodes opened: " << numNodesOpened_
              << ", Number nodes closed: " << numNodesClosed_);
 
   if (std::isinf(vertexDistances[goal]))  // TODO(davetcoleman): test that this works
   {
     throw Exception(name_, "Distance to goal is infinity");
+
     // Unload
     delete[] vertexPredecessors;
     delete[] vertexDistances;
 
     return false;
   }
+#endif
 
   // Only clear the vertexPath after we know we have a new solution, otherwise it might have a good
   // previous one
@@ -373,9 +379,7 @@ bool SparseGraph::astarSearch(const SparseVertex start, const SparseVertex goal,
   // Trace back the shortest path in reverse and only save the states
   SparseVertex v;
   for (v = goal; v != vertexPredecessors[v]; v = vertexPredecessors[v])
-  {
     vertexPath.push_back(v);
-  }
 
   // Add the start state to the path, unless this path is just one vertex long and the start==goal
   if (v != goal)
@@ -383,17 +387,8 @@ bool SparseGraph::astarSearch(const SparseVertex start, const SparseVertex goal,
     vertexPath.push_back(v);
   }
 
+#ifndef NDEBUG
   BOLT_ASSERT(vertexPath.size(), "Vertex path is empty! " << vertexPath.size());
-
-  // TODO: remove to speed up
-  if (!si_->getStateSpace()->equalStates(getState(vertexPath.back()), getState(start)))
-  {
-    BOLT_ERROR(indent, true, "Start states are not the same");
-    // Debug
-    for (auto v2 : vertexPath)
-      si_->printState(getState(v2));
-  }
-
   // Ensure start and goal states are included in path
   BOLT_ASSERT(si_->getStateSpace()->equalStates(getState(vertexPath.back()), getState(start)), "Start states are "
               "not the same");
@@ -417,6 +412,7 @@ bool SparseGraph::astarSearch(const SparseVertex start, const SparseVertex goal,
     }
     visual_->viz4()->trigger();
   }
+#endif
 
   // Unload
   delete[] vertexPredecessors;
@@ -437,9 +433,11 @@ bool SparseGraph::astarSearchLength(SparseVertex start, SparseVertex goal, doubl
   double *vertexDistances = new double[getNumVertices()];
   distance = std::numeric_limits<double>::infinity();
 
+#ifndef NDEBUG
   // Reset statistics
   numNodesOpened_ = 0;
   numNodesClosed_ = 0;
+#endif
 
   if (visualizeAstar_)
   {
@@ -448,14 +446,14 @@ bool SparseGraph::astarSearchLength(SparseVertex start, SparseVertex goal, doubl
 
   try
   {
-    double popularityBias = 0;  // TODO: remove this functionality
-    bool popularityBiasEnabled = false;
+    //double popularityBias = 0;  // TODO: remove this functionality
+    //bool popularityBiasEnabled = false;
     boost::astar_search(g_,                                                              // graph
                         start,                                                           // start state
                         boost::bind(&otb::SparseGraph::astarHeuristic, this, _1, goal),  // the heuristic
                         // ability to disable edges (set cost to inifinity):
-                        boost::weight_map(SparseEdgeWeightMap(g_, edgeCollisionStatePropertySparse_, popularityBias,
-                                                              popularityBiasEnabled))
+                        boost::weight_map(SparseEdgeWeightMap(g_, edgeCollisionStatePropertySparse_))
+                                                              //popularityBias, popularityBiasEnabled))
                             .predecessor_map(vertexPredecessors)
                             .distance_map(&vertexDistances[0])
                             .visitor(SparsestarVisitor(goal, this)));
@@ -481,7 +479,7 @@ double SparseGraph::astarHeuristic(SparseVertex a, SparseVertex b) const
   // Assume vertex 'a' is the one we care about its populariy
 
   // Get the classic distance
-  double dist = si_->distance(getState(a), getState(b));
+  //double dist = si_->distance(getState(a), getState(b));
 
   // if (false)  // method 1
   // {
@@ -526,7 +524,7 @@ double SparseGraph::astarHeuristic(SparseVertex a, SparseVertex b) const
 
   // std::cout << ", new distance: " << dist << std::endl;
 
-  return dist;
+  return si_->distance(getState(a), getState(b));
 }
 
 double SparseGraph::distanceFunction(SparseVertex a, SparseVertex b) const
@@ -770,7 +768,7 @@ SparseVertex SparseGraph::addVertex(base::State *state, const VertexType &type, 
   // Add properties
   vertexTypeProperty_[v] = type;
   vertexStateProperty_[v] = state;
-  vertexPopularity_[v] = MAX_POPULARITY_WEIGHT;  // 100 means the vertex is very unpopular
+  //vertexPopularity_[v] = MAX_POPULARITY_WEIGHT;  // 100 means the vertex is very unpopular
 
   // Clear all nearby interface data whenever a new vertex is added
   if (sparseCriteria_->getUseFourthCriteria())
@@ -845,7 +843,7 @@ SparseVertex SparseGraph::addVertexFromFile(base::State *state, const VertexType
   // Add properties
   vertexTypeProperty_[v] = type;
   vertexStateProperty_[v] = state;
-  vertexPopularity_[v] = MAX_POPULARITY_WEIGHT;  // 100 means the vertex is very unpopular
+  //vertexPopularity_[v] = MAX_POPULARITY_WEIGHT;  // 100 means the vertex is very unpopular
 
   // Connected component tracking
   if (sparseCriteria_->useConnectivityCriteria_)
@@ -1037,6 +1035,8 @@ SparseEdge SparseGraph::addEdge(SparseVertex v1, SparseVertex v2, EdgeType type,
 
 VizColors SparseGraph::edgeTypeToColor(EdgeType edgeType)
 {
+  return tools::BLUE; // match SPARS2
+
   switch (edgeType)
   {
     case eCONNECTIVITY:
@@ -1229,6 +1229,8 @@ void SparseGraph::visualizeVertex(SparseVertex v, const VertexType &type)
 
 tools::VizColors SparseGraph::vertexTypeToColor(VertexType type)
 {
+  return tools::BLACK; // match SPARS2
+
   switch (type)
   {
     case COVERAGE:
@@ -1259,12 +1261,6 @@ tools::VizColors SparseGraph::vertexTypeToColor(VertexType type)
 
 void SparseGraph::visualizeEdge(SparseEdge e, EdgeType type, std::size_t windowID)
 {
-  // TODO remove
-  // if (edgeWeightProperty_[e] <= sparseCriteria_->getDiscretization() * 2.1)
-  //   return;
-  // if (type != eCONNECTIVITY)
-  //   return;
-
   // Add edge
   SparseVertex v1 = boost::source(e, g_);
   SparseVertex v2 = boost::target(e, g_);
@@ -1429,6 +1425,7 @@ otb::SparsestarVisitor::SparsestarVisitor(SparseVertex goal, SparseGraph *parent
 {
 }
 
+#ifndef NDEBUG
 void otb::SparsestarVisitor::discover_vertex(SparseVertex v, const SparseAdjList &) const
 {
   // Statistics
@@ -1437,9 +1434,11 @@ void otb::SparsestarVisitor::discover_vertex(SparseVertex v, const SparseAdjList
   if (parent_->visualizeAstar_)
     parent_->getVisual()->viz4()->state(parent_->getState(v), tools::SMALL, tools::GREEN, 1);
 }
+#endif
 
 void otb::SparsestarVisitor::examine_vertex(SparseVertex v, const SparseAdjList &) const
 {
+#ifndef NDEBUG
   // Statistics
   parent_->recordNodeClosed();
 
@@ -1449,6 +1448,7 @@ void otb::SparsestarVisitor::examine_vertex(SparseVertex v, const SparseAdjList 
     parent_->getVisual()->viz4()->trigger();
     usleep(parent_->visualizeAstarSpeed_ * 1000000);
   }
+#endif
 
   if (v == goal_)
     throw FoundGoalException();

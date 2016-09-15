@@ -349,7 +349,7 @@ void ompl::geometric::SPARS2::constructRoadmap(const base::PlannerTerminationCon
         if (!sampler_->sample(qNew))
             continue;
 
-        findGraphNeighbors(qNew, graphNeighborhood, visibleNeighborhood);
+        findGraphNeighbors(qNew, sparseDelta_, graphNeighborhood, visibleNeighborhood);
 
         if (!checkAddCoverage(qNew, visibleNeighborhood))
             if (!checkAddConnectivity(qNew, visibleNeighborhood))
@@ -550,9 +550,11 @@ bool ompl::geometric::SPARS2::checkAddConnectivity(const base::State *qNew, std:
 bool ompl::geometric::SPARS2::checkAddInterface(const base::State *qNew, std::vector<Vertex> &graphNeighborhood,
                                                   std::vector<Vertex> &visibleNeighborhood)
 {
+  bool skipThis = false;
+
     // If we have more than 1 or 0 neighbors
     if (visibleNeighborhood.size() > 1)
-        if (graphNeighborhood[0] == visibleNeighborhood[0] && graphNeighborhood[1] == visibleNeighborhood[1])
+      if (skipThis || (graphNeighborhood[0] == visibleNeighborhood[0] && graphNeighborhood[1] == visibleNeighborhood[1]))
             // If our two closest neighbors don't share an edge
             if (!boost::edge(visibleNeighborhood[0], visibleNeighborhood[1], g_).second)
             {
@@ -679,12 +681,12 @@ void ompl::geometric::SPARS2::resetFailures()
     consecutiveFailures_ = 0;
 }
 
-void ompl::geometric::SPARS2::findGraphNeighbors(base::State *st, std::vector<Vertex> &graphNeighborhood,
+void ompl::geometric::SPARS2::findGraphNeighbors(base::State *st, double dist, std::vector<Vertex> &graphNeighborhood,
                                                    std::vector<Vertex> &visibleNeighborhood)
 {
     visibleNeighborhood.clear();
     stateProperty_[queryVertex_] = st;
-    nn_->nearestR(queryVertex_, sparseDelta_, graphNeighborhood);
+    nn_->nearestR(queryVertex_, dist, graphNeighborhood);
     stateProperty_[queryVertex_] = nullptr;
 
     // Now that we got the neighbors from the NN, we must remove any we can't see
@@ -917,7 +919,7 @@ void ompl::geometric::SPARS2::connectGuards(Vertex v, Vertex vp)
     const Graph::edge_property_type properties(weight);
 
     // Visualize edge
-    visual_->viz1()->edge(stateProperty_[v], stateProperty_[vp], tools::MEDIUM, tools::ORANGE);
+    visual_->viz1()->edge(stateProperty_[v], stateProperty_[vp], tools::MEDIUM, tools::BLUE);
 
     //std::lock_guard<std::mutex> _(graphMutex_);
     boost::add_edge(v, vp, properties, g_);
@@ -960,7 +962,9 @@ ompl::base::PathPtr ompl::geometric::SPARS2::constructSolution(const Vertex star
     {
         auto p(std::make_shared<PathGeometric>(si_));
         for (Vertex pos = goal; prev[pos] != pos; pos = prev[pos])
+        {
             p->append(stateProperty_[pos]);
+        }
         p->append(stateProperty_[start]);
         p->reverse();
 
@@ -1018,9 +1022,10 @@ void ompl::geometric::SPARS2::printDebug(std::ostream &out) const
     out << "    Consecutive Failures: " << consecutiveFailures_ << std::endl;
 }
 
-bool ompl::geometric::SPARS2::checkSparseGraphOptimality()
+bool ompl::geometric::SPARS2::checkGraphOptimality()
 {
-    OMPL_INFORM("checkSparseGraphOptimality()");
+    OMPL_INFORM("checkGraphOptimality()");
+    std::size_t indent = 0;
 
     std::size_t numTests = 1000;
     std::size_t numFailedPlans = 0;
@@ -1035,6 +1040,8 @@ bool ompl::geometric::SPARS2::checkSparseGraphOptimality()
     {
         if (visual_->viz1()->shutdownRequested())
             break;
+
+        time::point startTime = time::now(); // Benchmark
 
         /* The whole neighborhood set which has been most recently computed */
         std::vector<std::vector<Vertex>> graphNeighborhood(2);
@@ -1056,10 +1063,10 @@ bool ompl::geometric::SPARS2::checkSparseGraphOptimality()
                 throw Exception(name_, "No valid sample found");
 
             // Allow edges to be 5% longer than SparseDelta
-            //const double dist = sparseDelta_ * 1.05;
+            const double dist = sparseDelta_ * 1.05;
 
             // Find nearest neighbor
-            findGraphNeighbors(state, graphNeighborhood[i], visibleNeighborhood[i]);
+            findGraphNeighbors(state, dist, graphNeighborhood[i], visibleNeighborhood[i]);
 
             // Check if neighbor exists - should always have at least one neighbor otherwise graph lacks coverage
             if (visibleNeighborhood[i].empty())
@@ -1069,6 +1076,7 @@ bool ompl::geometric::SPARS2::checkSparseGraphOptimality()
               OMPL_ERROR("No neighbors");
               for (std::size_t i = 0; i < 5; ++i)
                 OMPL_ERROR("-----------------------------------------");
+              throw Exception(name_, "no neighbors");
               return false;
             }
 
@@ -1089,7 +1097,7 @@ bool ompl::geometric::SPARS2::checkSparseGraphOptimality()
         // Do not search astar if start goal are the same
         if (si_->getStateSpace()->equalStates(stateProperty_[start], stateProperty_[goal]))
         {
-            //OMPL_INFORM("start and goal are the same");
+          //OMPL_INFORM("start and goal are the same");
             auto p(std::make_shared<PathGeometric>(si_));
             p->append(stateProperty_[start]);
             vertexPath = p;
@@ -1126,83 +1134,105 @@ bool ompl::geometric::SPARS2::checkSparseGraphOptimality()
             exit(0);
             continue;
         }
+        double duration = time::seconds(time::now() - startTime);
+        //OMPL_INFORM("PLANNING took %f seconds", duration); // Benchmark
+        avgPlanTime_.push_back(duration);
 
         // If path found (same connected component) sum up total length
-        geometric::PathGeometric *geometricSolutionPtr = static_cast<geometric::PathGeometric *>(vertexPath.get());
-        geometric::PathGeometric geometricSolution = *geometricSolutionPtr;
-
+        geometric::PathGeometric geometricSolution(si_);
         //convertVertexPathToStatePath(vertexPath, actualStart, actualGoal, geometricSolution);
+        {
+          geometric::PathGeometric *vertexPathGeometric = static_cast<geometric::PathGeometric *>(vertexPath.get());
+          geometricSolution.append(actualGoal);
+
+          // Reverse the vertexPath and convert to state path
+          for (std::size_t i = vertexPathGeometric->getStateCount(); i > 0; --i)
+            geometricSolution.append(vertexPathGeometric->getState(i - 1));
+
+          geometricSolution.append(actualStart);
+        }
 
         // Smooth path to find the "optimal" path
         geometric::PathGeometric smoothedPath = geometricSolution;
         geometric::PathGeometric *smoothedPathPtr = &smoothedPath;
-
-        psimp_->reduceVertices(smoothedPath, 10);
-        psimp_->shortcutPath(smoothedPath, 50);
-        //sg_->smoothMax(smoothedPathPtr, indent);
+        sparseSmoother_->smoothMax(smoothedPathPtr, indent);
 
         // Show the two paths
         bool showEveryPath = false;
         if (showEveryPath)
         {
-            visual_->viz2()->deleteAllMarkers();
-            visual_->viz2()->path(&geometricSolution, tools::SMALL, tools::RED);
-            visual_->viz2()->path(smoothedPathPtr, tools::MEDIUM, tools::GREEN);
-            visual_->viz2()->trigger();
-            usleep(0.001 * 1000000);
+          // Visualize actual and snapped states
+          visual_->viz3()->deleteAllMarkers();
+          visual_->viz3()->state(actualStart, tools::LARGE, tools::RED, 0);
+          visual_->viz3()->state(actualGoal, tools::LARGE, tools::GREEN, 0);
+          visual_->viz3()->state(stateProperty_[start], tools::LARGE, tools::BLACK, 0);
+          visual_->viz3()->state(stateProperty_[goal], tools::LARGE, tools::BLACK, 0);
+          visual_->viz3()->trigger();
+
+          visual_->viz2()->deleteAllMarkers();
+          visual_->viz2()->path(&geometricSolution, tools::SMALL, tools::RED);
+          visual_->viz2()->path(smoothedPathPtr, tools::MEDIUM, tools::GREEN);
+          visual_->viz2()->trigger();
+          usleep(0.001 * 1000000);
         }
 
         // calculate theoretical guarantees
         double optimalLength = smoothedPathPtr->length();
         double sparseLength = geometricSolution.length();
-        double theoryLength = stretchFactor_ * optimalLength + std::numeric_limits<double>::epsilon(); // + 4 * sparseCriteria_->getSparseDelta();
+        double theoryLength = stretchFactor_ * optimalLength + 4 * sparseDelta_;
         double percentOfMaxAllows = sparseLength / theoryLength * 100.0;
 
-        bool show = sparseLength >= theoryLength;
+        // Save path quality
+        double pathQuality = optimalLength / sparseLength;
+        //BOLT_DEBUG(indent, true, "pathQuality: " << pathQuality << " optimalLength: " << optimalLength << " sparseLength: " << sparseLength);
+        avgPathQuality_.push_back(pathQuality);
 
-        if (show)
+        // Output to console
+        bool show = sparseLength >= theoryLength || false;
+        BOLT_DEBUG(indent, show, "-----------------------------------------");
+        BOLT_DEBUG(indent, show, "Checking Asymptotic Optimality Guarantees");
+        BOLT_DEBUG(indent + 2, show, "Raw Path Length:         " << sparseLength);
+        BOLT_DEBUG(indent + 2, show, "Smoothed Path Length:    " << optimalLength);
+        BOLT_DEBUG(indent + 2, show, "Smoothed Path States:    " << smoothedPathPtr->getStateCount());
+        BOLT_DEBUG(indent + 2, show, "Theoretical Path Length: " << theoryLength);
+        BOLT_DEBUG(indent + 2, show, "Stretch Factor t:        " << stretchFactor_);
+        BOLT_DEBUG(indent + 2, show, "Sparse Delta:            " << sparseDelta_);
+
+        BOLT_ASSERT(sparseLength > std::numeric_limits<double>::epsilon(), "Path is zero length");
+
+        if (sparseLength >= theoryLength)
         {
-            std::cout << "-----------------------------------------" << std::endl;
-            std::cout << "Checking Asymptotic Optimality Guarantees" << std::endl;
-            std::cout << "Raw Path Length:         " << sparseLength << std::endl;
-            std::cout << "Smoothed Path Length:    " << optimalLength << std::endl;
-            std::cout << "Smoothed Path States:    " << smoothedPathPtr->getStateCount() << std::endl;
-            std::cout << "Theoretical Path Length: " << theoryLength << std::endl;
-            std::cout << "Stretch Factor t:        " << stretchFactor_ << std::endl;
-            std::cout << "Sparse Delta:            " << sparseDelta_ << std::endl;
+          BOLT_ERROR(indent + 2, true, "Asymptotic optimality guarantee VIOLATED");
 
-            if (sparseLength >= theoryLength)
-            {
-                OMPL_ERROR("Asymptotic optimality guarantee VIOLATED");
+          // Show the two paths
+          visual_->viz2()->deleteAllMarkers();
+          visual_->viz2()->path(&geometricSolution, tools::SMALL, tools::RED);
+          visual_->viz2()->path(smoothedPathPtr, tools::MEDIUM, tools::GREEN);
+          visual_->viz2()->trigger();
+          usleep(0.001 * 1000000);
 
-                // Show the two paths
-                visual_->viz2()->deleteAllMarkers();
-                visual_->viz2()->path(&geometricSolution, tools::SMALL, tools::RED);
-                visual_->viz2()->path(smoothedPathPtr, tools::MEDIUM, tools::GREEN);
-                visual_->viz2()->trigger();
-                usleep(0.001 * 1000000);
+          // Show database with visibility regions (coverage)
+          // sg_->visualizeDatabaseCoverage_ = true;
+          // sg_->displayDatabase();
 
-                // Show database with visibility regions (coverage)
-                // sg_->visualizeDatabaseCoverage_ = true;
-                // sg_->displayDatabase();
-
-                visual_->viz1()->spin();
-                exit(0);
-                return false;
-            }
-            else
-                OMPL_INFORM("Asymptotic optimality guarantee maintained");
-            std::cout << "Percent of max allowed:  " << percentOfMaxAllows << " %" << std::endl;
-            std::cout << "-----------------------------------------" << std::endl;
+          visual_->viz1()->spin();
+          exit(0);
+          return false;
         }
+        else
+          BOLT_GREEN(indent + 2, show, "Asymptotic optimality guarantee maintained");
+        BOLT_WARN(indent + 2, show, "Percent of max allowed:  " << percentOfMaxAllows << " %");
+        BOLT_DEBUG(indent, show, "-----------------------------------------");
+
+        //visual_->waitForUserFeedback("next problem");
     }
 
     // Summary
-    std::cout <<  "-----------------------------------------" << std::endl;
-    std::cout <<  "Checking Asymptotic Optimality Guarantees" << std::endl;
-    std::cout <<  "Total tests:               " << numTests << std::endl;
-    std::cout <<  "Number failed plans:       " << numFailedPlans << std::endl;
-    std::cout <<  "-----------------------------------------" << std::endl;
+    BOLT_DEBUG(indent, 1, "-----------------------------------------");
+    BOLT_DEBUG(indent, 1, "Checking Asymptotic Optimality Guarantees");
+    BOLT_DEBUG(indent + 2, 1, "Total tests:               " << numTests);
+    BOLT_DEBUG(indent + 2, 1, "Number failed plans:       " << numFailedPlans);
+    BOLT_DEBUG(indent, 1, "-----------------------------------------");
 
     return true;
 }

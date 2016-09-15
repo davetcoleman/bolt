@@ -392,7 +392,7 @@ namespace ompl
                 visual_ = visual;
             }
 
-            bool checkSparseGraphOptimality();
+            bool checkGraphOptimality();
 
             double getLastGraphGenerationTime()
             {
@@ -402,6 +402,22 @@ namespace ompl
           void setClearance(double clearance)
           {
             clearance_ = clearance;
+          }
+
+          double getAvgPlanTime()
+          {
+            double sum = std::accumulate(avgPlanTime_.begin(), avgPlanTime_.end(), 0.0);
+            double mean = sum / avgPlanTime_.size();
+            avgPlanTime_.clear(); // reset for next run
+            return mean;
+          }
+
+          double getAvgPathQuality()
+          {
+            double sum = std::accumulate(avgPathQuality_.begin(), avgPathQuality_.end(), 0.0);
+            double mean = sum / avgPathQuality_.size();
+            avgPathQuality_.clear(); // reset for next run
+            return mean;
           }
 
         protected:
@@ -431,7 +447,7 @@ namespace ompl
             void resetFailures();
 
             /** \brief Finds visible nodes in the graph near st */
-            void findGraphNeighbors(base::State *st, std::vector<Vertex> &graphNeighborhood,
+            void findGraphNeighbors(base::State *st, double dist, std::vector<Vertex> &graphNeighborhood,
                                     std::vector<Vertex> &visibleNeighborhood);
 
             /** \brief Approaches the graph from a given vertex */
@@ -603,6 +619,10 @@ namespace ompl
 
             /** \brief Class for smoothing paths in ideal way for SPARS criteria */
             ompl::tools::bolt::SparseSmootherPtr sparseSmoother_;
+
+          // Benchmarking
+          std::vector<double> avgPlanTime_;
+          std::vector<double> avgPathQuality_;
         };
     }
 }

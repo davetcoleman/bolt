@@ -26,7 +26,7 @@ catkin_package(
 )
 
 # User debug code only if not release
-add_definitions(-DENABLE_DEBUG_MACRO)
+#add_definitions(-DENABLE_DEBUG_MACRO)
 
 ###########
 ## Build ##

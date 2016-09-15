@@ -118,7 +118,7 @@ public:
   /**
    * \brief Tests for ensuring the generated roadmap obeys the theoretical guarantees
    */
-  bool checkSparseGraphOptimality(std::size_t indent);
+  bool checkGraphOptimality(std::size_t indent);
 
   /** \brief Helper for debugging specific issue */
   void debugNoNeighbors(CandidateData &point, std::size_t indent);
@@ -148,6 +148,22 @@ public:
   CandidateQueuePtr getCandidateQueue()
   {
     return candidateQueue_;
+  }
+
+  double getAvgPlanTime()
+  {
+    double sum = std::accumulate(avgPlanTime_.begin(), avgPlanTime_.end(), 0.0);
+    double mean = sum / avgPlanTime_.size();
+    avgPlanTime_.clear(); // reset for next run
+    return mean;
+  }
+
+  double getAvgPathQuality()
+  {
+    double sum = std::accumulate(avgPathQuality_.begin(), avgPathQuality_.end(), 0.0);
+    double mean = sum / avgPathQuality_.size();
+    avgPathQuality_.clear(); // reset for next run
+    return mean;
   }
 
 protected:
@@ -182,9 +198,12 @@ protected:
   time::point timeRandSamplesStarted_;  // calculate rate at which the graph is being built
   time::point timeDiscretizeAndRandomStarted_;
 
+  // All for benchmarking / testing
   std::vector<std::string> stringLog_;
   std::string mapName_; // meta data for the logging
   double lastGraphGenerationTime_ = 0; // store how long it took to generate the last SPARS2 graph
+  std::vector<double> avgPlanTime_;
+  std::vector<double> avgPathQuality_;
 
 public:
   bool verbose_ = false;

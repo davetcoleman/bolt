@@ -492,7 +492,7 @@ protected:
   boost::property_map<SparseAdjList, vertex_interface_data_t>::type vertexInterfaceProperty_;
 
   /** \brief Access to the popularity of each node */
-  boost::property_map<SparseAdjList, vertex_popularity_t>::type vertexPopularity_;
+  //boost::property_map<SparseAdjList, vertex_popularity_t>::type vertexPopularity_;
 
   /** \brief Data structure that maintains the connected components */
   SparseDisjointSetType disjointSets_;
@@ -585,7 +585,10 @@ public:
    * \param v current Vertex
    * \param g graph we are searching on
    */
+
+#ifndef NDEBUG
   void discover_vertex(SparseVertex v, const SparseAdjList& g) const;
+#endif
 
   /**
    * \brief Check if we have arrived at the goal.

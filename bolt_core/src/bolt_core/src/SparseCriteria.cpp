@@ -341,8 +341,9 @@ bool SparseCriteria::checkAddInterface(CandidateData &candidateD, std::size_t in
   const SparseVertex &v1 = candidateD.visibleNeighborhood_[0];
   const SparseVertex &v2 = candidateD.visibleNeighborhood_[1];
 
-  // SKIP: Ensure the two closest nodes are also visible
-  if (!(candidateD.graphNeighborhood_[0] == v1 && candidateD.graphNeighborhood_[1] == v2))
+  // Ensure the two closest nodes are also visible
+  bool skipThis = true; // when true, is a new experimental feature
+  if (!skipThis && !(candidateD.graphNeighborhood_[0] == v1 && candidateD.graphNeighborhood_[1] == v2))
   {
     BOLT_DEBUG(indent, vCriteria_, "NOT adding because two closest nodes are not visible to each other");
 

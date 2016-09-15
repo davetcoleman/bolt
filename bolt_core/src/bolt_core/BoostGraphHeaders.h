@@ -142,10 +142,10 @@ struct vertex_type_t
   typedef boost::vertex_property_tag kind;
 };
 
-struct vertex_popularity_t
-{
-  typedef boost::vertex_property_tag kind;
-};
+// struct vertex_popularity_t
+// {
+//   typedef boost::vertex_property_tag kind;
+// };
 
 ////////////////////////////////////////////////////////////////////////////////////////
 // Edge properties
@@ -206,9 +206,9 @@ typedef boost::property<vertex_state_t, base::State*, // State
         boost::property<boost::vertex_predecessor_t, VertexIndexType, // Disjoint Sets
         boost::property<boost::vertex_rank_t, VertexIndexType, // Disjoint Sets
         boost::property<vertex_type_t, VertexType, // Sparse Type
-        boost::property<vertex_popularity_t, double, // Popularity
+        //boost::property<vertex_popularity_t, double, // Popularity
         boost::property<vertex_interface_data_t, InterfaceHash // Sparse meta data
-        > > > > > > SparseVertexProperties;
+        > > > > > SparseVertexProperties;
 // clang-format on
 
 /** Wrapper for the double assigned to an edge as its weight property. */
@@ -382,8 +382,8 @@ class SparseEdgeWeightMap
 private:
   const SparseAdjList& g_;  // Graph used
   const SparseEdgeCollisionStateMap& collisionStates_;
-  const double popularityBias_;
-  const bool popularityBiasEnabled_;
+  //const double popularityBias_;
+  //const bool popularityBiasEnabled_;
 
 public:
   /** Map key type. */
@@ -399,12 +399,12 @@ public:
    * Construct map for certain constraints.
    * \param graph         Graph to use
    */
-  SparseEdgeWeightMap(const SparseAdjList& graph, const SparseEdgeCollisionStateMap& collisionStates,
-                      const double& popularityBias, const bool popularityBiasEnabled)
+  SparseEdgeWeightMap(const SparseAdjList& graph, const SparseEdgeCollisionStateMap& collisionStates)
+    //const double& popularityBias, const bool popularityBiasEnabled)
     : g_(graph)
     , collisionStates_(collisionStates)
-    , popularityBias_(popularityBias)
-    , popularityBiasEnabled_(popularityBiasEnabled)
+      //, popularityBias_(popularityBias)
+      //, popularityBiasEnabled_(popularityBiasEnabled)
   {
   }
 
@@ -419,20 +419,20 @@ public:
     if (collisionStates_[e] == IN_COLLISION)
       return std::numeric_limits<double>::infinity();
 
-    double weight;
-    if (popularityBiasEnabled_)
-    {
-      // Maximum cost an edge can have based on popularity
-      const double MAX_POPULARITY_WEIGHT = 100.0;
+    //double weight;
+    // if (popularityBiasEnabled_)
+    // {
+    //   // Maximum cost an edge can have based on popularity
+    //   const double MAX_POPULARITY_WEIGHT = 100.0;
 
-      // static const double popularityBias = 10;
-      weight = boost::get(boost::edge_weight, g_, e) / MAX_POPULARITY_WEIGHT * popularityBias_;
-      std::cout << "getting popularity weight of edge " << e << " with value " << weight << std::endl;
-    }
-    else
-    {
-      weight = boost::get(boost::edge_weight, g_, e);
-    }
+    //   // static const double popularityBias = 10;
+    //   weight = boost::get(boost::edge_weight, g_, e) / MAX_POPULARITY_WEIGHT * popularityBias_;
+    //   std::cout << "getting popularity weight of edge " << e << " with value " << weight << std::endl;
+    // }
+    // else
+    // {
+    //weight = boost::get(boost::edge_weight, g_, e);
+      //}
 
     // Method 3 - less optimal but faster planning time
     // const double weighted_astar = 0.8;
@@ -440,7 +440,8 @@ public:
 
     // std::cout << "getting weight of edge " << e << " with value " << weight << std::endl;
 
-    return weight;
+    //return weight;
+    return boost::get(boost::edge_weight, g_, e);
   }
 };
 

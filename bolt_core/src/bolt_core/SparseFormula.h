@@ -103,8 +103,11 @@ struct SparseFormula
       BOLT_DEBUG(indent, 1, "Auto settings stretch factor because input value was 0");
 
       // ND: August 4th
-      std::cout << "dim: " << dim << std::endl;
       stretchFactor_ = dim * discretization_ / (discretization_ - 2 * denseDelta_);
+
+      // Sept 14th
+      // TODO: test new version with constant 4!!
+      //stretchFactor_ = dim * discretization_ / (discretization_ - 4 * denseDelta_);
     }
     else
       stretchFactor_ = stretchFactor;

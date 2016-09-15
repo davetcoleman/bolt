@@ -12,6 +12,10 @@ bolt_hilgendorf:
   run_problems: false # do plans?
   auto_run: true # do not wait to move interactive markers. note: 'autonomous' setting must be 'false'
 
+  sweep_spars_maps: true
+  sweep_map_start: 1 # Base 1, not 0
+  sweep_map_end: 1 # Base 1, not 0
+
   # run type
   headless: false
   planning_runs: 10
@@ -106,6 +110,7 @@ sparse_generator:
   save_interval: 1000 # how often to save during random sampling
   verbose:
     verbose: true
+    guarantees: true # show data about the optimiality guarantees verification
 
 # ====================================================
 vertex_discretizer:
