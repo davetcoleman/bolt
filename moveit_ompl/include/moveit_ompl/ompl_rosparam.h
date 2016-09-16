@@ -137,10 +137,10 @@ void loadOMPLParameters(ros::NodeHandle nh, const std::string &name, ompl::tools
     error += !get(name, rpnh, "use_l2_norm", sparseCriteria->useL2Norm_);
     error += !get(name, rpnh, "use_edge_improvement_rule", sparseCriteria->useEdgeImprovementRule_);
     error += !get(name, rpnh, "use_clear_edges_near_vertex", sparseCriteria->useClearEdgesNearVertex_);
-    error += !get(name, rpnh, "use_improved_smoother", sparseCriteria->useImprovedSmoother_);
     error += !get(name, rpnh, "use_connectivy_criteria", sparseCriteria->useConnectivityCriteria_);
     error += !get(name, rpnh, "use_quality_criteria", sparseCriteria->useQualityCriteria_);
-    //error += !get(name, rpnh, "use_smoothed_path_rejection", sparseCriteria->useSmoothedPathRejection_);
+    error += !get(name, rpnh, "use_direct_connectivity_criteria", sparseCriteria->useDirectConnectivyCriteria_);
+    error += !get(name, rpnh, "use_smoothed_path_improvement_rule", sparseCriteria->useSmoothedPathImprovementRule_);
     error += !get(name, rpnh, "verbose/criteria", sparseCriteria->vCriteria_);
     error += !get(name, rpnh, "verbose/quality", sparseCriteria->vQuality_);
     error += !get(name, rpnh, "verbose/quality_max_spanner", sparseCriteria->vQualityMaxSpanner_);

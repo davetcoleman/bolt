@@ -80,9 +80,6 @@ public:
    * Smoothing
    * --------------------------------------------------------------------------------- */
 
-  /** \brief Path smoothing - original simple implementation */
-  bool smoothQualityPathOriginal(geometric::PathGeometric* path, std::size_t indent);
-
   /**
    * \brief Path smoothing - improved Dave version
    * \return true on success, false if something failed

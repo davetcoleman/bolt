@@ -63,43 +63,6 @@ void SparseSmoother::setup()
   }
 }
 
-bool SparseSmoother::smoothQualityPathOriginal(geometric::PathGeometric *path, std::size_t indent)
-{
-  BOLT_ERROR(indent, visualizeQualityPathSmoothing_, "smoothQualityPathOriginal()");
-
-  // Visualize path
-  if (visualizeQualityPathSmoothing_)
-  {
-    visual_->viz2()->deleteAllMarkers();
-    visual_->viz2()->path(path, tools::SMALL, tools::BLUE);
-    visual_->viz2()->trigger();
-    usleep(0.001 * 1000000);
-  }
-
-  BOLT_DEBUG(indent, visualizeQualityPathSmoothing_, "Created 'quality path' candidate with " << path->getStateCount()
-                                                                                              << " states");
-  // if (visualizeQualityPathSmoothing_)
-  //   visual_->waitForUserFeedback("path simplification");
-
-  pathSimplifier_->reduceVertices(*path, 10);
-  pathSimplifier_->shortcutPath(*path, 50);
-
-  std::pair<bool, bool> repairResult = path->checkAndRepair(100);
-
-  if (!repairResult.second)  // Repairing was not successful
-  {
-    // Visualize path
-    visual_->viz2()->deleteAllMarkers();
-    visual_->viz2()->path(path, tools::SMALL, tools::BLUE);
-    visual_->viz2()->trigger();
-    usleep(0.001 * 1000000);
-    visual_->waitForUserFeedback("path simplification");
-
-    throw Exception(name_, "check and repair failed");
-  }
-  return true;
-}
-
 bool SparseSmoother::smoothQualityPath(geometric::PathGeometric *path, double clearance, bool debug, std::size_t indent)
 {
   BOLT_FUNC(indent, vSmooth_, "smoothQualityPath() clearance: " << clearance);

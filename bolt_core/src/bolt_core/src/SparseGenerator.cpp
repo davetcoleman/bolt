@@ -249,7 +249,7 @@ void SparseGenerator::copyPasteState(std::size_t numSets)
        << useRandomSamples_ << ", "
        << 0 << ", "
        << sparseCriteria_->useClearEdgesNearVertex_ << ", "
-       << sparseCriteria_->useImprovedSmoother_ << ", "
+       << 0 << ", "
        << sparseCriteria_->useEdgeImprovementRule_ << ", "
        << fourthCriteriaAfterFailures_ << ", "
        << terminateAfterFailures_ << ", "

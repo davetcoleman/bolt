@@ -271,10 +271,10 @@ public:
 
   /** \brief Experimental feature that allows very closeby vertices to be merged with newly added ones */
   bool useClearEdgesNearVertex_ = true;
-  bool useImprovedSmoother_ = true;
   bool useConnectivityCriteria_ = true;
   bool useQualityCriteria_ = true;
-  //bool useSmoothedPathRejection_ = true;
+  bool useDirectConnectivyCriteria_ = true; // Add direct edge instead of also vertex
+  bool useSmoothedPathImprovementRule_ = true;
 
   /** \brief Verbose flags */
   bool vCriteria_ = false;

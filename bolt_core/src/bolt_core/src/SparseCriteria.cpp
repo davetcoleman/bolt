@@ -253,15 +253,18 @@ bool SparseCriteria::checkAddConnectivity(CandidateData &candidateD, std::size_t
         BOLT_ASSERT(!sg_->hasEdge(v1, v2), "Edge exist but not in same component");
 
         // Can they be connected directly?
-        if (si_->checkMotion(sg_->getState(v1), sg_->getState(v2)))
+        if (useDirectConnectivyCriteria_)
         {
-          sg_->addEdge(v1, v2, eCONNECTIVITY, indent);
+          if (si_->checkMotion(sg_->getState(v1), sg_->getState(v2)))
+          {
+            sg_->addEdge(v1, v2, eCONNECTIVITY, indent);
 
-          // We return true (state was used to improve graph) but we didn't actually use
-          // the state, so we much manually free the memory
-          si_->freeState(candidateD.state_);
+            // We return true (state was used to improve graph) but we didn't actually use
+            // the state, so we much manually free the memory
+            si_->freeState(candidateD.state_);
 
-          return true;
+            return true;
+          }
         }
 
         // Add to potential list
@@ -282,6 +285,9 @@ bool SparseCriteria::checkAddConnectivity(CandidateData &candidateD, std::size_t
 
   // Add the node
   candidateD.newVertex_ = sg_->addVertex(candidateD.state_, CONNECTIVITY, indent + 2);
+
+  // Remove all edges from all vertices near our new vertex
+  //sg_->clearEdgesNearVertex(candidateD.newVertex_, indent);
 
   // Check if there are really close vertices nearby which should be merged
   // This feature doesn't really do anything but slow things down
@@ -390,6 +396,9 @@ bool SparseCriteria::checkAddInterface(CandidateData &candidateD, std::size_t in
   BOLT_DEBUG(indent, vCriteria_, "Adding node for INTERFACE");
 
   candidateD.newVertex_ = sg_->addVertex(candidateD.state_, INTERFACE, indent);
+
+  // Remove all edges from all vertices near our new vertex
+  //sg_->clearEdgesNearVertex(candidateD.newVertex_, indent);
 
   // Check if there are really close vertices nearby which should be merged
   // This feature doesn't really do anything but slow things down
@@ -797,30 +806,23 @@ bool SparseCriteria::addQualityPath(SparseVertex v, SparseVertex vp, SparseVerte
   }
 
   // Create path and simplify
-  if (!useImprovedSmoother_)
+  const bool debug = false;
+  if (!sg_->getSparseSmoother()->smoothQualityPath(path, sg_->getObstacleClearance(), debug, indent + 4))
   {
-    if (!sg_->getSparseSmoother()->smoothQualityPathOriginal(path, indent + 4))
-    {
-      delete path;
-      return false;
-    }
-  }
-  else
-  {
-    const bool debug = false;
-    if (!sg_->getSparseSmoother()->smoothQualityPath(path, sg_->getObstacleClearance(), debug, indent + 4))
-    {
-      delete path;
-      return false;
-    }
+    delete path;
+    return false;
   }
 
   // Determine if this smoothed path actually helps improve connectivity
-  if (path->length() > shortestPathVpVpp)
+  // "Improving the Smoothed Quality Path Criteria"
+  if (useSmoothedPathImprovementRule_)
   {
-    BOLT_WARN(indent, vQuality_, "Smoothed path does not improve connectivity");
-    delete path;
-    return false;
+    if (path->length() > shortestPathVpVpp)
+    {
+      BOLT_WARN(indent, vQuality_, "Smoothed path does not improve connectivity");
+      delete path;
+      return false;
+    }
   }
 
   // Insert simplified path into graph
@@ -837,17 +839,6 @@ bool SparseCriteria::addQualityPath(SparseVertex v, SparseVertex vp, SparseVerte
     // We don't have to copy the state memory because we did already above and use smart unloading
     BOLT_DEBUG(indent + 2, vQuality_, "Adding node from shortcut path for QUALITY");
     newVertex = sg_->addVertex(si_->getStateSpace()->cloneState(state), QUALITY, indent + 4);
-
-    // Check if there are really close vertices nearby which should be merged
-    // This feature doesn't really do anything but slow things down
-    // if (checkRemoveCloseVertices(newVertex, indent + 4))
-    // {
-    //   // New vertex replaced a nearby vertex, we can continue no further because graph has been re-indexed
-    //   // Remove all edges from all vertices near our new vertex
-    //   sg_->clearEdgesNearVertex(newVertex, indent);
-    //   delete path; // TODO should we clearEdgesNearVertex before return true ?
-    //   return true;
-    // }
 
     // Remove all edges from all vertices near our new vertex
     sg_->clearEdgesNearVertex(newVertex, indent);
@@ -883,6 +874,7 @@ bool SparseCriteria::spannerTest(SparseVertex v, SparseVertex vp, SparseVertex v
     double rejectStretchFactor = midpointPathLength / iData.getLastDistance();
     BOLT_DEBUG(indent + 2, vQuality_, "to reject, stretch factor > " << rejectStretchFactor);
 
+    // Modification of Quality Criteria for $L_1$ Space
     if (useEdgeImprovementRule_)
     {
       // Get the length of the proposed edge
@@ -1082,7 +1074,7 @@ void SparseCriteria::findCloseRepresentatives(const base::State *candidateState,
       }
       else
       {
-        BOLT_DEBUG(indent + 2, vQuality_, "Adding node for COVERAGE");
+        BOLT_DEBUG(indent + 2, vQuality_ || true, "Adding node for COVERAGE - findCloseRepresentatives");
         sg_->addVertex(si_->cloneState(sampledState), COVERAGE, indent + 2);
       }
 

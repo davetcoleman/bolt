@@ -1113,7 +1113,10 @@ void SparseGraph::clearEdgesNearVertex(SparseVertex vertex, std::size_t indent)
   // Search
   nn_->nearestR(vertex, sparseCriteria_->getSparseDelta(), graphNeighbors);
 
+#ifndef NDEBUG
   std::size_t origNumEdges = getNumEdges();
+#endif
+
   // For each of the vertices
   foreach (SparseVertex v, graphNeighbors)
   {
@@ -1121,6 +1124,7 @@ void SparseGraph::clearEdgesNearVertex(SparseVertex vertex, std::size_t indent)
     boost::clear_vertex(v, g_);
   }
 
+#ifndef NDEBUG
   BOLT_DEBUG(indent, false, "clearEdgesNearVertex() removed " << origNumEdges - getNumEdges());
 
   // Only display database if enabled
@@ -1130,6 +1134,7 @@ void SparseGraph::clearEdgesNearVertex(SparseVertex vertex, std::size_t indent)
     displayDatabase(true, true, 1, indent);
     // visual_->waitForUserFeedback("after clear edge near vertex");
   }
+#endif
 }
 
 void SparseGraph::displayDatabase(bool showVertices, bool showEdges, std::size_t windowID, std::size_t indent)

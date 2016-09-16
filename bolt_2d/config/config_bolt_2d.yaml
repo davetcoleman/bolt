@@ -13,8 +13,8 @@ bolt_2d:
   create_spars_count: 10 # create the spars graph multiple times
   continue_spars: false # even if a file has been saved, randomly sample for more coverage
   sweep_spars_maps: true
-  sweep_map_start: 4 # Base 1, not 0
-  sweep_map_end: 5 # Base 1, not 0
+  sweep_map_start: 1 # Base 1, not 0
+  sweep_map_end: 1 # Base 1, not 0
 
   # environment info
   image_id: 0 # 0 - hard0, 4 - hard4, 5 - blank, 6 - smiley (sparse), 7 - narrow
@@ -46,9 +46,11 @@ bolt_2d:
 
 # ====================================================
 sparse_generator:
-  fourth_criteria_after_failures: 5000 # mode change to 4th criteria after this many failures
+# VAR1
+  fourth_criteria_after_failures: 5000 # mode change to 4th criteria after this many failures - Methods to Reduce Outdated/Redundant Edges
   terminate_after_failures: 10000 # total failures, including 4th criteria
-  use_discretized_samples: true
+# VAR3
+  use_discretized_samples: true # Hybrid Discretization and Sampling
   use_random_samples: true
   verify_graph_properties: true # check optimiality of graph
   save_interval: 10000 # how often to save, based on number of random samples added
@@ -62,13 +64,19 @@ sparse_criteria:
   dense_delta_fraction: 0.01 #NOTE: this is not used anymore
   penetration_overlap_fraction: 0.01 #0.001
   near_sample_points_multiple: 2 # 2 is value used by SPARStwo
-  stretch_factor: 0   # 0 means auto set
-  use_edge_improvement_rule: true
+# VAR4
+  stretch_factor: 0   # 0 means: Exact method for choosing $t$-stretch factor
   use_l2_norm: false # straight line distance
-  use_clear_edges_near_vertex: true # When adding a quality vertex, remove nearby edges
-  use_improved_smoother: true
-  use_connectivy_criteria: true # if true, discretization does not work
+  use_connectivy_criteria: true # main feature
   use_quality_criteria: true # 4th criteria
+# VAR2
+  use_clear_edges_near_vertex: true # Methods to Reduce Outdated/Redundant Edges
+# VAR5
+  use_direct_connectivity_criteria: true # Add direct edge instead of also vertex
+# VAR6
+  use_smoothed_path_improvement_rule: true # Improving the Smoothed Quality Path Criteria
+# VAR7
+  use_edge_improvement_rule: true # Modification of Quality Criteria for $L_1$ Space
   verbose:
     added_reason: false # debug criteria for adding vertices & edges
     criteria: false
