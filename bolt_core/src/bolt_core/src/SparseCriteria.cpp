@@ -213,7 +213,7 @@ bool SparseCriteria::checkAddConnectivity(CandidateData &candidateD, std::size_t
     BOLT_DEBUG(indent, vCriteria_, "NOT adding node for connectivity - disabled ");
     return false;
   }
-  if (!useFourthCriteria_)
+  if (!useFourthCriteria_ && false)
   {
     BOLT_DEBUG(indent, vCriteria_, "NOT adding node for connectivity - waiting until fourth criteria ");
     return false;

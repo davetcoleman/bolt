@@ -82,6 +82,9 @@ bool VertexDiscretizer::generateGrid(std::size_t indent)
   // Benchmark runtime
   time::point totalStartTime = time::now();
 
+  // Reset stats
+  verticesAdded_ = 0;
+
   if (!si_->isSetup())
   {
     OMPL_WARN("Space information setup was not yet called. Calling now.");
@@ -100,76 +103,22 @@ bool VertexDiscretizer::generateGrid(std::size_t indent)
     exit(-1);
   }
 
-  ob::RealVectorBounds bounds = si_->getStateSpace()->getBounds();
-  const std::size_t jointID = 0;
-  const double range = bounds.high[jointID] - bounds.low[jointID];
-  const std::size_t jointIncrements = floor(range / discretization_);
-  double leftOver = range - jointIncrements * discretization_;
-  startingValueOffset_ = leftOver / 2;
-
-  BOLT_INFO(indent, verbose_, "------------------------------------------");
-  BOLT_INFO(indent, verbose_, "Discretization");
-  BOLT_INFO(indent, verbose_, "  Discretization:       " << discretization_);
-  BOLT_INFO(indent, verbose_, "  High Bound:           " << bounds.high[jointID]);
-  BOLT_INFO(indent, verbose_, "  Low Bound:            " << bounds.low[jointID]);
-  BOLT_INFO(indent, verbose_, "  Range:                " << range);
-  BOLT_INFO(indent, verbose_, "  Joint Increments:     " << jointIncrements);
-  BOLT_INFO(indent, verbose_, "  Left Over:            " << leftOver);
-  BOLT_INFO(indent, verbose_, "  Start Offset:         " << startingValueOffset_);
-  BOLT_INFO(indent, verbose_, "------------------------------------------");
-
-  // Reset stats
-  verticesAdded_ = 0;
-
-  double vertexDuration;
-  {
-    // Benchmark runtime
-    time::point startTime = time::now();
-
-    // Create vertices
-    generateVertices(indent);
-
-    // Benchmark runtime
-    vertexDuration = time::seconds(time::now() - startTime);
-  }
-  BOLT_INFO(indent, verbose_, "Generated " << verticesAdded_ << " vertices in " << vertexDuration << " sec");
-
-  // Error check
-  if (verticesAdded_ < 2)
-  {
-    OMPL_WARN("No vertices generated, failing");
-    // exit(-1);
-  }
-
-  // Total benchmark runtime
-  double totalDuration = time::seconds(time::now() - totalStartTime);
-
-  BOLT_INFO(indent, vThread_, "------------------------------------------------------");
-  BOLT_INFO(indent, vThread_, "Vertex Discretization stats:");
-  BOLT_INFO(indent, vThread_, "   Total valid vertices:   " << verticesAdded_);
-  BOLT_INFO(indent, vThread_, "   Vertex generation time: " << vertexDuration);
-  BOLT_INFO(indent, vThread_, "   Total grid gen. time:   " << totalDuration);
-  BOLT_INFO(indent, vThread_, "------------------------------------------------------");
-
-  return true;
-}
-
-void VertexDiscretizer::generateVertices(std::size_t indent)
-{
-  BOLT_FUNC(indent, verbose_, "VertexDiscretizer::generateVertices()");
-
   std::size_t dim = si_->getStateSpace()->getDimension();
 
-  // Setup bounds for joint 0
   ob::RealVectorBounds bounds = si_->getStateSpace()->getBounds();
   assert(bounds.high.size() == bounds.low.size());
   assert(bounds.high.size() == dim);
 
-  // Divide joint 0 between threads
   const std::size_t jointID = 0;
-  const double range = bounds.high[jointID] - bounds.low[jointID] - startingValueOffset_;
-  const std::size_t jointIncrements = ceil(range / discretization_);
+  const double fullRange = bounds.high[jointID] - bounds.low[jointID];
+  const std::size_t fullJointIncrements = floor(fullRange / discretization_);
+  double leftOver = fullRange - fullJointIncrements * discretization_;
+  startingValueOffset_ = leftOver / 2;
 
+  // Setup bounds for joint 0
+  // Divide joint 0 between threads
+  const double range = fullRange - startingValueOffset_;
+  const std::size_t jointIncrements = ceil(range / discretization_);
   assert(jointIncrements >= 1);
 
   // Check that we have enough jointIncrements for all the threads
@@ -183,18 +132,24 @@ void VertexDiscretizer::generateVertices(std::size_t indent)
   }
   std::size_t jointIncrementsPerThread = jointIncrements / numThreads_;
 
-  BOLT_DEBUG(indent, verbose_, "-------------------------------------------------------");
-  BOLT_DEBUG(indent, verbose_, "Single-Pass Discretization: ");
-  BOLT_DEBUG(indent, verbose_, "  Dimensions:             " << dim);
-  BOLT_DEBUG(indent, verbose_, "  Discretization:         " << discretization_);
-  BOLT_DEBUG(indent, verbose_, "  J0 Low:                 " << bounds.low[jointID]);
-  BOLT_DEBUG(indent, verbose_, "  J0 High:                " << bounds.high[jointID]);
-  BOLT_DEBUG(indent, verbose_, "  J0 Range:               " << range);
-  BOLT_DEBUG(indent, verbose_, "  J0 Increments:          " << jointIncrements);
-  BOLT_DEBUG(indent, verbose_, "  J0 IncrementsPerThread: " << jointIncrementsPerThread);
-  BOLT_DEBUG(indent, verbose_, "  Total states:           " << pow(jointIncrements, dim));
-  BOLT_DEBUG(indent, verbose_, "  Num Threads:            " << numThreads_);
-  BOLT_DEBUG(indent, verbose_, "-------------------------------------------------------");
+  BOLT_INFO(indent, verbose_, "-------------------------------------------------------");
+  BOLT_INFO(indent, verbose_, "Discretization");
+  BOLT_INFO(indent, verbose_, "  Discretization:       " << discretization_);
+  BOLT_INFO(indent, verbose_, "  High Bound:           " << bounds.high[jointID]);
+  BOLT_INFO(indent, verbose_, "  Low Bound:            " << bounds.low[jointID]);
+  BOLT_INFO(indent, verbose_, "  Range:                " << fullRange);
+  BOLT_INFO(indent, verbose_, "  Joint Increments:     " << fullJointIncrements);
+  BOLT_INFO(indent, verbose_, "  Left Over:            " << leftOver);
+  BOLT_INFO(indent, verbose_, "  Start Offset:         " << startingValueOffset_);
+  BOLT_INFO(indent, verbose_, "  Dimensions:             " << dim);
+  BOLT_INFO(indent, verbose_, "  J0 Low:                 " << bounds.low[jointID]);
+  BOLT_INFO(indent, verbose_, "  J0 High:                " << bounds.high[jointID]);
+  BOLT_INFO(indent, verbose_, "  J0 Range:               " << range);
+  BOLT_INFO(indent, verbose_, "  J0 Increments:          " << jointIncrements);
+  BOLT_INFO(indent, verbose_, "  J0 IncrementsPerThread: " << jointIncrementsPerThread);
+  BOLT_INFO(indent, verbose_, "  Total states:           " << pow(jointIncrements, dim));
+  BOLT_INFO(indent, verbose_, "  Num Threads:            " << numThreads_);
+  BOLT_INFO(indent, verbose_, "-------------------------------------------------------");
 
   // Setup threading
   std::vector<boost::thread *> threads(numThreads_);
@@ -239,6 +194,20 @@ void VertexDiscretizer::generateVertices(std::size_t indent)
     threads[i]->join();
     delete threads[i];
   }
+
+  // Error check
+  if (verticesAdded_ < 2)
+  {
+    OMPL_WARN("No vertices generated, failing");
+    // exit(-1);
+  }
+
+  BOLT_INFO(indent, vThread_, "------------------------------------------------------");
+  BOLT_INFO(indent, vThread_, "Vertex Discretization stats:");
+  BOLT_INFO(indent, vThread_, "   Total valid vertices:   " << verticesAdded_);
+  BOLT_INFO(indent, vThread_, "------------------------------------------------------");
+
+  return true;
 }
 
 void VertexDiscretizer::generateVerticesThread(std::size_t threadID, double startJointValue, double endJointValue,

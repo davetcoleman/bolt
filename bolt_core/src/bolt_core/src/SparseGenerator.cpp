@@ -186,6 +186,7 @@ void SparseGenerator::createSPARS()
   BOLT_INFO(indent, 1, "  Vertices:                  " << sg_->getNumRealVertices());
   BOLT_INFO(indent, 1, "  Edges:                     " << sg_->getNumEdges());
   BOLT_INFO(indent, 1, "  Generation time:           " << duration);
+  BOLT_INFO(indent, 1, "  Total seq. failures:       " << terminateAfterFailures_);
   BOLT_INFO(indent, 1, "  Disjoint sets:             " << numSets);
   BOLT_INFO(indent, 1, "  Sparse Criteria:           ");
   BOLT_INFO(indent, 1, "     SparseDelta:            " << sparseCriteria_->getSparseDelta());
@@ -464,7 +465,7 @@ bool SparseGenerator::addSample(CandidateData &candidateD, std::size_t threadID,
         {
           if (!sparseCriteria_->getUseFourthCriteria())
           {
-            BOLT_WARN(indent, true, "Pre-quality progress: " << percentComplete << "%");
+            BOLT_WARN(indent, true, "Pre-quality progress: " << percentComplete << "%, total failures: " << maxConsecutiveFailures_);
           }
           else
           {
@@ -481,14 +482,10 @@ bool SparseGenerator::addSample(CandidateData &candidateD, std::size_t threadID,
   }
 
   // Check consecutive failures to determine if quality criteria needs to be enabled
-  if (!sparseCriteria_->getUseFourthCriteria() && numConsecutiveFailures_ >= fourthCriteriaAfterFailures_)
+  if (sparseCriteria_->useQualityCriteria_ &&  // disabled from config
+      !sparseCriteria_->getUseFourthCriteria() && // 4th mode not enabled
+      numConsecutiveFailures_ >= fourthCriteriaAfterFailures_)
   {
-    if (!sparseCriteria_->useQualityCriteria_)
-    {
-      BOLT_INFO(0, true, "---------------------------------------------------");
-      BOLT_WARN(0, true, "Fourth criteria (quality) is disabled");
-      return false;  // stop inserting states
-    }
 
     BOLT_INFO(0, true, "---------------------------------------------------");
     BOLT_INFO(0, true, "Starting to check for 4th quality criteria because "
@@ -507,7 +504,8 @@ bool SparseGenerator::addSample(CandidateData &candidateD, std::size_t threadID,
   }
 
   // Check consequitive failures to determine termination
-  if (sparseCriteria_->getUseFourthCriteria() && numConsecutiveFailures_ > terminateAfterFailures_)
+  if ((sparseCriteria_->getUseFourthCriteria() || !sparseCriteria_->useQualityCriteria_)
+      && numConsecutiveFailures_ > terminateAfterFailures_)
   {
     BOLT_WARN(indent, true, "SPARS creation finished because " << terminateAfterFailures_ << " consecutive insertion "
                                                                                              "failures reached");

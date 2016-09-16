@@ -119,10 +119,6 @@ public:
   }
 
 private:
-  /**
-   * \brief Generate a grid of vertices across the configuration space
-   */
-  void generateVertices(std::size_t indent);
 
   void generateVerticesThread(std::size_t threadID, double startJointValue, double endJointValue,
                               base::SpaceInformationPtr si, std::size_t indent);
