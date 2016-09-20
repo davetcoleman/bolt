@@ -1,0 +1,63 @@
+# Simulation settings
+generic_hw_control_loop:
+  loop_hz: 100
+  cycle_time_error_threshold: 0.02
+
+# MoveIt-specific simulation settings
+moveit_sim_hw_interface:
+  joint_model_group: whole_body
+  joint_model_group_pose: home
+
+# Settings for generic ros_control hardware interface
+hardware_interface:
+   joints:
+      - left_elbow_joint
+      - left_shoulder_lift_joint
+      - left_shoulder_pan_joint
+      - left_wrist_1_joint
+      - left_wrist_2_joint
+      - left_wrist_3_joint
+      #- left_robotiq_85_right_knuckle_joint
+      - left_robotiq_85_left_knuckle_joint
+      - left_robotiq_85_left_inner_knuckle_joint
+      - left_robotiq_85_right_inner_knuckle_joint
+      - left_robotiq_85_left_finger_tip_joint
+      - left_robotiq_85_right_finger_tip_joint
+      - right_elbow_joint
+      - right_shoulder_lift_joint
+      - right_shoulder_pan_joint
+      - right_wrist_1_joint
+      - right_wrist_2_joint
+      - right_wrist_3_joint
+      #- right_robotiq_85_right_knuckle_joint
+      - right_robotiq_85_left_knuckle_joint
+      - right_robotiq_85_left_inner_knuckle_joint
+      - right_robotiq_85_right_inner_knuckle_joint
+      - right_robotiq_85_left_finger_tip_joint
+      - right_robotiq_85_right_finger_tip_joint
+
+# Publish all joint states ----------------------------------
+joint_state_controller:
+   type:         joint_state_controller/JointStateController
+   publish_rate: 100
+
+# Position Joint Trajectory Controller -------------------------------
+# For detailed explanations of parameter see http://wiki.ros.org/joint_trajectory_controller
+position_trajectory_controller:
+   type: position_controllers/JointTrajectoryController
+   joints:
+      - left_elbow_joint
+      - left_shoulder_lift_joint
+      - left_shoulder_pan_joint
+      - left_wrist_1_joint
+      - left_wrist_2_joint
+      - left_wrist_3_joint
+      - right_elbow_joint
+      - right_shoulder_lift_joint
+      - right_shoulder_pan_joint
+      - right_wrist_1_joint
+      - right_wrist_2_joint
+      - right_wrist_3_joint
+   constraints:
+      goal_time: 1.0 # If the timestamp of the goal trajectory point is t, then following the trajectory succeeds if it reaches the goal within t +/- goal_time, and aborts otherwise.
+      stopped_velocity_tolerance: 0.01 # Velocity to be considered approximately equal to zero
