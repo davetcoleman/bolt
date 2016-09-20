@@ -8,9 +8,14 @@ Panels:
         - /Grid1/Offset1
         - /Viz1to61
         - /Viz1to61/ompl6 - markers1
+        - /Trajectory1
+        - /PlanningScene1
         - /PlanningScene1/Scene Geometry1
         - /PlanningScene1/Scene Robot1
         - /InteractiveMarkers1
+        - /InteractiveMarkers1/Start2
+        - /InteractiveMarkers1/Goal2
+        - /InteractiveMarkers1/Cart2
         - /TF1/Frames1
       Splitter Ratio: 0.561968982
     Tree Height: 642
@@ -1839,7 +1844,7 @@ Visualization Manager:
       Enabled: true
       Name: Viz1to6
     - Class: moveit_rviz_plugin/Trajectory
-      Enabled: true
+      Enabled: false
       Interrupt Display: false
       Links:
         All Links Enabled: true
@@ -2128,7 +2133,7 @@ Visualization Manager:
       Show Trail: false
       State Display Time: REALTIME
       Trajectory Topic: /baxter/display_trajectory
-      Value: true
+      Value: false
     - Class: moveit_rviz_plugin/PlanningScene
       Enabled: false
       Move Group Namespace: ""

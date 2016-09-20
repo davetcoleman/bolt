@@ -43,7 +43,7 @@ int main(int argc, char **argv)
 {
   // Initialize ROS
   ros::init(argc, argv, "bolt_moveit");
-  ROS_INFO_STREAM_NAMED("main", "Starting BoltHilgendorf...");
+  ROS_INFO_STREAM_NAMED("main", "Starting BoltMoveIt...");
 
   // Allow the action server to recieve and send ros messages
   ros::AsyncSpinner spinner(2);
@@ -69,7 +69,7 @@ int main(int argc, char **argv)
   const std::string package_path = ros::package::getPath("bolt_moveit");
 
   // Initialize main class
-  bolt_moveit::BoltHilgendorf demo(hostname, package_path);
+  bolt_moveit::BoltMoveIt demo(hostname, package_path);
 
   // Shutdown
   ROS_INFO_STREAM_NAMED("main", "Shutting down.");

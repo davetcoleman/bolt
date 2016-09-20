@@ -67,14 +67,14 @@ namespace mo = moveit_ompl;
 
 namespace bolt_moveit
 {
-class BoltHilgendorf : public bolt_moveit::MoveItBase
+class BoltMoveIt : public bolt_moveit::MoveItBase
 {
 public:
   /** \brief Constructor */
-  BoltHilgendorf(const std::string& hostname, const std::string& package_path);
+  BoltMoveIt(const std::string& hostname, const std::string& package_path);
 
   /** \brief Destructor */
-  ~BoltHilgendorf();
+  ~BoltMoveIt();
 
   /** \brief Load the basic planning context components */
   bool loadOMPL();
@@ -220,8 +220,8 @@ public:
 };  // end class
 
 // Create boost pointers for this class
-typedef boost::shared_ptr<BoltHilgendorf> BoltHilgendorfPtr;
-typedef boost::shared_ptr<const BoltHilgendorf> BoltHilgendorfConstPtr;
+typedef boost::shared_ptr<BoltMoveIt> BoltMoveItPtr;
+typedef boost::shared_ptr<const BoltMoveIt> BoltMoveItConstPtr;
 
 }  // namespace bolt_moveit
 

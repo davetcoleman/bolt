@@ -1,4 +1,4 @@
-# Bolt Hilgendorf
+# Bolt MoveIt
 
 Description: Demonstrate dual arm manipulation using a combination of free space and Cartesian planning
 

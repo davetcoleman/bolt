@@ -8,11 +8,6 @@
 /home/dave/ros/current/ws_swri/src/moveit_all/moveit_visual_tools/src/imarker_robot_state.cpp
 /home/dave/ros/current/ws_swri/src/moveit_all/moveit_visual_tools/include/moveit_visual_tools/imarker_robot_state.h
 
-/home/dave/ros/current/ws_swri/src/bolt/bolt_hilgendorf/include/bolt_hilgendorf/moveit_viz_window.h
-/home/dave/ros/current/ws_swri/src/bolt/bolt_hilgendorf/include/bolt_hilgendorf/projection_viz_window.h
-/home/dave/ros/current/ws_swri/src/bolt/bolt_hilgendorf/src/moveit_viz_window.cpp
-/home/dave/ros/current/ws_swri/src/bolt/bolt_hilgendorf/src/projection_viz_window.cpp
-
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/Bolt.h
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/BoostGraphHeaders.h
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/SparseGraph.h
@@ -28,6 +23,7 @@
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/CandidateQueue.h
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/SamplingQueue.h
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/InterfaceData.h
+/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/spars2/SPARS2.h
 
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/src/Bolt.cpp
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/src/SparseGraph.cpp
@@ -41,7 +37,7 @@
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/src/DenseCache.cpp
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/src/CandidateQueue.cpp
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/src/SamplingQueue.cpp
-
+/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/spars2/src/SPARS2.cpp
 
 /home/dave/ros/current/ws_swri/src/ompl/src/ompl/tools/debug/Visualizer.h
 /home/dave/ros/current/ws_swri/src/ompl/src/ompl/geometric/PathGeometric.h
@@ -67,17 +63,18 @@
 /home/dave/ros/current/ws_swri/src/bolt/bolt_2d/include/bolt_2d/two_dim_viz_window.h
 /home/dave/ros/current/ws_swri/src/bolt/bolt_2d/include/bolt_2d/validity_checker_2d.h
 
-/home/dave/ros/current/ws_swri/src/bolt/bolt_hilgendorf/src/curie_demos.cpp
-/home/dave/ros/current/ws_swri/src/bolt/bolt_hilgendorf/src/curie_demos_main.cpp
-/home/dave/ros/current/ws_swri/src/bolt/bolt_hilgendorf/src/cart_path_planner.cpp
-/home/dave/ros/current/ws_swri/src/bolt/bolt_hilgendorf/src/moveit_base.cpp
-/home/dave/ros/current/ws_swri/src/bolt/bolt_hilgendorf/src/state_validity_checker.cpp
-/home/dave/ros/current/ws_swri/src/bolt/bolt_hilgendorf/include/curie_demos/curie_demos.h
-/home/dave/ros/current/ws_swri/src/bolt/bolt_hilgendorf/include/curie_demos/cart_path_planner.h
-/home/dave/ros/current/ws_swri/src/bolt/bolt_hilgendorf/include/curie_demos/moveit_base.h
-/home/dave/ros/current/ws_swri/src/bolt/bolt_hilgendorf/README.md
-/home/dave/ros/current/ws_swri/src/bolt/bolt_hilgendorf/config/config_hilgendorf.yaml
-/home/dave/ros/current/ws_swri/src/bolt/bolt_hilgendorf/include/curie_demos/path_loader.h
-
-/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/spars2/src/SPARS2.cpp
-/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/spars2/SPARS2.h
+/home/dave/ros/current/ws_swri/src/bolt/bolt_moveit/src/curie_demos.cpp
+/home/dave/ros/current/ws_swri/src/bolt/bolt_moveit/src/curie_demos_main.cpp
+/home/dave/ros/current/ws_swri/src/bolt/bolt_moveit/src/cart_path_planner.cpp
+/home/dave/ros/current/ws_swri/src/bolt/bolt_moveit/src/moveit_base.cpp
+/home/dave/ros/current/ws_swri/src/bolt/bolt_moveit/src/state_validity_checker.cpp
+/home/dave/ros/current/ws_swri/src/bolt/bolt_moveit/include/curie_demos/curie_demos.h
+/home/dave/ros/current/ws_swri/src/bolt/bolt_moveit/include/curie_demos/cart_path_planner.h
+/home/dave/ros/current/ws_swri/src/bolt/bolt_moveit/include/curie_demos/moveit_base.h
+/home/dave/ros/current/ws_swri/src/bolt/bolt_moveit/README.md
+/home/dave/ros/current/ws_swri/src/bolt/bolt_moveit/config/config_hilgendorf.yaml
+/home/dave/ros/current/ws_swri/src/bolt/bolt_moveit/include/curie_demos/path_loader.h
+/home/dave/ros/current/ws_swri/src/bolt/bolt_moveit/include/bolt_moveit/moveit_viz_window.h
+/home/dave/ros/current/ws_swri/src/bolt/bolt_moveit/include/bolt_moveit/projection_viz_window.h
+/home/dave/ros/current/ws_swri/src/bolt/bolt_moveit/src/moveit_viz_window.cpp
+/home/dave/ros/current/ws_swri/src/bolt/bolt_moveit/src/projection_viz_window.cpp

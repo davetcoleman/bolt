@@ -65,7 +65,7 @@
 
 namespace bolt_moveit
 {
-class BoltHilgendorf;
+class BoltMoveIt;
 
 class CartPathPlanner
 {
@@ -73,7 +73,7 @@ public:
   /**
    * \brief Constructor
    */
-  CartPathPlanner(BoltHilgendorf* parent);
+  CartPathPlanner(BoltMoveIt* parent);
 
   //void initDescartes();
 
@@ -109,7 +109,7 @@ private:
   ros::NodeHandle nh_;
 
   // Parent class
-  BoltHilgendorf* parent_;
+  BoltMoveIt* parent_;
 
   // The main graph
   ompl::tools::bolt::TaskGraphPtr task_graph_;

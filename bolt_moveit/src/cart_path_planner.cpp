@@ -49,7 +49,7 @@
 
 namespace bolt_moveit
 {
-CartPathPlanner::CartPathPlanner(BoltHilgendorf* parent) : name_("cart_path_planner"), nh_("~"), parent_(parent)
+CartPathPlanner::CartPathPlanner(BoltMoveIt* parent) : name_("cart_path_planner"), nh_("~"), parent_(parent)
 {
   jmg_ = parent_->jmg_;
 

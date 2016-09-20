@@ -58,7 +58,7 @@ namespace rvt = rviz_visual_tools;
 
 namespace bolt_moveit
 {
-BoltHilgendorf::BoltHilgendorf(const std::string &hostname, const std::string &package_path)
+BoltMoveIt::BoltMoveIt(const std::string &hostname, const std::string &package_path)
   : MoveItBase(), nh_("~"), remote_control_(nh_), package_path_(package_path)
 {
   // Profiler
@@ -162,7 +162,7 @@ BoltHilgendorf::BoltHilgendorf(const std::string &hostname, const std::string &p
   }
 
   // Set remote_control
-  remote_control_.setDisplayWaitingState(boost::bind(&BoltHilgendorf::displayWaitingState, this, _1));
+  remote_control_.setDisplayWaitingState(boost::bind(&BoltMoveIt::displayWaitingState, this, _1));
 
   // Wait until user does something
   if (!auto_run_)
@@ -176,14 +176,14 @@ BoltHilgendorf::BoltHilgendorf(const std::string &hostname, const std::string &p
   CALLGRIND_DUMP_STATS;
 }
 
-BoltHilgendorf::~BoltHilgendorf()
+BoltMoveIt::~BoltMoveIt()
 {
   // Free start and goal states
   space_->freeState(ompl_start_);
   space_->freeState(ompl_goal_);
 }
 
-bool BoltHilgendorf::loadOMPL()
+bool BoltMoveIt::loadOMPL()
 {
   moveit_ompl::ModelBasedStateSpaceSpecification mbss_spec(robot_model_, jmg_);
 
@@ -237,7 +237,7 @@ bool BoltHilgendorf::loadOMPL()
   return true;
 }
 
-bool BoltHilgendorf::loadData()
+bool BoltMoveIt::loadData()
 {
   // double vm1, rss1;
   // if (track_memory_consumption_)  // Track memory usage
@@ -268,7 +268,7 @@ bool BoltHilgendorf::loadData()
   return true;
 }
 
-void BoltHilgendorf::run()
+void BoltMoveIt::run()
 {
   // Benchmark performance
   if (benchmark_performance_)
@@ -335,7 +335,7 @@ void BoltHilgendorf::run()
   bolt_->saveIfChanged();
 }
 
-bool BoltHilgendorf::runProblems()
+bool BoltMoveIt::runProblems()
 {
   // Logging
   std::ofstream logging_file;  // open to append
@@ -431,7 +431,7 @@ bool BoltHilgendorf::runProblems()
   return true;
 }
 
-bool BoltHilgendorf::plan()
+bool BoltMoveIt::plan()
 {
   // Setup -----------------------------------------------------------
 
@@ -523,7 +523,7 @@ bool BoltHilgendorf::plan()
   return true;
 }
 
-void BoltHilgendorf::loadCollisionChecker()
+void BoltMoveIt::loadCollisionChecker()
 {
   // Create state validity checking for this space
   validity_checker_ =
@@ -538,7 +538,7 @@ void BoltHilgendorf::loadCollisionChecker()
   si_->setStateValidityCheckingResolution(0.005);
 }
 
-void BoltHilgendorf::deleteAllMarkers(bool clearDatabase)
+void BoltMoveIt::deleteAllMarkers(bool clearDatabase)
 {
   if (headless_)
     return;
@@ -563,7 +563,7 @@ void BoltHilgendorf::deleteAllMarkers(bool clearDatabase)
   viz6_->trigger();
 }
 
-void BoltHilgendorf::loadVisualTools()
+void BoltMoveIt::loadVisualTools()
 {
   using namespace bolt_moveit;
   using namespace moveit_visual_tools;
@@ -680,10 +680,10 @@ void BoltHilgendorf::loadVisualTools()
   }
 
   // Set other hooks
-  visual->setWaitForUserFeedback(boost::bind(&BoltHilgendorf::waitForNextStep, this, _1));
+  visual->setWaitForUserFeedback(boost::bind(&BoltMoveIt::waitForNextStep, this, _1));
 }
 
-void BoltHilgendorf::visualizeStartGoal()
+void BoltMoveIt::visualizeStartGoal()
 {
   visual_moveit_start_->publishRobotState(moveit_start_, rvt::GREEN);
   visual_moveit_goal_->publishRobotState(moveit_goal_, rvt::ORANGE);
@@ -695,7 +695,7 @@ void BoltHilgendorf::visualizeStartGoal()
   // visual_moveit_start_->showJointLimits(moveit_goal_);
 }
 
-void BoltHilgendorf::displayWaitingState(bool waiting)
+void BoltMoveIt::displayWaitingState(bool waiting)
 {
   // std::cout << " TODO display waiting state " << std::endl;
   // if (waiting)
@@ -706,12 +706,12 @@ void BoltHilgendorf::displayWaitingState(bool waiting)
   // viz_bg_->trigger();
 }
 
-void BoltHilgendorf::waitForNextStep(const std::string &msg)
+void BoltMoveIt::waitForNextStep(const std::string &msg)
 {
   remote_control_.waitForNextStep(msg);
 }
 
-void BoltHilgendorf::testConnectionToGraphOfRandStates()
+void BoltMoveIt::testConnectionToGraphOfRandStates()
 {
   ompl::base::State *random_state = space_->allocState();
 
@@ -744,7 +744,7 @@ void BoltHilgendorf::testConnectionToGraphOfRandStates()
   space_->freeState(random_state);
 }
 
-void BoltHilgendorf::visualizeRawTrajectory(og::PathGeometric &path)
+void BoltMoveIt::visualizeRawTrajectory(og::PathGeometric &path)
 {
   ROS_INFO("Visualizing non-interpolated trajectory");
 
@@ -758,7 +758,7 @@ void BoltHilgendorf::visualizeRawTrajectory(og::PathGeometric &path)
   viz3_->trigger();
 }
 
-bool BoltHilgendorf::generateCartGraph()
+bool BoltMoveIt::generateCartGraph()
 {
   // Generate the Descartes graph - if it fails let user adjust interactive marker
   while (true)
@@ -777,7 +777,7 @@ bool BoltHilgendorf::generateCartGraph()
   return true;
 }
 
-bool BoltHilgendorf::checkMoveItPathSolution(robot_trajectory::RobotTrajectoryPtr traj)
+bool BoltMoveIt::checkMoveItPathSolution(robot_trajectory::RobotTrajectoryPtr traj)
 {
   std::size_t state_count = traj->getWayPointCount();
   if (state_count < 3)
@@ -836,7 +836,7 @@ bool BoltHilgendorf::checkMoveItPathSolution(robot_trajectory::RobotTrajectoryPt
   return true;
 }
 
-bool BoltHilgendorf::getRandomState(moveit::core::RobotStatePtr &robot_state)
+bool BoltMoveIt::getRandomState(moveit::core::RobotStatePtr &robot_state)
 {
   static const std::size_t MAX_ATTEMPTS = 1000;
   for (std::size_t i = 0; i < MAX_ATTEMPTS; ++i)
@@ -862,7 +862,7 @@ bool BoltHilgendorf::getRandomState(moveit::core::RobotStatePtr &robot_state)
   return false;
 }
 
-void BoltHilgendorf::testMotionValidator()
+void BoltMoveIt::testMotionValidator()
 {
   // THIS FUNCTION BROKEN BECAUSE moveit_core SAYS "FCL continuous collision checking not yet implemented"
 
