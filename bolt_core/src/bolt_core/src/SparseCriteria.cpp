@@ -287,7 +287,7 @@ bool SparseCriteria::checkAddConnectivity(CandidateData &candidateD, std::size_t
   candidateD.newVertex_ = sg_->addVertex(candidateD.state_, CONNECTIVITY, indent + 2);
 
   // Remove all edges from all vertices near our new vertex
-  //sg_->clearEdgesNearVertex(candidateD.newVertex_, indent);
+  sg_->clearEdgesNearVertex(candidateD.newVertex_, indent);
 
   // Check if there are really close vertices nearby which should be merged
   // This feature doesn't really do anything but slow things down
@@ -348,7 +348,7 @@ bool SparseCriteria::checkAddInterface(CandidateData &candidateD, std::size_t in
   const SparseVertex &v2 = candidateD.visibleNeighborhood_[1];
 
   // Ensure the two closest nodes are also visible
-  bool skipThis = true; // when true, is a new experimental feature
+  bool skipThis = false; // when true, is a new experimental feature
   if (!skipThis && !(candidateD.graphNeighborhood_[0] == v1 && candidateD.graphNeighborhood_[1] == v2))
   {
     BOLT_DEBUG(indent, vCriteria_, "NOT adding because two closest nodes are not visible to each other");
@@ -398,7 +398,7 @@ bool SparseCriteria::checkAddInterface(CandidateData &candidateD, std::size_t in
   candidateD.newVertex_ = sg_->addVertex(candidateD.state_, INTERFACE, indent);
 
   // Remove all edges from all vertices near our new vertex
-  //sg_->clearEdgesNearVertex(candidateD.newVertex_, indent);
+  sg_->clearEdgesNearVertex(candidateD.newVertex_, indent);
 
   // Check if there are really close vertices nearby which should be merged
   // This feature doesn't really do anything but slow things down

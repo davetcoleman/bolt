@@ -13,8 +13,8 @@ bolt_2d:
   create_spars_count: 10 # create the spars graph multiple times
   continue_spars: false # even if a file has been saved, randomly sample for more coverage
   sweep_spars_maps: true
-  sweep_map_start: 1 # Base 1, not 0
-  sweep_map_end: 1 # Base 1, not 0
+  sweep_map_start: 3 # Base 1, not 0
+  sweep_map_end: 3 # Base 1, not 0
 
   # environment info
   image_id: 0 # 0 - hard0, 4 - hard4, 5 - blank, 6 - smiley (sparse), 7 - narrow
@@ -49,6 +49,8 @@ sparse_generator:
 # VAR1
   fourth_criteria_after_failures: 5000 # mode change to 4th criteria after this many failures - Methods to Reduce Outdated/Redundant Edges
   terminate_after_failures: 10000 # total failures, including 4th criteria
+  # fourth_criteria_after_failures: 0 # mode change to 4th criteria after this many failures - Methods to Reduce Outdated/Redundant Edges
+  # terminate_after_failures: 15000 # total failures, including 4th criteria
 # VAR3
   use_discretized_samples: true # Hybrid Discretization and Sampling
   use_random_samples: true
