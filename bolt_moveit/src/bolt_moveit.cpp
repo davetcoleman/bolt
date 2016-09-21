@@ -137,10 +137,18 @@ BoltMoveIt::BoltMoveIt(const std::string &hostname, const std::string &package_p
   loadVisualTools();
 
   // Add a collision objects
-  visual_moveit_start_->publishCollisionFloor(0.001, "floor", rvt::TRANSLUCENT_DARK);
-  visual_moveit_start_->publishCollisionWall(-0.3, 0.0, 0, 2, 1.5, "wall", rvt::BLACK);
+  const double baxter_toros_height = -0.9;
+  visual_moveit_start_->publishCollisionFloor(baxter_toros_height + 0.001, "floor", rvt::TRANSLUCENT_DARK);
+  visual_moveit_start_->publishCollisionWall(-0.5, 0.0, /*z*/ baxter_toros_height, 0, 2, 1.5, "wall", rvt::BLACK);
   visual_moveit_start_->triggerPlanningSceneUpdate();
   ros::spinOnce();
+
+  // Append to allowed collision matrix
+  {
+    planning_scene_monitor::LockedPlanningSceneRW scene(planning_scene_monitor_); // Lock planning
+    collision_detection::AllowedCollisionMatrix& collision_matrix = scene->getAllowedCollisionMatrixNonConst();
+    collision_matrix.setEntry("wall", "pedestal", true);
+  }
 
   // if (track_memory_consumption_)
   // {
@@ -585,6 +593,7 @@ void BoltMoveIt::loadVisualTools()
 
     MoveItVizWindowPtr viz = MoveItVizWindowPtr(new MoveItVizWindow(moveit_visual, si_));
     viz->setJointModelGroup(jmg_);
+    viz->setEEFLinkName(ee_tip_link_);
 
     bool blocking = false;
     if (!headless_)

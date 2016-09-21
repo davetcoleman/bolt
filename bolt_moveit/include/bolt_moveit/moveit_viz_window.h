@@ -291,6 +291,11 @@ public:
     return si_;
   }
 
+  void setEEFLinkName(const std::string& name)
+  {
+    eef_link_name_ = name;
+  }
+
 private:
   /** \brief Short name of class */
   std::string name_;
@@ -304,6 +309,7 @@ private:
   // From bolt_moveit ------------------------------------------------------
 
   // Remember what joint model group we care about so that calls from OMPL don't have to
+  std::string eef_link_name_;
   const robot_model::JointModelGroup* jmg_;
 
   // Cached Point object to reduce memory loading

@@ -75,7 +75,7 @@ void MoveItVizWindow::state(const ompl::base::State* state, ot::VizSizes size, o
       std::static_pointer_cast<moveit_ompl::ModelBasedStateSpace>(si_->getStateSpace());
   // We must use the root_robot_state here so that the virtual_joint isn't affected
   mb_state_space->copyToRobotState(*visuals_->getRootRobotState(), state);
-  Eigen::Affine3d pose = visuals_->getRootRobotState()->getGlobalLinkTransform("right_gripper_target");
+  Eigen::Affine3d pose = visuals_->getRootRobotState()->getGlobalLinkTransform(eef_link_name_);
 
   switch (size)
   {
@@ -483,8 +483,7 @@ Eigen::Vector3d MoveItVizWindow::stateToPoint(const ob::State* state)
   mb_state_space->copyToRobotState(*visuals_->getRootRobotState(), state);
 
   // Get pose
-  // TODO(davetcoleman): do not hard code
-  Eigen::Affine3d pose = visuals_->getRootRobotState()->getGlobalLinkTransform("right_gripper_target");
+  Eigen::Affine3d pose = visuals_->getRootRobotState()->getGlobalLinkTransform(eef_link_name_);
 
   return pose.translation();
 }

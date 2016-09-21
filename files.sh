@@ -15,6 +15,7 @@
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/SparseGenerator.h
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/SparseStorage.h
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/SparseSmoother.h
+/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/SparseFormula.h
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/TaskGraph.h
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/VertexDiscretizer.h
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/BoltPlanner.h
@@ -72,7 +73,7 @@
 /home/dave/ros/current/ws_swri/src/bolt/bolt_moveit/include/curie_demos/cart_path_planner.h
 /home/dave/ros/current/ws_swri/src/bolt/bolt_moveit/include/curie_demos/moveit_base.h
 /home/dave/ros/current/ws_swri/src/bolt/bolt_moveit/README.md
-/home/dave/ros/current/ws_swri/src/bolt/bolt_moveit/config/config_hilgendorf.yaml
+/home/dave/ros/current/ws_swri/src/bolt/bolt_moveit/config/config_baxter.yaml
 /home/dave/ros/current/ws_swri/src/bolt/bolt_moveit/include/curie_demos/path_loader.h
 /home/dave/ros/current/ws_swri/src/bolt/bolt_moveit/include/bolt_moveit/moveit_viz_window.h
 /home/dave/ros/current/ws_swri/src/bolt/bolt_moveit/include/bolt_moveit/projection_viz_window.h

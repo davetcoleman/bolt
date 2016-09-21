@@ -130,7 +130,6 @@ void loadOMPLParameters(ros::NodeHandle nh, const std::string &name, ompl::tools
   {
     ros::NodeHandle rpnh(nh, "sparse_criteria");
     error += !get(name, rpnh, "sparse_delta_fraction", sparseCriteria->sparseDeltaFraction_);
-    error += !get(name, rpnh, "dense_delta_fraction", sparseCriteria->denseDeltaFraction_);
     error += !get(name, rpnh, "near_sample_points_multiple", sparseCriteria->nearSamplePointsMultiple_);
     error += !get(name, rpnh, "stretch_factor", sparseCriteria->stretchFactor_);
     error += !get(name, rpnh, "penetration_overlap_fraction", sparseCriteria->penetrationOverlapFraction_);

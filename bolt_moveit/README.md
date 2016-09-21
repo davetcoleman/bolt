@@ -1,10 +1,10 @@
-# Bolt MoveIt
+# Bolt MoveIt!
 
 Description: Demonstrate dual arm manipulation using a combination of free space and Cartesian planning
 
 Features:
 
- - Integration of OMPL + MoveIt + Descartes
+ - Integration of OMPL + MoveIt + Descartes-like features
  - Multi-modal task planning - have intermediate waypoint goals
  - Follow cartesian paths
  - Support for dual arms
@@ -14,11 +14,6 @@ Features:
 Start Rviz:
 
     roslaunch bolt_moveit baxter_visualize.launch
-
-Start simulated ros_control:
-
-    ACTUALLY SKIP THIS STEP, NOT NECESSARY
-    #roslaunch bolt_moveit baxter_simulation.launch
 
 Run example demo:
 

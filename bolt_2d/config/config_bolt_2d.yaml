@@ -63,9 +63,8 @@ sparse_generator:
 # ====================================================
 sparse_criteria:
   sparse_delta_fraction: 0.1
-  dense_delta_fraction: 0.01 #NOTE: this is not used anymore
   penetration_overlap_fraction: 0.01 #0.001
-  near_sample_points_multiple: 2 # 2 is value used by SPARStwo
+  near_sample_points_multiple: 2 # multiply this times number of dimensions
 # VAR4
   stretch_factor: 0   # 0 means: Exact method for choosing $t$-stretch factor
   use_l2_norm: false # straight line distance
@@ -81,8 +80,8 @@ sparse_criteria:
   use_edge_improvement_rule: true # Modification of Quality Criteria for $L_1$ Space
   verbose:
     added_reason: false # debug criteria for adding vertices & edges
-    criteria: false
-    quality: false
+    criteria: false # all criteria except 4th (quality)
+    quality: false # 4th criteria
     quality_max_spanner: false
     remove_close: false
   visualize:
