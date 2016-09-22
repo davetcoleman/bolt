@@ -168,6 +168,10 @@ BoltMoveIt::BoltMoveIt(const std::string &hostname, const std::string &package_p
         new mvt::IMarkerRobotState(planning_scene_monitor_, "start", jmg_, ee_link_, rvt::GREEN, package_path_));
     imarker_goal_.reset(
         new mvt::IMarkerRobotState(planning_scene_monitor_, "goal", jmg_, ee_link_, rvt::ORANGE, package_path_));
+
+    imarker_start_->setCollisionCheckingVerbose(true);
+    imarker_start_->setOnlyCheckSelfCollision(true);
+    imarker_start_->setUseCollisionChecking(true);
   }
 
   // Set remote_control
@@ -653,9 +657,10 @@ void BoltMoveIt::loadVisualTools()
   // Block until all visualizers are finished loading
   if (!headless_)
   {
+    const double wait_time = 0.5;
     for (std::size_t i = 1; i <= NUM_VISUALS; ++i)
     {
-      vizs_[i - 1]->getVisualTools()->waitForMarkerPub();
+      //vizs_[i - 1]->getVisualTools()->waitForMarkerPub(wait_time);
 
       // Show the initial robot state
       MoveItVisualToolsPtr moveit_visual = vizs_[i - 1]->getVisualTools();

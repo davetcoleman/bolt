@@ -4,21 +4,74 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
-        - /Global Options1
         - /Grid1/Offset1
         - /Viz1to61
         - /Viz1to61/ompl6 - markers1
-        - /Trajectory1
-        - /PlanningScene1
         - /PlanningScene1/Scene Geometry1
         - /PlanningScene1/Scene Robot1
         - /InteractiveMarkers1
         - /InteractiveMarkers1/Start2
-        - /InteractiveMarkers1/Goal2
-        - /InteractiveMarkers1/Cart2
+        - /InteractiveMarkers1/Start2/Link Tree1/base1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/collision_head_link_11
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/collision_head_link_21
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/head1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/head1/dummyhead11
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/head1/head_camera1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/head1/screen1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/head1/screen1/display1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/left_arm_mount1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/left_arm_mount1/left_upper_shoulder1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/left_arm_mount1/left_upper_shoulder1/left_lower_shoulder1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/left_arm_mount1/left_upper_shoulder1/left_lower_shoulder1/left_upper_elbow1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/left_arm_mount1/left_upper_shoulder1/left_lower_shoulder1/left_upper_elbow1/left_lower_elbow1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/left_arm_mount1/left_upper_shoulder1/left_lower_shoulder1/left_upper_elbow1/left_lower_elbow1/left_upper_forearm1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/left_arm_mount1/left_upper_shoulder1/left_lower_shoulder1/left_upper_elbow1/left_lower_elbow1/left_upper_forearm1/left_arm_itb1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/left_arm_mount1/left_upper_shoulder1/left_lower_shoulder1/left_upper_elbow1/left_lower_elbow1/left_upper_forearm1/left_lower_forearm1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/left_arm_mount1/left_upper_shoulder1/left_lower_shoulder1/left_upper_elbow1/left_lower_elbow1/left_upper_forearm1/left_lower_forearm1/left_wrist1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/left_arm_mount1/left_upper_shoulder1/left_lower_shoulder1/left_upper_elbow1/left_lower_elbow1/left_upper_forearm1/left_lower_forearm1/left_wrist1/left_hand1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/left_arm_mount1/left_upper_shoulder1/left_lower_shoulder1/left_upper_elbow1/left_lower_elbow1/left_upper_forearm1/left_lower_forearm1/left_wrist1/left_hand1/left_gripper_base1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/left_arm_mount1/left_upper_shoulder1/left_lower_shoulder1/left_upper_elbow1/left_lower_elbow1/left_upper_forearm1/left_lower_forearm1/left_wrist1/left_hand1/left_gripper_base1/l_gripper_l_finger1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/left_arm_mount1/left_upper_shoulder1/left_lower_shoulder1/left_upper_elbow1/left_lower_elbow1/left_upper_forearm1/left_lower_forearm1/left_wrist1/left_hand1/left_gripper_base1/l_gripper_l_finger1/l_gripper_l_finger_tip1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/left_arm_mount1/left_upper_shoulder1/left_lower_shoulder1/left_upper_elbow1/left_lower_elbow1/left_upper_forearm1/left_lower_forearm1/left_wrist1/left_hand1/left_gripper_base1/l_gripper_r_finger1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/left_arm_mount1/left_upper_shoulder1/left_lower_shoulder1/left_upper_elbow1/left_lower_elbow1/left_upper_forearm1/left_lower_forearm1/left_wrist1/left_hand1/left_gripper_base1/l_gripper_r_finger1/l_gripper_r_finger_tip1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/left_arm_mount1/left_upper_shoulder1/left_lower_shoulder1/left_upper_elbow1/left_lower_elbow1/left_upper_forearm1/left_lower_forearm1/left_wrist1/left_hand1/left_gripper_base1/left_gripper1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/left_arm_mount1/left_upper_shoulder1/left_lower_shoulder1/left_upper_elbow1/left_lower_elbow1/left_upper_forearm1/left_lower_forearm1/left_wrist1/left_hand1/left_hand_accelerometer1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/left_arm_mount1/left_upper_shoulder1/left_lower_shoulder1/left_upper_elbow1/left_lower_elbow1/left_upper_forearm1/left_lower_forearm1/left_wrist1/left_hand1/left_hand_camera1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/left_arm_mount1/left_upper_shoulder1/left_lower_shoulder1/left_upper_elbow1/left_lower_elbow1/left_upper_forearm1/left_lower_forearm1/left_wrist1/left_hand1/left_hand_camera_axis1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/left_arm_mount1/left_upper_shoulder1/left_lower_shoulder1/left_upper_elbow1/left_lower_elbow1/left_upper_forearm1/left_lower_forearm1/left_wrist1/left_hand1/left_hand_range1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/left_arm_mount1/left_upper_shoulder1/left_lower_shoulder1/left_upper_elbow1/left_lower_elbow1/left_upper_forearm_visual1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/left_arm_mount1/left_upper_shoulder1/left_lower_shoulder1/left_upper_elbow_visual1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/left_torso_itb1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/pedestal1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_arm_mount1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_arm_mount1/right_upper_shoulder1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_arm_mount1/right_upper_shoulder1/right_lower_shoulder1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_arm_mount1/right_upper_shoulder1/right_lower_shoulder1/right_upper_elbow1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_arm_mount1/right_upper_shoulder1/right_lower_shoulder1/right_upper_elbow1/right_lower_elbow1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_arm_mount1/right_upper_shoulder1/right_lower_shoulder1/right_upper_elbow1/right_lower_elbow1/right_upper_forearm1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_arm_mount1/right_upper_shoulder1/right_lower_shoulder1/right_upper_elbow1/right_lower_elbow1/right_upper_forearm1/right_arm_itb1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_arm_mount1/right_upper_shoulder1/right_lower_shoulder1/right_upper_elbow1/right_lower_elbow1/right_upper_forearm1/right_lower_forearm1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_arm_mount1/right_upper_shoulder1/right_lower_shoulder1/right_upper_elbow1/right_lower_elbow1/right_upper_forearm1/right_lower_forearm1/right_wrist1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_arm_mount1/right_upper_shoulder1/right_lower_shoulder1/right_upper_elbow1/right_lower_elbow1/right_upper_forearm1/right_lower_forearm1/right_wrist1/right_hand1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_arm_mount1/right_upper_shoulder1/right_lower_shoulder1/right_upper_elbow1/right_lower_elbow1/right_upper_forearm1/right_lower_forearm1/right_wrist1/right_hand1/right_gripper_base1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_arm_mount1/right_upper_shoulder1/right_lower_shoulder1/right_upper_elbow1/right_lower_elbow1/right_upper_forearm1/right_lower_forearm1/right_wrist1/right_hand1/right_gripper_base1/r_gripper_l_finger1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_arm_mount1/right_upper_shoulder1/right_lower_shoulder1/right_upper_elbow1/right_lower_elbow1/right_upper_forearm1/right_lower_forearm1/right_wrist1/right_hand1/right_gripper_base1/r_gripper_l_finger1/r_gripper_l_finger_tip1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_arm_mount1/right_upper_shoulder1/right_lower_shoulder1/right_upper_elbow1/right_lower_elbow1/right_upper_forearm1/right_lower_forearm1/right_wrist1/right_hand1/right_gripper_base1/r_gripper_r_finger1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_arm_mount1/right_upper_shoulder1/right_lower_shoulder1/right_upper_elbow1/right_lower_elbow1/right_upper_forearm1/right_lower_forearm1/right_wrist1/right_hand1/right_gripper_base1/r_gripper_r_finger1/r_gripper_r_finger_tip1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_arm_mount1/right_upper_shoulder1/right_lower_shoulder1/right_upper_elbow1/right_lower_elbow1/right_upper_forearm1/right_lower_forearm1/right_wrist1/right_hand1/right_gripper_base1/right_gripper1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_arm_mount1/right_upper_shoulder1/right_lower_shoulder1/right_upper_elbow1/right_lower_elbow1/right_upper_forearm1/right_lower_forearm1/right_wrist1/right_hand1/right_hand_accelerometer1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_arm_mount1/right_upper_shoulder1/right_lower_shoulder1/right_upper_elbow1/right_lower_elbow1/right_upper_forearm1/right_lower_forearm1/right_wrist1/right_hand1/right_hand_camera1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_arm_mount1/right_upper_shoulder1/right_lower_shoulder1/right_upper_elbow1/right_lower_elbow1/right_upper_forearm1/right_lower_forearm1/right_wrist1/right_hand1/right_hand_camera_axis1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_arm_mount1/right_upper_shoulder1/right_lower_shoulder1/right_upper_elbow1/right_lower_elbow1/right_upper_forearm1/right_lower_forearm1/right_wrist1/right_hand1/right_hand_range1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_arm_mount1/right_upper_shoulder1/right_lower_shoulder1/right_upper_elbow1/right_lower_elbow1/right_upper_forearm_visual1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_arm_mount1/right_upper_shoulder1/right_lower_shoulder1/right_upper_elbow1/right_lower_elbow1/right_upper_forearm_visual1/Details1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_arm_mount1/right_upper_shoulder1/right_lower_shoulder1/right_upper_elbow_visual1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_torso_itb1
+        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/sonar_ring1
         - /TF1/Frames1
-      Splitter Ratio: 0.561968982
-    Tree Height: 642
+      Splitter Ratio: 0.875862062
+    Tree Height: 712
   - Class: rviz/Help
     Name: Help
   - Class: rviz/Views
@@ -1844,7 +1897,7 @@ Visualization Manager:
       Enabled: true
       Name: Viz1to6
     - Class: moveit_rviz_plugin/Trajectory
-      Enabled: false
+      Enabled: true
       Interrupt Display: false
       Links:
         All Links Enabled: true
@@ -2133,9 +2186,9 @@ Visualization Manager:
       Show Trail: false
       State Display Time: REALTIME
       Trajectory Topic: /baxter/display_trajectory
-      Value: false
+      Value: true
     - Class: moveit_rviz_plugin/PlanningScene
-      Enabled: false
+      Enabled: true
       Move Group Namespace: ""
       Name: PlanningScene
       Planning Scene Topic: /swri/planning_scene
@@ -2155,10 +2208,282 @@ Visualization Manager:
           Expand Link Details: false
           Expand Tree: false
           Link Tree Style: Links in Alphabetic Order
+          base:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          collision_head_link_1:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          collision_head_link_2:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          display:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          dummyhead1:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          head:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          head_camera:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          l_gripper_l_finger:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          l_gripper_l_finger_tip:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          l_gripper_r_finger:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          l_gripper_r_finger_tip:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          left_arm_itb:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          left_arm_mount:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          left_gripper:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          left_gripper_base:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          left_hand:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          left_hand_accelerometer:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          left_hand_camera:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          left_hand_camera_axis:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          left_hand_range:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          left_lower_elbow:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          left_lower_forearm:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          left_lower_shoulder:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          left_torso_itb:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          left_upper_elbow:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          left_upper_elbow_visual:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          left_upper_forearm:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          left_upper_forearm_visual:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          left_upper_shoulder:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          left_wrist:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          pedestal:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          r_gripper_l_finger:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          r_gripper_l_finger_tip:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          r_gripper_r_finger:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          r_gripper_r_finger_tip:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          right_arm_itb:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          right_arm_mount:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          right_gripper:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          right_gripper_base:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          right_hand:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          right_hand_accelerometer:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          right_hand_camera:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          right_hand_camera_axis:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          right_hand_range:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          right_lower_elbow:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          right_lower_forearm:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          right_lower_shoulder:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          right_torso_itb:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          right_upper_elbow:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          right_upper_elbow_visual:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          right_upper_forearm:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          right_upper_forearm_visual:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          right_upper_shoulder:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          right_wrist:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          screen:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          sonar_ring:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          torso:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
         Robot Alpha: 1
         Show Robot Collision: false
         Show Robot Visual: false
-      Value: false
+      Value: true
     - Class: rviz/Group
       Displays:
         - Class: rviz/InteractiveMarkers
@@ -2174,284 +2499,341 @@ Visualization Manager:
           Class: moveit_rviz_plugin/RobotState
           Collision Enabled: false
           Enabled: true
-          Links:
+          Link Tree:
             All Links Enabled: true
             Expand Joint Details: false
             Expand Link Details: false
-            Expand Tree: false
-            Link Tree Style: Links in Alphabetic Order
+            Expand Tree: true
+            Link Tree Style: Tree of links
             base:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            collision_head_link_1:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            collision_head_link_2:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            display:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            dummyhead1:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            head:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            head_camera:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            l_gripper_l_finger:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            l_gripper_l_finger_tip:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            l_gripper_r_finger:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            l_gripper_r_finger_tip:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            left_arm_itb:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            left_arm_mount:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            left_gripper:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            left_gripper_base:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            left_hand:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            left_hand_accelerometer:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            left_hand_camera:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            left_hand_camera_axis:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            left_hand_range:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            left_lower_elbow:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            left_lower_forearm:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            left_lower_shoulder:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            left_torso_itb:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            left_upper_elbow:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            left_upper_elbow_visual:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            left_upper_forearm:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            left_upper_forearm_visual:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            left_upper_shoulder:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            left_wrist:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            pedestal:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            r_gripper_l_finger:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            r_gripper_l_finger_tip:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            r_gripper_r_finger:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            r_gripper_r_finger_tip:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            right_arm_itb:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            right_arm_mount:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            right_gripper:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            right_gripper_base:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            right_hand:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            right_hand_accelerometer:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            right_hand_camera:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            right_hand_camera_axis:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            right_hand_range:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            right_lower_elbow:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            right_lower_forearm:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            right_lower_shoulder:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            right_torso_itb:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-            right_upper_elbow:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            right_upper_elbow_visual:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            right_upper_forearm:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            right_upper_forearm_visual:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            right_upper_shoulder:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            right_wrist:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            screen:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            sonar_ring:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            torso:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
+              Details:
+                Alpha: 1
+                Show Axes: false
+                Show Trail: false
+              collision_head_link_1:
+                Details:
+                  Alpha: 1
+                  Show Axes: false
+                  Show Trail: false
+                Value: true
+              collision_head_link_2:
+                Details:
+                  Alpha: 1
+                  Show Axes: false
+                  Show Trail: false
+                Value: true
+              torso:
+                Details:
+                  Alpha: 1
+                  Show Axes: false
+                  Show Trail: false
+                Value: true
+                head:
+                  Details:
+                    Alpha: 1
+                    Show Axes: false
+                    Show Trail: false
+                  Value: true
+                  dummyhead1:
+                    Details:
+                      Alpha: 1
+                      Show Axes: false
+                      Show Trail: false
+                  head_camera:
+                    Details:
+                      Alpha: 1
+                      Show Axes: false
+                      Show Trail: false
+                  screen:
+                    Details:
+                      Alpha: 1
+                      Show Axes: false
+                      Show Trail: false
+                    Value: true
+                    display:
+                      Details:
+                        Alpha: 1
+                        Show Axes: false
+                        Show Trail: false
+                      Value: true
+                left_arm_mount:
+                  Details:
+                    Alpha: 1
+                    Show Axes: false
+                    Show Trail: false
+                  left_upper_shoulder:
+                    Details:
+                      Alpha: 1
+                      Show Axes: false
+                      Show Trail: false
+                    Value: true
+                    left_lower_shoulder:
+                      Details:
+                        Alpha: 1
+                        Show Axes: false
+                        Show Trail: false
+                      Value: true
+                      left_upper_elbow:
+                        Details:
+                          Alpha: 1
+                          Show Axes: false
+                          Show Trail: false
+                        Value: true
+                        left_lower_elbow:
+                          Details:
+                            Alpha: 1
+                            Show Axes: false
+                            Show Trail: false
+                          Value: true
+                          left_upper_forearm:
+                            Details:
+                              Alpha: 1
+                              Show Axes: false
+                              Show Trail: false
+                            Value: true
+                            left_arm_itb:
+                              Details:
+                                Alpha: 1
+                                Show Axes: false
+                                Show Trail: false
+                            left_lower_forearm:
+                              Details:
+                                Alpha: 1
+                                Show Axes: false
+                                Show Trail: false
+                              Value: true
+                              left_wrist:
+                                Details:
+                                  Alpha: 1
+                                  Show Axes: false
+                                  Show Trail: false
+                                Value: true
+                                left_hand:
+                                  Details:
+                                    Alpha: 1
+                                    Show Axes: false
+                                    Show Trail: false
+                                  Value: true
+                                  left_gripper_base:
+                                    Details:
+                                      Alpha: 1
+                                      Show Axes: false
+                                      Show Trail: false
+                                    Value: true
+                                    l_gripper_l_finger:
+                                      Details:
+                                        Alpha: 1
+                                        Show Axes: false
+                                        Show Trail: false
+                                      Value: true
+                                      l_gripper_l_finger_tip:
+                                        Details:
+                                          Alpha: 1
+                                          Show Axes: false
+                                          Show Trail: false
+                                        Value: true
+                                    l_gripper_r_finger:
+                                      Details:
+                                        Alpha: 1
+                                        Show Axes: false
+                                        Show Trail: false
+                                      Value: true
+                                      l_gripper_r_finger_tip:
+                                        Details:
+                                          Alpha: 1
+                                          Show Axes: false
+                                          Show Trail: false
+                                        Value: true
+                                    left_gripper:
+                                      Details:
+                                        Alpha: 1
+                                        Show Axes: false
+                                        Show Trail: false
+                                  left_hand_accelerometer:
+                                    Details:
+                                      Alpha: 1
+                                      Show Axes: false
+                                      Show Trail: false
+                                    Value: true
+                                  left_hand_camera:
+                                    Details:
+                                      Alpha: 1
+                                      Show Axes: false
+                                      Show Trail: false
+                                    Value: true
+                                  left_hand_camera_axis:
+                                    Details:
+                                      Alpha: 1
+                                      Show Axes: false
+                                      Show Trail: false
+                                  left_hand_range:
+                                    Details:
+                                      Alpha: 1
+                                      Show Axes: false
+                                      Show Trail: false
+                                    Value: true
+                          left_upper_forearm_visual:
+                            Details:
+                              Alpha: 1
+                              Show Axes: false
+                              Show Trail: false
+                            Value: true
+                      left_upper_elbow_visual:
+                        Details:
+                          Alpha: 1
+                          Show Axes: false
+                          Show Trail: false
+                        Value: true
+                left_torso_itb:
+                  Details:
+                    Alpha: 1
+                    Show Axes: false
+                    Show Trail: false
+                pedestal:
+                  Details:
+                    Alpha: 1
+                    Show Axes: false
+                    Show Trail: false
+                  Value: true
+                right_arm_mount:
+                  Details:
+                    Alpha: 1
+                    Show Axes: false
+                    Show Trail: false
+                  right_upper_shoulder:
+                    Details:
+                      Alpha: 1
+                      Show Axes: false
+                      Show Trail: false
+                    Value: true
+                    right_lower_shoulder:
+                      Details:
+                        Alpha: 1
+                        Show Axes: false
+                        Show Trail: false
+                      Value: true
+                      right_upper_elbow:
+                        Details:
+                          Alpha: 1
+                          Show Axes: false
+                          Show Trail: false
+                        Value: true
+                        right_lower_elbow:
+                          Details:
+                            Alpha: 1
+                            Show Axes: false
+                            Show Trail: false
+                          Value: true
+                          right_upper_forearm:
+                            Details:
+                              Alpha: 1
+                              Show Axes: false
+                              Show Trail: false
+                            Value: true
+                            right_arm_itb:
+                              Details:
+                                Alpha: 1
+                                Show Axes: false
+                                Show Trail: false
+                            right_lower_forearm:
+                              Details:
+                                Alpha: 1
+                                Show Axes: false
+                                Show Trail: false
+                              Value: true
+                              right_wrist:
+                                Details:
+                                  Alpha: 1
+                                  Show Axes: false
+                                  Show Trail: false
+                                Value: true
+                                right_hand:
+                                  Details:
+                                    Alpha: 1
+                                    Show Axes: false
+                                    Show Trail: false
+                                  Value: true
+                                  right_gripper_base:
+                                    Details:
+                                      Alpha: 1
+                                      Show Axes: false
+                                      Show Trail: false
+                                    Value: true
+                                    r_gripper_l_finger:
+                                      Details:
+                                        Alpha: 1
+                                        Show Axes: false
+                                        Show Trail: false
+                                      Value: true
+                                      r_gripper_l_finger_tip:
+                                        Details:
+                                          Alpha: 1
+                                          Show Axes: false
+                                          Show Trail: false
+                                        Value: true
+                                    r_gripper_r_finger:
+                                      Details:
+                                        Alpha: 1
+                                        Show Axes: false
+                                        Show Trail: false
+                                      Value: true
+                                      r_gripper_r_finger_tip:
+                                        Details:
+                                          Alpha: 1
+                                          Show Axes: false
+                                          Show Trail: false
+                                        Value: true
+                                    right_gripper:
+                                      Details:
+                                        Alpha: 1
+                                        Show Axes: false
+                                        Show Trail: false
+                                  right_hand_accelerometer:
+                                    Details:
+                                      Alpha: 1
+                                      Show Axes: false
+                                      Show Trail: false
+                                    Value: true
+                                  right_hand_camera:
+                                    Details:
+                                      Alpha: 1
+                                      Show Axes: false
+                                      Show Trail: false
+                                    Value: true
+                                  right_hand_camera_axis:
+                                    Details:
+                                      Alpha: 1
+                                      Show Axes: false
+                                      Show Trail: false
+                                  right_hand_range:
+                                    Details:
+                                      Alpha: 1
+                                      Show Axes: false
+                                      Show Trail: false
+                                    Value: true
+                          right_upper_forearm_visual:
+                            Details:
+                              Alpha: 1
+                              Show Axes: false
+                              Show Trail: false
+                            Value: true
+                      right_upper_elbow_visual:
+                        Details:
+                          Alpha: 1
+                          Show Axes: false
+                          Show Trail: false
+                        Value: true
+                right_torso_itb:
+                  Details:
+                    Alpha: 1
+                    Show Axes: false
+                    Show Trail: false
+                sonar_ring:
+                  Details:
+                    Alpha: 1
+                    Show Axes: false
+                    Show Trail: false
+                  Value: true
           Name: Start
           Robot Alpha: 1
           Robot Description: /baxter/robot_description
@@ -3063,7 +3445,8 @@ Visualization Manager:
           Marker Topic: /baxter/cartesian_trajectory
           Name: Cart
           Namespaces:
-            {}
+            Axis Path: true
+            Cylinder: true
           Queue Size: 100
           Value: true
       Enabled: true
@@ -3103,27 +3486,27 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 6.81571484
+      Distance: 3.30283642
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.622002482
-        Y: -1.55196667
-        Z: -6.95179006e-06
+        X: 1.07172048
+        Y: 0.141677856
+        Z: -7.7415516e-06
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.349793494
+      Pitch: 0.404792815
       Target Frame: robot_table_link
       Value: XYOrbit (rviz)
-      Yaw: 6.13186979
+      Yaw: 0.343695074
     Saved: ~
 Window Geometry:
   Displays:
     collapsed: false
-  Height: 908
+  Height: 987
   Help:
     collapsed: false
   Hide Left Dock: false
@@ -3132,9 +3515,9 @@ Window Geometry:
     collapsed: false
   MoveItDashboard:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd0000000100000000000001c500000346fc0200000011fb0000000a0049006d00610067006500000000280000010d0000000000000000fb0000000a0049006d0061006700650000000041000002090000000000000000fb0000000a0049006d00610067006500000001700000015c0000000000000000fb000000100044006900730070006c0061007900730100000028000002c3000000dd00fffffffb0000000800480065006c00700000000342000000bb0000007600fffffffb0000000a00560069006500770073000000024d000000b0000000b000fffffffb0000000c00430061006d0065007200610000000369000000160000000000000000fb0000000c00430061006d006500720061000000038f000000160000000000000000fb0000001e004d006f00740069006f006e00200050006c0061006e006e0069006e00670100000230000001b60000000000000000fb0000000c00540065006c0065006f00700000000331000000b50000000000000000fb0000000c00430061006d00650072006100000003d0000000160000000000000000fb0000000c00430061006d00650072006101000002d6000001100000000000000000fb00000024004d006f0076006500490074004d0061006e006900700075006c006100740069006f006e000000032d000000d10000000000000000fb0000000e005000690063006b004e0069006b0100000334000000b20000000000000000fb0000000a0049006d006100670065010000031a000000cc0000000000000000fb0000000c004d006f007600650049007400000002e60000007d0000007800fffffffb0000001e004d006f007600650049007400440061007300680062006f00610072006401000002f10000007d0000007800ffffff000004f00000034600000001000000020000000100000002fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000100000000000002b100000395fc0200000011fb0000000a0049006d00610067006500000000280000010d0000000000000000fb0000000a0049006d0061006700650000000041000002090000000000000000fb0000000a0049006d00610067006500000001700000015c0000000000000000fb000000100044006900730070006c006100790073010000002800000309000000dd00fffffffb0000000800480065006c00700000000342000000bb0000007600fffffffb0000000a00560069006500770073000000024d000000b0000000b000fffffffb0000000c00430061006d0065007200610000000369000000160000000000000000fb0000000c00430061006d006500720061000000038f000000160000000000000000fb0000001e004d006f00740069006f006e00200050006c0061006e006e0069006e00670100000230000001b60000000000000000fb0000000c00540065006c0065006f00700000000331000000b50000000000000000fb0000000c00430061006d00650072006100000003d0000000160000000000000000fb0000000c00430061006d00650072006101000002d6000001100000000000000000fb00000024004d006f0076006500490074004d0061006e006900700075006c006100740069006f006e000000032d000000d10000000000000000fb0000000e005000690063006b004e0069006b0100000334000000b20000000000000000fb0000000a0049006d006100670065010000031a000000cc0000000000000000fb0000000c004d006f007600650049007400000002e60000007d0000007800fffffffb0000001e004d006f007600650049007400440061007300680062006f0061007200640100000337000000860000007800ffffff0000045c0000039500000001000000020000000100000002fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Views:
     collapsed: false
-  Width: 1723
+  Width: 1811
   X: 1023
   Y: 35

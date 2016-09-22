@@ -34,7 +34,7 @@
 
 /* Author: Andrew Dobson */
 
-#include <spars2/SPARS2.h>
+#include <bolt_core/SPARS2.h>
 #include "ompl/geometric/planners/prm/ConnectionStrategy.h"
 #include "ompl/base/goals/GoalSampleableRegion.h"
 #include "ompl/base/objectives/PathLengthOptimizationObjective.h"

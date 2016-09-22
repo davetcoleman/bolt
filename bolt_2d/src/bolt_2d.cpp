@@ -53,7 +53,7 @@
 #include <bolt_core/Bolt.h>
 #include <ompl/geometric/SimpleSetup.h>
 #include <ompl/base/PlannerTerminationCondition.h>
-#include <spars2/SPARS2.h>
+#include <bolt_core/SPARS2.h>
 #include <ompl/util/PPM.h> // For reading image files
 #include <bolt_core/SparseFormula.h>
 

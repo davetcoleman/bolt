@@ -398,7 +398,7 @@ void VertexDiscretizer::createState(std::size_t threadID, std::vector<double> &v
 
   if (dist < clearance_)
   {
-    BOLT_WARN(indent, vThread_, "Rejected because of clearance " << dist << " required: " << clearance_);
+    BOLT_WARN(indent, vThread_, "Rejected because of clearance " << std::fixed << dist << " required: " << clearance_);
 
     // Visualize
     if (visualizeGridGeneration_)

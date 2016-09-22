@@ -68,17 +68,18 @@ ProjectionVizWindow::ProjectionVizWindow(rviz_visual_tools::RvizVisualToolsPtr v
                                          ompl::base::SpaceInformationPtr si)
   : name_("projection_viz_window"), visuals_(visuals), si_(si)
 {
-  // with this OMPL interface to Rviz all pubs must be manually triggered
-  // visuals_->enableBatchPublishing(false);
-
   // Calculate ranges
   moveit_ompl::ModelBasedStateSpacePtr mb_state_space =
       std::static_pointer_cast<moveit_ompl::ModelBasedStateSpace>(si_->getStateSpace());
   ompl::base::RealVectorBounds bounds = mb_state_space->getBounds();
 
   // Only allow up to 6 dimensions
-  BOOST_ASSERT_MSG(si_->getStateSpace()->getDimension() > 0 && si_->getStateSpace()->getDimension() <= 6,
-                   "Invalid number of dimensions");
+  if (!(si_->getStateSpace()->getDimension() > 0 && si_->getStateSpace()->getDimension() <= 6))
+  {
+    ROS_ERROR_STREAM_NAMED(name_, "Invalid number of dimensions, disabling projection viz window");
+    enabled_ = false;
+    return;
+  }
 
   // For each dimension
   for (std::size_t i = 0; i < si_->getStateSpace()->getDimension(); ++i)
@@ -94,6 +95,9 @@ ProjectionVizWindow::ProjectionVizWindow(rviz_visual_tools::RvizVisualToolsPtr v
 void ProjectionVizWindow::state(const ompl::base::State* state, ot::VizSizes size, ot::VizColors color,
                                 double extra_data)
 {
+  if (!enabled_)
+    return;
+
   Eigen::Vector3d point2 = stateToPoint(state);
 
   switch (size)
@@ -128,6 +132,9 @@ void ProjectionVizWindow::state(const ompl::base::State* state, ot::VizSizes siz
 void ProjectionVizWindow::states(std::vector<const ompl::base::State*> states, std::vector<ot::VizColors> colors,
                                  ot::VizSizes size)
 {
+  if (!enabled_)
+    return;
+
   // Cache spheres
   EigenSTL::vector_Vector3d sphere_points;
   std::vector<rvt::colors> sphere_colors;
@@ -146,6 +153,9 @@ void ProjectionVizWindow::states(std::vector<const ompl::base::State*> states, s
 
 void ProjectionVizWindow::edge(const ompl::base::State* stateA, const ompl::base::State* stateB, double cost)
 {
+  if (!enabled_)
+    return;
+
   // Error check
   if (si_->getStateSpace()->equalStates(stateA, stateB))
   {
@@ -178,6 +188,9 @@ void ProjectionVizWindow::edge(const ompl::base::State* stateA, const ompl::base
 void ProjectionVizWindow::edge(const ompl::base::State* stateA, const ompl::base::State* stateB, ot::VizSizes size,
                                ot::VizColors color)
 {
+  if (!enabled_)
+    return;
+
   visuals_->publishCylinder(stateToPoint(stateA), stateToPoint(stateB), visuals_->intToRvizColor(color),
                             visuals_->intToRvizScale(size));
 }
@@ -186,6 +199,9 @@ void ProjectionVizWindow::edges(const std::vector<const ompl::base::State*> stat
                                 const std::vector<const ompl::base::State*> stateBs,
                                 std::vector<ompl::tools::VizColors> colors, ompl::tools::VizSizes size)
 {
+  if (!enabled_)
+    return;
+
   // Cache edges
   EigenSTL::vector_Vector3d aPoints;
   EigenSTL::vector_Vector3d bPoints;
@@ -207,6 +223,9 @@ void ProjectionVizWindow::edges(const std::vector<const ompl::base::State*> stat
 
 void ProjectionVizWindow::path(ompl::geometric::PathGeometric* path, ompl::tools::VizSizes type, ot::VizColors color)
 {
+  if (!enabled_)
+    return;
+
   // Convert
   const og::PathGeometric& geometric_path = *path;  // static_cast<og::PathGeometric&>(*path);
 
@@ -226,6 +245,9 @@ void ProjectionVizWindow::path(ompl::geometric::PathGeometric* path, ompl::tools
 
 void ProjectionVizWindow::trigger()
 {
+  if (!enabled_)
+    return;
+
   visuals_->triggerBatchPublish();
 }
 
@@ -285,11 +307,11 @@ bool ProjectionVizWindow::publishSpheres(const og::PathGeometric& path, const rv
 }
 
 // Deprecated
-bool ProjectionVizWindow::publishPath(const og::PathGeometric& path, const rvt::colors& color, const double thickness,
-                                      const std::string& ns)
-{
-  return publish2DPath(path, color, thickness, ns);
-}
+// bool ProjectionVizWindow::publishPath(const og::PathGeometric& path, const rvt::colors& color, const double thickness,
+//                                       const std::string& ns)
+// {
+//   return publish2DPath(path, color, thickness, ns);
+//}
 
 bool ProjectionVizWindow::publish2DPath(const og::PathGeometric& path, const rvt::colors& color, const double thickness,
                                         const std::string& ns)
