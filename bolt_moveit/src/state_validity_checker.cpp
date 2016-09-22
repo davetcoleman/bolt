@@ -78,6 +78,9 @@ void moveit_ompl::StateValidityChecker::setVerbose(bool flag)
 
 bool moveit_ompl::StateValidityChecker::isValid(const ompl::base::State *state, bool verbose) const
 {
+  // TODO: HACK
+  verbose = true;
+
   // check bounds
   if (!si_->satisfiesBounds(state))
   {
@@ -121,6 +124,9 @@ bool moveit_ompl::StateValidityChecker::isValid(const ompl::base::State *state, 
 
 bool moveit_ompl::StateValidityChecker::isValid(const ompl::base::State *state, double &dist, bool verbose) const
 {
+  // TODO: HACK
+  verbose = true;
+
   if (!si_->satisfiesBounds(state))
   {
     if (verbose)
@@ -159,8 +165,11 @@ bool moveit_ompl::StateValidityChecker::isValid(const ompl::base::State *state, 
 
   // check collision avoidance
   collision_detection::CollisionResult res;
-  planning_scene_->checkCollision(verbose ? collision_request_with_distance_verbose_ : collision_request_with_distance_,
-                                  res, *robot_state);
+  if (verbose)
+    planning_scene_->checkCollision(collision_request_with_distance_verbose_, res, *robot_state);
+  else
+    planning_scene_->checkCollision(collision_request_with_distance_, res, *robot_state);
+
   dist = res.distance;
 
   // Visualize
@@ -198,7 +207,12 @@ double moveit_ompl::StateValidityChecker::clearance(const ompl::base::State *sta
 
   collision_detection::CollisionResult res;
   planning_scene_->checkCollision(collision_request_with_distance_, res, *robot_state);
-  return res.collision ? 0.0 : (res.distance < 0.0 ? std::numeric_limits<double>::infinity() : res.distance);
+
+  if (res.collision)
+    return 0.0;
+  else if (res.distance < 0.0)
+    return std::numeric_limits<double>::infinity();
+  return res.distance;
 }
 
 void moveit_ompl::StateValidityChecker::setCheckingEnabled(const bool &checking_enabled)

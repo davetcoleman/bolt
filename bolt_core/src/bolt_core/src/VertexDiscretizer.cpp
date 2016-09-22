@@ -351,6 +351,10 @@ void VertexDiscretizer::recursiveDiscretization(std::size_t threadID, std::vecto
     else  // this is the end of recursion, create a new state
     {
       createState(threadID, values, si, candidateState, indent);
+
+      // Check for shutdown
+      if (visual_->viz1()->shutdownRequested())
+        exit(0);
     }
   }
 }
@@ -370,17 +374,17 @@ void VertexDiscretizer::createState(std::size_t threadID, std::vector<double> &v
     BOLT_ERROR(indent, vThread_, "Rejected because of validity");
 
     // Visualize
-    if (visualizeGridGeneration_)
+    if (visualizeGridGeneration_ && false)
     {
       // Candidate node rejected
       visual_->viz1()->state(candidateState, LARGE, RED, 0);
       visual_->viz1()->state(candidateState, ROBOT, RED, 0);
       visual_->viz1()->trigger();
 
-      if (visualizeGridGenerationWait_)
-        visual_->waitForUserFeedback("rejected");
-      else
-        usleep(0.001 * 1000000);
+      // if (visualizeGridGenerationWait_)
+      //   visual_->waitForUserFeedback("rejected");
+      // else
+      usleep(0.001 * 1000000);
     }
 
     return;

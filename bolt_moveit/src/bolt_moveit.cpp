@@ -139,7 +139,8 @@ BoltMoveIt::BoltMoveIt(const std::string &hostname, const std::string &package_p
   // Add a collision objects
   const double baxter_toros_height = -0.9;
   visual_moveit_start_->publishCollisionFloor(baxter_toros_height + 0.001, "floor", rvt::TRANSLUCENT_DARK);
-  visual_moveit_start_->publishCollisionWall(-0.5, 0.0, /*z*/ baxter_toros_height, 0, 2, 1.5, "wall", rvt::BLACK);
+  visual_moveit_start_->publishCollisionWall(/*x*/ -1.0, /*y*/ 0.0, /*z*/ baxter_toros_height, /*angle*/ 0,
+                                             /*width*/ 2, /*height*/ 2.0, "wall", rvt::BLACK);
   visual_moveit_start_->triggerPlanningSceneUpdate();
   ros::spinOnce();
 

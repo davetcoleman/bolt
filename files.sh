@@ -41,6 +41,7 @@
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/spars2/src/SPARS2.cpp
 
 /home/dave/ros/current/ws_swri/src/ompl/src/ompl/tools/debug/Visualizer.h
+/home/dave/ros/current/ws_swri/src/ompl/src/ompl/tools/debug/VizWindow.h
 /home/dave/ros/current/ws_swri/src/ompl/src/ompl/geometric/PathGeometric.h
 /home/dave/ros/current/ws_swri/src/ompl/src/ompl/geometric/PathSimplifier.h
 /home/dave/ros/current/ws_swri/src/ompl/src/ompl/geometric/SimpleSetup.h
@@ -48,10 +49,10 @@
 /home/dave/ros/current/ws_swri/src/ompl/src/ompl/base/SpaceInformation.h
 /home/dave/ros/current/ws_swri/src/ompl/src/ompl/base/spaces/RealVectorStateSpace.h
 
-/home/dave/ros/current/ws_swri/src/moveit/moveit_core/robot_state/include/moveit/robot_state/robot_state.h
-/home/dave/ros/current/ws_swri/src/moveit/moveit_core/robot_state/src/robot_state.cpp
-/home/dave/ros/current/ws_swri/src/moveit/moveit_core/robot_model/include/moveit/robot_model/robot_model.h
-/home/dave/ros/current/ws_swri/src/moveit/moveit_core/robot_model/src/robot_model.cpp
+/home/dave/ros/current/ws_swri/src/moveit_all/moveit/moveit_core/robot_state/include/moveit/robot_state/robot_state.h
+/home/dave/ros/current/ws_swri/src/moveit_all/moveit/moveit_core/robot_state/src/robot_state.cpp
+/home/dave/ros/current/ws_swri/src/moveit_all/moveit/moveit_core/robot_model/include/moveit/robot_model/robot_model.h
+/home/dave/ros/current/ws_swri/src/moveit_all/moveit/moveit_core/robot_model/src/robot_model.cpp
 
 /home/dave/ros/current/ws_swri/src/bolt/moveit_ompl/src/model_based_state_space.cpp
 /home/dave/ros/current/ws_swri/src/bolt/moveit_ompl/include/moveit_ompl/model_based_state_space.h
