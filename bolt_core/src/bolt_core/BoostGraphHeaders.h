@@ -384,8 +384,8 @@ class SparseEdgeWeightMap
 private:
   const SparseAdjList& g_;  // Graph used
   const SparseEdgeCollisionStateMap& collisionStates_;
-  //const double popularityBias_;
-  //const bool popularityBiasEnabled_;
+  // const double popularityBias_;
+  // const bool popularityBiasEnabled_;
 
 public:
   /** Map key type. */
@@ -402,11 +402,11 @@ public:
    * \param graph         Graph to use
    */
   SparseEdgeWeightMap(const SparseAdjList& graph, const SparseEdgeCollisionStateMap& collisionStates)
-    //const double& popularityBias, const bool popularityBiasEnabled)
-    : g_(graph)
-    , collisionStates_(collisionStates)
-      //, popularityBias_(popularityBias)
-      //, popularityBiasEnabled_(popularityBiasEnabled)
+      // const double& popularityBias, const bool popularityBiasEnabled)
+      : g_(graph),
+        collisionStates_(collisionStates)
+  //, popularityBias_(popularityBias)
+  //, popularityBiasEnabled_(popularityBiasEnabled)
   {
   }
 
@@ -421,7 +421,7 @@ public:
     if (collisionStates_[e] == IN_COLLISION)
       return std::numeric_limits<double>::infinity();
 
-    //double weight;
+    // double weight;
     // if (popularityBiasEnabled_)
     // {
     //   // Maximum cost an edge can have based on popularity
@@ -433,8 +433,8 @@ public:
     // }
     // else
     // {
-    //weight = boost::get(boost::edge_weight, g_, e);
-      //}
+    // weight = boost::get(boost::edge_weight, g_, e);
+    //}
 
     // Method 3 - less optimal but faster planning time
     // const double weighted_astar = 0.8;
@@ -442,7 +442,7 @@ public:
 
     // std::cout << "getting weight of edge " << e << " with value " << weight << std::endl;
 
-    //return weight;
+    // return weight;
     return boost::get(boost::edge_weight, g_, e);
   }
 };

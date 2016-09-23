@@ -105,7 +105,7 @@ public:
    * \param stateID representing a pre-populate state
    * \return true if sparse graph is still accepting states, false if the sparse graph has completed
    */
-  bool addSample(base::State* state, std::size_t threadID, bool &usedState, std::size_t indent);
+  bool addSample(base::State *state, std::size_t threadID, bool &usedState, std::size_t indent);
   bool addSample(CandidateData &candidateD, std::size_t threadID, bool &usedState, std::size_t indent);
 
   /**
@@ -155,7 +155,7 @@ public:
   {
     double sum = std::accumulate(avgPlanTime_.begin(), avgPlanTime_.end(), 0.0);
     double mean = sum / avgPlanTime_.size();
-    avgPlanTime_.clear(); // reset for next run
+    avgPlanTime_.clear();  // reset for next run
     return mean;
   }
 
@@ -163,7 +163,7 @@ public:
   {
     double sum = std::accumulate(avgPathQuality_.begin(), avgPathQuality_.end(), 0.0);
     double mean = sum / avgPathQuality_.size();
-    avgPathQuality_.clear(); // reset for next run
+    avgPathQuality_.clear();  // reset for next run
     return mean;
   }
 
@@ -201,8 +201,8 @@ protected:
 
   // All for benchmarking / testing
   std::vector<std::string> stringLog_;
-  std::string mapName_; // meta data for the logging
-  double lastGraphGenerationTime_ = 0; // store how long it took to generate the last SPARS2 graph
+  std::string mapName_;                 // meta data for the logging
+  double lastGraphGenerationTime_ = 0;  // store how long it took to generate the last SPARS2 graph
   std::vector<double> avgPlanTime_;
   std::vector<double> avgPathQuality_;
 

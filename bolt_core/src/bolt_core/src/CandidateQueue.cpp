@@ -51,7 +51,7 @@ namespace tools
 {
 namespace bolt
 {
-CandidateQueue::CandidateQueue(SparseGraphPtr sg, SparseGenerator* sparseGenerator)
+CandidateQueue::CandidateQueue(SparseGraphPtr sg, SparseGenerator *sparseGenerator)
   : sg_(sg)
   , sparseCriteria_(sg_->getSparseCriteria())
   , sparseGenerator_(sparseGenerator)
@@ -116,7 +116,7 @@ void CandidateQueue::startGenerating(std::size_t indent)
 
   // Set number threads - should be at least less than 1 from total number of threads on system
   // 1 thread is for parent, 1 is for sampler, 1 is for GUIs, etc, remainder are for this
-  //numThreads_ = std::max(1, int(sg_->getNumQueryVertices() - 3));
+  // numThreads_ = std::max(1, int(sg_->getNumQueryVertices() - 3));
 
   // TODO: how to choose this number best to minimize queue misses?
   /* For 2D environment test data...
@@ -195,7 +195,7 @@ void CandidateQueue::stopGenerating(std::size_t indent)
   // Clear remaining data
   while (!queue_.empty())
   {
-    //std::cout << "Queue num " << queue_.size() << ": queue_.front().state_: " << queue_.front().state_;
+    // std::cout << "Queue num " << queue_.size() << ": queue_.front().state_: " << queue_.front().state_;
 
     if (queue_.front().state_ == nullptr)
     {
@@ -206,7 +206,7 @@ void CandidateQueue::stopGenerating(std::size_t indent)
     {
       // Do not free the state of the last item on the queue, because it is used somewhere else (?)
       si_->getStateSpace()->freeState(queue_.front().state_);
-      //std::cout << "... freed " << std::endl;
+      // std::cout << "... freed " << std::endl;
     }
 
     queue_.pop();
@@ -282,8 +282,9 @@ void CandidateQueue::generatingThread(std::size_t threadID, base::SpaceInformati
 
 CandidateData &CandidateQueue::getNextCandidate(std::size_t indent)
 {
-  BOLT_CYAN(indent, verbose_, "CandidateQueue.getNextCanidate(): queue size: " << queue_.size()
-            << " num samples added: " << sparseGenerator_->getNumRandSamplesAdded());
+  BOLT_CYAN(indent, verbose_, "CandidateQueue.getNextCanidate(): queue size: "
+                                  << queue_.size()
+                                  << " num samples added: " << sparseGenerator_->getNumRandSamplesAdded());
   // This function is run in the parent thread
 
   // Keep looping until a non-expired candidate exists or the thread ends
@@ -369,7 +370,8 @@ void CandidateQueue::waitForQueueNotEmpty(std::size_t indent)
 
 bool CandidateQueue::findGraphNeighbors(CandidateData &candidateD, std::size_t threadID, std::size_t indent)
 {
-  BOLT_FUNC(indent, vNeighbor_, "findGraphNeighbors() within sparse delta " << sparseCriteria_->getSparseDelta() << " state: " << candidateD.state_);
+  BOLT_FUNC(indent, vNeighbor_, "findGraphNeighbors() within sparse delta " << sparseCriteria_->getSparseDelta()
+                                                                            << " state: " << candidateD.state_);
 
   // Get the version number of the graph, which is simply the number of states that have thus far been added
   // during this program's execution (not of all time). This allows us to know if the candidate has potentially

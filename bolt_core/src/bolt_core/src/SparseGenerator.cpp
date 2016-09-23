@@ -145,7 +145,7 @@ void SparseGenerator::createSPARS()
   if (useRandomSamples_)
   {
     BOLT_INFO(indent, true, "Adding random samples states");
-    //addRandomSamplesOneThread(indent);
+    // addRandomSamplesOneThread(indent);
     addRandomSamplesThreaded(indent);
   }
 
@@ -391,7 +391,7 @@ bool SparseGenerator::addRandomSamplesThreaded(std::size_t indent)
   return true;  // program should never reach here
 }
 
-bool SparseGenerator::addSample(ob::State* state, std::size_t threadID, bool &usedState, std::size_t indent)
+bool SparseGenerator::addSample(ob::State *state, std::size_t threadID, bool &usedState, std::size_t indent)
 {
   // Find nearby nodes
   CandidateData candidateD(state);
@@ -418,7 +418,7 @@ bool SparseGenerator::addSample(CandidateData &candidateD, std::size_t threadID,
 
       double duration = time::seconds(time::now() - timeRandSamplesStarted_);
       BOLT_DEBUG(indent, true, "Adding samples at rate: " << numRandSamplesAdded_ / duration << " hz");
-      //copyPasteState();
+      // copyPasteState();
     }
 
     // Increment statistics
@@ -470,7 +470,7 @@ bool SparseGenerator::addSample(CandidateData &candidateD, std::size_t threadID,
           {
             BOLT_GREEN(indent, true, "Quality termination progress: " << percentComplete << "%");
           }
-          //copyPasteState();
+          // copyPasteState();
         }
       }
     }
@@ -491,8 +491,8 @@ bool SparseGenerator::addSample(CandidateData &candidateD, std::size_t threadID,
     }
 
     BOLT_INFO(0, true, "---------------------------------------------------");
-    BOLT_INFO(0, true, "Starting to check for 4th quality criteria because "
-                                << numConsecutiveFailures_ << " consecutive failures have occured");
+    BOLT_INFO(0, true, "Starting to check for 4th quality criteria because " << numConsecutiveFailures_
+                                                                             << " consecutive failures have occured");
     BOLT_INFO(0, true, "");
 
     sparseCriteria_->setUseFourthCriteria(true);
@@ -522,15 +522,16 @@ void SparseGenerator::findGraphNeighbors(CandidateData &candidateD, std::size_t 
   findGraphNeighbors(candidateD, sparseCriteria_->getSparseDelta(), threadID, indent);
 }
 
-void SparseGenerator::findGraphNeighbors(CandidateData &candidateD, double distance, std::size_t threadID, std::size_t indent)
+void SparseGenerator::findGraphNeighbors(CandidateData &candidateD, double distance, std::size_t threadID,
+                                         std::size_t indent)
 {
-  BOLT_FUNC(indent, vFindGraphNeighbors_, "findGraphNeighbors() within sparse delta " << sparseCriteria_->getSparseDelta());
+  BOLT_FUNC(indent, vFindGraphNeighbors_, "findGraphNeighbors() within sparse delta "
+                                              << sparseCriteria_->getSparseDelta());
 
   // Search in thread-safe manner
   // Note that the main thread could be modifying the NN, so we have to lock it
   sg_->getQueryStateNonConst(threadID) = candidateD.state_;
-  sg_->getNN()->nearestR(sg_->getQueryVertices(threadID), distance,
-                         candidateD.graphNeighborhood_);
+  sg_->getNN()->nearestR(sg_->getQueryVertices(threadID), distance, candidateD.graphNeighborhood_);
   sg_->getQueryStateNonConst(threadID) = nullptr;
 
   // Now that we got the neighbors from the NN, we must remove any we can't see
@@ -553,7 +554,8 @@ void SparseGenerator::findGraphNeighbors(CandidateData &candidateD, double dista
     candidateD.visibleNeighborhood_.push_back(candidateD.graphNeighborhood_[i]);
   }
 
-  BOLT_DEBUG(indent, vFindGraphNeighbors_, "Graph neighborhood: " << candidateD.graphNeighborhood_.size()
+  BOLT_DEBUG(indent, vFindGraphNeighbors_,
+             "Graph neighborhood: " << candidateD.graphNeighborhood_.size()
                                     << " | Visible neighborhood: " << candidateD.visibleNeighborhood_.size());
 }
 
@@ -565,8 +567,7 @@ bool SparseGenerator::checkGraphOptimality(std::size_t indent)
   std::size_t numFailedPlans = 0;
 
   // Make sure motion validator is set to zero clearance
-  base::DiscreteMotionValidator *dmv =
-      dynamic_cast<base::DiscreteMotionValidator *>(si_->getMotionValidator().get());
+  base::DiscreteMotionValidator *dmv = dynamic_cast<base::DiscreteMotionValidator *>(si_->getMotionValidator().get());
   BOLT_ASSERT(dmv->getRequiredStateClearance() == 0, "Discrete motion validator should have clearance = 0");
 
   // For each test
@@ -575,7 +576,7 @@ bool SparseGenerator::checkGraphOptimality(std::size_t indent)
     if (visual_->viz1()->shutdownRequested())
       break;
 
-    time::point startTime = time::now(); // Benchmark
+    time::point startTime = time::now();  // Benchmark
 
     // Choose random start and goal state that has a nearest neighbor
     std::vector<CandidateData> endPoints(2);
@@ -640,7 +641,7 @@ bool SparseGenerator::checkGraphOptimality(std::size_t indent)
     }
 
     double duration = time::seconds(time::now() - startTime);
-    //OMPL_INFORM("PLANNING took %f seconds", duration); // Benchmark
+    // OMPL_INFORM("PLANNING took %f seconds", duration); // Benchmark
     avgPlanTime_.push_back(duration);
 
     // If path found (same connected component) sum up total length
@@ -674,13 +675,13 @@ bool SparseGenerator::checkGraphOptimality(std::size_t indent)
     // Calculate theoretical guarantees
     double optimalLength = smoothedPathPtr->length();
     double sparseLength = geometricSolution.length();
-    double theoryLength = sparseCriteria_->getStretchFactor() * optimalLength
-      + 4 * sparseCriteria_->getSparseDelta();
+    double theoryLength = sparseCriteria_->getStretchFactor() * optimalLength + 4 * sparseCriteria_->getSparseDelta();
     double percentOfMaxAllows = sparseLength / theoryLength * 100.0;
 
     // Save path quality
     double pathQuality = optimalLength / sparseLength;
-    //BOLT_DEBUG(indent, true, "pathQuality: " << pathQuality << " optimalLength: " << optimalLength << " sparseLength: " << sparseLength);
+    // BOLT_DEBUG(indent, true, "pathQuality: " << pathQuality << " optimalLength: " << optimalLength << " sparseLength:
+    // " << sparseLength);
     avgPathQuality_.push_back(pathQuality);
 
     // Output to console
@@ -720,7 +721,7 @@ bool SparseGenerator::checkGraphOptimality(std::size_t indent)
     BOLT_WARN(indent + 2, show, "Percent of max allowed:  " << percentOfMaxAllows << " %");
     BOLT_DEBUG(indent, show, "-----------------------------------------");
 
-    //visual_->waitForUserFeedback("next problem");
+    // visual_->waitForUserFeedback("next problem");
   }
 
   // Summary
@@ -762,11 +763,11 @@ void SparseGenerator::debugNoNeighbors(CandidateData &point, std::size_t indent)
       BOLT_DEBUG(indent, true, " not in collision ");
 
     // Trigger after checkMotion
-    visual_->viz2()->state(point.state_, tools::LARGE, tools::GREEN, 0); // show start
+    visual_->viz2()->state(point.state_, tools::LARGE, tools::GREEN, 0);  // show start
     visual_->viz2()->trigger();
   }
   visual_->viz3()->trigger();
-  usleep(0.001*1000000);
+  usleep(0.001 * 1000000);
 
   // Find nearest neighbor - SECOND TRY
   double dist = sparseCriteria_->getSparseDelta() * 1.5;
@@ -780,11 +781,12 @@ void SparseGenerator::debugNoNeighbors(CandidateData &point, std::size_t indent)
     BOLT_DEBUG(indent, true, "not empty anymore! ");
 
     double dist = si_->distance(sg_->getState(point.visibleNeighborhood_.front()), point.state_);
-    BOLT_DEBUG(indent, true, "distance to nearest vertex is " << dist << ", sparse delta = " << sparseCriteria_->getSparseDelta());
+    BOLT_DEBUG(indent, true, "distance to nearest vertex is "
+                                 << dist << ", sparse delta = " << sparseCriteria_->getSparseDelta());
 
     visual_->viz3()->edge(sg_->getState(point.visibleNeighborhood_.front()), point.state_, tools::SMALL, tools::RED);
     visual_->viz3()->trigger();
-    usleep(0.001*1000000);
+    usleep(0.001 * 1000000);
   }
 
   BOLT_ERROR(indent, false, "Found sampled vertex with no neighbors");

@@ -307,7 +307,8 @@ bool ProjectionVizWindow::publishSpheres(const og::PathGeometric& path, const rv
 }
 
 // Deprecated
-// bool ProjectionVizWindow::publishPath(const og::PathGeometric& path, const rvt::colors& color, const double thickness,
+// bool ProjectionVizWindow::publishPath(const og::PathGeometric& path, const rvt::colors& color, const double
+// thickness,
 //                                       const std::string& ns)
 // {
 //   return publish2DPath(path, color, thickness, ns);

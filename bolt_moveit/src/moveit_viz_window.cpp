@@ -78,12 +78,11 @@ void MoveItVizWindow::state(const ompl::base::State* state, ot::VizSizes size, o
   mb_state_space->copyToRobotState(*visuals_->getRootRobotState(), state);
 
   // Check for this size first, because we can skip forward kinematics
-  if (size == ompl::tools::ROBOT) // Show actual robot in custom color
+  if (size == ompl::tools::ROBOT)  // Show actual robot in custom color
   {
     visuals_->publishRobotState(visuals_->getSharedRobotState(), visuals_->intToRvizColor(color));
     return;
   }
-
 
   Eigen::Affine3d pose = visuals_->getRootRobotState()->getGlobalLinkTransform(eef_link_name_);
   switch (size)
@@ -341,7 +340,8 @@ bool MoveItVizWindow::publishRobotState(const ompl::base::State* state)
   return visuals_->publishRobotState(visuals_->getSharedRobotState());
 }
 
-// bool MoveItVizWindow::publishTrajectoryPath(const ompl::base::PlannerDataPtr& path, robot_model::JointModelGroup* jmg,
+// bool MoveItVizWindow::publishTrajectoryPath(const ompl::base::PlannerDataPtr& path, robot_model::JointModelGroup*
+// jmg,
 //                                             const std::vector<const robot_model::LinkModel*>& tips,
 //                                             bool show_trajectory_animated)
 // {
@@ -390,7 +390,8 @@ bool MoveItVizWindow::publishRobotState(const ompl::base::State* state)
 //       }
 
 //       // Debug pose
-//       // std::cout << "Pose: " << state_id << " of link " << tips[tip_id]->getName() << ": \n" << pose.translation() <<
+//       // std::cout << "Pose: " << state_id << " of link " << tips[tip_id]->getName() << ": \n" << pose.translation()
+//       <<
 //       // std::endl;
 
 //       paths_msgs[tip_id].push_back(visuals_->convertPose(pose).position);

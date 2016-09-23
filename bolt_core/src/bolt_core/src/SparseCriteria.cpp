@@ -144,28 +144,32 @@ bool SparseCriteria::addStateToRoadmap(CandidateData &candidateD, VertexType &ad
   // Always add a node if no other nodes around it are visible (GUARD)
   if (checkAddCoverage(candidateD, indent))
   {
-    BOLT_DEBUG(indent, vAddedReason_, "Graph updated: COVERAGE Fourth: " << useFourthCriteria_ << " State: " << candidateD.state_);
+    BOLT_DEBUG(indent, vAddedReason_, "Graph updated: COVERAGE Fourth: " << useFourthCriteria_
+                                                                         << " State: " << candidateD.state_);
 
     addReason = COVERAGE;
     stateAdded = true;
   }
   else if (checkAddConnectivity(candidateD, indent + 2))
   {
-    BOLT_MAGENTA(indent, vAddedReason_, "Graph updated: CONNECTIVITY Fourth: " << useFourthCriteria_ << " State: " << candidateD.state_);
+    BOLT_MAGENTA(indent, vAddedReason_, "Graph updated: CONNECTIVITY Fourth: " << useFourthCriteria_
+                                                                               << " State: " << candidateD.state_);
 
     addReason = CONNECTIVITY;
     stateAdded = true;
   }
   else if (checkAddInterface(candidateD, indent + 4))
   {
-    BOLT_BLUE(indent, vAddedReason_, "Graph updated: INTERFACE Fourth: " << useFourthCriteria_ << " State: " << candidateD.state_);
+    BOLT_BLUE(indent, vAddedReason_, "Graph updated: INTERFACE Fourth: " << useFourthCriteria_
+                                                                         << " State: " << candidateD.state_);
     addReason = INTERFACE;
     stateAdded = true;
   }
 #ifdef ENABLE_QUALITY
   else if (checkAddQuality(candidateD, threadID, indent + 6))
   {
-    BOLT_GREEN(indent, vAddedReason_, "Graph updated: QUALITY Fourth: " << useFourthCriteria_ << " State: " << candidateD.state_);
+    BOLT_GREEN(indent, vAddedReason_, "Graph updated: QUALITY Fourth: " << useFourthCriteria_
+                                                                        << " State: " << candidateD.state_);
     addReason = QUALITY;
     stateAdded = true;
 
@@ -176,7 +180,8 @@ bool SparseCriteria::addStateToRoadmap(CandidateData &candidateD, VertexType &ad
 #endif
   else
   {
-    BOLT_DEBUG(indent, vCriteria_, "Did NOT add state for any criteria " << " State: " << candidateD.state_);
+    BOLT_DEBUG(indent, vCriteria_, "Did NOT add state for any criteria "
+                                       << " State: " << candidateD.state_);
   }
 
   return stateAdded;
@@ -232,17 +237,17 @@ bool SparseCriteria::checkAddConnectivity(CandidateData &candidateD, std::size_t
   std::set<SparseVertex> statesInDiffConnectedComponents;
 
   // For each neighbor
-  for (const SparseVertex& v1 : candidateD.visibleNeighborhood_)
+  for (const SparseVertex &v1 : candidateD.visibleNeighborhood_)
   {
     // For each other neighbor
-    for (const SparseVertex& v2 : candidateD.visibleNeighborhood_)
+    for (const SparseVertex &v2 : candidateD.visibleNeighborhood_)
     {
       // If they are in different components
       if (!sg_->sameComponent(v1, v2))
       {
         BOLT_DEBUG(indent, vCriteria_, "Different connected component: " << v1 << ", " << v2);
 
-        if (visualizeConnectivity_) // Debug
+        if (visualizeConnectivity_)  // Debug
         {
           visual_->viz2()->state(sg_->getState(v1), tools::MEDIUM, tools::BLUE, 0);
           visual_->viz2()->state(sg_->getState(v2), tools::MEDIUM, tools::BLUE, 0);
@@ -291,7 +296,7 @@ bool SparseCriteria::checkAddConnectivity(CandidateData &candidateD, std::size_t
 
   // Check if there are really close vertices nearby which should be merged
   // This feature doesn't really do anything but slow things down
-  //checkRemoveCloseVertices(candidateD.newVertex_, indent);
+  // checkRemoveCloseVertices(candidateD.newVertex_, indent);
 
   // Add the edges
   for (std::set<SparseVertex>::const_iterator vertexIt = statesInDiffConnectedComponents.begin();
@@ -348,7 +353,7 @@ bool SparseCriteria::checkAddInterface(CandidateData &candidateD, std::size_t in
   const SparseVertex &v2 = candidateD.visibleNeighborhood_[1];
 
   // Ensure the two closest nodes are also visible
-  bool skipThis = false; // when true, is a new experimental feature
+  bool skipThis = false;  // when true, is a new experimental feature
   if (!skipThis && !(candidateD.graphNeighborhood_[0] == v1 && candidateD.graphNeighborhood_[1] == v2))
   {
     BOLT_DEBUG(indent, vCriteria_, "NOT adding because two closest nodes are not visible to each other");
@@ -356,10 +361,12 @@ bool SparseCriteria::checkAddInterface(CandidateData &candidateD, std::size_t in
     // TEMP
     if (vCriteria_)
     {
-      visual_->viz1()->edge(sg_->getState(candidateD.graphNeighborhood_[0]), candidateD.state_, tools::SMALL, tools::BLUE);
-      visual_->viz1()->edge(sg_->getState(candidateD.graphNeighborhood_[1]), candidateD.state_, tools::SMALL, tools::BLUE);
+      visual_->viz1()->edge(sg_->getState(candidateD.graphNeighborhood_[0]), candidateD.state_, tools::SMALL,
+                            tools::BLUE);
+      visual_->viz1()->edge(sg_->getState(candidateD.graphNeighborhood_[1]), candidateD.state_, tools::SMALL,
+                            tools::BLUE);
       visual_->viz1()->trigger();
-      usleep(0.001*1000000);
+      usleep(0.001 * 1000000);
     }
 
     return false;
@@ -439,12 +446,13 @@ bool SparseCriteria::checkPathLength(SparseVertex v1, SparseVertex v2, std::size
     double newEdgeDist = si_->distance(sg_->getState(v1), sg_->getState(v2));
     if (pathLength < newEdgeDist + SMALL_EPSILON)
     {
-      if (false) // Debug
+      if (false)  // Debug
       {
-        BOLT_ERROR(indent, true, "New interface edge does not help enough, difference between distances: " << fabs(newEdgeDist - pathLength));
+        BOLT_ERROR(indent, true, "New interface edge does not help enough, difference between distances: "
+                                     << fabs(newEdgeDist - pathLength));
         visual_->viz4()->edge(sg_->getState(v1), sg_->getState(v2), tools::MEDIUM, tools::RED);
         visual_->viz4()->trigger();
-        usleep(0.001*1000000);
+        usleep(0.001 * 1000000);
       }
 
       return false;
@@ -848,7 +856,7 @@ bool SparseCriteria::addQualityPath(SparseVertex v, SparseVertex vp, SparseVerte
     sg_->addEdge(prior, newVertex, eQUALITY, indent + 2);
     prior = newVertex;
 
-  } // for each state in path
+  }  // for each state in path
 
   // Add last edge back onto graph
   assert(prior != vpp);
@@ -859,7 +867,7 @@ bool SparseCriteria::addQualityPath(SparseVertex v, SparseVertex vp, SparseVerte
 }
 
 bool SparseCriteria::spannerTest(SparseVertex v, SparseVertex vp, SparseVertex vpp, InterfaceData &iData,
-                                         double &shortestPathVpVpp, std::size_t indent)
+                                 double &shortestPathVpVpp, std::size_t indent)
 {
   BOLT_FUNC(indent, vQuality_, "spannerTest()");
   // Computes all nodes which qualify as a candidate x for v, v', and v" and get the length of the longest one

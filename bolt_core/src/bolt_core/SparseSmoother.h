@@ -68,7 +68,6 @@ OMPL_CLASS_FORWARD(SparseSmoother);
 class SparseSmoother
 {
 public:
-
   /** \brief Constructor needs the state space used for planning.
    */
   SparseSmoother(base::SpaceInformationPtr si, VisualizerPtr visual);
@@ -90,7 +89,6 @@ public:
   bool smoothMax(geometric::PathGeometric* path, std::size_t indent);
 
 protected:
-
   /** \brief Short name of this class */
   const std::string name_ = "SparseSmoother";
 
@@ -104,7 +102,6 @@ protected:
   geometric::PathSimplifierPtr pathSimplifier_;
 
 public:
-
   bool visualizeQualityPathSmoothing_ = false;
   bool vSmooth_ = false;
 

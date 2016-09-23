@@ -77,7 +77,6 @@ void TwoDimVizWindow::state(const ompl::base::State* state, ot::VizSizes size, o
   if (si_->getStateDimension() == 2)
     point.z() += 0.5;
 
-
   switch (size)
   {
     case ompl::tools::XXSMALL:
@@ -103,13 +102,13 @@ void TwoDimVizWindow::state(const ompl::base::State* state, ot::VizSizes size, o
       break;
     case ompl::tools::VARIABLE_SIZE:
       // Visual tools has a scaling feature that will mess up the exact scaling we desire, so we out-smart it
-      //extra_data /= visuals_->getGlobalScale();
-      //visuals_->publishSphere(point, visuals_->intToRvizColor(color), extra_data * 2);
+      // extra_data /= visuals_->getGlobalScale();
+      // visuals_->publishSphere(point, visuals_->intToRvizColor(color), extra_data * 2);
       {
-        extra_data = sqrt(2*pow(extra_data,2));
+        extra_data = sqrt(2 * pow(extra_data, 2));
         Eigen::Affine3d pose = Eigen::Affine3d::Identity();
         pose.translation() = point;
-        pose = pose * Eigen::AngleAxisd(M_PI/4.0, Eigen::Vector3d::UnitZ());
+        pose = pose * Eigen::AngleAxisd(M_PI / 4.0, Eigen::Vector3d::UnitZ());
 
         visuals_->publishCuboid(pose, extra_data, extra_data, extra_data, visuals_->intToRvizColor(color));
       }
@@ -168,7 +167,7 @@ void TwoDimVizWindow::states(std::vector<const ompl::base::State*> states, std::
 }
 
 void TwoDimVizWindow::edge(const ompl::base::State* stateA, const ompl::base::State* stateB, ot::VizSizes size,
-                        ot::VizColors color)
+                           ot::VizColors color)
 {
   Eigen::Vector3d pointA = stateToPoint(stateA);
   Eigen::Vector3d pointB = stateToPoint(stateB);
@@ -318,7 +317,7 @@ bool TwoDimVizWindow::publishPPMImage(ompl::PPM& ppm, bool static_id)
   marker.scale.z = 1.0;
   marker.color = visuals_->getColor(rvt::BLACK);
 
-  static const double MAX_COLOR = 255.0 * 3  - 2.0 * std::numeric_limits<double>::epsilon();
+  static const double MAX_COLOR = 255.0 * 3 - 2.0 * std::numeric_limits<double>::epsilon();
 
   // Visualize Results -------------------------------------------------------------------------------------------------
   for (std::size_t x = 0; x < ppm.getWidth(); ++x)
@@ -330,17 +329,17 @@ bool TwoDimVizWindow::publishPPMImage(ompl::PPM& ppm, bool static_id)
       std_msgs::ColorRGBA color;
       if (map_color.red + map_color.green + map_color.blue >= MAX_COLOR)
       {
-        //continue;  // transparent, do not publish
+        // continue;  // transparent, do not publish
 
         // set single color
-        color = visuals_->getColor(rvt::WHITE); // color doesn't matter since alpha is 0
+        color = visuals_->getColor(rvt::WHITE);  // color doesn't matter since alpha is 0
         color.a = 0.0;
       }
       else
       {
         // set single color
         color = visuals_->getColor(rvt::DARK_GREY);
-        //color = visuals_->getColor(rvt::BLACK);
+        // color = visuals_->getColor(rvt::BLACK);
         color.a = 1.0;
       }
 
@@ -379,13 +378,13 @@ bool TwoDimVizWindow::publishTriangle(int x, int y, visualization_msgs::Marker* 
 }
 
 bool TwoDimVizWindow::publishEdge(const ob::State* stateA, const ob::State* stateB, const std_msgs::ColorRGBA& color,
-                               const double radius)
+                                  const double radius)
 {
   return visuals_->publishCylinder(stateToPoint(stateA), stateToPoint(stateB), color, radius / 2.0);
 }
 
 bool TwoDimVizWindow::publishSpheres(const og::PathGeometric& path, const rvt::colors& color, double scale,
-                                  const std::string& ns)
+                                     const std::string& ns)
 {
   geometry_msgs::Vector3 scale_vector;
   scale_vector.x = scale;
@@ -395,13 +394,13 @@ bool TwoDimVizWindow::publishSpheres(const og::PathGeometric& path, const rvt::c
 }
 
 bool TwoDimVizWindow::publishSpheres(const og::PathGeometric& path, const rvt::colors& color, const rvt::scales scale,
-                                  const std::string& ns)
+                                     const std::string& ns)
 {
   return publishSpheres(path, color, visuals_->getScale(scale), ns);
 }
 
 bool TwoDimVizWindow::publishSpheres(const og::PathGeometric& path, const rvt::colors& color,
-                                  const geometry_msgs::Vector3& scale, const std::string& ns)
+                                     const geometry_msgs::Vector3& scale, const std::string& ns)
 {
   std::vector<geometry_msgs::Point> points;
   for (std::size_t i = 0; i < path.getStateCount(); ++i)
@@ -411,7 +410,7 @@ bool TwoDimVizWindow::publishSpheres(const og::PathGeometric& path, const rvt::c
 }
 
 bool TwoDimVizWindow::publish2DPath(const og::PathGeometric& path, const rvt::colors& color, const double thickness,
-                                 const std::string& ns)
+                                    const std::string& ns)
 {
   // Error check
   if (path.getStateCount() <= 0)
@@ -470,31 +469,31 @@ Eigen::Vector3d TwoDimVizWindow::stateToPoint(const ob::State* state)
 }
 
 bool TwoDimVizWindow::publishState(const ob::State* state, const rvt::colors& color, const rvt::scales scale,
-                                const std::string& ns)
+                                   const std::string& ns)
 {
   return visuals_->publishSphere(stateToPoint(state), color, scale, ns);
 }
 
 bool TwoDimVizWindow::publishState(const ob::State* state, const rvt::colors& color, const double scale,
-                                const std::string& ns)
+                                   const std::string& ns)
 {
   return visuals_->publishSphere(stateToPoint(state), color, scale, ns);
 }
 
 bool TwoDimVizWindow::publishState(const ob::ScopedState<> state, const rvt::colors& color, const rvt::scales scale,
-                                const std::string& ns)
+                                   const std::string& ns)
 {
   return visuals_->publishSphere(stateToPoint(state), color, scale, ns);
 }
 
 bool TwoDimVizWindow::publishState(const ob::ScopedState<> state, const rvt::colors& color, double scale,
-                                const std::string& ns)
+                                   const std::string& ns)
 {
   return visuals_->publishSphere(stateToPoint(state), color, scale, ns);
 }
 
 bool TwoDimVizWindow::publishState(const ob::ScopedState<> state, const rvt::colors& color,
-                                const geometry_msgs::Vector3& scale, const std::string& ns)
+                                   const geometry_msgs::Vector3& scale, const std::string& ns)
 {
   return visuals_->publishSphere(stateToPoint(state), color, scale.x, ns);
 }

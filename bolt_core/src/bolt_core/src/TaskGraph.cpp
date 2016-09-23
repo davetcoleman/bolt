@@ -877,7 +877,7 @@ bool TaskGraph::smoothQualityPathOriginal(geometric::PathGeometric *path, std::s
   }
 
   BOLT_DEBUG(indent, visualizeQualityPathSmoothing_, "Created 'quality path' candidate with " << path->getStateCount()
-                                                                                         << " states");
+                                                                                              << " states");
   if (visualizeQualityPathSmoothing_)
     visual_->waitForUserFeedback("path simplification");
 
@@ -907,13 +907,12 @@ bool TaskGraph::smoothQualityPath(geometric::PathGeometric *path, double clearan
   }
 
   BOLT_DEBUG(indent, visualizeQualityPathSmoothing_, "Created 'quality path' candidate with " << path->getStateCount()
-                                                                                         << " states");
+                                                                                              << " states");
   if (visualizeQualityPathSmoothing_)
     visual_->waitForUserFeedback("path simplification");
 
   // Set the motion validator to use clearance, this way isValid() checks clearance before confirming valid
-  base::DiscreteMotionValidator *dmv =
-      dynamic_cast<base::DiscreteMotionValidator *>(si_->getMotionValidator().get());
+  base::DiscreteMotionValidator *dmv = dynamic_cast<base::DiscreteMotionValidator *>(si_->getMotionValidator().get());
   dmv->setRequiredStateClearance(clearance);
 
   for (std::size_t i = 0; i < 3; ++i)

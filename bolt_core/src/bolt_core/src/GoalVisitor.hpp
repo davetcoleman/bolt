@@ -44,31 +44,31 @@
 
 namespace
 {
-    struct AStarFoundGoal
-    {
-    };  // exception for termination
+struct AStarFoundGoal
+{
+};  // exception for termination
 
-    // visitor that terminates when we find the goal
-    // V is the vertex type
-    template <typename V>
-    class AStarGoalVisitor : public boost::default_astar_visitor
-    {
-    public:
-        AStarGoalVisitor(const V &goal) : goal_(goal)
-        {
-        }
+// visitor that terminates when we find the goal
+// V is the vertex type
+template <typename V>
+class AStarGoalVisitor : public boost::default_astar_visitor
+{
+public:
+  AStarGoalVisitor(const V &goal) : goal_(goal)
+  {
+  }
 
-        // G is the graph type
-        template <typename G>
-        void examine_vertex(const V &u, const G &)
-        {
-            if (u == goal_)
-                throw AStarFoundGoal();
-        }
+  // G is the graph type
+  template <typename G>
+  void examine_vertex(const V &u, const G &)
+  {
+    if (u == goal_)
+      throw AStarFoundGoal();
+  }
 
-    private:
-        V goal_;
-    };
+private:
+  V goal_;
+};
 }
 
 #endif

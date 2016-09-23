@@ -50,7 +50,7 @@
 #include <ompl/tools/debug/Visualizer.h>
 #include <ompl/geometric/PathGeometric.h>
 #include <ompl/base/ScopedState.h>
-#include <ompl/util/PPM.h> // For reading image files
+#include <ompl/util/PPM.h>  // For reading image files
 
 // Visualization
 #include <rviz_visual_tools/rviz_visual_tools.h>

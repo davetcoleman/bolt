@@ -205,12 +205,12 @@ bool SparseSmoother::smoothMax(geometric::PathGeometric *path, std::size_t inden
     visual_->viz2()->deleteAllMarkers();
     visual_->viz2()->path(path, tools::MEDIUM, tools::BLUE);
     visual_->viz2()->trigger();
-   usleep(0.001 * 1000000);
+    usleep(0.001 * 1000000);
   }
 
   // Set the motion validator to use clearance, this way isValid() checks clearance before confirming valid
   base::DiscreteMotionValidator *dmv = dynamic_cast<base::DiscreteMotionValidator *>(si_->getMotionValidator().get());
-  BOLT_ASSERT(dmv->getRequiredStateClearance() < 2*std::numeric_limits<double>::epsilon(),
+  BOLT_ASSERT(dmv->getRequiredStateClearance() < 2 * std::numeric_limits<double>::epsilon(),
               "Discrete motion validator should have clearance = 0");
 
   double prevDistance = std::numeric_limits<double>::infinity();

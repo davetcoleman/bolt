@@ -86,7 +86,7 @@ CartPathPlanner::CartPathPlanner(BoltMoveIt* parent) : name_("cart_path_planner"
   rosparam_shortcuts::shutdownIfError(name_, error);
 
   // initializing descartes
-  //initDescartes();
+  // initDescartes();
 
   // Load desired path
   PathLoader path_loader(parent_->package_path_);
@@ -387,7 +387,7 @@ bool CartPathPlanner::populateBoltGraph(ompl::tools::bolt::TaskGraphPtr task_gra
 
     // Calculate all possible joint solutions
     std::vector<std::vector<double>> joint_poses;
-    getAllJointPosesForCartPoint(pose, joint_poses);
+    getAllJointPosesForCartPoint(pose, joint_poses, indent);
 
     // Handle error: no IK solutions found
     if (joint_poses.empty())
@@ -403,7 +403,7 @@ bool CartPathPlanner::populateBoltGraph(ompl::tools::bolt::TaskGraphPtr task_gra
         joint_poses.clear();  // reset vector
 
         // Get the joint poses from the last cartesian point
-        getAllJointPosesForCartPoint(exact_poses_[traj_id - 1], joint_poses);
+        getAllJointPosesForCartPoint(exact_poses_[traj_id - 1], joint_poses, indent);
         BOOST_ASSERT_MSG(!joint_poses.empty(), "Should not happen - no joint poses found for previous cartesian point");
         visual_tools_->publishRobotState(joint_poses.front(), jmg_, rvt::RED);
       }
@@ -632,60 +632,60 @@ bool CartPathPlanner::connectTrajectoryEndPoints(const TrajectoryGraph& graph_ve
 }
 
 bool CartPathPlanner::getAllJointPosesForCartPoint(const Eigen::Affine3d& pose,
-                                                   std::vector<std::vector<double>>& joint_poses)
+                                                   std::vector<std::vector<double>>& joint_poses, std::size_t indent)
 {
   EigenSTL::vector_Affine3d candidate_poses;
   if (!computeAllPoses(pose, orientation_tol_, candidate_poses))
     return false;
 
+  // Get the IK solver for a given planning group
+  const kinematics::KinematicsBaseConstPtr& solver = jmg_->getSolverInstance();
+
+  // Bring the pose to the frame of the IK solver
+  Eigen::Affine3d ik_pose = pose;
+  ik_state_->setToIKSolverFrame(ik_pose, solver);
+
   // Enumerate solvable joint poses for each candidate_pose
   for (const Eigen::Affine3d& candidate_pose : candidate_poses)
   {
-    // std::vector<std::vector<double>> local_joint_poses;
+    std::vector<std::vector<double>> local_joint_poses;
 
-    // ROS_WARN_STREAM_NAMED(name_, "TODO here3");
+    ROS_WARN_STREAM_NAMED(name_, "TODO here3");
 
-    // // Get the IK solver for a given planning group
-    // const kinematics::KinematicsBaseConstPtr& solver = jmg_->getSolverInstance();
+    // Convert to msg
+    geometry_msgs::Pose ik_query;
+    tf::poseEigenToMsg(ik_pose, ik_query);
 
-    // // Bring the pose to the frame of the IK solver
-    // ik_state_->setToIKSolverFrame(pose, solver);
+    // Add to vector
+    std::vector<geometry_msgs::Pose> ik_poses;
+    ik_poses.push_back(ik_query);
 
-    // // Convert to msg
-    // geometry_msgs::Pose ik_query;
-    // tf::poseEigenToMsg(pose, ik_query);
+    // Create seed state
+    std::vector<double> ik_seed_state;
+    std::vector<double> initial_values;
+    ik_state_->copyJointGroupPositions(jmg_, initial_values);
+    const std::vector<unsigned int>& bij = jmg_->getKinematicsSolverJointBijection();
+    for (std::size_t i = 0; i < bij.size(); ++i)
+      ik_seed_state[i] = initial_values[bij[i]];
 
-    // // Add to vector
-    // std::vector<geometry_msgs::Pose> ik_poses;
-    // ik_poses.push_back(ik_query);
+    // Discretization setting
+    kinematics::KinematicsQueryOptions options;
+    options.discretization_method = kinematics::DiscretizationMethods::DiscretizationMethod::ALL_DISCRETIZED;
 
-    // // Create seed state
-    // std::vector<double> ik_seed_state;
-    // std::vector<double> initial_values;
-    // ik_state_->copyJointGroupPositions(jmg_, initial_values);
-    // const std::vector<unsigned int> &bij = jmg_->getKinematicsSolverJointBijection();
-    // for (std::size_t i = 0 ; i < bij.size() ; ++i)
-    //   ik_seed_state[i] = initial_values[bij[i]];
+    // Solution
+    std::vector<std::vector<double>> solutions;
+    kinematics::KinematicsResult kin_result;
 
-    // // Discretization setting
-    // kinematics::KinematicsQueryOptions options;
-    // options.discretization_method = ALL_DISCRETIZED;
+    // Solve
+    bool result = solver->getPositionIK(ik_poses, ik_seed_state, solutions, kin_result, options);
 
-    // // Solution
-    // std::vector< std::vector<double> > solutions;
-    // KinematicsResult result;
-
-    // // Solve
-    // bool result = solver->getPositionIK(ik_poses, ik_seed_state, solutions, result, options);
-
-    // if (result)
-    // {
-    //   BOLT_DEBUG(indent, true, "Found " << solutions.size() << " poses");
-    //   joint_poses.insert(joint_poses.end(), solutions.begin(), solutions.end());
-    // }
-    // else
-    //   BOLT_WARN(indent, true, "Failed to find a solution for a pose");
-
+    if (result)
+    {
+      BOLT_DEBUG(indent, true, "Found " << solutions.size() << " poses");
+      joint_poses.insert(joint_poses.end(), solutions.begin(), solutions.end());
+    }
+    else
+      BOLT_WARN(indent, true, "Failed to find a solution for a pose");
   }
   return true;
 }

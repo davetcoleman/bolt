@@ -66,20 +66,17 @@ namespace ompl
 {
 namespace base
 {
-
 /// @cond IGNORE
 OMPL_CLASS_FORWARD(ValidityChecker2D);
 /// @endcond
 
-static const double MAX_COLOR = 255.0 * 3  - 2.0 * std::numeric_limits<double>::epsilon();
+static const double MAX_COLOR = 255.0 * 3 - 2.0 * std::numeric_limits<double>::epsilon();
 
 class ValidityChecker2D : public ob::StateValidityChecker
 {
 public:
   /** \brief Constructor */
-  ValidityChecker2D(const ob::SpaceInformationPtr &si, ompl::PPM* ppm)
-    : StateValidityChecker(si)
-    , ppm_(ppm)
+  ValidityChecker2D(const ob::SpaceInformationPtr &si, ompl::PPM *ppm) : StateValidityChecker(si), ppm_(ppm)
   {
     // Set default value
     clearanceSearchDistance_ = 1.0;
@@ -110,7 +107,7 @@ public:
       return true;
 
     const double *coords = state->as<ompl::base::RealVectorStateSpace::StateType>()->values;
-    const ompl::PPM::Color& map_color = ppm_->getPixel(floor(coords[1]), floor(coords[0]));
+    const ompl::PPM::Color &map_color = ppm_->getPixel(floor(coords[1]), floor(coords[0]));
 
     return (map_color.red + map_color.green + map_color.blue >= MAX_COLOR);
 
@@ -199,7 +196,7 @@ private:
         state_values[0] = xs - d + i;
         state_values[1] = ys - i;
 
-        if (visual_ && VISUALIZE_SPIRAL) // Debug
+        if (visual_ && VISUALIZE_SPIRAL)  // Debug
         {
           visual_->viz6()->state(work_state, tools::MEDIUM, tools::BLUE, 0);
         }
@@ -215,7 +212,7 @@ private:
         state_values[0] = xs + d - i;
         state_values[1] = ys + i;
 
-        if (visual_ && VISUALIZE_SPIRAL) // Debug
+        if (visual_ && VISUALIZE_SPIRAL)  // Debug
           visual_->viz6()->state(work_state, tools::SMALL, tools::BLUE, 0);
 
         if (si_->satisfiesBounds(work_state))  // Check bounds
@@ -232,7 +229,7 @@ private:
         state_values[0] = xs - i;
         state_values[1] = ys + d - i;
 
-        if (visual_ && VISUALIZE_SPIRAL) // Debug
+        if (visual_ && VISUALIZE_SPIRAL)  // Debug
           visual_->viz6()->state(work_state, tools::SMALL, tools::BLUE, 0);
 
         if (si_->satisfiesBounds(work_state))  // Check bounds
@@ -246,7 +243,7 @@ private:
         state_values[0] = xs + d - i;
         state_values[1] = ys - i;
 
-        if (visual_ && VISUALIZE_SPIRAL) // Debug
+        if (visual_ && VISUALIZE_SPIRAL)  // Debug
           visual_->viz6()->state(work_state, tools::SMALL, tools::BLUE, 0);
 
         if (si_->satisfiesBounds(work_state))  // Check bounds
@@ -267,7 +264,7 @@ private:
     return false;
   }
 
-  ompl::PPM* ppm_;
+  ompl::PPM *ppm_;
   double max_threshold_;
 
   bool enabled_ = true;

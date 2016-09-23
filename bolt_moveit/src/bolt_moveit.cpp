@@ -146,8 +146,8 @@ BoltMoveIt::BoltMoveIt(const std::string &hostname, const std::string &package_p
 
   // Append to allowed collision matrix
   {
-    planning_scene_monitor::LockedPlanningSceneRW scene(planning_scene_monitor_); // Lock planning
-    collision_detection::AllowedCollisionMatrix& collision_matrix = scene->getAllowedCollisionMatrixNonConst();
+    planning_scene_monitor::LockedPlanningSceneRW scene(planning_scene_monitor_);  // Lock planning
+    collision_detection::AllowedCollisionMatrix &collision_matrix = scene->getAllowedCollisionMatrixNonConst();
     collision_matrix.setEntry("wall", "pedestal", true);
   }
 
@@ -289,8 +289,8 @@ void BoltMoveIt::run()
     // testMotionValidator();
     // bolt_->getSparseGenerator()->benchmarkSparseGraphGeneration();
     bolt_->getSparseGenerator()->benchmarkValidClearanceSampler();
-    //bolt_->getSparseGenerator()->benchmarkRandValidSampling();
-    //bolt_->getSparseGenerator()->benchmarkVisualizeSampling();
+    // bolt_->getSparseGenerator()->benchmarkRandValidSampling();
+    // bolt_->getSparseGenerator()->benchmarkVisualizeSampling();
     ROS_INFO_STREAM_NAMED(name_, "Finished benchmarking");
     exit(0);
   }

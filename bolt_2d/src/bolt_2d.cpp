@@ -54,7 +54,7 @@
 #include <ompl/geometric/SimpleSetup.h>
 #include <ompl/base/PlannerTerminationCondition.h>
 #include <bolt_core/SPARS2.h>
-#include <ompl/util/PPM.h> // For reading image files
+#include <ompl/util/PPM.h>  // For reading image files
 #include <bolt_core/SparseFormula.h>
 
 // Interface for loading rosparam settings into OMPL
@@ -72,13 +72,13 @@ namespace bolt_2d
 static const std::string BASE_FRAME = "/world";
 
 enum PlannerName
-  {
-    BOLT,
-    THUNDER,
-    SPARS,
-    SPARS2,
-    PRM
-  };
+{
+  BOLT,
+  THUNDER,
+  SPARS,
+  SPARS2,
+  PRM
+};
 
 /**
  * \brief Experience Planning Class
@@ -86,7 +86,6 @@ enum PlannerName
 class Bolt2D
 {
 public:
-
   /**
    * \brief Constructor
    */
@@ -307,7 +306,7 @@ public:
 
     sparse_two_->setSparseDeltaFraction(sparseDeltaFraction_);
     sparse_two_->setDenseDeltaFraction(denseDeltaFraction_);
-    sparse_two_->setStretchFactor(formulas.stretchFactor_); // uses same method as Bolt to calculate
+    sparse_two_->setStretchFactor(formulas.stretchFactor_);  // uses same method as Bolt to calculate
 
     {
       ros::NodeHandle rpnh(nh_, "sparse_generator");
@@ -316,7 +315,7 @@ public:
       total_failures = temp;
       error += !get(name_, rpnh, "fourth_criteria_after_failures", temp);
       total_failures += temp;
-      //total_failures *= 2; // Because SPARS2 keeps failing the optimiality test with "no neighbors found"
+      // total_failures *= 2; // Because SPARS2 keeps failing the optimiality test with "no neighbors found"
       std::cout << " Found total failures: " << total_failures << std::endl;
       sparse_two_->setMaxFailures(total_failures);
     }
@@ -386,13 +385,13 @@ public:
         case THUNDER:
           break;
         case SPARS2:
-          {
-            ompl::base::PlannerTerminationCondition ptc = ompl::base::plannerNonTerminatingCondition();
-            ROS_INFO_STREAM_NAMED(name_, "Constructing SPARS2 roadmap");
-            bool stopOnMaxFail = true;
-            sparse_two_->constructRoadmap(ptc, stopOnMaxFail);
-          }
-          break;
+        {
+          ompl::base::PlannerTerminationCondition ptc = ompl::base::plannerNonTerminatingCondition();
+          ROS_INFO_STREAM_NAMED(name_, "Constructing SPARS2 roadmap");
+          bool stopOnMaxFail = true;
+          sparse_two_->constructRoadmap(ptc, stopOnMaxFail);
+        }
+        break;
       }
       loaded = true;
     }
@@ -478,14 +477,14 @@ public:
       if (bolt_->getSparseGraph()->visualizeSparseGraph_ &&
           bolt_->getSparseGraph()->visualizeSparseGraphSpeed_ > std::numeric_limits<double>::epsilon())
       {
-        showGrownLive = true; // visualization will occur as it grows
+        showGrownLive = true;  // visualization will occur as it grows
       }
     }
 
     std::vector<std::string> high_level_log;
 
     // For each map
-    //for (std::size_t map_id = 0; map_id < trial_maps.size(); ++map_id)
+    // for (std::size_t map_id = 0; map_id < trial_maps.size(); ++map_id)
     for (std::size_t map_id = sweep_map_start_ - 1; map_id < sweep_map_end_; ++map_id)
     {
       // Begin statistics
@@ -500,7 +499,8 @@ public:
       {
         // Debug
         BOLT_DEBUG(indent + 2, true, "----------------------------------------------------------------------------");
-        BOLT_DEBUG(indent + 2, true, "Creating spars graph, trial " << trial_id+1 << " out of " << TRIALS_PER_MAP << " for map " << trial_maps[map_id] << ".ppm");
+        BOLT_DEBUG(indent + 2, true, "Creating spars graph, trial " << trial_id + 1 << " out of " << TRIALS_PER_MAP
+                                                                    << " for map " << trial_maps[map_id] << ".ppm");
         BOLT_DEBUG(indent + 2, true, "----------------------------------------------------------------------------");
 
         // Clear spars graph
@@ -508,9 +508,9 @@ public:
         viz_bg_->trigger();
         simple_setup_->clear();
         if (showGrownLive)
-          deleteAllMarkers(true); // trigger now
+          deleteAllMarkers(true);  // trigger now
         else
-          viz1_->deleteAllMarkers(); // delete them, but do not trigger
+          viz1_->deleteAllMarkers();  // delete them, but do not trigger
 
         // if (trial_id > 0 || map_id > 0)
         //   waitForNextStep("cleared data - memory should be low");
@@ -538,7 +538,7 @@ public:
           if (!showGrownLive)
           {
             viz1_->trigger();
-            usleep(0.1*1000000);
+            usleep(0.1 * 1000000);
           }
 
           if (!sparse_two_->checkGraphOptimality())
@@ -554,7 +554,7 @@ public:
           total_avg_plan_times.push_back(bolt_->getSparseGenerator()->getAvgPlanTime());
           total_avg_path_quality.push_back(bolt_->getSparseGenerator()->getAvgPathQuality());
         }
-        else // SPARS2
+        else  // SPARS2
         {
           total_edges.push_back(sparse_two_->getNumEdges());
           total_vertices.push_back(sparse_two_->milestoneCount());
@@ -565,23 +565,23 @@ public:
 
         if (!ros::ok())
           break;
-      } // for each trial
+      }  // for each trial
 
-        // Output log
+      // Output log
       if (planner_name_ == BOLT)
         bolt_->getSparseGenerator()->dumpLog();
       else
         sparse_two_->dumpLog();
-      //waitForNextStep("copy data");
+      // waitForNextStep("copy data");
 
       // Create high level log entry
       std::stringstream line;
 
-      std::pair<double,double> edge_data = getMeanStdDev(total_edges);
-      std::pair<double,double> vertex_data = getMeanStdDev(total_vertices);
-      std::pair<double,double> gen_time_data = getMeanStdDev(total_gen_times);
-      std::pair<double,double> avg_plan_time_data = getMeanStdDev(total_avg_plan_times);
-      std::pair<double,double> avg_path_quality_data = getMeanStdDev(total_avg_path_quality);
+      std::pair<double, double> edge_data = getMeanStdDev(total_edges);
+      std::pair<double, double> vertex_data = getMeanStdDev(total_vertices);
+      std::pair<double, double> gen_time_data = getMeanStdDev(total_gen_times);
+      std::pair<double, double> avg_plan_time_data = getMeanStdDev(total_avg_plan_times);
+      std::pair<double, double> avg_path_quality_data = getMeanStdDev(total_avg_path_quality);
 
       std::string planner_name = "Spars2";
       if (planner_name_ == BOLT)
@@ -620,24 +620,27 @@ public:
       if (!ros::ok())
         break;
 
-    } // for each map
+    }  // for each map
 
     // Done experiment... dump to console
     for (auto line : high_level_log)
       std::cout << line << std::endl;
   }
 
-  std::pair<double,double> getMeanStdDev(const std::vector<double>& data)
+  std::pair<double, double> getMeanStdDev(const std::vector<double> &data)
   {
     double sum = std::accumulate(data.begin(), data.end(), 0.0);
     double mean = sum / data.size();
 
     std::vector<double> diff(data.size());
-    std::transform(data.begin(), data.end(), diff.begin(), [mean](double x) { return x - mean; });
+    std::transform(data.begin(), data.end(), diff.begin(), [mean](double x)
+                   {
+                     return x - mean;
+                   });
     double sq_sum = std::inner_product(diff.begin(), diff.end(), diff.begin(), 0.0);
     double stdev = std::sqrt(sq_sum / data.size());
 
-    return std::pair<double,double>(mean, stdev);
+    return std::pair<double, double>(mean, stdev);
   }
 
   /** \brief Plan repeatidly */
@@ -777,13 +780,13 @@ public:
     loadMapAndCollisionChecker(image_path);
   }
 
-  void loadMapAndCollisionChecker(const std::string& image_path)
+  void loadMapAndCollisionChecker(const std::string &image_path)
   {
     loadImage(image_path);
 
     // Set the bounds for the R^2
     ob::RealVectorBounds bounds(dimensions_);
-    bounds.setLow(0);                             // both dimensions start at 0
+    bounds.setLow(0);                        // both dimensions start at 0
     bounds.setHigh(0, ppm_.getWidth() - 1);  // allow for non-square images
     // Allow arbitrary number of dimensions
     for (std::size_t i = 1; i < dimensions_; ++i)
@@ -793,8 +796,8 @@ public:
     space_->as<ob::RealVectorStateSpace>()->setBounds(bounds);
 
     // Change the discretization level for collision checking
-    //space_->setLongestValidSegmentFraction(0.005);
-    //space_->setLongestValidSegmentFraction(0.01); // this is the default value
+    // space_->setLongestValidSegmentFraction(0.005);
+    // space_->setLongestValidSegmentFraction(0.01); // this is the default value
 
     space_->setup();
 
@@ -827,7 +830,7 @@ public:
       ppm_.loadFile(image_path.c_str());
       ok = true;
     }
-    catch(ompl::Exception &ex)
+    catch (ompl::Exception &ex)
     {
       ROS_ERROR_STREAM("Unable to load " << image_path);
       return;
@@ -876,8 +879,8 @@ public:
     for (std::size_t i = 1; i <= NUM_VISUALS; ++i)
     {
       rviz_visual_tools::RvizVisualToolsPtr rviz_visual =
-        rviz_visual_tools::RvizVisualToolsPtr(new rviz_visual_tools::RvizVisualTools(
-                                                                                     "/world_visual" + std::to_string(i), "/ompl_visual" + std::to_string(i)));
+          rviz_visual_tools::RvizVisualToolsPtr(new rviz_visual_tools::RvizVisualTools(
+              "/world_visual" + std::to_string(i), "/ompl_visual" + std::to_string(i)));
       rviz_visual->loadMarkerPub();
       rviz_visual->enableBatchPublishing();
       ros::spinOnce();
@@ -907,7 +910,7 @@ public:
 
     // Load background visualizer
     rviz_visual_tools::RvizVisualToolsPtr rviz_visual =
-      rviz_visual_tools::RvizVisualToolsPtr(new rviz_visual_tools::RvizVisualTools("/world", "/ompl_background"));
+        rviz_visual_tools::RvizVisualToolsPtr(new rviz_visual_tools::RvizVisualTools("/world", "/ompl_background"));
     rviz_visual->loadMarkerPub();
     rviz_visual->enableBatchPublishing();
     ros::spinOnce();
@@ -985,8 +988,8 @@ public:
       viz_bg_->getVisualTools()->publishText(text_pose_, std::string("2 "), rvt::BLACK, rvt::MEDIUM, false);
     viz_bg_->publishPPMImage(ppm_, false);
     std::string message =
-      "Nodes - black: coverage, orange: connectivity, pink: interface, blue: quality, green: discretized\n"
-      "Edges - green: connectivity, yellow: interface, red: quality";
+        "Nodes - black: coverage, orange: connectivity, pink: interface, blue: quality, green: discretized\n"
+        "Edges - green: connectivity, yellow: interface, red: quality";
     if (use_labels)
       viz_bg_->getVisualTools()->publishText(sub_text_pose_, message, rvt::BLACK, rvt::SMALL, false);
 
@@ -1053,84 +1056,84 @@ public:
     switch (problem_type_)
     {
       case 0:  // random
-        {
-          findRandValidState(start);
-          findRandValidState(goal);
+      {
+        findRandValidState(start);
+        findRandValidState(goal);
 
-          // Debug
-          if (verbose)
-          {
-            std::cout << "Random Problem " << std::setprecision(5) << std::endl;
-            std::cout << "  Start: ";
-            si_->printState(start, std::cout);
-            std::cout << "  Goal:  ";
-            si_->printState(goal, std::cout);
-          }
+        // Debug
+        if (verbose)
+        {
+          std::cout << "Random Problem " << std::setprecision(5) << std::endl;
+          std::cout << "  Start: ";
+          si_->printState(start, std::cout);
+          std::cout << "  Goal:  ";
+          si_->printState(goal, std::cout);
         }
-        break;
+      }
+      break;
       case 1:  // static
-        {
-          ob::RealVectorStateSpace::StateType *real_start = static_cast<ob::RealVectorStateSpace::StateType *>(start);
-          ob::RealVectorStateSpace::StateType *real_goal = static_cast<ob::RealVectorStateSpace::StateType *>(goal);
-          getStaticStartGoal(problem_id_, real_start, real_goal);
-        }
-        break;
+      {
+        ob::RealVectorStateSpace::StateType *real_start = static_cast<ob::RealVectorStateSpace::StateType *>(start);
+        ob::RealVectorStateSpace::StateType *real_goal = static_cast<ob::RealVectorStateSpace::StateType *>(goal);
+        getStaticStartGoal(problem_id_, real_start, real_goal);
+      }
+      break;
       case 2:  // Randomly sample around two states
-        {
-          ROS_INFO_STREAM_NAMED("experience_setup", "Sampling start and goal around two center points");
+      {
+        ROS_INFO_STREAM_NAMED("experience_setup", "Sampling start and goal around two center points");
 
-          // Create new states to be the 'near' states
-          ob::ScopedState<> near_start(space_);
-          ob::ScopedState<> near_goal(space_);
-          ob::RealVectorStateSpace::StateType *real_near_start =
+        // Create new states to be the 'near' states
+        ob::ScopedState<> near_start(space_);
+        ob::ScopedState<> near_goal(space_);
+        ob::RealVectorStateSpace::StateType *real_near_start =
             static_cast<ob::RealVectorStateSpace::StateType *>(near_start.get());
-          ob::RealVectorStateSpace::StateType *real_near_goal =
+        ob::RealVectorStateSpace::StateType *real_near_goal =
             static_cast<ob::RealVectorStateSpace::StateType *>(near_goal.get());
-          getStaticStartGoal(problem_id_, real_near_start, real_near_goal);
+        getStaticStartGoal(problem_id_, real_near_start, real_near_goal);
 
-          // Check these hard coded values against varying image sizes
-          if (!space_->satisfiesBounds(real_near_start) || !space_->satisfiesBounds(real_near_goal))
-          {
-            ROS_ERROR_STREAM_NAMED("chooseStartGoal:", "State does not satisfy bounds");
-
-            // Debug
-            if (verbose)
-            {
-              std::cout << "Start: " << std::setprecision(5);
-              si_->printState(near_start.get(), std::cout);
-              std::cout << "Goal:  ";
-              si_->printState(near_goal.get(), std::cout);
-            }
-
-            exit(-1);
-            return;
-          }
-
-          // Choose the distance to sample around
-          double maxExtent = si_->getMaximumExtent();
-          double distance = maxExtent * 0.1;
-          ROS_INFO_STREAM_NAMED("experience_setup", "Distance is " << distance << " from max extent " << maxExtent);
-
-          // Sample near the target states
-          findRandValidState(start, real_near_start, distance);
-          findRandValidState(goal, real_near_goal, distance);
+        // Check these hard coded values against varying image sizes
+        if (!space_->satisfiesBounds(real_near_start) || !space_->satisfiesBounds(real_near_goal))
+        {
+          ROS_ERROR_STREAM_NAMED("chooseStartGoal:", "State does not satisfy bounds");
 
           // Debug
           if (verbose)
           {
             std::cout << "Start: " << std::setprecision(5);
-            si_->printState(start, std::cout);
-            std::cout << "Goal: ";
-            si_->printState(goal, std::cout);
+            si_->printState(near_start.get(), std::cout);
+            std::cout << "Goal:  ";
+            si_->printState(near_goal.get(), std::cout);
           }
-          // Show the sample regions
-          if (false)
-          {
-            viz5_->publishSampleRegion(near_start, distance);
-            viz5_->publishSampleRegion(near_goal, distance);
-          }
+
+          exit(-1);
+          return;
         }
-        break;
+
+        // Choose the distance to sample around
+        double maxExtent = si_->getMaximumExtent();
+        double distance = maxExtent * 0.1;
+        ROS_INFO_STREAM_NAMED("experience_setup", "Distance is " << distance << " from max extent " << maxExtent);
+
+        // Sample near the target states
+        findRandValidState(start, real_near_start, distance);
+        findRandValidState(goal, real_near_goal, distance);
+
+        // Debug
+        if (verbose)
+        {
+          std::cout << "Start: " << std::setprecision(5);
+          si_->printState(start, std::cout);
+          std::cout << "Goal: ";
+          si_->printState(goal, std::cout);
+        }
+        // Show the sample regions
+        if (false)
+        {
+          viz5_->publishSampleRegion(near_start, distance);
+          viz5_->publishSampleRegion(near_goal, distance);
+        }
+      }
+      break;
       default:
         ROS_ERROR_STREAM_NAMED(name_, "Invalid problem type");
     }
@@ -1440,7 +1443,7 @@ public:
 
     geometry_msgs::Pose demo_pose;
     demo_pose.position.x = ppm_.getHeight() * 0.95;  // move to far left
-    demo_pose.position.y = -10;                               //-12;
+    demo_pose.position.y = -10;                      //-12;
     demo_pose.position.z = 0;
     demo_pose.orientation.x = 0;
     demo_pose.orientation.y = 0;
@@ -1456,19 +1459,19 @@ public:
 
     // Visualize name of algorithm
     demo_pose.position.y = -10.0;
-    demo_pose.position.x = ppm_.getHeight() * 0.6;    // move to left
+    demo_pose.position.x = ppm_.getHeight() * 0.6;             // move to left
     viz_bg_->getVisualTools()->setGlobalScale(global_scale_);  // change back to normal value
     viz_bg_->getVisualTools()->publishText(demo_pose, "BOLT", rvt::BLACK, rvt::XXXLARGE, false);
     viz_bg_->trigger();
   }
 
-  void clickedCallback(const geometry_msgs::PointStamped::ConstPtr& msg)
+  void clickedCallback(const geometry_msgs::PointStamped::ConstPtr &msg)
   {
-    //ROS_INFO_STREAM_NAMED(name_, "Clicked point:\n" << msg->point);
+    // ROS_INFO_STREAM_NAMED(name_, "Clicked point:\n" << msg->point);
     ROS_INFO_STREAM_NAMED(name_, "Clicked point");
 
-    ob::State* temp_state = space_->allocState();
-    ob::RealVectorStateSpace::StateType* real_state = static_cast<ob::RealVectorStateSpace::StateType*>(temp_state);
+    ob::State *temp_state = space_->allocState();
+    ob::RealVectorStateSpace::StateType *real_state = static_cast<ob::RealVectorStateSpace::StateType *>(temp_state);
     real_state->values[0] = msg->point.x;
     real_state->values[1] = msg->point.y;
     real_state->values[2] = msg->point.z;
@@ -1478,7 +1481,7 @@ public:
     {
       experience_setup_->getVisual()->viz1()->state(temp_state, ompl::tools::MEDIUM, ompl::tools::BLUE, 0);
       experience_setup_->getVisual()->viz1()->trigger();
-      usleep(0.001*1000000);
+      usleep(0.001 * 1000000);
     }
 
     // Make SparseCriteria and SparseGraph verbose

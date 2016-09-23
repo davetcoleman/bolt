@@ -398,7 +398,7 @@ void VertexDiscretizer::createState(std::size_t threadID, std::vector<double> &v
       // if (visualizeGridGenerationWait_)
       //   visual_->waitForUserFeedback("rejected");
       // else
-      //usleep(0.001 * 1000000);
+      // usleep(0.001 * 1000000);
     }
 
     return;
@@ -407,14 +407,15 @@ void VertexDiscretizer::createState(std::size_t threadID, std::vector<double> &v
   if (visualizeDistanceToCollision_)
   {
     visual_->viz6()->trigger();
-    usleep(0.001*1000000);
+    usleep(0.001 * 1000000);
   }
 
   if (useClearance)
   {
     if (dist < clearance_)
     {
-      BOLT_WARN(indent, vThread_, "Rejected because of clearance " << std::fixed << dist << " required: " << clearance_);
+      BOLT_WARN(indent, vThread_, "Rejected because of clearance " << std::fixed << dist
+                                                                   << " required: " << clearance_);
 
       // Visualize
       if (visualizeGridGeneration_)

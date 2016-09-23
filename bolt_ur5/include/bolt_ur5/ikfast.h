@@ -58,7 +58,7 @@ public:
   unsigned char jointtype;     ///< joint type, 0x01 is revolute, 0x11 is slider
   unsigned char maxsolutions;  ///< max possible indices, 0 if controlled by free index or a free joint itself
   unsigned char indices[5];  ///< unique index of the solution used to keep track on what part it came from. sometimes a
-                             ///solution can be repeated for different indices. store at least another repeated root
+  /// solution can be repeated for different indices. store at least another repeated root
 };
 
 /// \brief The discrete solutions are returned in this structure.

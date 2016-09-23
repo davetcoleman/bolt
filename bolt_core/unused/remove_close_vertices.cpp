@@ -1,9 +1,7 @@
-  /** \brief After adding a new vertex, check if there is a really close nearby vertex that can be merged with this one
-   */
-  bool checkRemoveCloseVertices(SparseVertex v1, std::size_t indent = 0);
-  void visualizeRemoveCloseVertices(SparseVertex v1, SparseVertex v2);
-
-
+/** \brief After adding a new vertex, check if there is a really close nearby vertex that can be merged with this one
+ */
+bool checkRemoveCloseVertices(SparseVertex v1, std::size_t indent = 0);
+void visualizeRemoveCloseVertices(SparseVertex v1, SparseVertex v2);
 
 bool SparseCriteria::checkRemoveCloseVertices(SparseVertex v1, std::size_t indent)
 {

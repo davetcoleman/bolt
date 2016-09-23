@@ -177,7 +177,7 @@ public:
   /** \brief Get the total number of paths stored in the database */
   std::size_t getExperiencesCount() const
   {
-       return sparseGraph_->getNumVertices();
+    return sparseGraph_->getNumVertices();
   }
 
   /** \brief Hook for getting access to common functions */
@@ -202,8 +202,7 @@ public:
   }
 
   /** \brief Allow accumlated experiences to be processed */
-  //bool doPostProcessing();
-
+  // bool doPostProcessing();
 
 protected:
   /**  The maintained experience planner instance */

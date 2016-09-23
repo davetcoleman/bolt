@@ -105,8 +105,8 @@ public:
                       const double shortestPathVpVpp, std::size_t indent);
 
   /** \brief As described in paper */
-  bool spannerTest(SparseVertex v, SparseVertex vp, SparseVertex vpp, InterfaceData& iData,
-                           double& shortestPathVpVpp, std::size_t indent);
+  bool spannerTest(SparseVertex v, SparseVertex vp, SparseVertex vpp, InterfaceData& iData, double& shortestPathVpVpp,
+                   std::size_t indent);
 
   /** \brief Get shortest path between two vertices */
   double qualityEdgeAstarTest(SparseVertex vp, SparseVertex vpp, InterfaceData& iData, std::size_t indent);
@@ -274,7 +274,7 @@ public:
   bool useClearEdgesNearVertex_ = true;
   bool useConnectivityCriteria_ = true;
   bool useQualityCriteria_ = true;
-  bool useDirectConnectivyCriteria_ = true; // Add direct edge instead of also vertex
+  bool useDirectConnectivyCriteria_ = true;  // Add direct edge instead of also vertex
   bool useSmoothedPathImprovementRule_ = true;
 
   /** \brief Verbose flags */

@@ -330,7 +330,8 @@ bool MoveItVizWindow::publishRobotState(const ompl::base::State* state)
   return visuals_->publishRobotState(visuals_->getSharedRobotState());
 }
 
-// bool MoveItVizWindow::publishTrajectoryPath(const ompl::base::PlannerDataPtr& path, robot_model::JointModelGroup* jmg,
+// bool MoveItVizWindow::publishTrajectoryPath(const ompl::base::PlannerDataPtr& path, robot_model::JointModelGroup*
+// jmg,
 //                                             const std::vector<const robot_model::LinkModel*>& tips,
 //                                             bool show_trajectory_animated)
 // {
@@ -379,7 +380,8 @@ bool MoveItVizWindow::publishRobotState(const ompl::base::State* state)
 //       }
 
 //       // Debug pose
-//       // std::cout << "Pose: " << state_id << " of link " << tips[tip_id]->getName() << ": \n" << pose.translation() <<
+//       // std::cout << "Pose: " << state_id << " of link " << tips[tip_id]->getName() << ": \n" << pose.translation()
+//       <<
 //       // std::endl;
 
 //       paths_msgs[tip_id].push_back(visuals_->convertPose(pose).position);

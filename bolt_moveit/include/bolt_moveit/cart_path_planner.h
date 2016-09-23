@@ -75,7 +75,7 @@ public:
    */
   CartPathPlanner(BoltMoveIt* parent);
 
-  //void initDescartes();
+  // void initDescartes();
 
   void processIMarkerPose(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback,
                           const Eigen::Affine3d& feedback_pose);
@@ -96,7 +96,8 @@ public:
   bool addEdgesToBoltGraph(const TrajectoryGraph& graph_vertices, ompl::tools::bolt::TaskVertex startingVertex,
                            ompl::tools::bolt::TaskVertex endingVertex);
   bool connectTrajectoryEndPoints(const TrajectoryGraph& graph_vertices, double& shortest_path_across_cart);
-  bool getAllJointPosesForCartPoint(const Eigen::Affine3d& pose, std::vector<std::vector<double>>& joint_poses);
+  bool getAllJointPosesForCartPoint(const Eigen::Affine3d& pose, std::vector<std::vector<double>>& joint_poses,
+                                    std::size_t indent);
   void visualizeAllJointPoses(const std::vector<std::vector<double>>& joint_poses);
 
 private:
@@ -127,7 +128,7 @@ private:
   const moveit::core::JointModelGroup* jmg_;
 
   // Performs tasks specific to the Robot such IK, FK and collision detection
-  //bolt_ur5::UR5RobotModelPtr ur5_robot_model_;
+  // bolt_ur5::UR5RobotModelPtr ur5_robot_model_;
 
   // The exact trajectory to follow
   EigenSTL::vector_Affine3d exact_poses_;

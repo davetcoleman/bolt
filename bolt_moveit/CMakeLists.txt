@@ -33,6 +33,7 @@ catkin_package(
     rosparam_shortcuts
     bolt_core
   INCLUDE_DIRS
+    ${EIGEN3_INCLUDE_DIR}
     include
   LIBRARIES
     ${PROJECT_NAME}_cart_path_planner
@@ -45,8 +46,8 @@ catkin_package(
 ###########
 
 include_directories(SYSTEM
-  ${Boost_INCLUDE_DIR}
   ${EIGEN3_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIR}
 )
 
 include_directories(

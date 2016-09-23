@@ -189,7 +189,6 @@ void loadOMPLParameters(ros::NodeHandle nh, const std::string &name, ompl::tools
     shutdownIfError(name, error);
   }
 
-
   // BoltPlanner
   {
     ros::NodeHandle rpnh(nh, "bolt_planner");
@@ -208,7 +207,6 @@ void loadOMPLParameters(ros::NodeHandle nh, const std::string &name, ompl::tools
     error += !get(name, rpnh, "verbose/thread", candidateQueue->vThread_);
     shutdownIfError(name, error);
   }
-
 }
 
 /**

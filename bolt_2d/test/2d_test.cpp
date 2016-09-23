@@ -78,7 +78,10 @@ public:
 TestingBase base;
 
 /* Run tests ------------------------------------------------------------------------------ */
-TEST(TestingBase, initialize) { ASSERT_TRUE(base.initialize()); }
+TEST(TestingBase, initialize)
+{
+  ASSERT_TRUE(base.initialize());
+}
 
 TEST(TestingBase, name_of_this_test)
 {

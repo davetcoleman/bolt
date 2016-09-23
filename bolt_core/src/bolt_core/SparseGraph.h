@@ -337,7 +337,7 @@ public:
   inline base::State*& getQueryStateNonConst(std::size_t threadID)
   {
     BOLT_ASSERT(threadID < queryVertices_.size(), "Attempted to request state of regular vertex using query "
-                "function");
+                                                  "function");
     return queryStates_[threadID];
   }
 
@@ -354,7 +354,7 @@ public:
     return vertexStateProperty_[v];
   }
 
-  inline const base::State *getState(SparseVertex v) const
+  inline const base::State* getState(SparseVertex v) const
   {
     BOLT_ASSERT(v >= queryVertices_.size(), "Attempted to request state of query vertex using wrong function");
     return vertexStateProperty_[v];
@@ -392,9 +392,9 @@ public:
   /** \brief Display in viewer */
   void visualizeEdge(SparseVertex v1, SparseVertex v2, EdgeType type, std::size_t windowID);
 
-  /* ---------------------------------------------------------------------------------
-   * Sparse Interfaces
-   * --------------------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------------------
+ * Sparse Interfaces
+ * --------------------------------------------------------------------------------- */
 #ifdef ENABLE_QUALITY
   /** \brief When a new guard is added at state, finds all guards who must abandon their interface information and
    * delete that information */
@@ -498,7 +498,7 @@ protected:
 #endif
 
   /** \brief Access to the popularity of each node */
-  //boost::property_map<SparseAdjList, vertex_popularity_t>::type vertexPopularity_;
+  // boost::property_map<SparseAdjList, vertex_popularity_t>::type vertexPopularity_;
 
   /** \brief Data structure that maintains the connected components */
   SparseDisjointSetType disjointSets_;
@@ -587,11 +587,11 @@ public:
    */
   SparsestarVisitor(SparseVertex goal, SparseGraph* parent);
 
-  /**
-   * \brief Invoked when a vertex is first discovered and is added to the OPEN list.
-   * \param v current Vertex
-   * \param g graph we are searching on
-   */
+/**
+ * \brief Invoked when a vertex is first discovered and is added to the OPEN list.
+ * \param v current Vertex
+ * \param g graph we are searching on
+ */
 
 #ifndef NDEBUG
   void discover_vertex(SparseVertex v, const SparseAdjList& g) const;

@@ -50,10 +50,8 @@ namespace tools
 {
 namespace bolt
 {
-
 struct SparseFormula
 {
-
   void calc(base::SpaceInformationPtr si, double stretchFactor, double sparseDeltaFraction,
             double penetrationOverlapFraction, double nearSamplePointsMultiple, bool useL2Norm)
   {
@@ -103,7 +101,7 @@ struct SparseFormula
       BOLT_DEBUG(indent, 1, "Auto setting stretch factor because input value was 0");
 
       // ND: August 4th
-      //stretchFactor_ = dim * discretization_ / (discretization_ - 2 * denseDelta_);
+      // stretchFactor_ = dim * discretization_ / (discretization_ - 2 * denseDelta_);
 
       // Sept 14th
       // This is the paper-corrected version
@@ -136,7 +134,7 @@ struct SparseFormula
     BOLT_INFO(indent + 2, 1, "Discret Penetration     = " << discretizePenetrationDist_);
     BOLT_INFO(indent + 2, 1, "Stretch Factor          = " << stretchFactor_);
     BOLT_INFO(indent, 1, "--------------------------------------------------");
-  } // calc
+  }  // calc
 
   double maxExtent_;
   double sparseDelta_;
@@ -146,7 +144,6 @@ struct SparseFormula
   double discretization_;
   double stretchFactor_;
 };
-
 
 }  // namespace bolt
 }  // namespace tools

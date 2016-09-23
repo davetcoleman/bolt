@@ -69,7 +69,7 @@ class CandidateQueue
 {
 public:
   /** \brief Constructor */
-  CandidateQueue(SparseGraphPtr sg, SparseGenerator* sparseGenerator);
+  CandidateQueue(SparseGraphPtr sg, SparseGenerator *sparseGenerator);
 
   ~CandidateQueue();
 
@@ -106,7 +106,7 @@ private:
 
   SparseGraphPtr sg_;
   SparseCriteriaPtr sparseCriteria_;
-  SparseGenerator* sparseGenerator_;
+  SparseGenerator *sparseGenerator_;
 
   /** \brief The created space information */
   base::SpaceInformationPtr si_;
@@ -138,10 +138,10 @@ private:
 
 public:
   bool verbose_ = false;      // general program direction
-  bool vNeighbor_ = false;     // nearest neighbor search
-  bool vClear_ = false;        // when queue is being cleared because of change
-  bool vQueueFull_ = false;    // alert when queue is full and waiting
-  bool vQueueEmpty_ = false;   // alert when queue is empty and holding up process
+  bool vNeighbor_ = false;    // nearest neighbor search
+  bool vClear_ = false;       // when queue is being cleared because of change
+  bool vQueueFull_ = false;   // alert when queue is full and waiting
+  bool vQueueEmpty_ = false;  // alert when queue is empty and holding up process
   bool vThread_ = false;
 
 };  // end of class CandidateQueue
