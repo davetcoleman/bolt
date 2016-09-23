@@ -130,8 +130,9 @@ public:
    */
   void stopCandidateQueueAndSave(std::size_t indent);
 
+  void benchmarkValidClearanceSampler();
   void benchmarkRandValidSampling();
-  void benchmarkVisualizeSampling();
+  void benchmarkVisualizeSampling(std::size_t indent = 0);
   void benchmarkSparseGraphGeneration();
 
   /** \brief Getter for vertexDiscretizer */
@@ -165,6 +166,9 @@ public:
     avgPathQuality_.clear(); // reset for next run
     return mean;
   }
+
+  /** \brief Choose a regular sampler or clearance sampler based on clearance sampler value */
+  base::ValidStateSamplerPtr getSampler(std::size_t indent);
 
 protected:
   /** \brief Short name of this class */

@@ -217,7 +217,7 @@ protected:
   VisualizerPtr visual_;
 
   /** \brief Sampler user for generating valid samples in the state space */
-  ClearanceSamplerPtr clearanceSampler_;
+  base::ValidStateSamplerPtr sampler_;
 
   /** \brief Amount of sub-optimality allowed */
   double sparseDelta_;

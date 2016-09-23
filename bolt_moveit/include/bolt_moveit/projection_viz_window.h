@@ -97,7 +97,7 @@ public:
   void path(ompl::geometric::PathGeometric* path, ompl::tools::VizSizes type, ompl::tools::VizColors color);
 
   /** \brief Trigger visualizer to refresh/repaint/display all graphics */
-  void trigger();
+  void trigger(std::size_t queueSize = 0);
 
   /** \brief Trigger visualizer to clear all graphics */
   void deleteAllMarkers();

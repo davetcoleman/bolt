@@ -103,7 +103,7 @@ public:
   void path(ompl::geometric::PathGeometric* path, ompl::tools::VizSizes type, ompl::tools::VizColors color);
 
   /** \brief Trigger visualizer to refresh/repaint/display all graphics */
-  void trigger();
+  void trigger(std::size_t queueSize = 0);
 
   /** \brief Trigger visualizer to clear all graphics */
   void deleteAllMarkers();
@@ -265,13 +265,6 @@ public:
     min_state_radius_ = min_state_radius;
     max_state_radius_ = max_state_radius;
   }
-
-  /**
-   * \brief An OMPL planner calls this function directly through boost::bind to display its graph's progress during
-   * search
-   * \param pointer to the planner, to be used for getPlannerData()
-   */
-  void vizTrigger();
 
   /** \brief Getter for JointModelGroup */
   const robot_model::JointModelGroup* getJointModelGroup() const

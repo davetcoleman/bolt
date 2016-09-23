@@ -141,8 +141,6 @@ install(DIRECTORY launch
 )
 
 # Mark config files for installation
-# install(FILES config
-#   FILES_MATCHING PATTERN "*.yaml"
-#   PATTERN ".svn" EXCLUDE
-#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-# )
+install(DIRECTORY config
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)

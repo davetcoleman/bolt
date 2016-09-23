@@ -40,6 +40,7 @@
 #include <bolt_core/CandidateQueue.h>
 #include <bolt_core/SparseCriteria.h>
 #include <bolt_core/SparseGenerator.h>
+#include <ompl/base/samplers/UniformValidStateSampler.h>
 
 // C++
 #include <queue>
@@ -153,15 +154,29 @@ void CandidateQueue::startGenerating(std::size_t indent)
     si->setStateValidityChecker(si_->getStateValidityChecker());
     si->setMotionValidator(si_->getMotionValidator());
 
-    // Load minimum clearance state sampler
-    ClearanceSamplerPtr clearanceSampler =
-        ClearanceSamplerPtr(new base::MinimumClearanceValidStateSampler(si.get()));
-    clearanceSampler->setMinimumObstacleClearance(sg_->getObstacleClearance());
-    si->getStateValidityChecker()->setClearanceSearchDistance(sg_->getObstacleClearance());
+    // Choose sampler based on clearance
+    base::ValidStateSamplerPtr sampler;
+    if (sg_->getObstacleClearance() > std::numeric_limits<double>::epsilon())
+    {
+      BOLT_ERROR(indent, true, "Using clearance");
+      // Load minimum clearance state sampler
+      sampler.reset(new base::MinimumClearanceValidStateSampler(si.get()));
+      // Set the clearance
+      base::MinimumClearanceValidStateSampler* mcvss =
+        dynamic_cast<base::MinimumClearanceValidStateSampler *>(sampler.get());
+      mcvss->setMinimumObstacleClearance(sg_->getObstacleClearance());
+      si->getStateValidityChecker()->setClearanceSearchDistance(sg_->getObstacleClearance());
+    }
+    else // regular sampler
+    {
+      BOLT_ERROR(indent, true, "NOT using clearance " << sg_->getObstacleClearance());
+      sampler.reset(new base::UniformValidStateSampler(si.get()));
+      //sampler = si_->allocStateSampler();
+    }
 
     std::size_t threadID = i + 1;  // the first thread (0) is reserved for the parent process
     generatorThreads_[i] =
-        new boost::thread(boost::bind(&CandidateQueue::generatingThread, this, threadID, si, clearanceSampler, indent));
+        new boost::thread(boost::bind(&CandidateQueue::generatingThread, this, threadID, si, sampler, indent));
   }
 
   // Wait for first sample to be found
@@ -219,7 +234,7 @@ void CandidateQueue::stopGenerating(std::size_t indent)
 }
 
 void CandidateQueue::generatingThread(std::size_t threadID, base::SpaceInformationPtr si,
-                                      ClearanceSamplerPtr clearanceSampler, std::size_t indent)
+                                      base::ValidStateSamplerPtr sampler, std::size_t indent)
 {
   BOLT_FUNC(indent, verbose_, "generatingThread() " << threadID);
 
@@ -237,7 +252,7 @@ void CandidateQueue::generatingThread(std::size_t threadID, base::SpaceInformati
     candidateState = si_->allocState();
 
     // Sample randomly
-    if (!clearanceSampler->sample(candidateState))
+    if (!sampler->sample(candidateState))
       throw Exception(name_, "Unable to find valid sample");
 
     BOLT_DEBUG(indent + 2, vThread_, "New candidateState: " << candidateState << " on thread " << threadID);

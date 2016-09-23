@@ -3,7 +3,7 @@
 bolt_moveit:
   # run mode
   auto_run: true # do not wait to move interactive markers. note: 'autonomous' setting must be 'false'
-  benchmark_performance: false
+  benchmark_performance: true
   display_disjoint_sets: false
   eliminate_dense_disjoint_sets: false
   check_valid_vertices: false
@@ -71,7 +71,7 @@ sparse_criteria:
   use_l2_norm: false # instead use L1
   use_edge_improvement_rule: true
   use_connectivy_criteria: true # main feature
-  use_quality_criteria: true # 4th criteria
+  use_quality_criteria: false # 4th criteria
 # VAR2
   use_clear_edges_near_vertex: true # Methods to Reduce Outdated/Redundant Edges
 # VAR5
@@ -97,19 +97,19 @@ sparse_criteria:
 
 # ====================================================
 sparse_graph:
-  save_enabled: true
+  save_enabled: false
   super_debug: false # run more checks and tests that slow down speed
-  obstacle_clearance: 0.006 #0.0035 # max before gripper piece is in collision
+  obstacle_clearance: 0.0 #0.0035 # max before gripper piece is in collision
   verbose:
     add: false # debug when addVertex() and addEdge() are called
     search: false
   visualize:
     spars_graph: true
-    spars_graph_speed: 0.00001 # if 0, does not animate but only single image draw
+    spars_graph_speed: 0.000001 # if 0, does not animate but only single image draw
     database_vertices: true # must have spars_graph enabled
     database_edges: true # must have spars_graph enabled
     database_coverage: false # the grey circles around vertices, must have spars_graph enabled
-    projection: true # show the joint space in a nD grid
+    projection: false # show the joint space in a nD grid
     graph_after_loading: false
     quality_path_smoothing: false # simplification
     astar: true # show node expansions and openings
@@ -125,11 +125,11 @@ sparse_smoother:
 # ====================================================
 vertex_discretizer:
   verbose:
-    verbose: true
-    thread: true # output within threading (very verbose)
+    verbose: false
+    thread: false # output within threading (very verbose)
   visualize:
-    grid_generation: true
-    grid_generation_wait: true
+    grid_generation: false
+    grid_generation_wait: false
 
 # ====================================================
 candidate_queue:

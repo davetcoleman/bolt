@@ -120,21 +120,27 @@ void MoveItVizWindow::state(const ompl::base::State* state, ot::VizSizes size, o
 void MoveItVizWindow::states(std::vector<const ompl::base::State*> states, std::vector<ot::VizColors> colors,
                              ot::VizSizes size)
 {
-  std::cout << "not implemented for mvoeit_viz_window " << std::endl;
-  // // Cache spheres
-  // EigenSTL::vector_Vector3d sphere_points;
-  // std::vector<rvt::colors> sphere_colors;
+  if (size == ompl::tools::ROBOT)
+  {
+    ROS_WARN_STREAM_NAMED(name_, "Not implemented for moveit_viz_window");
+    return;
+  }
 
-  // for (std::size_t i = 0; i < states.size(); ++i)
-  // {
-  //   // Convert OMPL state to vector3
-  //   sphere_points.push_back(stateToPoint(states[i]));
-  //   // Convert OMPL color to Rviz color
-  //   sphere_colors.push_back(visuals_->intToRvizColor(colors[i]));
-  // }
+  // Cache spheres
+  EigenSTL::vector_Vector3d sphere_points;
+  std::vector<rvt::colors> sphere_colors;
 
-  // // Publish
-  // visuals_->publishSpheres(sphere_points, sphere_colors, visuals_->intToRvizScale(size));
+  for (std::size_t i = 0; i < states.size(); ++i)
+  {
+    // Convert OMPL state to vector3
+    sphere_points.push_back(stateToPoint(states[i]));
+
+    // Convert OMPL color to Rviz color
+    sphere_colors.push_back(visuals_->intToRvizColor(colors[i]));
+  }
+
+  // Publish
+  visuals_->publishSpheres(std::move(sphere_points), std::move(sphere_colors), visuals_->intToRvizScale(size));
 }
 
 void MoveItVizWindow::edge(const ompl::base::State* stateA, const ompl::base::State* stateB, double cost)
@@ -208,9 +214,9 @@ void MoveItVizWindow::path(ompl::geometric::PathGeometric* path, ompl::tools::Vi
   }
 }
 
-void MoveItVizWindow::trigger()
+void MoveItVizWindow::trigger(std::size_t queueSize)
 {
-  vizTrigger();
+  visuals_->triggerEvery(queueSize);
 }
 
 void MoveItVizWindow::deleteAllMarkers()
@@ -558,21 +564,6 @@ bool MoveItVizWindow::convertPath(const og::PathGeometric& path, const robot_mod
     traj->addSuffixWayPoint(state, speed);
   }
   return true;
-}
-
-void MoveItVizWindow::vizTrigger()
-{
-  visuals_->triggerBatchPublish();
-
-  // Kill OMPL
-  // if (!ros::ok())
-  // {
-  //   std::cout << std::endl;
-  //   std::cout << "-------------------------------------------------------" << std::endl;
-  //   std::cout << "Shutting down process by request of ros::ok()" << std::endl;
-  //   std::cout << "-------------------------------------------------------" << std::endl;
-  //   exit(0);
-  // }
 }
 
 }  // namespace bolt_moveit

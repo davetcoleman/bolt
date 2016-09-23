@@ -6,69 +6,12 @@ Panels:
       Expanded:
         - /Grid1/Offset1
         - /Viz1to61
+        - /Viz1to61/ompl1 - state1
         - /Viz1to61/ompl6 - markers1
         - /PlanningScene1/Scene Geometry1
         - /PlanningScene1/Scene Robot1
         - /InteractiveMarkers1
         - /InteractiveMarkers1/Start2
-        - /InteractiveMarkers1/Start2/Link Tree1/base1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/collision_head_link_11
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/collision_head_link_21
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/head1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/head1/dummyhead11
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/head1/head_camera1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/head1/screen1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/head1/screen1/display1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/left_arm_mount1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/left_arm_mount1/left_upper_shoulder1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/left_arm_mount1/left_upper_shoulder1/left_lower_shoulder1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/left_arm_mount1/left_upper_shoulder1/left_lower_shoulder1/left_upper_elbow1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/left_arm_mount1/left_upper_shoulder1/left_lower_shoulder1/left_upper_elbow1/left_lower_elbow1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/left_arm_mount1/left_upper_shoulder1/left_lower_shoulder1/left_upper_elbow1/left_lower_elbow1/left_upper_forearm1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/left_arm_mount1/left_upper_shoulder1/left_lower_shoulder1/left_upper_elbow1/left_lower_elbow1/left_upper_forearm1/left_arm_itb1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/left_arm_mount1/left_upper_shoulder1/left_lower_shoulder1/left_upper_elbow1/left_lower_elbow1/left_upper_forearm1/left_lower_forearm1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/left_arm_mount1/left_upper_shoulder1/left_lower_shoulder1/left_upper_elbow1/left_lower_elbow1/left_upper_forearm1/left_lower_forearm1/left_wrist1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/left_arm_mount1/left_upper_shoulder1/left_lower_shoulder1/left_upper_elbow1/left_lower_elbow1/left_upper_forearm1/left_lower_forearm1/left_wrist1/left_hand1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/left_arm_mount1/left_upper_shoulder1/left_lower_shoulder1/left_upper_elbow1/left_lower_elbow1/left_upper_forearm1/left_lower_forearm1/left_wrist1/left_hand1/left_gripper_base1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/left_arm_mount1/left_upper_shoulder1/left_lower_shoulder1/left_upper_elbow1/left_lower_elbow1/left_upper_forearm1/left_lower_forearm1/left_wrist1/left_hand1/left_gripper_base1/l_gripper_l_finger1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/left_arm_mount1/left_upper_shoulder1/left_lower_shoulder1/left_upper_elbow1/left_lower_elbow1/left_upper_forearm1/left_lower_forearm1/left_wrist1/left_hand1/left_gripper_base1/l_gripper_l_finger1/l_gripper_l_finger_tip1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/left_arm_mount1/left_upper_shoulder1/left_lower_shoulder1/left_upper_elbow1/left_lower_elbow1/left_upper_forearm1/left_lower_forearm1/left_wrist1/left_hand1/left_gripper_base1/l_gripper_r_finger1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/left_arm_mount1/left_upper_shoulder1/left_lower_shoulder1/left_upper_elbow1/left_lower_elbow1/left_upper_forearm1/left_lower_forearm1/left_wrist1/left_hand1/left_gripper_base1/l_gripper_r_finger1/l_gripper_r_finger_tip1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/left_arm_mount1/left_upper_shoulder1/left_lower_shoulder1/left_upper_elbow1/left_lower_elbow1/left_upper_forearm1/left_lower_forearm1/left_wrist1/left_hand1/left_gripper_base1/left_gripper1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/left_arm_mount1/left_upper_shoulder1/left_lower_shoulder1/left_upper_elbow1/left_lower_elbow1/left_upper_forearm1/left_lower_forearm1/left_wrist1/left_hand1/left_hand_accelerometer1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/left_arm_mount1/left_upper_shoulder1/left_lower_shoulder1/left_upper_elbow1/left_lower_elbow1/left_upper_forearm1/left_lower_forearm1/left_wrist1/left_hand1/left_hand_camera1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/left_arm_mount1/left_upper_shoulder1/left_lower_shoulder1/left_upper_elbow1/left_lower_elbow1/left_upper_forearm1/left_lower_forearm1/left_wrist1/left_hand1/left_hand_camera_axis1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/left_arm_mount1/left_upper_shoulder1/left_lower_shoulder1/left_upper_elbow1/left_lower_elbow1/left_upper_forearm1/left_lower_forearm1/left_wrist1/left_hand1/left_hand_range1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/left_arm_mount1/left_upper_shoulder1/left_lower_shoulder1/left_upper_elbow1/left_lower_elbow1/left_upper_forearm_visual1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/left_arm_mount1/left_upper_shoulder1/left_lower_shoulder1/left_upper_elbow_visual1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/left_torso_itb1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/pedestal1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_arm_mount1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_arm_mount1/right_upper_shoulder1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_arm_mount1/right_upper_shoulder1/right_lower_shoulder1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_arm_mount1/right_upper_shoulder1/right_lower_shoulder1/right_upper_elbow1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_arm_mount1/right_upper_shoulder1/right_lower_shoulder1/right_upper_elbow1/right_lower_elbow1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_arm_mount1/right_upper_shoulder1/right_lower_shoulder1/right_upper_elbow1/right_lower_elbow1/right_upper_forearm1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_arm_mount1/right_upper_shoulder1/right_lower_shoulder1/right_upper_elbow1/right_lower_elbow1/right_upper_forearm1/right_arm_itb1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_arm_mount1/right_upper_shoulder1/right_lower_shoulder1/right_upper_elbow1/right_lower_elbow1/right_upper_forearm1/right_lower_forearm1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_arm_mount1/right_upper_shoulder1/right_lower_shoulder1/right_upper_elbow1/right_lower_elbow1/right_upper_forearm1/right_lower_forearm1/right_wrist1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_arm_mount1/right_upper_shoulder1/right_lower_shoulder1/right_upper_elbow1/right_lower_elbow1/right_upper_forearm1/right_lower_forearm1/right_wrist1/right_hand1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_arm_mount1/right_upper_shoulder1/right_lower_shoulder1/right_upper_elbow1/right_lower_elbow1/right_upper_forearm1/right_lower_forearm1/right_wrist1/right_hand1/right_gripper_base1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_arm_mount1/right_upper_shoulder1/right_lower_shoulder1/right_upper_elbow1/right_lower_elbow1/right_upper_forearm1/right_lower_forearm1/right_wrist1/right_hand1/right_gripper_base1/r_gripper_l_finger1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_arm_mount1/right_upper_shoulder1/right_lower_shoulder1/right_upper_elbow1/right_lower_elbow1/right_upper_forearm1/right_lower_forearm1/right_wrist1/right_hand1/right_gripper_base1/r_gripper_l_finger1/r_gripper_l_finger_tip1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_arm_mount1/right_upper_shoulder1/right_lower_shoulder1/right_upper_elbow1/right_lower_elbow1/right_upper_forearm1/right_lower_forearm1/right_wrist1/right_hand1/right_gripper_base1/r_gripper_r_finger1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_arm_mount1/right_upper_shoulder1/right_lower_shoulder1/right_upper_elbow1/right_lower_elbow1/right_upper_forearm1/right_lower_forearm1/right_wrist1/right_hand1/right_gripper_base1/r_gripper_r_finger1/r_gripper_r_finger_tip1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_arm_mount1/right_upper_shoulder1/right_lower_shoulder1/right_upper_elbow1/right_lower_elbow1/right_upper_forearm1/right_lower_forearm1/right_wrist1/right_hand1/right_gripper_base1/right_gripper1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_arm_mount1/right_upper_shoulder1/right_lower_shoulder1/right_upper_elbow1/right_lower_elbow1/right_upper_forearm1/right_lower_forearm1/right_wrist1/right_hand1/right_hand_accelerometer1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_arm_mount1/right_upper_shoulder1/right_lower_shoulder1/right_upper_elbow1/right_lower_elbow1/right_upper_forearm1/right_lower_forearm1/right_wrist1/right_hand1/right_hand_camera1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_arm_mount1/right_upper_shoulder1/right_lower_shoulder1/right_upper_elbow1/right_lower_elbow1/right_upper_forearm1/right_lower_forearm1/right_wrist1/right_hand1/right_hand_camera_axis1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_arm_mount1/right_upper_shoulder1/right_lower_shoulder1/right_upper_elbow1/right_lower_elbow1/right_upper_forearm1/right_lower_forearm1/right_wrist1/right_hand1/right_hand_range1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_arm_mount1/right_upper_shoulder1/right_lower_shoulder1/right_upper_elbow1/right_lower_elbow1/right_upper_forearm_visual1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_arm_mount1/right_upper_shoulder1/right_lower_shoulder1/right_upper_elbow1/right_lower_elbow1/right_upper_forearm_visual1/Details1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_arm_mount1/right_upper_shoulder1/right_lower_shoulder1/right_upper_elbow_visual1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/right_torso_itb1
-        - /InteractiveMarkers1/Start2/Link Tree1/base1/torso1/sonar_ring1
         - /TF1/Frames1
       Splitter Ratio: 0.875862062
     Tree Height: 712
@@ -108,7 +51,7 @@ Visualization Manager:
       Displays:
         - Attached Body Color: 150; 50; 150
           Class: moveit_rviz_plugin/RobotState
-          Collision Enabled: false
+          Collision Enabled: true
           Enabled: true
           Links:
             All Links Enabled: true
@@ -148,26 +91,6 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-            l_gripper_l_finger:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            l_gripper_l_finger_tip:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            l_gripper_r_finger:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            l_gripper_r_finger_tip:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
             left_arm_itb:
               Alpha: 1
               Show Axes: false
@@ -180,7 +103,18 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
+              Value: true
             left_gripper_base:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            left_gripper_l_finger:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            left_gripper_r_finger:
               Alpha: 1
               Show Axes: false
               Show Trail: false
@@ -194,7 +128,6 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: true
             left_hand_camera:
               Alpha: 1
               Show Axes: false
@@ -263,26 +196,6 @@ Visualization Manager:
               Show Axes: false
               Show Trail: false
               Value: true
-            r_gripper_l_finger:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            r_gripper_l_finger_tip:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            r_gripper_r_finger:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            r_gripper_r_finger_tip:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
             right_arm_itb:
               Alpha: 1
               Show Axes: false
@@ -295,7 +208,18 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
+              Value: true
             right_gripper_base:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            right_gripper_l_finger:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            right_gripper_r_finger:
               Alpha: 1
               Show Axes: false
               Show Trail: false
@@ -309,7 +233,6 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: true
             right_hand_camera:
               Alpha: 1
               Show Axes: false
@@ -388,14 +311,14 @@ Visualization Manager:
               Show Axes: false
               Show Trail: false
               Value: true
-          Name: ompl1 - start
+          Name: ompl1 - state
           Robot Alpha: 1
           Robot Description: /baxter/robot_description
           Robot State Topic: /baxter/robot_state1
           Show All Links: true
           Show Highlights: true
           Value: true
-          Visual Enabled: true
+          Visual Enabled: false
         - Class: rviz/MarkerArray
           Enabled: true
           Marker Topic: /baxter/ompl_visual1
@@ -446,26 +369,6 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-            l_gripper_l_finger:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            l_gripper_l_finger_tip:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            l_gripper_r_finger:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            l_gripper_r_finger_tip:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
             left_arm_itb:
               Alpha: 1
               Show Axes: false
@@ -478,7 +381,18 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
+              Value: true
             left_gripper_base:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            left_gripper_l_finger:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            left_gripper_r_finger:
               Alpha: 1
               Show Axes: false
               Show Trail: false
@@ -492,7 +406,6 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: true
             left_hand_camera:
               Alpha: 1
               Show Axes: false
@@ -561,26 +474,6 @@ Visualization Manager:
               Show Axes: false
               Show Trail: false
               Value: true
-            r_gripper_l_finger:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            r_gripper_l_finger_tip:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            r_gripper_r_finger:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            r_gripper_r_finger_tip:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
             right_arm_itb:
               Alpha: 1
               Show Axes: false
@@ -593,7 +486,18 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
+              Value: true
             right_gripper_base:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            right_gripper_l_finger:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            right_gripper_r_finger:
               Alpha: 1
               Show Axes: false
               Show Trail: false
@@ -607,7 +511,6 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: true
             right_hand_camera:
               Alpha: 1
               Show Axes: false
@@ -686,7 +589,7 @@ Visualization Manager:
               Show Axes: false
               Show Trail: false
               Value: true
-          Name: ompl2 - goal
+          Name: ompl2 - state
           Robot Alpha: 1
           Robot Description: baxter/robot_description
           Robot State Topic: /baxter/robot_state2
@@ -744,26 +647,6 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-            l_gripper_l_finger:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            l_gripper_l_finger_tip:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            l_gripper_r_finger:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            l_gripper_r_finger_tip:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
             left_arm_itb:
               Alpha: 1
               Show Axes: false
@@ -776,7 +659,18 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
+              Value: true
             left_gripper_base:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            left_gripper_l_finger:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            left_gripper_r_finger:
               Alpha: 1
               Show Axes: false
               Show Trail: false
@@ -790,7 +684,6 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: true
             left_hand_camera:
               Alpha: 1
               Show Axes: false
@@ -859,26 +752,6 @@ Visualization Manager:
               Show Axes: false
               Show Trail: false
               Value: true
-            r_gripper_l_finger:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            r_gripper_l_finger_tip:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            r_gripper_r_finger:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            r_gripper_r_finger_tip:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
             right_arm_itb:
               Alpha: 1
               Show Axes: false
@@ -891,7 +764,18 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
+              Value: true
             right_gripper_base:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            right_gripper_l_finger:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            right_gripper_r_finger:
               Alpha: 1
               Show Axes: false
               Show Trail: false
@@ -905,7 +789,6 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: true
             right_hand_camera:
               Alpha: 1
               Show Axes: false
@@ -984,7 +867,7 @@ Visualization Manager:
               Show Axes: false
               Show Trail: false
               Value: true
-          Name: ompl3
+          Name: ompl3 - state
           Robot Alpha: 1
           Robot Description: baxter/robot_description
           Robot State Topic: /baxter/robot_state3
@@ -1042,26 +925,6 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-            l_gripper_l_finger:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            l_gripper_l_finger_tip:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            l_gripper_r_finger:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            l_gripper_r_finger_tip:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
             left_arm_itb:
               Alpha: 1
               Show Axes: false
@@ -1074,7 +937,18 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
+              Value: true
             left_gripper_base:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            left_gripper_l_finger:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            left_gripper_r_finger:
               Alpha: 1
               Show Axes: false
               Show Trail: false
@@ -1088,7 +962,6 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: true
             left_hand_camera:
               Alpha: 1
               Show Axes: false
@@ -1157,26 +1030,6 @@ Visualization Manager:
               Show Axes: false
               Show Trail: false
               Value: true
-            r_gripper_l_finger:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            r_gripper_l_finger_tip:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            r_gripper_r_finger:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            r_gripper_r_finger_tip:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
             right_arm_itb:
               Alpha: 1
               Show Axes: false
@@ -1189,7 +1042,18 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
+              Value: true
             right_gripper_base:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            right_gripper_l_finger:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            right_gripper_r_finger:
               Alpha: 1
               Show Axes: false
               Show Trail: false
@@ -1203,7 +1067,6 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: true
             right_hand_camera:
               Alpha: 1
               Show Axes: false
@@ -1340,26 +1203,6 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-            l_gripper_l_finger:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            l_gripper_l_finger_tip:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            l_gripper_r_finger:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            l_gripper_r_finger_tip:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
             left_arm_itb:
               Alpha: 1
               Show Axes: false
@@ -1372,7 +1215,18 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
+              Value: true
             left_gripper_base:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            left_gripper_l_finger:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            left_gripper_r_finger:
               Alpha: 1
               Show Axes: false
               Show Trail: false
@@ -1386,7 +1240,6 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: true
             left_hand_camera:
               Alpha: 1
               Show Axes: false
@@ -1455,26 +1308,6 @@ Visualization Manager:
               Show Axes: false
               Show Trail: false
               Value: true
-            r_gripper_l_finger:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            r_gripper_l_finger_tip:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            r_gripper_r_finger:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            r_gripper_r_finger_tip:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
             right_arm_itb:
               Alpha: 1
               Show Axes: false
@@ -1487,7 +1320,18 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
+              Value: true
             right_gripper_base:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            right_gripper_l_finger:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            right_gripper_r_finger:
               Alpha: 1
               Show Axes: false
               Show Trail: false
@@ -1501,7 +1345,6 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: true
             right_hand_camera:
               Alpha: 1
               Show Axes: false
@@ -1638,26 +1481,6 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-            l_gripper_l_finger:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            l_gripper_l_finger_tip:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            l_gripper_r_finger:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            l_gripper_r_finger_tip:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
             left_arm_itb:
               Alpha: 1
               Show Axes: false
@@ -1670,7 +1493,18 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
+              Value: true
             left_gripper_base:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            left_gripper_l_finger:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            left_gripper_r_finger:
               Alpha: 1
               Show Axes: false
               Show Trail: false
@@ -1684,7 +1518,6 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: true
             left_hand_camera:
               Alpha: 1
               Show Axes: false
@@ -1753,26 +1586,6 @@ Visualization Manager:
               Show Axes: false
               Show Trail: false
               Value: true
-            r_gripper_l_finger:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            r_gripper_l_finger_tip:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            r_gripper_r_finger:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            r_gripper_r_finger_tip:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
             right_arm_itb:
               Alpha: 1
               Show Axes: false
@@ -1785,7 +1598,18 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
+              Value: true
             right_gripper_base:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            right_gripper_l_finger:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            right_gripper_r_finger:
               Alpha: 1
               Show Axes: false
               Show Trail: false
@@ -1799,7 +1623,6 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: true
             right_hand_camera:
               Alpha: 1
               Show Axes: false
@@ -1937,26 +1760,6 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        l_gripper_l_finger:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        l_gripper_l_finger_tip:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        l_gripper_r_finger:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        l_gripper_r_finger_tip:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
         left_arm_itb:
           Alpha: 1
           Show Axes: false
@@ -1969,7 +1772,18 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+          Value: true
         left_gripper_base:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        left_gripper_l_finger:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        left_gripper_r_finger:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -1983,7 +1797,6 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-          Value: true
         left_hand_camera:
           Alpha: 1
           Show Axes: false
@@ -2052,26 +1865,6 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
-        r_gripper_l_finger:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        r_gripper_l_finger_tip:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        r_gripper_r_finger:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        r_gripper_r_finger_tip:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
         right_arm_itb:
           Alpha: 1
           Show Axes: false
@@ -2084,7 +1877,18 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+          Value: true
         right_gripper_base:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        right_gripper_l_finger:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        right_gripper_r_finger:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -2098,7 +1902,6 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-          Value: true
         right_hand_camera:
           Alpha: 1
           Show Axes: false
@@ -2240,26 +2043,6 @@ Visualization Manager:
             Alpha: 1
             Show Axes: false
             Show Trail: false
-          l_gripper_l_finger:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          l_gripper_l_finger_tip:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          l_gripper_r_finger:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          l_gripper_r_finger_tip:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
           left_arm_itb:
             Alpha: 1
             Show Axes: false
@@ -2272,7 +2055,18 @@ Visualization Manager:
             Alpha: 1
             Show Axes: false
             Show Trail: false
+            Value: true
           left_gripper_base:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          left_gripper_l_finger:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          left_gripper_r_finger:
             Alpha: 1
             Show Axes: false
             Show Trail: false
@@ -2286,7 +2080,6 @@ Visualization Manager:
             Alpha: 1
             Show Axes: false
             Show Trail: false
-            Value: true
           left_hand_camera:
             Alpha: 1
             Show Axes: false
@@ -2355,26 +2148,6 @@ Visualization Manager:
             Show Axes: false
             Show Trail: false
             Value: true
-          r_gripper_l_finger:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          r_gripper_l_finger_tip:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          r_gripper_r_finger:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          r_gripper_r_finger_tip:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
           right_arm_itb:
             Alpha: 1
             Show Axes: false
@@ -2387,7 +2160,18 @@ Visualization Manager:
             Alpha: 1
             Show Axes: false
             Show Trail: false
+            Value: true
           right_gripper_base:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          right_gripper_l_finger:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          right_gripper_r_finger:
             Alpha: 1
             Show Axes: false
             Show Trail: false
@@ -2401,7 +2185,6 @@ Visualization Manager:
             Alpha: 1
             Show Axes: false
             Show Trail: false
-            Value: true
           right_hand_camera:
             Alpha: 1
             Show Axes: false
@@ -2499,362 +2282,6 @@ Visualization Manager:
           Class: moveit_rviz_plugin/RobotState
           Collision Enabled: false
           Enabled: true
-          Link Tree:
-            All Links Enabled: true
-            Expand Joint Details: false
-            Expand Link Details: false
-            Expand Tree: true
-            Link Tree Style: Tree of links
-            base:
-              Details:
-                Alpha: 1
-                Show Axes: false
-                Show Trail: false
-              collision_head_link_1:
-                Details:
-                  Alpha: 1
-                  Show Axes: false
-                  Show Trail: false
-                Value: true
-              collision_head_link_2:
-                Details:
-                  Alpha: 1
-                  Show Axes: false
-                  Show Trail: false
-                Value: true
-              torso:
-                Details:
-                  Alpha: 1
-                  Show Axes: false
-                  Show Trail: false
-                Value: true
-                head:
-                  Details:
-                    Alpha: 1
-                    Show Axes: false
-                    Show Trail: false
-                  Value: true
-                  dummyhead1:
-                    Details:
-                      Alpha: 1
-                      Show Axes: false
-                      Show Trail: false
-                  head_camera:
-                    Details:
-                      Alpha: 1
-                      Show Axes: false
-                      Show Trail: false
-                  screen:
-                    Details:
-                      Alpha: 1
-                      Show Axes: false
-                      Show Trail: false
-                    Value: true
-                    display:
-                      Details:
-                        Alpha: 1
-                        Show Axes: false
-                        Show Trail: false
-                      Value: true
-                left_arm_mount:
-                  Details:
-                    Alpha: 1
-                    Show Axes: false
-                    Show Trail: false
-                  left_upper_shoulder:
-                    Details:
-                      Alpha: 1
-                      Show Axes: false
-                      Show Trail: false
-                    Value: true
-                    left_lower_shoulder:
-                      Details:
-                        Alpha: 1
-                        Show Axes: false
-                        Show Trail: false
-                      Value: true
-                      left_upper_elbow:
-                        Details:
-                          Alpha: 1
-                          Show Axes: false
-                          Show Trail: false
-                        Value: true
-                        left_lower_elbow:
-                          Details:
-                            Alpha: 1
-                            Show Axes: false
-                            Show Trail: false
-                          Value: true
-                          left_upper_forearm:
-                            Details:
-                              Alpha: 1
-                              Show Axes: false
-                              Show Trail: false
-                            Value: true
-                            left_arm_itb:
-                              Details:
-                                Alpha: 1
-                                Show Axes: false
-                                Show Trail: false
-                            left_lower_forearm:
-                              Details:
-                                Alpha: 1
-                                Show Axes: false
-                                Show Trail: false
-                              Value: true
-                              left_wrist:
-                                Details:
-                                  Alpha: 1
-                                  Show Axes: false
-                                  Show Trail: false
-                                Value: true
-                                left_hand:
-                                  Details:
-                                    Alpha: 1
-                                    Show Axes: false
-                                    Show Trail: false
-                                  Value: true
-                                  left_gripper_base:
-                                    Details:
-                                      Alpha: 1
-                                      Show Axes: false
-                                      Show Trail: false
-                                    Value: true
-                                    l_gripper_l_finger:
-                                      Details:
-                                        Alpha: 1
-                                        Show Axes: false
-                                        Show Trail: false
-                                      Value: true
-                                      l_gripper_l_finger_tip:
-                                        Details:
-                                          Alpha: 1
-                                          Show Axes: false
-                                          Show Trail: false
-                                        Value: true
-                                    l_gripper_r_finger:
-                                      Details:
-                                        Alpha: 1
-                                        Show Axes: false
-                                        Show Trail: false
-                                      Value: true
-                                      l_gripper_r_finger_tip:
-                                        Details:
-                                          Alpha: 1
-                                          Show Axes: false
-                                          Show Trail: false
-                                        Value: true
-                                    left_gripper:
-                                      Details:
-                                        Alpha: 1
-                                        Show Axes: false
-                                        Show Trail: false
-                                  left_hand_accelerometer:
-                                    Details:
-                                      Alpha: 1
-                                      Show Axes: false
-                                      Show Trail: false
-                                    Value: true
-                                  left_hand_camera:
-                                    Details:
-                                      Alpha: 1
-                                      Show Axes: false
-                                      Show Trail: false
-                                    Value: true
-                                  left_hand_camera_axis:
-                                    Details:
-                                      Alpha: 1
-                                      Show Axes: false
-                                      Show Trail: false
-                                  left_hand_range:
-                                    Details:
-                                      Alpha: 1
-                                      Show Axes: false
-                                      Show Trail: false
-                                    Value: true
-                          left_upper_forearm_visual:
-                            Details:
-                              Alpha: 1
-                              Show Axes: false
-                              Show Trail: false
-                            Value: true
-                      left_upper_elbow_visual:
-                        Details:
-                          Alpha: 1
-                          Show Axes: false
-                          Show Trail: false
-                        Value: true
-                left_torso_itb:
-                  Details:
-                    Alpha: 1
-                    Show Axes: false
-                    Show Trail: false
-                pedestal:
-                  Details:
-                    Alpha: 1
-                    Show Axes: false
-                    Show Trail: false
-                  Value: true
-                right_arm_mount:
-                  Details:
-                    Alpha: 1
-                    Show Axes: false
-                    Show Trail: false
-                  right_upper_shoulder:
-                    Details:
-                      Alpha: 1
-                      Show Axes: false
-                      Show Trail: false
-                    Value: true
-                    right_lower_shoulder:
-                      Details:
-                        Alpha: 1
-                        Show Axes: false
-                        Show Trail: false
-                      Value: true
-                      right_upper_elbow:
-                        Details:
-                          Alpha: 1
-                          Show Axes: false
-                          Show Trail: false
-                        Value: true
-                        right_lower_elbow:
-                          Details:
-                            Alpha: 1
-                            Show Axes: false
-                            Show Trail: false
-                          Value: true
-                          right_upper_forearm:
-                            Details:
-                              Alpha: 1
-                              Show Axes: false
-                              Show Trail: false
-                            Value: true
-                            right_arm_itb:
-                              Details:
-                                Alpha: 1
-                                Show Axes: false
-                                Show Trail: false
-                            right_lower_forearm:
-                              Details:
-                                Alpha: 1
-                                Show Axes: false
-                                Show Trail: false
-                              Value: true
-                              right_wrist:
-                                Details:
-                                  Alpha: 1
-                                  Show Axes: false
-                                  Show Trail: false
-                                Value: true
-                                right_hand:
-                                  Details:
-                                    Alpha: 1
-                                    Show Axes: false
-                                    Show Trail: false
-                                  Value: true
-                                  right_gripper_base:
-                                    Details:
-                                      Alpha: 1
-                                      Show Axes: false
-                                      Show Trail: false
-                                    Value: true
-                                    r_gripper_l_finger:
-                                      Details:
-                                        Alpha: 1
-                                        Show Axes: false
-                                        Show Trail: false
-                                      Value: true
-                                      r_gripper_l_finger_tip:
-                                        Details:
-                                          Alpha: 1
-                                          Show Axes: false
-                                          Show Trail: false
-                                        Value: true
-                                    r_gripper_r_finger:
-                                      Details:
-                                        Alpha: 1
-                                        Show Axes: false
-                                        Show Trail: false
-                                      Value: true
-                                      r_gripper_r_finger_tip:
-                                        Details:
-                                          Alpha: 1
-                                          Show Axes: false
-                                          Show Trail: false
-                                        Value: true
-                                    right_gripper:
-                                      Details:
-                                        Alpha: 1
-                                        Show Axes: false
-                                        Show Trail: false
-                                  right_hand_accelerometer:
-                                    Details:
-                                      Alpha: 1
-                                      Show Axes: false
-                                      Show Trail: false
-                                    Value: true
-                                  right_hand_camera:
-                                    Details:
-                                      Alpha: 1
-                                      Show Axes: false
-                                      Show Trail: false
-                                    Value: true
-                                  right_hand_camera_axis:
-                                    Details:
-                                      Alpha: 1
-                                      Show Axes: false
-                                      Show Trail: false
-                                  right_hand_range:
-                                    Details:
-                                      Alpha: 1
-                                      Show Axes: false
-                                      Show Trail: false
-                                    Value: true
-                          right_upper_forearm_visual:
-                            Details:
-                              Alpha: 1
-                              Show Axes: false
-                              Show Trail: false
-                            Value: true
-                      right_upper_elbow_visual:
-                        Details:
-                          Alpha: 1
-                          Show Axes: false
-                          Show Trail: false
-                        Value: true
-                right_torso_itb:
-                  Details:
-                    Alpha: 1
-                    Show Axes: false
-                    Show Trail: false
-                sonar_ring:
-                  Details:
-                    Alpha: 1
-                    Show Axes: false
-                    Show Trail: false
-                  Value: true
-          Name: Start
-          Robot Alpha: 1
-          Robot Description: /baxter/robot_description
-          Robot State Topic: /baxter/imarker_start_state
-          Show All Links: true
-          Show Highlights: true
-          Value: true
-          Visual Enabled: true
-        - Class: rviz/InteractiveMarkers
-          Enable Transparency: true
-          Enabled: true
-          Name: Goal
-          Show Axes: false
-          Show Descriptions: true
-          Show Visual Aids: false
-          Update Topic: /baxter/goal_imarker/update
-          Value: true
-        - Attached Body Color: 150; 50; 150
-          Class: moveit_rviz_plugin/RobotState
-          Collision Enabled: false
-          Enabled: true
           Links:
             All Links Enabled: true
             Expand Joint Details: false
@@ -2893,26 +2320,6 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-            l_gripper_l_finger:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            l_gripper_l_finger_tip:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            l_gripper_r_finger:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            l_gripper_r_finger_tip:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
             left_arm_itb:
               Alpha: 1
               Show Axes: false
@@ -2925,7 +2332,18 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
+              Value: true
             left_gripper_base:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            left_gripper_l_finger:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            left_gripper_r_finger:
               Alpha: 1
               Show Axes: false
               Show Trail: false
@@ -2939,7 +2357,6 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: true
             left_hand_camera:
               Alpha: 1
               Show Axes: false
@@ -3008,22 +2425,281 @@ Visualization Manager:
               Show Axes: false
               Show Trail: false
               Value: true
-            r_gripper_l_finger:
+            right_arm_itb:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+            right_arm_mount:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+            right_gripper:
               Alpha: 1
               Show Axes: false
               Show Trail: false
               Value: true
-            r_gripper_l_finger_tip:
+            right_gripper_base:
               Alpha: 1
               Show Axes: false
               Show Trail: false
               Value: true
-            r_gripper_r_finger:
+            right_gripper_l_finger:
               Alpha: 1
               Show Axes: false
               Show Trail: false
               Value: true
-            r_gripper_r_finger_tip:
+            right_gripper_r_finger:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            right_hand:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            right_hand_accelerometer:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+            right_hand_camera:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            right_hand_camera_axis:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+            right_hand_range:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            right_lower_elbow:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            right_lower_forearm:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            right_lower_shoulder:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            right_torso_itb:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+            right_upper_elbow:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            right_upper_elbow_visual:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            right_upper_forearm:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            right_upper_forearm_visual:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            right_upper_shoulder:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            right_wrist:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            screen:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            sonar_ring:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            torso:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+          Name: Start
+          Robot Alpha: 1
+          Robot Description: /baxter/robot_description
+          Robot State Topic: /baxter/imarker_start_state
+          Show All Links: true
+          Show Highlights: true
+          Value: true
+          Visual Enabled: true
+        - Class: rviz/InteractiveMarkers
+          Enable Transparency: true
+          Enabled: true
+          Name: Goal
+          Show Axes: false
+          Show Descriptions: true
+          Show Visual Aids: false
+          Update Topic: /baxter/goal_imarker/update
+          Value: true
+        - Attached Body Color: 150; 50; 150
+          Class: moveit_rviz_plugin/RobotState
+          Collision Enabled: false
+          Enabled: true
+          Links:
+            All Links Enabled: true
+            Expand Joint Details: false
+            Expand Link Details: false
+            Expand Tree: false
+            Link Tree Style: Links in Alphabetic Order
+            base:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+            collision_head_link_1:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            collision_head_link_2:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            display:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            dummyhead1:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+            head:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            head_camera:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+            left_arm_itb:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+            left_arm_mount:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+            left_gripper:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            left_gripper_base:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            left_gripper_l_finger:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            left_gripper_r_finger:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            left_hand:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            left_hand_accelerometer:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+            left_hand_camera:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            left_hand_camera_axis:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+            left_hand_range:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            left_lower_elbow:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            left_lower_forearm:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            left_lower_shoulder:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            left_torso_itb:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+            left_upper_elbow:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            left_upper_elbow_visual:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            left_upper_forearm:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            left_upper_forearm_visual:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            left_upper_shoulder:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            left_wrist:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            pedestal:
               Alpha: 1
               Show Axes: false
               Show Trail: false
@@ -3040,7 +2716,18 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
+              Value: true
             right_gripper_base:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            right_gripper_l_finger:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            right_gripper_r_finger:
               Alpha: 1
               Show Axes: false
               Show Trail: false
@@ -3054,7 +2741,6 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: true
             right_hand_camera:
               Alpha: 1
               Show Axes: false
@@ -3192,26 +2878,6 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-            l_gripper_l_finger:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            l_gripper_l_finger_tip:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            l_gripper_r_finger:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            l_gripper_r_finger_tip:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
             left_arm_itb:
               Alpha: 1
               Show Axes: false
@@ -3224,7 +2890,18 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
+              Value: true
             left_gripper_base:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            left_gripper_l_finger:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            left_gripper_r_finger:
               Alpha: 1
               Show Axes: false
               Show Trail: false
@@ -3238,7 +2915,6 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: true
             left_hand_camera:
               Alpha: 1
               Show Axes: false
@@ -3307,26 +2983,6 @@ Visualization Manager:
               Show Axes: false
               Show Trail: false
               Value: true
-            r_gripper_l_finger:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            r_gripper_l_finger_tip:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            r_gripper_r_finger:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
-            r_gripper_r_finger_tip:
-              Alpha: 1
-              Show Axes: false
-              Show Trail: false
-              Value: true
             right_arm_itb:
               Alpha: 1
               Show Axes: false
@@ -3339,7 +2995,18 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
+              Value: true
             right_gripper_base:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            right_gripper_l_finger:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            right_gripper_r_finger:
               Alpha: 1
               Show Axes: false
               Show Trail: false
@@ -3353,7 +3020,6 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: true
             right_hand_camera:
               Alpha: 1
               Show Axes: false
@@ -3486,22 +3152,22 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 3.30283642
+      Distance: 8.67327976
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 1.07172048
-        Y: 0.141677856
-        Z: -7.7415516e-06
+        X: 1.43711019
+        Y: -1.49226522
+        Z: 1.90734863e-06
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.404792815
+      Pitch: 0.0803987607
       Target Frame: robot_table_link
       Value: XYOrbit (rviz)
-      Yaw: 0.343695074
+      Yaw: 0.0203972049
     Saved: ~
 Window Geometry:
   Displays:

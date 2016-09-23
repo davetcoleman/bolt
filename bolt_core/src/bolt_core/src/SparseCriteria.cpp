@@ -39,6 +39,7 @@
 // OMPL
 #include <bolt_core/SparseCriteria.h>
 #include <bolt_core/SparseFormula.h>
+#include <ompl/base/samplers/UniformValidStateSampler.h>
 
 // Boost
 #include <boost/foreach.hpp>
@@ -73,7 +74,7 @@ SparseCriteria::SparseCriteria(SparseGraphPtr sg) : sg_(sg), si_(sg_->getSpaceIn
 
 SparseCriteria::~SparseCriteria(void)
 {
-  clearanceSampler_.reset();
+  sampler_.reset();
 
   for (std::size_t i = 0; i < sg_->getNumQueryVertices(); ++i)
   {
@@ -102,10 +103,21 @@ bool SparseCriteria::setup(std::size_t indent)
   assert(sparseDelta_ > 0);
   assert(sparseDelta_ > 0.000000001);  // Sanity check
 
-  // Load minimum clearance state sampler
-  clearanceSampler_ = ClearanceSamplerPtr(new ob::MinimumClearanceValidStateSampler(si_.get()));
-  clearanceSampler_->setMinimumObstacleClearance(sg_->getObstacleClearance());
-  si_->getStateValidityChecker()->setClearanceSearchDistance(sg_->getObstacleClearance());
+  // Choose sampler based on clearance
+  if (sg_->getObstacleClearance() > std::numeric_limits<double>::epsilon())
+  {
+    // Load minimum clearance state sampler
+    sampler_.reset(new base::MinimumClearanceValidStateSampler(si_.get()));
+    // Set the clearance
+    base::MinimumClearanceValidStateSampler* mcvss =
+      dynamic_cast<base::MinimumClearanceValidStateSampler *>(sampler_.get());
+    mcvss->setMinimumObstacleClearance(sg_->getObstacleClearance());
+    si_->getStateValidityChecker()->setClearanceSearchDistance(sg_->getObstacleClearance());
+  }
+  else // regular sampler
+  {
+    sampler_.reset(new base::UniformValidStateSampler(si_.get()));
+  }
 
   if (si_->getStateValidityChecker()->getClearanceSearchDistance() < sg_->getObstacleClearance())
     OMPL_WARN("State validity checker clearance search distance %f is less than the required obstacle clearance %f for "
@@ -1004,7 +1016,7 @@ void SparseCriteria::findCloseRepresentatives(const base::State *candidateState,
     static const std::size_t MAX_SAMPLE_ATTEMPT = 1000;
     for (std::size_t attempt = 0; attempt < MAX_SAMPLE_ATTEMPT; ++attempt)
     {
-      clearanceSampler_->sampleNear(sampledState, candidateState, denseDelta_);
+      sampler_->sampleNear(sampledState, candidateState, denseDelta_);
 
       if (!si_->isValid(sampledState))
       {

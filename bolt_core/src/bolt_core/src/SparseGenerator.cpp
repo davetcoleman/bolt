@@ -40,6 +40,7 @@
 #include <bolt_core/SparseGenerator.h>
 #include <bolt_core/SparseCriteria.h>
 #include <ompl/base/DiscreteMotionValidator.h>
+#include <ompl/base/samplers/UniformValidStateSampler.h>
 
 // Boost
 #include <boost/foreach.hpp>
@@ -827,6 +828,41 @@ void SparseGenerator::stopCandidateQueueAndSave(std::size_t indent)
   candidateQueue_->startGenerating(indent);
 }
 
+void SparseGenerator::benchmarkValidClearanceSampler()
+{
+  std::cout << "-------------------------------------------------------" << std::endl;
+  OMPL_INFORM("Running benchmark for random valid sampler with CLEARANCE");
+  base::State *candidateState = si_->getStateSpace()->allocState();
+
+  // Choose sampler based on clearance
+  base::ValidStateSamplerPtr sampler = getSampler(0);
+
+  const std::size_t benchmarkRuns = 10000;
+  std::size_t debugIncrement = benchmarkRuns / 10;
+
+  // Benchmark runtime
+  time::point startTimeSampler;
+  double totalDurationSampler = 0;
+  for (std::size_t i = 0; i < benchmarkRuns; ++i)
+  {
+    startTimeSampler = time::now();
+    sampler->sample(candidateState);
+
+    totalDurationSampler += time::seconds(time::now() - startTimeSampler);
+
+    if (i % debugIncrement == 0)
+    {
+      std::cout << "Progress: " << i / double(benchmarkRuns) * 100.0 << "%" << std::endl;
+      if (visual_->viz1()->shutdownRequested())
+        break;
+    }
+  }
+  // Benchmark runtime
+  OMPL_INFORM("  sample() took %f seconds (%f per run)", totalDurationSampler, totalDurationSampler / benchmarkRuns);
+  std::cout << "-------------------------------------------------------" << std::endl;
+  std::cout << std::endl;
+}
+
 void SparseGenerator::benchmarkRandValidSampling()
 {
   std::cout << "-------------------------------------------------------" << std::endl;
@@ -857,7 +893,11 @@ void SparseGenerator::benchmarkRandValidSampling()
     totalDurationValid += time::seconds(time::now() - startTimeValid);
 
     if (i % debugIncrement == 0)
+    {
       std::cout << "Progress: " << i / double(benchmarkRuns) * 100.0 << "%" << std::endl;
+      if (visual_->viz1()->shutdownRequested())
+        break;
+    }
   }
   // Benchmark runtime
   OMPL_INFORM("  isValid() took %f seconds (%f per run)", totalDurationValid, totalDurationValid / benchmarkRuns);
@@ -868,19 +908,17 @@ void SparseGenerator::benchmarkRandValidSampling()
   std::cout << std::endl;
 }
 
-void SparseGenerator::benchmarkVisualizeSampling()
+void SparseGenerator::benchmarkVisualizeSampling(std::size_t indent)
 {
   std::cout << "-------------------------------------------------------" << std::endl;
   OMPL_INFORM("Running system performance benchmark - benchmarkVisualizeSampling()");
 
-  ClearanceSamplerPtr clearanceSampler(new ob::MinimumClearanceValidStateSampler(si_.get()));
-  clearanceSampler->setMinimumObstacleClearance(sg_->getObstacleClearance());
+  // Choose sampler based on clearance
+  base::ValidStateSamplerPtr sampler = getSampler(indent);
 
-  base::StateSamplerPtr sampler;
-  sampler = si_->allocStateSampler();
-
-  const std::size_t benchmarkRuns = 1000000;
-  std::size_t debugIncrement = std::max(benchmarkRuns, std::size_t(benchmarkRuns / 100.0));
+  const std::size_t benchmarkRuns = 100000;
+  const std::size_t debugIncrement = std::max(1.0, (benchmarkRuns / 100.0));
+  std::cout << "debugIncrement: " << debugIncrement << std::endl;
 
   // Pre-allocate state
   std::vector<ompl::base::State *> stateMemory(debugIncrement);
@@ -901,7 +939,7 @@ void SparseGenerator::benchmarkVisualizeSampling()
   for (std::size_t i = 0; i < benchmarkRuns; ++i)
   {
     base::State *candidateState = stateMemory[i % debugIncrement];
-    clearanceSampler->sample(candidateState);
+    sampler->sample(candidateState);
 
     states.push_back(candidateState);
     colors.push_back(tools::GREEN);
@@ -951,6 +989,27 @@ void SparseGenerator::benchmarkSparseGraphGeneration()
   std::cout << std::endl;
 }
 
+base::ValidStateSamplerPtr SparseGenerator::getSampler(std::size_t indent)
+{
+  base::ValidStateSamplerPtr sampler;
+  if (sg_->getObstacleClearance() > std::numeric_limits<double>::epsilon())
+  {
+    BOLT_INFO(indent, true, "Sampling with clearance " << sg_->getObstacleClearance());
+    // Load minimum clearance state sampler
+    sampler.reset(new base::MinimumClearanceValidStateSampler(si_.get()));
+    // Set the clearance
+    base::MinimumClearanceValidStateSampler* mcvss =
+      dynamic_cast<base::MinimumClearanceValidStateSampler *>(sampler.get());
+    mcvss->setMinimumObstacleClearance(sg_->getObstacleClearance());
+    si_->getStateValidityChecker()->setClearanceSearchDistance(sg_->getObstacleClearance());
+  }
+  else // regular sampler
+  {
+    BOLT_INFO(indent, true, "Sampling without clearance");
+    sampler.reset(new base::UniformValidStateSampler(si_.get()));
+  }
+  return sampler;
+}
 
 }  // namespace bolt
 }  // namespace tools

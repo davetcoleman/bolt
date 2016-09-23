@@ -142,7 +142,7 @@ void TwoDimVizWindow::state(const ompl::base::State* state, ot::VizSizes size, o
 }
 
 void TwoDimVizWindow::states(std::vector<const ompl::base::State*> states, std::vector<ot::VizColors> colors,
-                          ot::VizSizes size)
+                             ot::VizSizes size)
 {
   // Cache spheres
   EigenSTL::vector_Vector3d sphere_points;
@@ -251,9 +251,9 @@ void TwoDimVizWindow::path(ompl::geometric::PathGeometric* path, ompl::tools::Vi
   }
 }
 
-void TwoDimVizWindow::trigger()
+void TwoDimVizWindow::trigger(std::size_t queueSize)
 {
-  visuals_->triggerBatchPublish();
+  visuals_->triggerEvery(queueSize);
 }
 
 void TwoDimVizWindow::deleteAllMarkers()

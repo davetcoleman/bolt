@@ -76,7 +76,7 @@ ProjectionVizWindow::ProjectionVizWindow(rviz_visual_tools::RvizVisualToolsPtr v
   // Only allow up to 6 dimensions
   if (!(si_->getStateSpace()->getDimension() > 0 && si_->getStateSpace()->getDimension() <= 6))
   {
-    ROS_ERROR_STREAM_NAMED(name_, "Invalid number of dimensions, disabling projection viz window");
+    ROS_WARN_STREAM_NAMED(name_, "Invalid number of dimensions, disabling projection viz window");
     enabled_ = false;
     return;
   }
@@ -243,12 +243,12 @@ void ProjectionVizWindow::path(ompl::geometric::PathGeometric* path, ompl::tools
   }
 }
 
-void ProjectionVizWindow::trigger()
+void ProjectionVizWindow::trigger(std::size_t queueSize)
 {
   if (!enabled_)
     return;
 
-  visuals_->triggerBatchPublish();
+  visuals_->triggerEvery(queueSize);
 }
 
 void ProjectionVizWindow::deleteAllMarkers()

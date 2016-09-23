@@ -77,7 +77,7 @@ VertexDiscretizer::~VertexDiscretizer()
 
 bool VertexDiscretizer::generateGrid(std::size_t indent)
 {
-  BOLT_FUNC(indent, verbose_, "VertexDiscretizer::generateGrid()");
+  BOLT_FUNC(indent, verbose_ || true, "VertexDiscretizer::generateGrid()");
 
   // Benchmark runtime
   time::point totalStartTime = time::now();
@@ -239,6 +239,8 @@ void VertexDiscretizer::generateVertices(std::size_t indent)
     threads[i]->join();
     delete threads[i];
   }
+  // Clear the visualization cache
+  visual_->viz1()->trigger();
 }
 
 void VertexDiscretizer::generateVerticesThread(std::size_t threadID, double startJointValue, double endJointValue,
@@ -367,9 +369,21 @@ void VertexDiscretizer::createState(std::size_t threadID, std::vector<double> &v
   // Fill the state with current values
   si->getStateSpace()->populateState(candidateState, values);
 
+  bool useClearance = (sg_->getObstacleClearance() > std::numeric_limits<double>::epsilon());
+
   // Collision check
   double dist;
-  if (!si->getStateValidityChecker()->isValid(candidateState, dist))
+  bool valid = false;
+  if (useClearance)
+  {
+    valid = si->getStateValidityChecker()->isValid(candidateState, dist);
+  }
+  else
+  {
+    valid = si->getStateValidityChecker()->isValid(candidateState);
+  }
+
+  if (!valid)
   {
     BOLT_ERROR(indent, vThread_, "Rejected because of validity");
 
@@ -379,12 +393,12 @@ void VertexDiscretizer::createState(std::size_t threadID, std::vector<double> &v
       // Candidate node rejected
       visual_->viz1()->state(candidateState, LARGE, RED, 0);
       visual_->viz1()->state(candidateState, ROBOT, RED, 0);
-      visual_->viz1()->trigger();
+      visual_->viz1()->trigger(20);
 
       // if (visualizeGridGenerationWait_)
       //   visual_->waitForUserFeedback("rejected");
       // else
-      usleep(0.001 * 1000000);
+      //usleep(0.001 * 1000000);
     }
 
     return;
@@ -396,28 +410,31 @@ void VertexDiscretizer::createState(std::size_t threadID, std::vector<double> &v
     usleep(0.001*1000000);
   }
 
-  if (dist < clearance_)
+  if (useClearance)
   {
-    BOLT_WARN(indent, vThread_, "Rejected because of clearance " << std::fixed << dist << " required: " << clearance_);
-
-    // Visualize
-    if (visualizeGridGeneration_)
+    if (dist < clearance_)
     {
-      // Candidate node rejected
-      visual_->viz1()->state(candidateState, LARGE, YELLOW, 0);
-      visual_->viz1()->state(candidateState, ROBOT, YELLOW, 0);
-      visual_->viz1()->trigger();
+      BOLT_WARN(indent, vThread_, "Rejected because of clearance " << std::fixed << dist << " required: " << clearance_);
 
-      if (visualizeGridGenerationWait_)
-        visual_->waitForUserFeedback("clearance");
-      else
-        usleep(0.001 * 1000000);
+      // Visualize
+      if (visualizeGridGeneration_)
+      {
+        // Candidate node rejected
+        visual_->viz1()->state(candidateState, LARGE, YELLOW, 0);
+        visual_->viz1()->state(candidateState, ROBOT, YELLOW, 0);
+        visual_->viz1()->trigger();
+
+        if (visualizeGridGenerationWait_)
+          visual_->waitForUserFeedback("clearance");
+        // else
+        //   usleep(0.001 * 1000000);
+      }
+
+      return;
     }
-
-    return;
+    else
+      BOLT_GREEN(indent, vThread_, "Accepted, actual distance to obstacle: " << dist);
   }
-
-  BOLT_GREEN(indent, vThread_, "Accepted, actual distance to obstacle: " << dist);
 
   // Add to graph
   {
@@ -430,12 +447,12 @@ void VertexDiscretizer::createState(std::size_t threadID, std::vector<double> &v
   if (visualizeGridGeneration_)
   {
     // Do not visualize because it should already be visualized in underlying class
-    //visual_->viz1()->state(candidateState, LARGE, ot::VizColors::GREEN, 0);
-    //visual_->viz1()->state(candidateState, ROBOT, GREEN, 0);
-    //visual_->viz1()->trigger();
+    visual_->viz1()->state(candidateState, LARGE, ot::VizColors::GREEN, 0);
+    visual_->viz1()->state(candidateState, ROBOT, GREEN, 0);
+    visual_->viz1()->trigger();
 
-    if (visualizeGridGenerationWait_)
-      visual_->waitForUserFeedback("accepted");
+    // if (visualizeGridGenerationWait_)
+    //   visual_->waitForUserFeedback("accepted");
     // else
     //   usleep(0.01 * 1000000);
   }

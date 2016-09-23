@@ -53,7 +53,6 @@ add_library(${PROJECT_NAME}
   src/bolt_core/src/SparseStorage.cpp
   src/bolt_core/src/TaskGraph.cpp
   src/bolt_core/src/VertexDiscretizer.cpp
-  #src/bolt_core/src/SamplingQueue.cpp
   src/bolt_core/src/CandidateQueue.cpp
   src/bolt_core/src/SparseSmoother.cpp
   src/bolt_core/src/SPARS2.cpp

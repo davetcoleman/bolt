@@ -92,7 +92,7 @@ public:
   }
 
 private:
-  void generatingThread(std::size_t threadID, base::SpaceInformationPtr si, ClearanceSamplerPtr clearanceSampler,
+  void generatingThread(std::size_t threadID, base::SpaceInformationPtr si, base::ValidStateSamplerPtr sampler,
                         std::size_t indent);
 
   /** \brief Do not add more states if queue is full */

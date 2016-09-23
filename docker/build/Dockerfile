@@ -1,6 +1,6 @@
-# davetcoleman/bolt:bolt-jade
+# davetcoleman/bolt:bolt-kinetic
 
-FROM davetcoleman/bolt:bolt-jade-source
+FROM davetcoleman/bolt:bolt-kinetic-source
 MAINTAINER Dave Coleman dave@dav.ee
 
 ENV CATKIN_WS=/root/ws_moveit

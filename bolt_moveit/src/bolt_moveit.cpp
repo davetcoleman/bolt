@@ -288,7 +288,9 @@ void BoltMoveIt::run()
   {
     // testMotionValidator();
     // bolt_->getSparseGenerator()->benchmarkSparseGraphGeneration();
-    bolt_->getSparseGenerator()->benchmarkRandValidSampling();
+    bolt_->getSparseGenerator()->benchmarkValidClearanceSampler();
+    //bolt_->getSparseGenerator()->benchmarkRandValidSampling();
+    //bolt_->getSparseGenerator()->benchmarkVisualizeSampling();
     ROS_INFO_STREAM_NAMED(name_, "Finished benchmarking");
     exit(0);
   }
@@ -660,7 +662,7 @@ void BoltMoveIt::loadVisualTools()
     const double wait_time = 0.5;
     for (std::size_t i = 1; i <= NUM_VISUALS; ++i)
     {
-      //vizs_[i - 1]->getVisualTools()->waitForMarkerPub(wait_time);
+      vizs_[i - 1]->getVisualTools()->waitForMarkerPub(wait_time);
 
       // Show the initial robot state
       MoveItVisualToolsPtr moveit_visual = vizs_[i - 1]->getVisualTools();
