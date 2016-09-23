@@ -27,6 +27,8 @@ catkin_package(
 
 # User debug code only if not release
 add_definitions(-DENABLE_DEBUG_MACRO)
+# Do not use quality criteria data structures
+#add_definitions(-DENABLE_QUALITY)
 
 ###########
 ## Build ##

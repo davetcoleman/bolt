@@ -39,7 +39,6 @@
 // OMPL
 #include <bolt_core/SparseCriteria.h>
 #include <bolt_core/SparseFormula.h>
-#include <ompl/base/samplers/UniformValidStateSampler.h>
 
 // Boost
 #include <boost/foreach.hpp>
@@ -103,21 +102,8 @@ bool SparseCriteria::setup(std::size_t indent)
   assert(sparseDelta_ > 0);
   assert(sparseDelta_ > 0.000000001);  // Sanity check
 
-  // Choose sampler based on clearance
-  if (sg_->getObstacleClearance() > std::numeric_limits<double>::epsilon())
-  {
-    // Load minimum clearance state sampler
-    sampler_.reset(new base::MinimumClearanceValidStateSampler(si_.get()));
-    // Set the clearance
-    base::MinimumClearanceValidStateSampler* mcvss =
-      dynamic_cast<base::MinimumClearanceValidStateSampler *>(sampler_.get());
-    mcvss->setMinimumObstacleClearance(sg_->getObstacleClearance());
-    si_->getStateValidityChecker()->setClearanceSearchDistance(sg_->getObstacleClearance());
-  }
-  else // regular sampler
-  {
-    sampler_.reset(new base::UniformValidStateSampler(si_.get()));
-  }
+  // Get a sampler with or without clearance sampling
+  sampler_ = sg_->getSampler(si_, sg_->getObstacleClearance(), indent);
 
   if (si_->getStateValidityChecker()->getClearanceSearchDistance() < sg_->getObstacleClearance())
     OMPL_WARN("State validity checker clearance search distance %f is less than the required obstacle clearance %f for "
@@ -176,6 +162,7 @@ bool SparseCriteria::addStateToRoadmap(CandidateData &candidateD, VertexType &ad
     addReason = INTERFACE;
     stateAdded = true;
   }
+#ifdef ENABLE_QUALITY
   else if (checkAddQuality(candidateD, threadID, indent + 6))
   {
     BOLT_GREEN(indent, vAddedReason_, "Graph updated: QUALITY Fourth: " << useFourthCriteria_ << " State: " << candidateD.state_);
@@ -186,6 +173,7 @@ bool SparseCriteria::addStateToRoadmap(CandidateData &candidateD, VertexType &ad
     // the state, so we much manually free the memory
     si_->freeState(candidateD.state_);
   }
+#endif
   else
   {
     BOLT_DEBUG(indent, vCriteria_, "Did NOT add state for any criteria " << " State: " << candidateD.state_);
@@ -469,6 +457,7 @@ bool SparseCriteria::checkPathLength(SparseVertex v1, SparseVertex v2, std::size
   return true;
 }
 
+#ifdef ENABLE_QUALITY
 bool SparseCriteria::checkAddQuality(CandidateData &candidateD, std::size_t threadID, std::size_t indent)
 {
   if (!useFourthCriteria_)
@@ -1438,6 +1427,7 @@ std::pair<std::size_t, std::size_t> SparseCriteria::getInterfaceStateStorageSize
   }
   return std::pair<std::size_t, std::size_t>(numStates, numMissingInterfaces);
 }
+#endif
 
 bool SparseCriteria::checkSufficientClearance(base::State *state)
 {

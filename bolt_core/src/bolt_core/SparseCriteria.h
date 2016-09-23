@@ -85,10 +85,10 @@ public:
   bool checkAddCoverage(CandidateData& candidateD, std::size_t indent);
   bool checkAddConnectivity(CandidateData& candidateD, std::size_t indent);
   bool checkAddInterface(CandidateData& candidateD, std::size_t indent);
+  bool checkPathLength(SparseVertex v1, SparseVertex v2, std::size_t indent);
+#ifdef ENABLE_QUALITY
   bool checkAddQuality(CandidateData& candidateD, std::size_t threadID, std::size_t indent);
   void visualizeCheckAddQuality(base::State* candidateState, SparseVertex candidateRep);
-
-  bool checkPathLength(SparseVertex v1, SparseVertex v2, std::size_t indent);
 
   /* ----------------------------------------------------------------------------------------*/
   // 4th Criteria
@@ -151,6 +151,7 @@ public:
    *          second - num missing interfaces
    */
   std::pair<std::size_t, std::size_t> getInterfaceStateStorageSize();
+#endif
 
   /** \brief Return true if state is far enough away from nearest obstacle */
   bool checkSufficientClearance(base::State* state);

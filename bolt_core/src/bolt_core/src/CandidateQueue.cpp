@@ -40,7 +40,6 @@
 #include <bolt_core/CandidateQueue.h>
 #include <bolt_core/SparseCriteria.h>
 #include <bolt_core/SparseGenerator.h>
-#include <ompl/base/samplers/UniformValidStateSampler.h>
 
 // C++
 #include <queue>
@@ -155,24 +154,7 @@ void CandidateQueue::startGenerating(std::size_t indent)
     si->setMotionValidator(si_->getMotionValidator());
 
     // Choose sampler based on clearance
-    base::ValidStateSamplerPtr sampler;
-    if (sg_->getObstacleClearance() > std::numeric_limits<double>::epsilon())
-    {
-      BOLT_ERROR(indent, true, "Using clearance");
-      // Load minimum clearance state sampler
-      sampler.reset(new base::MinimumClearanceValidStateSampler(si.get()));
-      // Set the clearance
-      base::MinimumClearanceValidStateSampler* mcvss =
-        dynamic_cast<base::MinimumClearanceValidStateSampler *>(sampler.get());
-      mcvss->setMinimumObstacleClearance(sg_->getObstacleClearance());
-      si->getStateValidityChecker()->setClearanceSearchDistance(sg_->getObstacleClearance());
-    }
-    else // regular sampler
-    {
-      BOLT_ERROR(indent, true, "NOT using clearance " << sg_->getObstacleClearance());
-      sampler.reset(new base::UniformValidStateSampler(si.get()));
-      //sampler = si_->allocStateSampler();
-    }
+    base::ValidStateSamplerPtr sampler = sg_->getSampler(si, sg_->getObstacleClearance(), indent);
 
     std::size_t threadID = i + 1;  // the first thread (0) is reserved for the parent process
     generatorThreads_[i] =

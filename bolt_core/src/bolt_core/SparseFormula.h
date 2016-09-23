@@ -108,6 +108,8 @@ struct SparseFormula
       // Sept 14th
       // This is the paper-corrected version
       stretchFactor_ = dim * discretization_ / (discretization_ - 4 * denseDelta_);
+      // 7 DOF:      = 7   * 0.862283        / (0.862283 - 4 * 0.312745)
+      //             = 6.035981 / −0.388697
     }
     else
       stretchFactor_ = stretchFactor;

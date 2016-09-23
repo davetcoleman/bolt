@@ -205,10 +205,12 @@ enum EdgeCollisionState
 typedef boost::property<vertex_state_t, base::State*, // State
         boost::property<boost::vertex_predecessor_t, VertexIndexType, // Disjoint Sets
         boost::property<boost::vertex_rank_t, VertexIndexType, // Disjoint Sets
-        boost::property<vertex_type_t, VertexType, // Sparse Type
+        boost::property<vertex_type_t, VertexType // Sparse Type
         //boost::property<vertex_popularity_t, double, // Popularity
-        boost::property<vertex_interface_data_t, InterfaceHash // Sparse meta data
-        > > > > > SparseVertexProperties;
+#ifdef ENABLE_QUALITY
+        , boost::property<vertex_interface_data_t, InterfaceHash> // Sparse meta data
+#endif
+         > > > > SparseVertexProperties;
 // clang-format on
 
 /** Wrapper for the double assigned to an edge as its weight property. */

@@ -369,10 +369,6 @@ public:
   /** \brief Used for creating a voronoi diagram */
   SparseVertex getSparseRepresentative(base::State* state);
 
-  /** \brief When a new guard is added at state, finds all guards who must abandon their interface information and
-   * delete that information */
-  void clearInterfaceData(base::State* st);
-
   /** \brief When a quality path is added with new vertices, remove all edges near the new vertex */
   void clearEdgesNearVertex(SparseVertex vertex, std::size_t indent);
 
@@ -399,6 +395,10 @@ public:
   /* ---------------------------------------------------------------------------------
    * Sparse Interfaces
    * --------------------------------------------------------------------------------- */
+#ifdef ENABLE_QUALITY
+  /** \brief When a new guard is added at state, finds all guards who must abandon their interface information and
+   * delete that information */
+  void clearInterfaceData(base::State* st);
 
   /** \brief Rectifies indexing order for accessing the vertex data */
   VertexPair interfaceDataIndex(SparseVertex vp, SparseVertex vpp);
@@ -408,6 +408,7 @@ public:
 
   /** \brief Retrieves the vertex data associated with v */
   InterfaceHash& getVertexInterfaceProperty(SparseVertex v);
+#endif
 
   /* ---------------------------------------------------------------------------------
    * Debug Utilities
@@ -427,6 +428,9 @@ public:
 
   /** \brief Verify graph is not in collision */
   bool verifyGraph(std::size_t indent);
+
+  /** \brief Choose a regular sampler or clearance sampler based on clearance sampler value */
+  static base::ValidStateSamplerPtr getSampler(base::SpaceInformationPtr si, double clearance, std::size_t indent);
 
   bool superDebugEnabled()
   {
@@ -488,8 +492,10 @@ protected:
   /** \brief Access to the SPARS vertex type for the vertices */
   boost::property_map<SparseAdjList, vertex_type_t>::type vertexTypeProperty_;
 
+#ifdef ENABLE_QUALITY
   /** \brief Access to the interface pair information for the vertices */
   boost::property_map<SparseAdjList, vertex_interface_data_t>::type vertexInterfaceProperty_;
+#endif
 
   /** \brief Access to the popularity of each node */
   //boost::property_map<SparseAdjList, vertex_popularity_t>::type vertexPopularity_;
@@ -538,6 +544,7 @@ public:  // user settings from other applications
 
   /** \brief Visualization speed of astar search, num of seconds to show each vertex */
   double visualizeAstarSpeed_ = 0.1;
+  std::size_t visualizeTriggerEvery_ = 10;
 
   /** \brief Change verbosity levels */
   bool verbose_ = false;

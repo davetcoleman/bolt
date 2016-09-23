@@ -41,6 +41,7 @@
 #include <ompl/datastructures/NearestNeighborsGNAT.h>
 #include <ompl/datastructures/NearestNeighborsGNATNoThreadSafety.h>
 #include <ompl/base/DiscreteMotionValidator.h>
+#include <ompl/base/samplers/UniformValidStateSampler.h>
 
 // Bolt
 #include <bolt_core/SparseGraph.h>
@@ -86,7 +87,9 @@ SparseGraph::SparseGraph(base::SpaceInformationPtr si, VisualizerPtr visual)
   // Property accessors of vertices
   , vertexStateProperty_(boost::get(vertex_state_t(), g_))
   , vertexTypeProperty_(boost::get(vertex_type_t(), g_))
+#ifdef ENABLE_QUALITY
   , vertexInterfaceProperty_(boost::get(vertex_interface_data_t(), g_))
+#endif
     //, vertexPopularity_(boost::get(vertex_popularity_t(), g_))
   // Disjoint set accessors
   , disjointSets_(boost::get(boost::vertex_rank, g_), boost::get(boost::vertex_predecessor, g_))
@@ -114,6 +117,10 @@ SparseGraph::SparseGraph(base::SpaceInformationPtr si, VisualizerPtr visual)
     BOLT_WARN(0, true, "Superdebug mode is enabled - will run slower");
     BOLT_WARN(0, true, "--------------------------------------------");
   }
+
+#ifdef ENABLE_QUALITY
+  BOLT_INFO(0, true, "Using Quality Criteria datastructures");
+#endif
 }
 
 SparseGraph::~SparseGraph()
@@ -135,11 +142,13 @@ void SparseGraph::freeMemory()
 {
   foreach (SparseVertex v, boost::vertices(g_))
   {
+#ifdef ENABLE_QUALITY
     // Clear interface data
     foreach (InterfaceData &iData, vertexInterfaceProperty_[v] | boost::adaptors::map_values)
     {
       iData.clear(si_);
     }
+#endif
 
     // Free states memory
     if (vertexStateProperty_[v] != nullptr)
@@ -222,7 +231,7 @@ bool SparseGraph::load()
   hasUnsavedChanges_ = false;
 
   if (visualizeGraphAfterLoading_)
-    displayDatabase();
+    displayDatabase(/*vertices*/false);
 
   return true;
 }
@@ -771,8 +780,10 @@ SparseVertex SparseGraph::addVertex(base::State *state, const VertexType &type, 
   //vertexPopularity_[v] = MAX_POPULARITY_WEIGHT;  // 100 means the vertex is very unpopular
 
   // Clear all nearby interface data whenever a new vertex is added
+#ifdef ENABLE_QUALITY
   if (sparseCriteria_->getUseFourthCriteria())
     clearInterfaceData(state);
+#endif
 
   if (sparseCriteria_->useConnectivityCriteria_)
     disjointSets_.make_set(v);
@@ -811,12 +822,12 @@ SparseVertex SparseGraph::addVertex(base::State *state, const VertexType &type, 
 
     if (visualizeSparseGraphSpeed_ > std::numeric_limits<double>::epsilon())
     {
-      visual_->viz1()->trigger();
+      visual_->viz1()->trigger(visualizeTriggerEvery_);
 
       if (visualizeProjection_)  // Hack: Project to 2D space
-        visual_->viz7()->trigger();
+        visual_->viz7()->trigger(visualizeTriggerEvery_);
 
-      usleep(visualizeSparseGraphSpeed_ * 1000000);
+      //usleep(visualizeSparseGraphSpeed_ * 1000000);
     }
   }
 
@@ -866,9 +877,12 @@ void SparseGraph::removeVertex(SparseVertex v, std::size_t indent)
   si_->freeState(vertexStateProperty_[v]);
   vertexStateProperty_[v] = nullptr;
 
+
+#ifdef ENABLE_QUALITY
   // Clear interface data
   foreach (InterfaceData &iData, vertexInterfaceProperty_[v] | boost::adaptors::map_values)
     iData.clear(si_);
+#endif
 
   // TODO: disjointSets is now inaccurate
   // Our checkAddConnectivity() criteria is broken
@@ -994,12 +1008,12 @@ SparseEdge SparseGraph::addEdge(SparseVertex v1, SparseVertex v2, EdgeType type,
 
     if (visualizeSparseGraphSpeed_ > std::numeric_limits<double>::epsilon())
     {
-      visual_->viz1()->trigger();
+      visual_->viz1()->trigger(visualizeTriggerEvery_);
 
       if (visualizeProjection_)  // Hack: Project to 2D space
-        visual_->viz7()->trigger();
+        visual_->viz7()->trigger(visualizeTriggerEvery_);
 
-      usleep(visualizeSparseGraphSpeed_ * 1000000);
+      //usleep(visualizeSparseGraphSpeed_ * 1000000);
     }
 
     // if (edgeWeightProperty_[e] <= sparseCriteria_->getDiscretization() * 2.1)
@@ -1076,26 +1090,6 @@ SparseVertex SparseGraph::getSparseRepresentative(base::State *state)
     throw Exception(name_, "No neighbors found for sparse representative");
   }
   return graphNeighbors[0];
-}
-
-void SparseGraph::clearInterfaceData(base::State *state)
-{
-  std::vector<SparseVertex> graphNeighbors;
-  const std::size_t threadID = 0;
-
-  // Search
-  queryStates_[threadID] = state;
-  nn_->nearestR(queryVertices_[threadID], 2.0 * sparseCriteria_->getSparseDelta(), graphNeighbors);
-  queryStates_[threadID] = nullptr;
-
-  // For each of the vertices
-  foreach (SparseVertex v, graphNeighbors)
-  {
-    foreach (VertexPair r, vertexInterfaceProperty_[v] | boost::adaptors::map_keys)
-    {
-      vertexInterfaceProperty_[v][r].clear(si_);
-    }
-  }
 }
 
 void SparseGraph::clearEdgesNearVertex(SparseVertex vertex, std::size_t indent)
@@ -1220,6 +1214,9 @@ void SparseGraph::visualizeVertex(SparseVertex v, const VertexType &type)
   // Show vertex
   visual_->viz1()->state(getState(v), vertexSize_, std::move(color), 0);
 
+  // Show robot arm
+  visual_->viz1()->state(getState(v), tools::ROBOT, tools::DEFAULT, 0);
+
   if (visualizeProjection_)  // For joint-space robots: project to 2D space
   {
     // Show visibility region around vertex
@@ -1279,6 +1276,27 @@ void SparseGraph::visualizeEdge(SparseVertex v1, SparseVertex v2, EdgeType type,
   visual_->viz(windowID)->edge(getState(v1), getState(v2), edgeSize_, edgeTypeToColor(type));
 }
 
+#ifdef ENABLE_QUALITY
+void SparseGraph::clearInterfaceData(base::State *state)
+{
+  std::vector<SparseVertex> graphNeighbors;
+  const std::size_t threadID = 0;
+
+  // Search
+  queryStates_[threadID] = state;
+  nn_->nearestR(queryVertices_[threadID], 2.0 * sparseCriteria_->getSparseDelta(), graphNeighbors);
+  queryStates_[threadID] = nullptr;
+
+  // For each of the vertices
+  foreach (SparseVertex v, graphNeighbors)
+  {
+    foreach (VertexPair r, vertexInterfaceProperty_[v] | boost::adaptors::map_keys)
+    {
+      vertexInterfaceProperty_[v][r].clear(si_);
+    }
+  }
+}
+
 VertexPair SparseGraph::interfaceDataIndex(SparseVertex vp, SparseVertex vpp)
 {
   if (vp < vpp)
@@ -1300,6 +1318,7 @@ InterfaceHash &SparseGraph::getVertexInterfaceProperty(SparseVertex v)
 {
   return vertexInterfaceProperty_[v];
 }
+#endif
 
 void SparseGraph::debugState(const ompl::base::State *state)
 {
@@ -1405,6 +1424,28 @@ bool SparseGraph::verifyGraph(std::size_t indent)
   return true;
 }
 
+base::ValidStateSamplerPtr SparseGraph::getSampler(base::SpaceInformationPtr si, double clearance, std::size_t indent)
+{
+  base::ValidStateSamplerPtr sampler;
+  if (clearance > std::numeric_limits<double>::epsilon())
+  {
+    //BOLT_INFO(indent, true, "Sampling with clearance " << clearance);
+    // Load minimum clearance state sampler
+    sampler.reset(new base::MinimumClearanceValidStateSampler(si.get()));
+    // Set the clearance
+    base::MinimumClearanceValidStateSampler* mcvss =
+      dynamic_cast<base::MinimumClearanceValidStateSampler *>(sampler.get());
+    mcvss->setMinimumObstacleClearance(clearance);
+    si->getStateValidityChecker()->setClearanceSearchDistance(clearance);
+  }
+  else // regular sampler
+  {
+    //BOLT_INFO(indent, true, "Sampling without clearance");
+    sampler.reset(new base::UniformValidStateSampler(si.get()));
+  }
+  return sampler;
+}
+
 }  // namespace bolt
 }  // namespace tools
 }  // namespace ompl
@@ -1446,7 +1487,7 @@ void otb::SparsestarVisitor::examine_vertex(SparseVertex v, const SparseAdjList 
 #ifndef NDEBUG
   // Statistics
   parent_->recordNodeClosed();
-
+p
   if (parent_->visualizeAstar_)
   {
     parent_->getVisual()->viz4()->state(parent_->getState(v), tools::LARGE, tools::BLACK, 1);

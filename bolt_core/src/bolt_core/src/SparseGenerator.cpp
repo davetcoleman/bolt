@@ -40,7 +40,6 @@
 #include <bolt_core/SparseGenerator.h>
 #include <bolt_core/SparseCriteria.h>
 #include <ompl/base/DiscreteMotionValidator.h>
-#include <ompl/base/samplers/UniformValidStateSampler.h>
 
 // Boost
 #include <boost/foreach.hpp>
@@ -77,7 +76,7 @@ SparseGenerator::SparseGenerator(SparseGraphPtr sg)
 
 SparseGenerator::~SparseGenerator(void)
 {
-  clearanceSampler_.reset();
+  sampler_.reset();
 }
 
 void SparseGenerator::clear()
@@ -93,9 +92,7 @@ void SparseGenerator::clear()
 bool SparseGenerator::setup(std::size_t indent)
 {
   // Load minimum clearance state sampler
-  clearanceSampler_ = ClearanceSamplerPtr(new ob::MinimumClearanceValidStateSampler(si_.get()));
-  clearanceSampler_->setMinimumObstacleClearance(sg_->getObstacleClearance());
-  si_->getStateValidityChecker()->setClearanceSearchDistance(sg_->getObstacleClearance());
+  sampler_ = sg_->getSampler(si_, sg_->getObstacleClearance(), indent);
 
   // Configure vertex discretizer
   vertexDiscretizer_->setMinimumObstacleClearance(sg_->getObstacleClearance());
@@ -164,7 +161,6 @@ void SparseGenerator::createSPARS()
 
   // Check how many connected components exist
   std::size_t numSets = sg_->getDisjointSetsCount();
-  std::pair<std::size_t, std::size_t> interfaceStats = sparseCriteria_->getInterfaceStateStorageSize();
 
   // Find min, max, and average edge length
   double totalEdgeLength = 0;
@@ -206,10 +202,13 @@ void SparseGenerator::createSPARS()
   BOLT_INFO(indent, 1, "  Num random samples added:  " << numRandSamplesAdded_);
   BOLT_INFO(indent, 1, "  Num vertices moved:        " << sparseCriteria_->getNumVerticesMoved());
   BOLT_INFO(indent, 1, "  CandidateQueue Misses:     " << candidateQueue_->getTotalMisses());
+#ifdef ENABLE_QUALITY
+  std::pair<std::size_t, std::size_t> interfaceStats = sparseCriteria_->getInterfaceStateStorageSize();
   BOLT_INFO(indent, 1, "  InterfaceData:             ");
   BOLT_INFO(indent, 1, "    States stored:           " << interfaceStats.first);
   BOLT_INFO(indent, 1, "    Missing interfaces:      " << interfaceStats.second);
   BOLT_INFO(indent, 1, "-----------------------------------------");
+#endif
 
   // Copy-paste data
   copyPasteState(numSets);
@@ -319,7 +318,7 @@ bool SparseGenerator::addRandomSamplesOneThread(std::size_t indent)
   while (true)
   {
     // Sample randomly
-    if (!clearanceSampler_->sample(candidateState))
+    if (!sampler_->sample(candidateState))
     {
       OMPL_ERROR("Unable to find valid sample");
       exit(-1);  // this should never happen
@@ -587,7 +586,7 @@ bool SparseGenerator::checkGraphOptimality(std::size_t indent)
       point.state_ = si_->getStateSpace()->allocState();
 
       // Sample
-      if (!clearanceSampler_->sample(point.state_))
+      if (!sampler_->sample(point.state_))
         throw Exception(name_, "No valid sample found");
 
       // Allow edges to be 5% longer than SparseDelta
@@ -828,14 +827,14 @@ void SparseGenerator::stopCandidateQueueAndSave(std::size_t indent)
   candidateQueue_->startGenerating(indent);
 }
 
-void SparseGenerator::benchmarkValidClearanceSampler()
+void SparseGenerator::benchmarkValidClearanceSampler(std::size_t indent)
 {
   std::cout << "-------------------------------------------------------" << std::endl;
   OMPL_INFORM("Running benchmark for random valid sampler with CLEARANCE");
   base::State *candidateState = si_->getStateSpace()->allocState();
 
   // Choose sampler based on clearance
-  base::ValidStateSamplerPtr sampler = getSampler(0);
+  base::ValidStateSamplerPtr sampler = sg_->getSampler(si_, sg_->getObstacleClearance(), indent);
 
   const std::size_t benchmarkRuns = 10000;
   std::size_t debugIncrement = benchmarkRuns / 10;
@@ -863,7 +862,7 @@ void SparseGenerator::benchmarkValidClearanceSampler()
   std::cout << std::endl;
 }
 
-void SparseGenerator::benchmarkRandValidSampling()
+void SparseGenerator::benchmarkRandValidSampling(std::size_t indent)
 {
   std::cout << "-------------------------------------------------------" << std::endl;
   OMPL_INFORM("Running system performance benchmark");
@@ -914,7 +913,7 @@ void SparseGenerator::benchmarkVisualizeSampling(std::size_t indent)
   OMPL_INFORM("Running system performance benchmark - benchmarkVisualizeSampling()");
 
   // Choose sampler based on clearance
-  base::ValidStateSamplerPtr sampler = getSampler(indent);
+  base::ValidStateSamplerPtr sampler = sg_->getSampler(si_, sg_->getObstacleClearance(), indent);
 
   const std::size_t benchmarkRuns = 100000;
   const std::size_t debugIncrement = std::max(1.0, (benchmarkRuns / 100.0));
@@ -967,7 +966,7 @@ void SparseGenerator::benchmarkVisualizeSampling(std::size_t indent)
   std::cout << std::endl;
 }
 
-void SparseGenerator::benchmarkSparseGraphGeneration()
+void SparseGenerator::benchmarkSparseGraphGeneration(std::size_t indent)
 {
   std::cout << "-------------------------------------------------------" << std::endl;
   OMPL_INFORM("Running graph generation benchmark");
@@ -987,28 +986,6 @@ void SparseGenerator::benchmarkSparseGraphGeneration()
 
   std::cout << "-------------------------------------------------------" << std::endl;
   std::cout << std::endl;
-}
-
-base::ValidStateSamplerPtr SparseGenerator::getSampler(std::size_t indent)
-{
-  base::ValidStateSamplerPtr sampler;
-  if (sg_->getObstacleClearance() > std::numeric_limits<double>::epsilon())
-  {
-    BOLT_INFO(indent, true, "Sampling with clearance " << sg_->getObstacleClearance());
-    // Load minimum clearance state sampler
-    sampler.reset(new base::MinimumClearanceValidStateSampler(si_.get()));
-    // Set the clearance
-    base::MinimumClearanceValidStateSampler* mcvss =
-      dynamic_cast<base::MinimumClearanceValidStateSampler *>(sampler.get());
-    mcvss->setMinimumObstacleClearance(sg_->getObstacleClearance());
-    si_->getStateValidityChecker()->setClearanceSearchDistance(sg_->getObstacleClearance());
-  }
-  else // regular sampler
-  {
-    BOLT_INFO(indent, true, "Sampling without clearance");
-    sampler.reset(new base::UniformValidStateSampler(si_.get()));
-  }
-  return sampler;
 }
 
 }  // namespace bolt

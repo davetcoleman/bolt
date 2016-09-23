@@ -53,6 +53,7 @@
 /home/dave/ros/current/ws_swri/src/moveit/moveit_core/robot_state/src/robot_state.cpp
 /home/dave/ros/current/ws_swri/src/moveit/moveit_core/robot_model/include/moveit/robot_model/robot_model.h
 /home/dave/ros/current/ws_swri/src/moveit/moveit_core/robot_model/src/robot_model.cpp
+/home/dave/ros/current/ws_swri/src/moveit/moveit_core/kinematics_base/include/moveit/kinematics_base/kinematics_base.h
 
 /home/dave/ros/current/ws_swri/src/bolt/moveit_ompl/src/model_based_state_space.cpp
 /home/dave/ros/current/ws_swri/src/bolt/moveit_ompl/include/moveit_ompl/model_based_state_space.h

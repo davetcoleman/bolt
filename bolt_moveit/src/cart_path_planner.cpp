@@ -54,7 +54,7 @@ CartPathPlanner::CartPathPlanner(BoltMoveIt* parent) : name_("cart_path_planner"
   jmg_ = parent_->jmg_;
 
   // Load planning state
-  imarker_state_.reset(new moveit::core::RobotState(*parent_->moveit_start_));
+  ik_state_.reset(new moveit::core::RobotState(*parent_->moveit_start_));
 
   // Create cartesian start pose interactive marker
   imarker_cartesian_.reset(new mvt::IMarkerRobotState(parent_->getPlanningSceneMonitor(), "cart", jmg_,
@@ -134,8 +134,8 @@ CartPathPlanner::CartPathPlanner(BoltMoveIt* parent) : name_("cart_path_planner"
 void CartPathPlanner::processIMarkerPose(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback,
                                          const Eigen::Affine3d& feedback_pose)
 {
-  imarker_state_ = imarker_cartesian_->getRobotState();
-  Eigen::Affine3d start_pose = imarker_state_->getGlobalLinkTransform(parent_->ee_link_);
+  moveit::core::RobotStatePtr imarker_state = imarker_cartesian_->getRobotState();
+  Eigen::Affine3d start_pose = imarker_state->getGlobalLinkTransform(parent_->ee_link_);
 
   generateExactPoses(start_pose);
 }
@@ -143,8 +143,8 @@ void CartPathPlanner::processIMarkerPose(const visualization_msgs::InteractiveMa
 bool CartPathPlanner::generateExactPoses(bool debug)
 {
   // Generate exact poses
-  imarker_state_ = imarker_cartesian_->getRobotState();
-  Eigen::Affine3d start_pose = imarker_state_->getGlobalLinkTransform(parent_->ee_link_);
+  moveit::core::RobotStatePtr imarker_state = imarker_cartesian_->getRobotState();
+  Eigen::Affine3d start_pose = imarker_state->getGlobalLinkTransform(parent_->ee_link_);
 
   generateExactPoses(start_pose, debug);
 }
@@ -196,6 +196,7 @@ bool CartPathPlanner::debugShowAllIKSolutions()
     {
       std::vector<std::vector<double>> local_joint_poses;
       ROS_WARN_STREAM_NAMED(name_, "TODO debugShowAllIKSolitions");
+
       // if (ur5_robot_model_->getAllIK(candidate_pose, local_joint_poses))
       // {
       //   joint_poses.insert(joint_poses.end(), local_joint_poses.begin(), local_joint_poses.end());
@@ -640,13 +641,51 @@ bool CartPathPlanner::getAllJointPosesForCartPoint(const Eigen::Affine3d& pose,
   // Enumerate solvable joint poses for each candidate_pose
   for (const Eigen::Affine3d& candidate_pose : candidate_poses)
   {
-    std::vector<std::vector<double>> local_joint_poses;
+    // std::vector<std::vector<double>> local_joint_poses;
 
-    ROS_WARN_STREAM_NAMED(name_, "TODO here3");
-    // if (ur5_robot_model_->getAllIK(candidate_pose, local_joint_poses))
+    // ROS_WARN_STREAM_NAMED(name_, "TODO here3");
+
+    // // Get the IK solver for a given planning group
+    // const kinematics::KinematicsBaseConstPtr& solver = jmg_->getSolverInstance();
+
+    // // Bring the pose to the frame of the IK solver
+    // ik_state_->setToIKSolverFrame(pose, solver);
+
+    // // Convert to msg
+    // geometry_msgs::Pose ik_query;
+    // tf::poseEigenToMsg(pose, ik_query);
+
+    // // Add to vector
+    // std::vector<geometry_msgs::Pose> ik_poses;
+    // ik_poses.push_back(ik_query);
+
+    // // Create seed state
+    // std::vector<double> ik_seed_state;
+    // std::vector<double> initial_values;
+    // ik_state_->copyJointGroupPositions(jmg_, initial_values);
+    // const std::vector<unsigned int> &bij = jmg_->getKinematicsSolverJointBijection();
+    // for (std::size_t i = 0 ; i < bij.size() ; ++i)
+    //   ik_seed_state[i] = initial_values[bij[i]];
+
+    // // Discretization setting
+    // kinematics::KinematicsQueryOptions options;
+    // options.discretization_method = ALL_DISCRETIZED;
+
+    // // Solution
+    // std::vector< std::vector<double> > solutions;
+    // KinematicsResult result;
+
+    // // Solve
+    // bool result = solver->getPositionIK(ik_poses, ik_seed_state, solutions, result, options);
+
+    // if (result)
     // {
-    //   joint_poses.insert(joint_poses.end(), local_joint_poses.begin(), local_joint_poses.end());
+    //   BOLT_DEBUG(indent, true, "Found " << solutions.size() << " poses");
+    //   joint_poses.insert(joint_poses.end(), solutions.begin(), solutions.end());
     // }
+    // else
+    //   BOLT_WARN(indent, true, "Failed to find a solution for a pose");
+
   }
   return true;
 }

@@ -130,10 +130,10 @@ public:
    */
   void stopCandidateQueueAndSave(std::size_t indent);
 
-  void benchmarkValidClearanceSampler();
-  void benchmarkRandValidSampling();
+  void benchmarkValidClearanceSampler(std::size_t indent = 0);
+  void benchmarkRandValidSampling(std::size_t indent = 0);
   void benchmarkVisualizeSampling(std::size_t indent = 0);
-  void benchmarkSparseGraphGeneration();
+  void benchmarkSparseGraphGeneration(std::size_t indent = 0);
 
   /** \brief Getter for vertexDiscretizer */
   VertexDiscretizerPtr &getVertexDiscretizer()
@@ -167,9 +167,6 @@ public:
     return mean;
   }
 
-  /** \brief Choose a regular sampler or clearance sampler based on clearance sampler value */
-  base::ValidStateSamplerPtr getSampler(std::size_t indent);
-
 protected:
   /** \brief Short name of this class */
   const std::string name_ = "SparseGenerator";
@@ -186,7 +183,7 @@ protected:
   VisualizerPtr visual_;
 
   /** \brief Sampler user for generating valid samples in the state space */
-  ClearanceSamplerPtr clearanceSampler_;
+  base::ValidStateSamplerPtr sampler_;
 
   /** \brief Multiple threads for finding nearest neighbors from samples */
   CandidateQueuePtr candidateQueue_;

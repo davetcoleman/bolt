@@ -114,8 +114,8 @@ private:
   // The main graph
   ompl::tools::bolt::TaskGraphPtr task_graph_;
 
-  // State
-  moveit::core::RobotStatePtr imarker_state_;
+  // State used for solving IK
+  moveit::core::RobotStatePtr ik_state_;
 
   // Rviz
   moveit_visual_tools::MoveItVisualToolsPtr visual_tools_;

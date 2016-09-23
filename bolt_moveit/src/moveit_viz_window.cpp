@@ -73,10 +73,19 @@ void MoveItVizWindow::state(const ompl::base::State* state, ot::VizSizes size, o
   visuals_->loadSharedRobotState();
   moveit_ompl::ModelBasedStateSpacePtr mb_state_space =
       std::static_pointer_cast<moveit_ompl::ModelBasedStateSpace>(si_->getStateSpace());
+
   // We must use the root_robot_state here so that the virtual_joint isn't affected
   mb_state_space->copyToRobotState(*visuals_->getRootRobotState(), state);
-  Eigen::Affine3d pose = visuals_->getRootRobotState()->getGlobalLinkTransform(eef_link_name_);
 
+  // Check for this size first, because we can skip forward kinematics
+  if (size == ompl::tools::ROBOT) // Show actual robot in custom color
+  {
+    visuals_->publishRobotState(visuals_->getSharedRobotState(), visuals_->intToRvizColor(color));
+    return;
+  }
+
+
+  Eigen::Affine3d pose = visuals_->getRootRobotState()->getGlobalLinkTransform(eef_link_name_);
   switch (size)
   {
     case ompl::tools::SMALL:
@@ -108,10 +117,6 @@ void MoveItVizWindow::state(const ompl::base::State* state, ot::VizSizes size, o
       visuals_->publishSphere(pose, visuals_->getColorScale(percent), scale);
     }
     break;
-    case ompl::tools::ROBOT:  // Show actual robot in custom color
-      mb_state_space->copyToRobotState(*visuals_->getSharedRobotState(), state);
-      visuals_->publishRobotState(visuals_->getSharedRobotState(), visuals_->intToRvizColor(color));
-      break;
     default:
       ROS_ERROR_STREAM_NAMED(name_, "vizStateRobot: Invalid state type value");
   }  // end switch
