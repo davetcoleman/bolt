@@ -539,14 +539,17 @@ bool CartPathPlanner::addEdgesToBoltGraph(const TrajectoryGraph& graph_vertices,
             task_graph_->getState(v0)->as<moveit_ompl::ModelBasedStateSpace::StateType>()->values;
         const double* end_array = task_graph_->getState(v1)->as<moveit_ompl::ModelBasedStateSpace::StateType>()->values;
 
-        ROS_WARN_STREAM_NAMED(name_, "TODO here2");
-
         // Attempt to eliminate edge based on the ability to achieve joint motion is possible in the window provided
         // if (!ur5_robot_model_->isValidMove(start_array, end_array, space->getDimension(), timing_))
         // {
         //   edges_skipped_count++;
         //   continue;
         // }
+        if (!ik_state_->isValidVelocityMove(jmg_, start_array, end_array, space->getDimension(), timing_))
+        {
+          edges_skipped_count++;
+          continue;
+        }
 
         // ROS_DEBUG_STREAM_NAMED(name_, "Adding edge " << v0 << " to " << v1);
         task_graph_->addEdge(v0, v1, edge_type, indent);
@@ -650,8 +653,6 @@ bool CartPathPlanner::getAllJointPosesForCartPoint(const Eigen::Affine3d& pose,
   {
     std::vector<std::vector<double>> local_joint_poses;
 
-    ROS_WARN_STREAM_NAMED(name_, "TODO here3");
-
     // Convert to msg
     geometry_msgs::Pose ik_query;
     tf::poseEigenToMsg(ik_pose, ik_query);
@@ -664,9 +665,14 @@ bool CartPathPlanner::getAllJointPosesForCartPoint(const Eigen::Affine3d& pose,
     std::vector<double> ik_seed_state;
     std::vector<double> initial_values;
     ik_state_->copyJointGroupPositions(jmg_, initial_values);
+    ik_seed_state.resize(initial_values.size());
+
     const std::vector<unsigned int>& bij = jmg_->getKinematicsSolverJointBijection();
+
     for (std::size_t i = 0; i < bij.size(); ++i)
+    {
       ik_seed_state[i] = initial_values[bij[i]];
+    }
 
     // Discretization setting
     kinematics::KinematicsQueryOptions options;
@@ -678,7 +684,6 @@ bool CartPathPlanner::getAllJointPosesForCartPoint(const Eigen::Affine3d& pose,
 
     // Solve
     bool result = solver->getPositionIK(ik_poses, ik_seed_state, solutions, kin_result, options);
-
     if (result)
     {
       BOLT_DEBUG(indent, true, "Found " << solutions.size() << " poses");

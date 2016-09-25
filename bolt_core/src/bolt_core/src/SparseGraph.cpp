@@ -1484,7 +1484,7 @@ void otb::SparsestarVisitor::examine_vertex(SparseVertex v, const SparseAdjList 
 #ifndef NDEBUG
   // Statistics
   parent_->recordNodeClosed();
-  p if (parent_->visualizeAstar_)
+  if (parent_->visualizeAstar_)
   {
     parent_->getVisual()->viz4()->state(parent_->getState(v), tools::LARGE, tools::BLACK, 1);
     parent_->getVisual()->viz4()->trigger();

@@ -4,7 +4,7 @@ bolt_moveit:
   # run mode
   auto_run: true # do not wait to move interactive markers. note: 'autonomous' setting must be 'false'
   benchmark_performance: false
-  display_disjoint_sets: false
+  display_disjoint_sets: true
   eliminate_dense_disjoint_sets: false
   check_valid_vertices: false
 
