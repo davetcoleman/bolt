@@ -778,10 +778,11 @@ void BoltMoveIt::visualizeRawTrajectory(og::PathGeometric &path)
 
 bool BoltMoveIt::generateCartGraph()
 {
+  std::size_t indent = 2;
   // Generate the Descartes graph - if it fails let user adjust interactive marker
   while (true)
   {
-    if (!cart_path_planner_->populateBoltGraph(bolt_->getTaskGraph()))
+    if (!cart_path_planner_->populateBoltGraph(bolt_->getTaskGraph(), indent))
     {
       ROS_INFO_STREAM_NAMED(name_, "Unable to populate Bolt graph - try moving the start location");
       waitForNextStep("attempt Bolt graph generation again");

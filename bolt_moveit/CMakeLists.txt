@@ -41,6 +41,9 @@ catkin_package(
     ${PROJECT_NAME}
 )
 
+# If enabled, show debug message output
+add_definitions(-DENABLE_DEBUG_MACRO)
+
 ###########
 ## Build ##
 ###########

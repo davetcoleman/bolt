@@ -25,9 +25,9 @@ catkin_package(
     ${PROJECT_NAME}
 )
 
-# User debug code only if not release
+# If enabled, show debug message output
 add_definitions(-DENABLE_DEBUG_MACRO)
-# Do not use quality criteria data structures
+# If enabled, use quality criteria data structures
 #add_definitions(-DENABLE_QUALITY)
 
 ###########

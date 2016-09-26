@@ -2,7 +2,7 @@
 # Main program
 bolt_moveit:
   # run mode
-  auto_run: true # do not wait to move interactive markers. note: 'autonomous' setting must be 'false'
+  auto_run: false # do not wait to move interactive markers. note: 'autonomous' setting must be 'false'
   benchmark_performance: false
   display_disjoint_sets: false
   eliminate_dense_disjoint_sets: false
@@ -189,12 +189,17 @@ cart_path_planner:
   tip_link: right_gripper
   base_link: base_link
   world_frame: base_link # TODO it bothers me this is required
-  descartes_check_collisions: false
-  orientation_increment: 1 # in radians, discretization of space [-Pi, Pi]
+  ik_discretization: 2 # 0.785 # pi / 4
+  tolerance_increment: 0.39 # in radians, discretization of space [-Pi, Pi]
+  tolerance_roll: 0.3925 # pi/8
+  tolerance_pitch: 0.3925 # pi/8
+  tolerance_yaw: 3.14 # pi
   trajectory_discretization: 0.01 # how much space, in meters, between trajectory points
   timing: 0.5 # time between each Cartesian point, e.g. discretization
   visualize:
     show_all_solutions: true
+    show_all_solutions_sleep: 0.005 # time between each solution for viewing
+    show_all_cart_poses: true
 
 # ====================================================
 # Interface for publishing joint/cartesian commands to the low level controllers

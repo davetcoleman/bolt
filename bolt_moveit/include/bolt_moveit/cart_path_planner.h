@@ -46,13 +46,6 @@
 // ROS
 #include <ros/ros.h>
 
-// Descartes
-// #include <descartes_trajectory/axial_symmetric_pt.h>
-// #include <descartes_trajectory/cart_trajectory_pt.h>
-// #include <descartes_planner/dense_planner.h>
-// #include <descartes_planner/sparse_planner.h>
-//#include <bolt_ur5/ur5_robot_model.h>
-
 // Eigen
 #include <eigen_conversions/eigen_msg.h>
 
@@ -79,30 +72,28 @@ public:
    */
   CartPathPlanner(BoltMoveIt* parent);
 
-  // void initDescartes();
-
   void processIMarkerPose(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback,
                           const Eigen::Affine3d& feedback_pose);
 
-  bool generateExactPoses();
-  bool generateExactPoses(const Eigen::Affine3d& start_pose);
+  bool generateExactPoses(std::size_t indent);
+  bool generateExactPoses(const Eigen::Affine3d& start_pose, std::size_t indent);
 
-  bool debugShowAllIKSolutions();
-  bool computeAllPoses(const Eigen::Affine3d& pose, const OrientationTol& orientation_tol,
-                       EigenSTL::vector_Affine3d& candidate_poses);
+  bool debugShowAllIKSolutions(std::size_t indent);
+  bool computeRedundantPosesForCartPoint(const Eigen::Affine3d& pose, const OrientationTol& orientation_tol,
+                                       EigenSTL::vector_Affine3d& candidate_poses, std::size_t indent);
   bool rotateOnAxis(const Eigen::Affine3d& pose, const OrientationTol& orientation_tol, const Axis axis,
-                    EigenSTL::vector_Affine3d& candidate_poses);
-  bool transform2DPath(const Eigen::Affine3d& starting_pose, EigenSTL::vector_Affine3d& poses);
-  bool populateBoltGraph(ompl::tools::bolt::TaskGraphPtr task_graph);
+                    EigenSTL::vector_Affine3d& candidate_poses, std::size_t indent);
+  bool transform2DPath(const Eigen::Affine3d& starting_pose, EigenSTL::vector_Affine3d& poses, std::size_t indent);
+  bool populateBoltGraph(ompl::tools::bolt::TaskGraphPtr task_graph, std::size_t indent);
   bool addCartPointToBoltGraph(const std::vector<std::vector<double>>& joint_poses,
                                std::vector<ompl::tools::bolt::TaskVertex>& point_vertices,
-                               moveit::core::RobotStatePtr moveit_robot_state);
+                               moveit::core::RobotStatePtr moveit_robot_state, std::size_t indent);
   bool addEdgesToBoltGraph(const TaskVertexMatrix& graph_vertices, ompl::tools::bolt::TaskVertex startingVertex,
-                           ompl::tools::bolt::TaskVertex endingVertex);
-  bool connectTrajectoryEndPoints(const TaskVertexMatrix& graph_vertices, double& shortest_path_across_cart);
-  bool getAllJointPosesForCartPoint(const Eigen::Affine3d& pose, std::vector<std::vector<double>>& joint_poses,
+                           ompl::tools::bolt::TaskVertex endingVertex, std::size_t indent);
+  bool connectTrajectoryEndPoints(const TaskVertexMatrix& graph_vertices, double& shortest_path_across_cart, std::size_t indent);
+  bool getRedundantJointPosesForCartPoint(const Eigen::Affine3d& pose, std::vector<std::vector<double>>& joint_poses,
                                     std::size_t indent);
-  void visualizeAllJointPoses(const std::vector<std::vector<double>>& joint_poses);
+  void visualizeAllJointPoses(const std::vector<std::vector<double>>& joint_poses, std::size_t indent);
 
 private:
   // --------------------------------------------------------
@@ -129,7 +120,7 @@ private:
   moveit_visual_tools::IMarkerRobotStatePtr imarker_cartesian_;
 
   // The planning group to work on
-  const moveit::core::JointModelGroup* jmg_;
+  moveit::core::JointModelGroup* jmg_;
 
   // Performs tasks specific to the Robot such IK, FK and collision detection
   // bolt_ur5::UR5RobotModelPtr ur5_robot_model_;
@@ -141,10 +132,7 @@ private:
   // Timing between each pose in exact_poses
   double timing_;
 
-  // User settings
-  bool descartes_check_collisions_;
-
-  double orientation_increment_ = 0.5;
+  double ik_discretization_ = M_PI / 4;
 
   // Robot settings
   std::string group_name_;
@@ -156,10 +144,15 @@ private:
   // Desired path to draw
   EigenSTL::vector_Affine3d path_from_file_;
 
-public:
-
+  bool verbose_ = false;
   bool visualize_show_all_solutions_ = false;
+  double visualize_show_all_solutions_sleep_ = 0.001;
+  bool visualize_show_all_cart_poses_ = false;
 
+  double tolerance_increment_ = 0.5;
+  double tolerance_roll_;
+  double tolerance_pitch_;
+  double tolerance_yaw_;
 };  // end class
 
 // Create boost pointers for this class
