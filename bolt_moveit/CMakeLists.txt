@@ -14,9 +14,9 @@ find_package(catkin REQUIRED COMPONENTS
   rosparam_shortcuts
   bolt_core
   tf_conversions
-  descartes_core
-  descartes_planner
-  descartes_moveit
+  # descartes_core
+  # descartes_planner
+  # descartes_moveit
   #bolt_ur5
 )
 

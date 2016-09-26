@@ -28,9 +28,9 @@
   <depend>cmake_modules</depend>
   <depend>pluginlib</depend>
   <depend>tf_conversions</depend>
-  <depend>descartes_core</depend>
-  <depend>descartes_planner</depend>
-  <depend>descartes_moveit</depend>
+  <!-- <depend>descartes_core</depend> -->
+  <!-- <depend>descartes_planner</depend> -->
+  <!-- <depend>descartes_moveit</depend> -->
   <!-- <depend>bolt_ur5</depend> -->
 
   <export>

@@ -681,7 +681,7 @@ void SparseGraph::visualizeDisjointSets(SparseDisjointSetsMap &disjointSets)
       maxDisjointSetParent = v;
     }
   }
-  OMPL_INFORM("The largest disjoint set is of size %u and parent vertex %u", maxDisjointSetSize, maxDisjointSetParent);
+  OMPL_INFORM("The largest disjoint set is of size %u with root vertex %u (not visualizing)", maxDisjointSetSize, maxDisjointSetParent);
 
   // Display size of disjoint sets and visualize small ones
   for (SparseDisjointSetsMap::const_iterator iterator = disjointSets.begin(); iterator != disjointSets.end();
@@ -695,11 +695,15 @@ void SparseGraph::visualizeDisjointSets(SparseDisjointSetsMap &disjointSets)
     if (freq == maxDisjointSetSize)  // any subgraph that is smaller than the full graph
       continue;                      // the main disjoint set is not considered a disjoint set
 
+    BOLT_INFO(0, true, "Showing disjoint set of size " << freq);
+
     // Visualize sets of size one
     if (freq == 1)
     {
-      visual_->viz5()->state(getState(v1), tools::LARGE, tools::RED, 0);
-      visual_->viz5()->trigger();
+      visual_->viz4()->deleteAllMarkers();
+      visual_->viz4()->state(getState(v1), tools::LARGE, tools::RED, 0);
+      visual_->viz4()->state(getState(v1), tools::ROBOT, tools::DEFAULT, 0);
+      visual_->viz4()->trigger();
       visual_->waitForUserFeedback("showing disjoint set");
       continue;
     }
@@ -726,16 +730,16 @@ void SparseGraph::visualizeDisjointSets(SparseDisjointSetsMap &disjointSets)
             SparseVertex e_v2 = boost::target(edge, g_);
             visual_->viz4()->edge(getState(e_v1), getState(e_v2), edgeWeightProperty_[edge]);
           }
-          visual_->viz4()->trigger();
+          visual_->viz4()->trigger(/*every*/50);
 
           // Show this robot state
-          // visual_->viz4()->state(getState(*v2), tools::ROBOT, tools::DEFAULT, 0);
+          visual_->viz4()->state(getState(*v2), tools::ROBOT, tools::DEFAULT, 0);
           visual_->viz4()->state(getState(*v2), tools::SMALL, tools::RED, 0);
 
-          usleep(0.1 * 1000000);
+          usleep(0.001*1000000);
         }  // if
       }    // for
-
+      visual_->viz4()->trigger();
       visual_->waitForUserFeedback("showing large disjoint set");
     }  // if
   }

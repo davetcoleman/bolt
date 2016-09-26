@@ -83,6 +83,8 @@ CartPathPlanner::CartPathPlanner(BoltMoveIt* parent) : name_("cart_path_planner"
   error += !rosparam_shortcuts::get(name_, rpnh, "orientation_increment", orientation_increment_);
   error += !rosparam_shortcuts::get(name_, rpnh, "trajectory_discretization", trajectory_discretization_);
   error += !rosparam_shortcuts::get(name_, rpnh, "timing", timing_);
+  error += !rosparam_shortcuts::get(name_, rpnh, "visualize/show_all_solutions", visualize_show_all_solutions_);
+  visualize_show_all_solutions_ = false;
   rosparam_shortcuts::shutdownIfError(name_, error);
 
   // initializing descartes
@@ -91,11 +93,11 @@ CartPathPlanner::CartPathPlanner(BoltMoveIt* parent) : name_("cart_path_planner"
   // Load desired path
   PathLoader path_loader(parent_->package_path_);
   const bool debug = false;
-  if (!path_loader.get2DPath(path_, debug))
+  if (!path_loader.get2DPath(path_from_file_, debug))
     exit(0);
 
   // Trigger the first path viz
-  generateExactPoses(/*debug*/ false);
+  generateExactPoses();
 
   ROS_INFO_STREAM_NAMED(name_, "CartPathPlanner Ready.");
 }
@@ -140,20 +142,18 @@ void CartPathPlanner::processIMarkerPose(const visualization_msgs::InteractiveMa
   generateExactPoses(start_pose);
 }
 
-bool CartPathPlanner::generateExactPoses(bool debug)
+bool CartPathPlanner::generateExactPoses()
 {
   // Generate exact poses
   moveit::core::RobotStatePtr imarker_state = imarker_cartesian_->getRobotState();
   Eigen::Affine3d start_pose = imarker_state->getGlobalLinkTransform(parent_->ee_link_);
 
-  generateExactPoses(start_pose, debug);
+  generateExactPoses(start_pose);
 }
 
-bool CartPathPlanner::generateExactPoses(const Eigen::Affine3d& start_pose, bool debug)
+bool CartPathPlanner::generateExactPoses(const Eigen::Affine3d& start_pose)
 {
   // ROS_DEBUG_STREAM_NAMED(name_, "generateExactPoses()");
-  if (debug)
-    ROS_WARN_STREAM_NAMED(name_, "Running generateExactPoses() in debug mode");
 
   if (!transform2DPath(start_pose, exact_poses_))
   {
@@ -175,36 +175,30 @@ bool CartPathPlanner::generateExactPoses(const Eigen::Affine3d& start_pose, bool
   orientation_tol_ = OrientationTol(M_PI, M_PI / 5, M_PI / 5);
   // rosparam timing_ = 0.1;
 
-  if (debug)
-    debugShowAllIKSolutions();
+  // if (visualize_show_all_solutions_);
+  //   debugShowAllIKSolutions();
 
   return true;
 }
 
 bool CartPathPlanner::debugShowAllIKSolutions()
 {
+  std::size_t indent = 0;
+
   // Enumerate the potential poses within tolerance
   for (std::size_t i = 0; i < exact_poses_.size(); ++i)
   {
     const Eigen::Affine3d& pose = exact_poses_[i];
 
-    EigenSTL::vector_Affine3d candidate_poses;
-    computeAllPoses(pose, orientation_tol_, candidate_poses);
-
-    std::vector<std::vector<double>> joint_poses;
-    for (const Eigen::Affine3d& candidate_pose : candidate_poses)
+    std::vector<std::vector<double>> local_joint_poses;
+    if (!getAllJointPosesForCartPoint(pose, local_joint_poses, indent))
     {
-      std::vector<std::vector<double>> local_joint_poses;
-      ROS_WARN_STREAM_NAMED(name_, "TODO debugShowAllIKSolitions");
-
-      // if (ur5_robot_model_->getAllIK(candidate_pose, local_joint_poses))
-      // {
-      //   joint_poses.insert(joint_poses.end(), local_joint_poses.begin(), local_joint_poses.end());
-      // }
+      ROS_ERROR_STREAM_NAMED(name_, "Error when getting joint poses for cartesian point");
+      continue;
     }
 
     // Handle error: no IK solutions found
-    if (joint_poses.empty())
+    if (local_joint_poses.empty())
     {
       ROS_ERROR_STREAM_NAMED(name_, "No joint solutions found for pose " << i);
 
@@ -215,7 +209,7 @@ bool CartPathPlanner::debugShowAllIKSolutions()
     }
 
     // Show all possible configurations
-    visualizeAllJointPoses(joint_poses);
+    visualizeAllJointPoses(local_joint_poses);
   }
 
   return true;
@@ -292,12 +286,12 @@ bool CartPathPlanner::transform2DPath(const Eigen::Affine3d& starting_pose, Eige
 {
   poses.clear();
 
-  if (path_.empty())
+  if (path_from_file_.empty())
   {
     ROS_ERROR_STREAM_NAMED(name_, "Unable to create drawing: no path loaded from file");
     return false;
   }
-  if (path_.size() == 1)
+  if (path_from_file_.size() == 1)
   {
     ROS_ERROR_STREAM_NAMED(name_, "Unable to create drawing: path only has 1 point");
     return false;
@@ -305,12 +299,12 @@ bool CartPathPlanner::transform2DPath(const Eigen::Affine3d& starting_pose, Eige
 
   // Transform each point read from file
   EigenSTL::vector_Affine3d transformed_poses;
-  for (std::size_t i = 0; i < path_.size(); ++i)
+  for (std::size_t i = 0; i < path_from_file_.size(); ++i)
   {
-    Eigen::Affine3d point = starting_pose * path_[i];
+    Eigen::Affine3d point = starting_pose * path_from_file_[i];
 
     // Rotate 90 so that the x axis points down
-    //  point = point * Eigen::AngleAxisd(M_PI / 2.0, Eigen::Vector3d::UnitY());
+    //point = point * Eigen::AngleAxisd(M_PI / 2.0, Eigen::Vector3d::UnitY());
 
     // Add start pose
     transformed_poses.push_back(point);
@@ -355,8 +349,7 @@ bool CartPathPlanner::populateBoltGraph(ompl::tools::bolt::TaskGraphPtr task_gra
     ROS_WARN_STREAM_NAMED(name_, "No exact poses had been previously generated. Creating.");
 
     // Generating trajectory
-    bool debug = false;
-    if (!generateExactPoses(debug))
+    if (!generateExactPoses())
       return false;
   }
 
@@ -644,22 +637,22 @@ bool CartPathPlanner::getAllJointPosesForCartPoint(const Eigen::Affine3d& pose,
   // Get the IK solver for a given planning group
   const kinematics::KinematicsBaseConstPtr& solver = jmg_->getSolverInstance();
 
-  // Bring the pose to the frame of the IK solver
-  Eigen::Affine3d ik_pose = pose;
-  ik_state_->setToIKSolverFrame(ik_pose, solver);
-
   // Enumerate solvable joint poses for each candidate_pose
   for (const Eigen::Affine3d& candidate_pose : candidate_poses)
   {
     std::vector<std::vector<double>> local_joint_poses;
 
+    // Bring the pose to the frame of the IK solver
+    Eigen::Affine3d ik_query = candidate_pose;
+    ik_state_->setToIKSolverFrame(ik_query, solver);
+
     // Convert to msg
-    geometry_msgs::Pose ik_query;
-    tf::poseEigenToMsg(ik_pose, ik_query);
+    geometry_msgs::Pose ik_query_msg;
+    tf::poseEigenToMsg(ik_query, ik_query_msg);
 
     // Add to vector
-    std::vector<geometry_msgs::Pose> ik_poses;
-    ik_poses.push_back(ik_query);
+    std::vector<geometry_msgs::Pose> ik_queries;
+    ik_queries.push_back(ik_query_msg);
 
     // Create seed state
     std::vector<double> ik_seed_state;
@@ -683,7 +676,7 @@ bool CartPathPlanner::getAllJointPosesForCartPoint(const Eigen::Affine3d& pose,
     kinematics::KinematicsResult kin_result;
 
     // Solve
-    bool result = solver->getPositionIK(ik_poses, ik_seed_state, solutions, kin_result, options);
+    bool result = solver->getPositionIK(ik_queries, ik_seed_state, solutions, kin_result, options);
     if (result)
     {
       BOLT_DEBUG(indent, true, "Found " << solutions.size() << " poses");
@@ -700,7 +693,7 @@ void CartPathPlanner::visualizeAllJointPoses(const std::vector<std::vector<doubl
   for (std::vector<double> joint_pose : joint_poses)
   {
     visual_tools_->publishRobotState(joint_pose, jmg_);
-    // ros::Duration(0.01).sleep();
+    ros::Duration(0.001).sleep();
 
     if (!ros::ok())
       exit(0);

@@ -47,10 +47,10 @@
 #include <ros/ros.h>
 
 // Descartes
-#include <descartes_trajectory/axial_symmetric_pt.h>
-#include <descartes_trajectory/cart_trajectory_pt.h>
-#include <descartes_planner/dense_planner.h>
-#include <descartes_planner/sparse_planner.h>
+// #include <descartes_trajectory/axial_symmetric_pt.h>
+// #include <descartes_trajectory/cart_trajectory_pt.h>
+// #include <descartes_planner/dense_planner.h>
+// #include <descartes_planner/sparse_planner.h>
 //#include <bolt_ur5/ur5_robot_model.h>
 
 // Eigen
@@ -80,8 +80,8 @@ public:
   void processIMarkerPose(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback,
                           const Eigen::Affine3d& feedback_pose);
 
-  bool generateExactPoses(bool debug = false);
-  bool generateExactPoses(const Eigen::Affine3d& start_pose, bool debug = false);
+  bool generateExactPoses();
+  bool generateExactPoses(const Eigen::Affine3d& start_pose);
 
   bool debugShowAllIKSolutions();
   bool computeAllPoses(const Eigen::Affine3d& pose, const OrientationTol& orientation_tol,
@@ -150,7 +150,11 @@ private:
   double trajectory_discretization_;
 
   // Desired path to draw
-  EigenSTL::vector_Affine3d path_;
+  EigenSTL::vector_Affine3d path_from_file_;
+
+public:
+
+  bool visualize_show_all_solutions_ = false;
 
 };  // end class
 

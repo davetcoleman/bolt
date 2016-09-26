@@ -80,7 +80,7 @@ void MoveItVizWindow::state(const ompl::base::State* state, ot::VizSizes size, o
   // Check for this size first, because we can skip forward kinematics
   if (size == ompl::tools::ROBOT)  // Show actual robot in custom color
   {
-    visuals_->publishRobotState(visuals_->getSharedRobotState(), visuals_->intToRvizColor(color));
+    visuals_->publishRobotState(visuals_->getRootRobotState(), visuals_->intToRvizColor(color));
     return;
   }
 

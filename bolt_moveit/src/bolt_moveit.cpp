@@ -321,6 +321,7 @@ void BoltMoveIt::run()
     bolt_->getSparseGraph()->getDisjointSets(disjointSets);
     bolt_->getSparseGraph()->printDisjointSets(disjointSets);
     bolt_->getSparseGraph()->visualizeDisjointSets(disjointSets);
+    exit(0);
   }
 
   // Repair missing coverage in the dense graph
