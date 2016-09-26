@@ -788,8 +788,9 @@ bool BoltMoveIt::generateCartGraph()
       if (!ros::ok())
         exit(0);
     }
-    else
-      break;
+    // else
+    //   break;
+    waitForNextStep("looping bolt graph generation");
   }
 
   return true;

@@ -55,7 +55,7 @@ bool CartPathPlanner::visualizeMoveItCartPath(const Eigen::Affine3d &start_pose)
       break;
     last_valid_percentage = percentage;
   }
-  imarker_cartesian_->getVisualTools()->triggerBatchPublishAndDisable();
+  imarker_cartesian_->getVisualTools()->triggerAndDisable();
 
   // std::cout << "last_valid_percentage: " << last_valid_percentage << std::endl;
 

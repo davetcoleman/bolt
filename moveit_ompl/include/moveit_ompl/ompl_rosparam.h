@@ -164,7 +164,6 @@ void loadOMPLParameters(ros::NodeHandle nh, const std::string &name, ompl::tools
     error += !get(name, rpnh, "use_discretized_samples", sparseGenerator->useDiscretizedSamples_);
     error += !get(name, rpnh, "use_random_samples", sparseGenerator->useRandomSamples_);
     error += !get(name, rpnh, "verify_graph_properties", sparseGenerator->verifyGraphProperties_);
-    error += !get(name, rpnh, "save_interval", sparseGenerator->saveInterval_);
     error += !get(name, rpnh, "verbose", sparseGenerator->verbose_);
     error += !get(name, rpnh, "verbose/guarantees", sparseGenerator->vGuarantees_);
   }

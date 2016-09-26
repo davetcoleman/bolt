@@ -49,7 +49,7 @@
 
 namespace bolt_moveit
 {
-CartPathPlanner::CartPathPlanner(BoltMoveIt* parent) : name_("cart_path_planner"), nh_("~"), parent_(parent)
+CartPathPlanner::CartPathPlanner(BoltMoveIt* parent) : nh_("~"), parent_(parent)
 {
   jmg_ = parent_->jmg_;
 
@@ -153,8 +153,6 @@ bool CartPathPlanner::generateExactPoses()
 
 bool CartPathPlanner::generateExactPoses(const Eigen::Affine3d& start_pose)
 {
-  // ROS_DEBUG_STREAM_NAMED(name_, "generateExactPoses()");
-
   if (!transform2DPath(start_pose, exact_poses_))
   {
     ROS_ERROR_STREAM_NAMED(name_, "Trajectory generation failed");
@@ -168,15 +166,15 @@ bool CartPathPlanner::generateExactPoses(const Eigen::Affine3d& start_pose)
   visual_tools_->deleteAllMarkers();
   visual_tools_->publishPath(exact_poses_, rvt::ORANGE, rvt::XXSMALL);
   visual_tools_->publishAxisPath(exact_poses_, rvt::XXXSMALL);
-  visual_tools_->triggerBatchPublish();
+  visual_tools_->trigger();
 
   // Specify tolerance for new exact_poses
   // orientation_tol_ = OrientationTol(M_PI, 0, 0);
   orientation_tol_ = OrientationTol(M_PI, M_PI / 5, M_PI / 5);
   // rosparam timing_ = 0.1;
 
-  // if (visualize_show_all_solutions_);
-  //   debugShowAllIKSolutions();
+  if (visualize_show_all_solutions_);
+    debugShowAllIKSolutions();
 
   return true;
 }
@@ -190,7 +188,7 @@ bool CartPathPlanner::debugShowAllIKSolutions()
   {
     const Eigen::Affine3d& pose = exact_poses_[i];
 
-    std::vector<std::vector<double>> local_joint_poses;
+    JointPoses local_joint_poses;
     if (!getAllJointPosesForCartPoint(pose, local_joint_poses, indent))
     {
       ROS_ERROR_STREAM_NAMED(name_, "Error when getting joint poses for cartesian point");
@@ -203,7 +201,7 @@ bool CartPathPlanner::debugShowAllIKSolutions()
       ROS_ERROR_STREAM_NAMED(name_, "No joint solutions found for pose " << i);
 
       visual_tools_->publishAxis(pose, rvt::XXSMALL);
-      visual_tools_->triggerBatchPublish();
+      visual_tools_->trigger();
 
       return false;
     }
@@ -304,7 +302,7 @@ bool CartPathPlanner::transform2DPath(const Eigen::Affine3d& starting_pose, Eige
     Eigen::Affine3d point = starting_pose * path_from_file_[i];
 
     // Rotate 90 so that the x axis points down
-    //point = point * Eigen::AngleAxisd(M_PI / 2.0, Eigen::Vector3d::UnitY());
+    // point = point * Eigen::AngleAxisd(M_PI / 2.0, Eigen::Vector3d::UnitY());
 
     // Add start pose
     transformed_poses.push_back(point);
@@ -341,7 +339,7 @@ bool CartPathPlanner::transform2DPath(const Eigen::Affine3d& starting_pose, Eige
 bool CartPathPlanner::populateBoltGraph(ompl::tools::bolt::TaskGraphPtr task_graph)
 {
   std::size_t indent = 0;
-  task_graph_ = task_graph;  // copy into this class to share among all functions
+  task_graph_ = task_graph;  // copy pointer into this class to share among all functions
 
   // Make sure exact poses are available
   if (exact_poses_.empty())
@@ -363,7 +361,7 @@ bool CartPathPlanner::populateBoltGraph(ompl::tools::bolt::TaskGraphPtr task_gra
   task_graph_->generateTaskSpace(indent);
 
   // Track all created vertices - for each pt in the cartesian trajectory, contains multiple vertices
-  TrajectoryGraph graph_vertices;
+  TaskVertexMatrix graph_vertices;
   graph_vertices.resize(exact_poses_.size());
 
   ompl::tools::bolt::TaskVertex startingVertex = task_graph_->getNumVertices() - 1;
@@ -379,7 +377,7 @@ bool CartPathPlanner::populateBoltGraph(ompl::tools::bolt::TaskGraphPtr task_gra
     const Eigen::Affine3d& pose = exact_poses_[traj_id];
 
     // Calculate all possible joint solutions
-    std::vector<std::vector<double>> joint_poses;
+    JointPoses joint_poses;
     getAllJointPosesForCartPoint(pose, joint_poses, indent);
 
     // Handle error: no IK solutions found
@@ -388,7 +386,7 @@ bool CartPathPlanner::populateBoltGraph(ompl::tools::bolt::TaskGraphPtr task_gra
       ROS_ERROR_STREAM_NAMED(name_, "No joint solutions found for pose " << traj_id);
 
       visual_tools_->publishAxis(pose, rvt::XXSMALL);
-      visual_tools_->triggerBatchPublish();
+      visual_tools_->trigger();
 
       // Show last valid pose if possible
       if (traj_id > 0)
@@ -452,7 +450,7 @@ bool CartPathPlanner::populateBoltGraph(ompl::tools::bolt::TaskGraphPtr task_gra
   return true;
 }
 
-bool CartPathPlanner::addCartPointToBoltGraph(const std::vector<std::vector<double>>& joint_poses,
+bool CartPathPlanner::addCartPointToBoltGraph(const JointPoses& joint_poses,
                                               std::vector<ompl::tools::bolt::TaskVertex>& point_vertices,
                                               moveit::core::RobotStatePtr moveit_robot_state)
 {
@@ -488,7 +486,7 @@ bool CartPathPlanner::addCartPointToBoltGraph(const std::vector<std::vector<doub
   return true;
 }
 
-bool CartPathPlanner::addEdgesToBoltGraph(const TrajectoryGraph& graph_vertices,
+bool CartPathPlanner::addEdgesToBoltGraph(const TaskVertexMatrix& graph_vertices,
                                           ompl::tools::bolt::TaskVertex startingVertex,
                                           ompl::tools::bolt::TaskVertex endingVertex)
 {
@@ -550,11 +548,12 @@ bool CartPathPlanner::addEdgesToBoltGraph(const TrajectoryGraph& graph_vertices,
         new_edge_count++;
       }  // for
     }    // for
-    ROS_DEBUG_STREAM_NAMED(name_ + ".generation", "Point " << traj_id << " current edge count: " << new_edge_count);
+    //ROS_DEBUG_STREAM_NAMED(name_ + ".generation", "Point " << traj_id << " current edge count: " << new_edge_count);
     if (!ros::ok())
       exit(0);
   }  // for
-  ROS_DEBUG_STREAM_NAMED(name_, "Added " << new_edge_count << " new edges, rejected " << edges_skipped_count);
+  ROS_DEBUG_STREAM_NAMED(name_, "Added " << new_edge_count << " new edges, rejected " << edges_skipped_count
+                         << " (rejected " << edges_skipped_count / (new_edge_count + edges_skipped_count) << "%)");
 
   std::size_t warning_factor = 4;
   if (edges_skipped_count * warning_factor > new_edge_count)
@@ -565,7 +564,7 @@ bool CartPathPlanner::addEdgesToBoltGraph(const TrajectoryGraph& graph_vertices,
   return true;
 }
 
-bool CartPathPlanner::connectTrajectoryEndPoints(const TrajectoryGraph& graph_vertices,
+bool CartPathPlanner::connectTrajectoryEndPoints(const TaskVertexMatrix& graph_vertices,
                                                  double& shortest_path_across_cart)
 {
   std::size_t indent = 0;
@@ -627,8 +626,8 @@ bool CartPathPlanner::connectTrajectoryEndPoints(const TrajectoryGraph& graph_ve
   return true;
 }
 
-bool CartPathPlanner::getAllJointPosesForCartPoint(const Eigen::Affine3d& pose,
-                                                   std::vector<std::vector<double>>& joint_poses, std::size_t indent)
+bool CartPathPlanner::getAllJointPosesForCartPoint(const Eigen::Affine3d& pose, JointPoses& joint_poses,
+                                                   std::size_t indent)
 {
   EigenSTL::vector_Affine3d candidate_poses;
   if (!computeAllPoses(pose, orientation_tol_, candidate_poses))
@@ -640,7 +639,7 @@ bool CartPathPlanner::getAllJointPosesForCartPoint(const Eigen::Affine3d& pose,
   // Enumerate solvable joint poses for each candidate_pose
   for (const Eigen::Affine3d& candidate_pose : candidate_poses)
   {
-    std::vector<std::vector<double>> local_joint_poses;
+    JointPoses local_joint_poses;
 
     // Bring the pose to the frame of the IK solver
     Eigen::Affine3d ik_query = candidate_pose;
@@ -672,7 +671,7 @@ bool CartPathPlanner::getAllJointPosesForCartPoint(const Eigen::Affine3d& pose,
     options.discretization_method = kinematics::DiscretizationMethods::DiscretizationMethod::ALL_DISCRETIZED;
 
     // Solution
-    std::vector<std::vector<double>> solutions;
+    JointPoses solutions;
     kinematics::KinematicsResult kin_result;
 
     // Solve
@@ -680,15 +679,22 @@ bool CartPathPlanner::getAllJointPosesForCartPoint(const Eigen::Affine3d& pose,
     if (result)
     {
       BOLT_DEBUG(indent, true, "Found " << solutions.size() << " poses");
+      BOLT_INFO(indent, true, "Found " << solutions.size() << " poses");
       joint_poses.insert(joint_poses.end(), solutions.begin(), solutions.end());
     }
     else
+    {
       BOLT_WARN(indent, true, "Failed to find a solution for a pose");
+
+      visual_tools_->publishArrow(ik_queries.front());
+      visual_tools_->trigger();
+      ros::Duration(1.0).sleep();
+    }
   }
   return true;
 }
 
-void CartPathPlanner::visualizeAllJointPoses(const std::vector<std::vector<double>>& joint_poses)
+void CartPathPlanner::visualizeAllJointPoses(const JointPoses& joint_poses)
 {
   for (std::vector<double> joint_pose : joint_poses)
   {

@@ -53,7 +53,7 @@ bool CartPathPlanner::useDescartesToGetPoses(EigenSTL::vector_Affine3d exact_pos
         ROS_ERROR_STREAM_NAMED(name_, "No joint solutions found for pose " << i);
 
         visual_tools_->publishAxis(pose, rvt::XXSMALL);
-        visual_tools_->triggerBatchPublish();
+        visual_tools_->trigger();
 
         // Show previous joint poses
         if (i > 0)
@@ -90,7 +90,7 @@ bool CartPathPlanner::useDescartesToGetPoses(EigenSTL::vector_Affine3d exact_pos
       }
 
       visual_tools_->publishAxis(pose, rvt::XXXXSMALL);
-      visual_tools_->triggerBatchPublish();
+      visual_tools_->trigger();
     }
   }
 

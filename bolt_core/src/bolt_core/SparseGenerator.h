@@ -206,6 +206,9 @@ protected:
   std::vector<double> avgPlanTime_;
   std::vector<double> avgPathQuality_;
 
+  /** \brief How often to save */
+  std::size_t saveInterval_ = 1000;
+
 public:
   bool verbose_ = false;
   bool vGuarantees_ = false;
@@ -217,9 +220,6 @@ public:
   /** \brief Number of failed state insertion attempts before starting to apply the fourth quality criteria from SPARS
    */
   std::size_t fourthCriteriaAfterFailures_ = 500;
-
-  /** \brief How often to save */
-  std::size_t saveInterval_ = 1000;
 
   /** \brief Generate the Sparse graph with discretized and/or random samples */
   bool useDiscretizedSamples_;

@@ -65,6 +65,10 @@
 
 namespace bolt_moveit
 {
+
+typedef std::vector<std::vector<double>> JointPoses;
+typedef std::vector<std::vector<ompl::tools::bolt::TaskVertex>> TaskVertexMatrix;
+
 class BoltMoveIt;
 
 class CartPathPlanner
@@ -93,9 +97,9 @@ public:
   bool addCartPointToBoltGraph(const std::vector<std::vector<double>>& joint_poses,
                                std::vector<ompl::tools::bolt::TaskVertex>& point_vertices,
                                moveit::core::RobotStatePtr moveit_robot_state);
-  bool addEdgesToBoltGraph(const TrajectoryGraph& graph_vertices, ompl::tools::bolt::TaskVertex startingVertex,
+  bool addEdgesToBoltGraph(const TaskVertexMatrix& graph_vertices, ompl::tools::bolt::TaskVertex startingVertex,
                            ompl::tools::bolt::TaskVertex endingVertex);
-  bool connectTrajectoryEndPoints(const TrajectoryGraph& graph_vertices, double& shortest_path_across_cart);
+  bool connectTrajectoryEndPoints(const TaskVertexMatrix& graph_vertices, double& shortest_path_across_cart);
   bool getAllJointPosesForCartPoint(const Eigen::Affine3d& pose, std::vector<std::vector<double>>& joint_poses,
                                     std::size_t indent);
   void visualizeAllJointPoses(const std::vector<std::vector<double>>& joint_poses);
@@ -104,7 +108,7 @@ private:
   // --------------------------------------------------------
 
   // The short name of this class
-  std::string name_;
+  std::string name_ = "cart_path_planner";
 
   // A shared node handle
   ros::NodeHandle nh_;

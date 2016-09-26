@@ -417,7 +417,16 @@ bool SparseGenerator::addSample(CandidateData &candidateD, std::size_t threadID,
       stopCandidateQueueAndSave(indent);
 
       double duration = time::seconds(time::now() - timeRandSamplesStarted_);
-      BOLT_DEBUG(indent, true, "Adding samples at rate: " << numRandSamplesAdded_ / duration << " hz");
+      double addHz = numRandSamplesAdded_ / duration;
+      BOLT_DEBUG(indent, true, "Adding samples at rate: " << addHz << " hz");
+
+      // Change save interval based on addition rate
+      const double saveEveryXMinutes = pow(2, si_->getStateDimension() * 1.5);
+      std::cout << "saveEveryXMinutes: " << saveEveryXMinutes << std::endl;
+      const std::size_t saveEveryXNodeAdditions = saveEveryXMinutes / addHz;
+      std::cout << "saveEveryXNodeAdditions: " << saveEveryXNodeAdditions << std::endl;
+      saveInterval_ = saveEveryXNodeAdditions;
+
       // copyPasteState();
     }
 
@@ -464,7 +473,8 @@ bool SparseGenerator::addSample(CandidateData &candidateD, std::size_t threadID,
         {
           if (!sparseCriteria_->getUseFourthCriteria())
           {
-            BOLT_WARN(indent, true, "Pre-quality progress: " << percentComplete << "%");
+            BOLT_WARN(indent, true, "Pre-quality progress: " << percentComplete << "% (maxConsecutiveFailures: "
+                      << maxConsecutiveFailures_ << ")");
           }
           else
           {

@@ -199,7 +199,7 @@ void TwoDimVizWindow::edge(const ompl::base::State* stateA, const ompl::base::St
   {
     ROS_WARN_STREAM_NAMED(name_, "Unable to visualize edge because states are the same");
     visuals_->publishSphere(stateToPoint(stateA), rvt::RED, rvt::XLARGE);
-    visuals_->triggerBatchPublish();
+    visuals_->trigger();
     ros::Duration(0.01).sleep();
     return;
   }

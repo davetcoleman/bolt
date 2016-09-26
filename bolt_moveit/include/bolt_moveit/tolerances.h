@@ -64,7 +64,5 @@ struct OrientationTol
   std::vector<double> axis_dist_from_center_;
 };
 
-typedef std::vector<std::vector<ompl::tools::bolt::TaskVertex>> TrajectoryGraph;
-
 }  // namespace bolt_moveit
 #endif  // BOLT_MOVEIT_TOLERANCES_H

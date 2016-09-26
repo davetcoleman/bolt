@@ -168,7 +168,7 @@ bool CartPathPlanner::generateExactPoses(const Eigen::Affine3d& start_pose, bool
   visual_tools_->deleteAllMarkers();
   visual_tools_->publishPath(exact_poses_, rvt::ORANGE, rvt::XXSMALL);
   visual_tools_->publishAxisPath(exact_poses_, rvt::XXXSMALL);
-  visual_tools_->triggerBatchPublish();
+  visual_tools_->trigger();
 
   // Specify tolerance for new exact_poses
   // orientation_tol_ = OrientationTol(M_PI, 0, 0);
@@ -207,7 +207,7 @@ bool CartPathPlanner::debugShowAllIKSolutions()
       ROS_ERROR_STREAM_NAMED(name_, "No joint solutions found for pose " << i);
 
       visual_tools_->publishAxis(pose, rvt::XXSMALL);
-      visual_tools_->triggerBatchPublish();
+      visual_tools_->trigger();
 
       return false;
     }
@@ -393,7 +393,7 @@ bool CartPathPlanner::populateBoltGraph(ompl::tools::bolt::TaskGraphPtr task_gra
       ROS_ERROR_STREAM_NAMED(name_, "No joint solutions found for pose " << traj_id);
 
       visual_tools_->publishAxis(pose, rvt::XXSMALL);
-      visual_tools_->triggerBatchPublish();
+      visual_tools_->trigger();
 
       // Show last valid pose if possible
       if (traj_id > 0)
