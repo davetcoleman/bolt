@@ -221,7 +221,7 @@ void ProjectionVizWindow::edges(const std::vector<const ompl::base::State*> stat
   visuals_->publishLines(aPoints, bPoints, rviz_colors, visuals_->intToRvizScale(size));
 }
 
-void ProjectionVizWindow::path(ompl::geometric::PathGeometric* path, ompl::tools::VizSizes type, ot::VizColors color)
+void ProjectionVizWindow::path(ompl::geometric::PathGeometric* path, ompl::tools::VizSizes type, ot::VizColors vertexColor, ot::VizColors edgeColor)
 {
   if (!enabled_)
     return;
@@ -232,8 +232,8 @@ void ProjectionVizWindow::path(ompl::geometric::PathGeometric* path, ompl::tools
   switch (type)
   {
     case ompl::tools::SMALL:  // Basic black line with vertiices
-      publish2DPath(geometric_path, visuals_->intToRvizColor(color), min_edge_radius_);
-      publishSpheres(geometric_path, visuals_->intToRvizColor(color), rvt::SMALL);
+      publish2DPath(geometric_path, visuals_->intToRvizColor(edgeColor), min_edge_radius_);
+      publishSpheres(geometric_path, visuals_->intToRvizColor(vertexColor), rvt::SMALL);
       break;
     case ompl::tools::ROBOT:
       // Playback motion for real robot, which is not applicable for this space

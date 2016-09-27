@@ -927,7 +927,7 @@ bool TaskGraph::smoothQualityPathOriginal(geometric::PathGeometric *path, std::s
   if (visualizeQualityPathSmoothing_)
   {
     visual_->viz2()->deleteAllMarkers();
-    visual_->viz2()->path(path, tools::SMALL, tools::BLUE);
+    visual_->viz2()->path(path, tools::SMALL, tools::BLACK, tools::BLUE);
     visual_->viz2()->trigger();
     usleep(0.001 * 1000000);
   }
@@ -957,7 +957,7 @@ bool TaskGraph::smoothQualityPath(geometric::PathGeometric *path, double clearan
   if (visualizeQualityPathSmoothing_)
   {
     visual_->viz2()->deleteAllMarkers();
-    visual_->viz2()->path(path, tools::SMALL, tools::BLUE);
+    visual_->viz2()->path(path, tools::SMALL, tools::BLACK, tools::BLUE);
     visual_->viz2()->trigger();
     usleep(0.001 * 1000000);
   }
@@ -978,7 +978,7 @@ bool TaskGraph::smoothQualityPath(geometric::PathGeometric *path, double clearan
     if (visualizeQualityPathSmoothing_)
     {
       visual_->viz2()->deleteAllMarkers();
-      visual_->viz2()->path(path, tools::SMALL, tools::ORANGE);
+      visual_->viz2()->path(path, tools::SMALL, tools::BLACK, tools::ORANGE);
       visual_->viz2()->trigger();
       usleep(0.1 * 1000000);
       // visual_->waitForUserFeedback("optimizing path");
@@ -989,7 +989,7 @@ bool TaskGraph::smoothQualityPath(geometric::PathGeometric *path, double clearan
     if (visualizeQualityPathSmoothing_)
     {
       visual_->viz2()->deleteAllMarkers();
-      visual_->viz2()->path(path, tools::SMALL, tools::BLUE);
+      visual_->viz2()->path(path, tools::SMALL, tools::BLACK, tools::BLUE);
       visual_->viz2()->trigger();
       usleep(0.1 * 1000000);
       // visual_->waitForUserFeedback("optimizing path");
@@ -1003,7 +1003,7 @@ bool TaskGraph::smoothQualityPath(geometric::PathGeometric *path, double clearan
   if (visualizeQualityPathSmoothing_)
   {
     visual_->viz2()->deleteAllMarkers();
-    visual_->viz2()->path(path, tools::SMALL, tools::GREEN);
+    visual_->viz2()->path(path, tools::SMALL, tools::BLACK, tools::GREEN);
     visual_->viz2()->trigger();
     visual_->waitForUserFeedback("finished quality path");
   }

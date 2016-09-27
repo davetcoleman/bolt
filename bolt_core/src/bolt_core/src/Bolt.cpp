@@ -178,13 +178,13 @@ void Bolt::visualize()
     std::shared_ptr<geometric::PathGeometric> originalPath = boltPlanner_->getOriginalSolutionPath();
 
     // Make the chosen path a different color and thickness
-    visual_->viz5()->path(originalPath.get(), tools::MEDIUM, tools::BLACK);
+    visual_->viz5()->path(originalPath.get(), tools::MEDIUM, tools::BLUE, tools::BLACK);
     visual_->viz5()->trigger();
 
     // Don't show raw trajectory twice in larger dimensions
     if (si_->getStateSpace()->getDimension() == 3)
     {
-      visual_->viz6()->path(originalPath.get(), tools::MEDIUM, tools::BLACK);
+      visual_->viz6()->path(originalPath.get(), tools::MEDIUM, tools::BLUE, tools::BLACK);
       visual_->viz6()->trigger();
     }
   }
@@ -198,7 +198,7 @@ void Bolt::visualize()
   // Show smoothed & interpolated path
   if (visualizeSmoothTrajectory_)
   {
-    visual_->viz6()->path(&solutionPathCopy, tools::LARGE, tools::PURPLE);
+    visual_->viz6()->path(&solutionPathCopy, tools::LARGE, tools::BLACK, tools::PURPLE);
     visual_->viz6()->trigger();
   }
 
@@ -207,7 +207,7 @@ void Bolt::visualize()
   {
     std::size_t indent = 0;
     BOLT_DEBUG(indent, true, "Blocking while visualizing solution path");
-    visual_->viz6()->path(&solutionPathCopy, tools::ROBOT, tools::DEFAULT);
+    visual_->viz6()->path(&solutionPathCopy, tools::ROBOT, tools::DEFAULT, tools::DEFAULT);
   }
 }
 

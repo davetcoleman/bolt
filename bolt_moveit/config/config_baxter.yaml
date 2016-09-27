@@ -11,7 +11,7 @@ bolt_moveit:
   # create sparse graph
   load_spars: true
   create_spars: true
-  continue_spars: false # even if a file has been saved, randomly sample for more coverage
+  continue_spars: true # even if a file has been saved, randomly sample for more coverage
   run_problems: true # do plans?
   sweep_spars_maps: true
   sweep_map_start: 1 # Base 1, not 0
@@ -67,7 +67,7 @@ sparse_generator:
 
 # ====================================================
 sparse_criteria:
-  sparse_delta_fraction: 0.1 # for 6dof
+  sparse_delta_fraction: 0.2 # for 6dof
   #sparse_delta_fraction: 0.2 # for 12dof
   penetration_overlap_fraction: 0.01
   near_sample_points_multiple: 2 # multiply this times number of dimensions

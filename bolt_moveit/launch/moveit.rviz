@@ -6,14 +6,12 @@ Panels:
       Expanded:
         - /Grid1/Offset1
         - /Viz1to61
-        - /Viz1to61/ompl1 - state1
         - /Viz1to61/ompl6 - markers1
         - /PlanningScene1/Scene Geometry1
         - /PlanningScene1/Scene Robot1
         - /InteractiveMarkers1
-        - /InteractiveMarkers1/Start2
         - /TF1/Frames1
-      Splitter Ratio: 0.875862062
+      Splitter Ratio: 0.578241408
     Tree Height: 712
   - Class: rviz/Help
     Name: Help
@@ -52,7 +50,7 @@ Visualization Manager:
         - Attached Body Color: 150; 50; 150
           Class: moveit_rviz_plugin/RobotState
           Collision Enabled: true
-          Enabled: true
+          Enabled: false
           Links:
             All Links Enabled: true
             Expand Joint Details: false
@@ -119,6 +117,10 @@ Visualization Manager:
               Show Axes: false
               Show Trail: false
               Value: true
+            left_gripper_tip:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
             left_hand:
               Alpha: 1
               Show Axes: false
@@ -224,6 +226,10 @@ Visualization Manager:
               Show Axes: false
               Show Trail: false
               Value: true
+            right_gripper_tip:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
             right_hand:
               Alpha: 1
               Show Axes: false
@@ -317,7 +323,7 @@ Visualization Manager:
           Robot State Topic: /baxter/robot_state1
           Show All Links: true
           Show Highlights: true
-          Value: true
+          Value: false
           Visual Enabled: false
         - Class: rviz/MarkerArray
           Enabled: true
@@ -397,6 +403,10 @@ Visualization Manager:
               Show Axes: false
               Show Trail: false
               Value: true
+            left_gripper_tip:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
             left_hand:
               Alpha: 1
               Show Axes: false
@@ -502,6 +512,10 @@ Visualization Manager:
               Show Axes: false
               Show Trail: false
               Value: true
+            right_gripper_tip:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
             right_hand:
               Alpha: 1
               Show Axes: false
@@ -675,6 +689,10 @@ Visualization Manager:
               Show Axes: false
               Show Trail: false
               Value: true
+            left_gripper_tip:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
             left_hand:
               Alpha: 1
               Show Axes: false
@@ -780,6 +798,10 @@ Visualization Manager:
               Show Axes: false
               Show Trail: false
               Value: true
+            right_gripper_tip:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
             right_hand:
               Alpha: 1
               Show Axes: false
@@ -953,6 +975,10 @@ Visualization Manager:
               Show Axes: false
               Show Trail: false
               Value: true
+            left_gripper_tip:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
             left_hand:
               Alpha: 1
               Show Axes: false
@@ -1058,6 +1084,10 @@ Visualization Manager:
               Show Axes: false
               Show Trail: false
               Value: true
+            right_gripper_tip:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
             right_hand:
               Alpha: 1
               Show Axes: false
@@ -1231,6 +1261,10 @@ Visualization Manager:
               Show Axes: false
               Show Trail: false
               Value: true
+            left_gripper_tip:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
             left_hand:
               Alpha: 1
               Show Axes: false
@@ -1336,6 +1370,10 @@ Visualization Manager:
               Show Axes: false
               Show Trail: false
               Value: true
+            right_gripper_tip:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
             right_hand:
               Alpha: 1
               Show Axes: false
@@ -1509,6 +1547,10 @@ Visualization Manager:
               Show Axes: false
               Show Trail: false
               Value: true
+            left_gripper_tip:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
             left_hand:
               Alpha: 1
               Show Axes: false
@@ -1614,6 +1656,10 @@ Visualization Manager:
               Show Axes: false
               Show Trail: false
               Value: true
+            right_gripper_tip:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
             right_hand:
               Alpha: 1
               Show Axes: false
@@ -1788,6 +1834,10 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        left_gripper_tip:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
         left_hand:
           Alpha: 1
           Show Axes: false
@@ -1893,6 +1943,10 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        right_gripper_tip:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
         right_hand:
           Alpha: 1
           Show Axes: false
@@ -2071,6 +2125,10 @@ Visualization Manager:
             Show Axes: false
             Show Trail: false
             Value: true
+          left_gripper_tip:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
           left_hand:
             Alpha: 1
             Show Axes: false
@@ -2176,6 +2234,10 @@ Visualization Manager:
             Show Axes: false
             Show Trail: false
             Value: true
+          right_gripper_tip:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
           right_hand:
             Alpha: 1
             Show Axes: false
@@ -2348,6 +2410,10 @@ Visualization Manager:
               Show Axes: false
               Show Trail: false
               Value: true
+            left_gripper_tip:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
             left_hand:
               Alpha: 1
               Show Axes: false
@@ -2453,6 +2519,10 @@ Visualization Manager:
               Show Axes: false
               Show Trail: false
               Value: true
+            right_gripper_tip:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
             right_hand:
               Alpha: 1
               Show Axes: false
@@ -2627,6 +2697,10 @@ Visualization Manager:
               Show Axes: false
               Show Trail: false
               Value: true
+            left_gripper_tip:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
             left_hand:
               Alpha: 1
               Show Axes: false
@@ -2732,6 +2806,10 @@ Visualization Manager:
               Show Axes: false
               Show Trail: false
               Value: true
+            right_gripper_tip:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
             right_hand:
               Alpha: 1
               Show Axes: false
@@ -2906,6 +2984,10 @@ Visualization Manager:
               Show Axes: false
               Show Trail: false
               Value: true
+            left_gripper_tip:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
             left_hand:
               Alpha: 1
               Show Axes: false
@@ -3011,6 +3093,10 @@ Visualization Manager:
               Show Axes: false
               Show Trail: false
               Value: true
+            right_gripper_tip:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
             right_hand:
               Alpha: 1
               Show Axes: false
@@ -3111,6 +3197,7 @@ Visualization Manager:
           Marker Topic: /baxter/cartesian_trajectory
           Name: Cart
           Namespaces:
+            Arrow: true
             Axis Path: true
             Cylinder: true
           Queue Size: 100
@@ -3152,22 +3239,22 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 8.67327976
+      Distance: 2.31662178
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 1.43711019
-        Y: -1.49226522
-        Z: 1.90734863e-06
+        X: 0.926472127
+        Y: -0.445648342
+        Z: 1.78813934e-07
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.0803987607
+      Pitch: 0.419797182
       Target Frame: robot_table_link
       Value: XYOrbit (rviz)
-      Yaw: 0.0203972049
+      Yaw: 5.17856169
     Saved: ~
 Window Geometry:
   Displays:

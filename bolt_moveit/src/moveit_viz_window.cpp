@@ -187,7 +187,7 @@ void MoveItVizWindow::edge(const ompl::base::State* stateA, const ompl::base::St
                             visuals_->intToRvizScale(size));
 }
 
-void MoveItVizWindow::path(ompl::geometric::PathGeometric* path, ompl::tools::VizSizes type, ot::VizColors color)
+void MoveItVizWindow::path(ompl::geometric::PathGeometric* path, ompl::tools::VizSizes type, ompl::tools::VizColors vertexColor, ompl::tools::VizColors edgeColor)
 {
   // Convert
   const og::PathGeometric& geometric_path = *path;  // static_cast<og::PathGeometric&>(*path);
@@ -195,16 +195,16 @@ void MoveItVizWindow::path(ompl::geometric::PathGeometric* path, ompl::tools::Vi
   switch (type)
   {
     case ompl::tools::SMALL:  // Basic line with vertiices
-      publish2DPath(geometric_path, visuals_->intToRvizColor(color), min_edge_radius_);
-      publishSpheres(geometric_path, visuals_->intToRvizColor(color), rvt::SMALL);
+      publish2DPath(geometric_path, visuals_->intToRvizColor(edgeColor), min_edge_radius_);
+      publishSpheres(geometric_path, visuals_->intToRvizColor(vertexColor), rvt::SMALL);
       break;
     case ompl::tools::MEDIUM:  // Basic line with vertiices
-      publish2DPath(geometric_path, visuals_->intToRvizColor(color), (max_edge_radius_ - min_edge_radius_) / 2.0);
-      publishSpheres(geometric_path, visuals_->intToRvizColor(color), rvt::SMALL);
+      publish2DPath(geometric_path, visuals_->intToRvizColor(edgeColor), (max_edge_radius_ - min_edge_radius_) / 2.0);
+      publishSpheres(geometric_path, visuals_->intToRvizColor(vertexColor), rvt::SMALL);
       break;
     case ompl::tools::LARGE:  // Basic line with vertiices
-      publish2DPath(geometric_path, visuals_->intToRvizColor(color), max_edge_radius_);
-      publishSpheres(geometric_path, visuals_->intToRvizColor(color), rvt::SMALL);
+      publish2DPath(geometric_path, visuals_->intToRvizColor(edgeColor), max_edge_radius_);
+      publishSpheres(geometric_path, visuals_->intToRvizColor(vertexColor), rvt::SMALL);
       break;
     case ompl::tools::ROBOT:  // Playback motion for real robot
       // Check that jmg_ was set

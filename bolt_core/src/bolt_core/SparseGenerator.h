@@ -135,6 +135,8 @@ public:
   void benchmarkVisualizeSampling(std::size_t indent = 0);
   void benchmarkSparseGraphGeneration(std::size_t indent = 0);
 
+  void mirrorGraphDualArm(base::SpaceInformationPtr dualSpaceInfo);
+
   /** \brief Getter for vertexDiscretizer */
   VertexDiscretizerPtr &getVertexDiscretizer()
   {

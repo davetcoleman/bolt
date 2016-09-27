@@ -100,7 +100,7 @@ public:
    * \param type - the style to display the line as
    * \return true on success
    */
-  void path(ompl::geometric::PathGeometric* path, ompl::tools::VizSizes type, ompl::tools::VizColors color);
+  void path(ompl::geometric::PathGeometric* path, ompl::tools::VizSizes type, ompl::tools::VizColors vertexColor, ompl::tools::VizColors edgeColor);
 
   /** \brief Trigger visualizer to refresh/repaint/display all graphics */
   void trigger(std::size_t queueSize = 0);

@@ -676,8 +676,8 @@ bool SparseGenerator::checkGraphOptimality(std::size_t indent)
       visual_->viz3()->trigger();
 
       visual_->viz2()->deleteAllMarkers();
-      visual_->viz2()->path(&geometricSolution, tools::SMALL, tools::RED);
-      visual_->viz2()->path(smoothedPathPtr, tools::MEDIUM, tools::GREEN);
+      visual_->viz2()->path(&geometricSolution, tools::SMALL, tools::BLACK, tools::RED);
+      visual_->viz2()->path(smoothedPathPtr, tools::MEDIUM, tools::BLACK, tools::GREEN);
       visual_->viz2()->trigger();
       usleep(0.001 * 1000000);
     }
@@ -713,8 +713,8 @@ bool SparseGenerator::checkGraphOptimality(std::size_t indent)
 
       // Show the two paths
       visual_->viz2()->deleteAllMarkers();
-      visual_->viz2()->path(&geometricSolution, tools::SMALL, tools::RED);
-      visual_->viz2()->path(smoothedPathPtr, tools::MEDIUM, tools::GREEN);
+      visual_->viz2()->path(&geometricSolution, tools::SMALL, tools::BLACK, tools::RED);
+      visual_->viz2()->path(smoothedPathPtr, tools::MEDIUM, tools::BLACK, tools::GREEN);
       visual_->viz2()->trigger();
       usleep(0.001 * 1000000);
 
@@ -998,6 +998,14 @@ void SparseGenerator::benchmarkSparseGraphGeneration(std::size_t indent)
 
   std::cout << "-------------------------------------------------------" << std::endl;
   std::cout << std::endl;
+}
+
+void SparseGenerator::mirrorGraphDualArm(base::SpaceInformationPtr dualSpaceInfo)
+{
+  // Create SparseGraph for dual arm
+
+  // Insert mono SparseGraph into dual SparseGraph
+
 }
 
 }  // namespace bolt

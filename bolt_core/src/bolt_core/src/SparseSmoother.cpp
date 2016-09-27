@@ -85,7 +85,7 @@ bool SparseSmoother::smoothQualityPath(geometric::PathGeometric *path, double cl
     visual_->viz4()->deleteAllMarkers();
     visual_->viz6()->deleteAllMarkers();
 
-    visual_->viz2()->path(path, tools::SMALL, tools::BLUE);
+    visual_->viz2()->path(path, tools::SMALL, tools::BLACK, tools::BLUE);
     visual_->viz2()->trigger();
     usleep(0.001 * 1000000);
   }
@@ -112,7 +112,7 @@ bool SparseSmoother::smoothQualityPath(geometric::PathGeometric *path, double cl
     if (visualizeQualityPathSmoothing_)
     {
       // visual_->viz3()->deleteAllMarkers();
-      visual_->viz3()->path(path, tools::SMALL, tools::ORANGE);
+      visual_->viz3()->path(path, tools::SMALL, tools::BLACK, tools::ORANGE);
       visual_->viz3()->trigger();
       usleep(0.1 * 1000000);
 
@@ -124,7 +124,7 @@ bool SparseSmoother::smoothQualityPath(geometric::PathGeometric *path, double cl
     if (visualizeQualityPathSmoothing_)
     {
       // visual_->viz4()->deleteAllMarkers();
-      visual_->viz4()->path(path, tools::SMALL, tools::BLUE);
+      visual_->viz4()->path(path, tools::SMALL, tools::BLACK, tools::BLUE);
       visual_->viz4()->trigger();
       usleep(0.1 * 1000000);
 
@@ -143,7 +143,7 @@ bool SparseSmoother::smoothQualityPath(geometric::PathGeometric *path, double cl
   if (visualizeQualityPathSmoothing_)
   {
     visual_->viz6()->deleteAllMarkers();
-    visual_->viz6()->path(path, tools::SMALL, tools::GREEN);
+    visual_->viz6()->path(path, tools::SMALL, tools::BLACK, tools::GREEN);
     visual_->viz6()->trigger();
     // visual_->waitForUserFeedback("finished quality path");
   }
@@ -165,7 +165,7 @@ bool SparseSmoother::smoothQualityPath(geometric::PathGeometric *path, double cl
     if (!visualizeQualityPathSmoothing_)
     {
       visual_->viz6()->deleteAllMarkers();
-      visual_->viz6()->path(path, tools::SMALL, tools::GREEN);
+      visual_->viz6()->path(path, tools::SMALL, tools::BLACK, tools::GREEN);
       visual_->viz6()->trigger();
     }
 
@@ -203,7 +203,7 @@ bool SparseSmoother::smoothMax(geometric::PathGeometric *path, std::size_t inden
     }
 
     visual_->viz2()->deleteAllMarkers();
-    visual_->viz2()->path(path, tools::MEDIUM, tools::BLUE);
+    visual_->viz2()->path(path, tools::MEDIUM, tools::BLACK, tools::BLUE);
     visual_->viz2()->trigger();
     usleep(0.001 * 1000000);
   }
@@ -230,7 +230,7 @@ bool SparseSmoother::smoothMax(geometric::PathGeometric *path, std::size_t inden
       if (visualizeQualityPathSmoothing_)
       {
         visual_->viz3()->deleteAllMarkers();
-        visual_->viz3()->path(path, tools::MEDIUM, tools::ORANGE);
+        visual_->viz3()->path(path, tools::MEDIUM, tools::BLACK, tools::ORANGE);
         visual_->viz3()->trigger();
         usleep(0.1 * 1000000);
         // BOLT_DEBUG(indent, true, "path->length() " << path->length() << " states: " << path->getStateCount());
@@ -252,7 +252,7 @@ bool SparseSmoother::smoothMax(geometric::PathGeometric *path, std::size_t inden
       if (visualizeQualityPathSmoothing_)
       {
         visual_->viz4()->deleteAllMarkers();
-        visual_->viz4()->path(path, tools::MEDIUM, tools::ORANGE);
+        visual_->viz4()->path(path, tools::MEDIUM, tools::BLACK, tools::ORANGE);
         visual_->viz4()->trigger();
         usleep(0.01 * 1000000);
         // visual_->waitForUserFeedback("reduce vertices");
@@ -301,7 +301,7 @@ bool SparseSmoother::smoothMax(geometric::PathGeometric *path, std::size_t inden
     if (visualizeQualityPathSmoothing_)
     {
       visual_->viz5()->deleteAllMarkers();
-      visual_->viz5()->path(path, tools::MEDIUM, tools::ORANGE);
+      visual_->viz5()->path(path, tools::MEDIUM, tools::BLACK, tools::ORANGE);
       visual_->viz5()->trigger();
       usleep(0.01 * 1000000);
 
@@ -321,7 +321,7 @@ bool SparseSmoother::smoothMax(geometric::PathGeometric *path, std::size_t inden
       if (visualizeQualityPathSmoothing_)
       {
         visual_->viz3()->deleteAllMarkers();
-        visual_->viz3()->path(path, tools::MEDIUM, tools::ORANGE);
+        visual_->viz3()->path(path, tools::MEDIUM, tools::BLACK, tools::ORANGE);
         visual_->viz3()->trigger();
         usleep(0.01 * 1000000);
 

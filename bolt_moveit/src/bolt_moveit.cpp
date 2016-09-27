@@ -161,6 +161,9 @@ BoltMoveIt::BoltMoveIt(const std::string &hostname, const std::string &package_p
   // Create start/goal state imarker
   if (!headless_)
   {
+    std::cout << std::endl;
+    std::cout << "-------------------------------------------------------" << std::endl;
+
     // Create cartesian planner
     cart_path_planner_.reset(new CartPathPlanner(this));
 
@@ -169,9 +172,11 @@ BoltMoveIt::BoltMoveIt(const std::string &hostname, const std::string &package_p
     imarker_goal_.reset(
         new mvt::IMarkerRobotState(planning_scene_monitor_, "goal", jmg_, ee_link_, rvt::ORANGE, package_path_));
 
-    imarker_start_->setCollisionCheckingVerbose(true);
-    imarker_start_->setOnlyCheckSelfCollision(true);
-    imarker_start_->setUseCollisionChecking(true);
+    // imarker_start_->setCollisionCheckingVerbose(true);
+    // imarker_start_->setOnlyCheckSelfCollision(true);
+    // imarker_start_->setUseCollisionChecking(true);
+    std::cout << "-------------------------------------------------------" << std::endl;
+    std::cout << std::endl;
   }
 
   // Set remote_control
@@ -353,6 +358,8 @@ void BoltMoveIt::run()
 
 bool BoltMoveIt::runProblems()
 {
+  std::size_t indent = 0;
+
   // Logging
   std::ofstream logging_file;  // open to append
   if (use_logging_)
@@ -668,7 +675,7 @@ void BoltMoveIt::loadVisualTools()
   // Block until all visualizers are finished loading
   if (!headless_)
   {
-    const double wait_time = 0.5;
+    const double wait_time = 0.05;
     for (std::size_t i = 1; i <= NUM_VISUALS; ++i)
     {
       vizs_[i - 1]->getVisualTools()->waitForMarkerPub(wait_time);
