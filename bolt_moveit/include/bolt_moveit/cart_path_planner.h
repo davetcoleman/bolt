@@ -122,6 +122,9 @@ private:
   // The planning group to work on
   moveit::core::JointModelGroup* jmg_;
 
+  // End effector
+  moveit::core::LinkModel *ee_link_;
+
   // Performs tasks specific to the Robot such IK, FK and collision detection
   // bolt_ur5::UR5RobotModelPtr ur5_robot_model_;
 

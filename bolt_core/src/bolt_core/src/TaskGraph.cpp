@@ -171,9 +171,11 @@ bool TaskGraph::astarSearch(const TaskVertex start, const TaskVertex goal, std::
   bool foundGoal = false;
   double *vertexDistances = new double[getNumVertices()];
 
+#ifndef NDEBUG
   // Reset statistics
   numNodesOpened_ = 0;
   numNodesClosed_ = 0;
+#endif
 
   if (visualizeAstar_)
   {
@@ -200,42 +202,37 @@ bool TaskGraph::astarSearch(const TaskVertex start, const TaskVertex goal, std::
   {
     distance = vertexDistances[goal];
 
+#ifndef NDEBUG
     // the custom exception from TaskAstarVisitor
     BOLT_DEBUG(indent, vSearch_, "AStar found solution. Distance to goal: " << vertexDistances[goal]);
     BOLT_DEBUG(indent, vSearch_, "Number nodes opened: " << numNodesOpened_
                                                          << ", Number nodes closed: " << numNodesClosed_);
+#endif
 
-    if (std::isinf(vertexDistances[goal]))  // TODO(davetcoleman): test that this works
+    // Only clear the vertexPath after we know we have a new solution, otherwise it might have a good
+    // previous one
+    vertexPath.clear();  // remove any old solutions
+
+    // Trace back the shortest path in reverse and only save the states
+    TaskVertex v;
+    for (v = goal; v != vertexPredecessors[v]; v = vertexPredecessors[v])
     {
-      throw Exception(name_, "Distance to goal is infinity");
-      foundGoal = false;
+      vertexPath.push_back(v);
     }
-    else
+
+    // Add the start state to the path, unless this path is just one vertex long and the start==goal
+    if (v != goal)
     {
-      // Only clear the vertexPath after we know we have a new solution, otherwise it might have a good
-      // previous one
-      vertexPath.clear();  // remove any old solutions
-
-      // Trace back the shortest path in reverse and only save the states
-      TaskVertex v;
-      for (v = goal; v != vertexPredecessors[v]; v = vertexPredecessors[v])
-      {
-        vertexPath.push_back(v);
-      }
-
-      // Add the start state to the path, unless this path is just one vertex long and the start==goal
-      if (v != goal)
-      {
-        vertexPath.push_back(v);
-      }
-
-      foundGoal = true;
+      vertexPath.push_back(v);
     }
+
+    foundGoal = true;
   }
 
   if (!foundGoal)
     BOLT_WARN(indent, vSearch_, "Did not find goal");
 
+#ifndef NDEBUG
   // Show all predecessors
   if (visualizeAstar_)
   {
@@ -251,6 +248,7 @@ bool TaskGraph::astarSearch(const TaskVertex start, const TaskVertex goal, std::
     }
     visual_->viz4()->trigger();
   }
+#endif
 
   // Unload
   delete[] vertexPredecessors;
@@ -456,11 +454,11 @@ void TaskGraph::generateTaskSpace(std::size_t indent)
   }
 
   // Record a mapping from SparseVertex to the two TaskVertices
-  std::vector<TaskVertex> sparseToTaskVertex1(sg_->getNumVertices());
+  std::vector<TaskVertex> sparseToTaskVertex0(sg_->getNumVertices());
   std::vector<TaskVertex> sparseToTaskVertex2(sg_->getNumVertices());
 
   // Loop through every vertex in sparse graph and copy twice to task graph
-  BOLT_DEBUG(indent + 2, vGenerateTask_, "Adding task space vertices");
+  BOLT_DEBUG(indent + 2, vGenerateTask_, "Adding " << sg_->getNumVertices() << " task space vertices");
   foreach (SparseVertex sparseV, boost::vertices(sg_->getGraph()))
   {
     // The first thread number of verticies are used for queries and should be skipped
@@ -472,8 +470,8 @@ void TaskGraph::generateTaskSpace(std::size_t indent)
 
     // Create level 0 vertex
     VertexLevel level = 0;
-    TaskVertex taskV1 = addVertex(si_->cloneState(state), type, level, indent);
-    sparseToTaskVertex1[sparseV] = taskV1;  // record mapping
+    TaskVertex taskV0 = addVertex(si_->cloneState(state), type, level, indent);
+    sparseToTaskVertex0[sparseV] = taskV0;  // record mapping
 
     // Create level 2 vertex
     level = 2;
@@ -481,37 +479,38 @@ void TaskGraph::generateTaskSpace(std::size_t indent)
     sparseToTaskVertex2[sparseV] = taskV2;  // record mapping
 
     // Link the two vertices to each other for future bookkeeping
-    vertexTaskMirrorProperty_[taskV1] = taskV2;
-    vertexTaskMirrorProperty_[taskV2] = taskV1;
+    vertexTaskMirrorProperty_[taskV0] = taskV2;
+    vertexTaskMirrorProperty_[taskV2] = taskV0;
   }
 
   // Loop through every edge in sparse graph and copy twice to task graph
   BOLT_DEBUG(indent + 2, vGenerateTask_, "Adding task space edges");
   foreach (const SparseEdge sparseE, boost::edges(sg_->getGraph()))
   {
-    const SparseVertex sparseE_v1 = boost::source(sparseE, sg_->getGraph());
+    const SparseVertex sparseE_v0 = boost::source(sparseE, sg_->getGraph());
     const SparseVertex sparseE_v2 = boost::target(sparseE, sg_->getGraph());
     EdgeType type = sg_->getEdgeTypeProperty(sparseE);
 
     // Error check
-    BOLT_ASSERT(sparseE_v1 >= sg_->getNumQueryVertices(), "Found query vertex in sparse graph that has an edge!");
+    BOLT_ASSERT(sparseE_v0 >= sg_->getNumQueryVertices(), "Found query vertex in sparse graph that has an edge!");
     BOLT_ASSERT(sparseE_v2 >= sg_->getNumQueryVertices(), "Found query vertex in sparse graph that has an edge!");
 
     // Create level 0 edge
-    // TaskEdge taskEdge1 =
-    addEdge(sparseToTaskVertex1[sparseE_v1], sparseToTaskVertex1[sparseE_v2], type, indent);
+    // TaskEdge taskEdge0 =
+    addEdge(sparseToTaskVertex0[sparseE_v0], sparseToTaskVertex0[sparseE_v2], type, indent);
 
     // Create level 2 edge
     // TaskEdge taskEdge2 =
-    addEdge(sparseToTaskVertex2[sparseE_v1], sparseToTaskVertex2[sparseE_v2], type, indent);
+    addEdge(sparseToTaskVertex2[sparseE_v0], sparseToTaskVertex2[sparseE_v2], type, indent);
   }
 
   // Visualize
   // displayDatabase();
 
-  printGraphStats();
+  printGraphStats(time::seconds(time::now() - startTime));
 
-  BOLT_DEBUG(indent, verbose_, "Generated task space in " << time::seconds(time::now() - startTime) << " seconds");
+  // Tell the planner to require task planning
+  taskPlanningEnabled_ = true;
 }
 
 bool TaskGraph::addCartPath(std::vector<base::State *> path, std::size_t indent)
@@ -1466,7 +1465,7 @@ void TaskGraph::debugNN()
   std::cout << std::endl;
 }
 
-void TaskGraph::printGraphStats()
+void TaskGraph::printGraphStats(double generationDuration)
 {
   // Get the average vertex degree (number of connected edges)
   double averageDegree = (getNumEdges() * 2) / static_cast<double>(getNumVertices());
@@ -1492,6 +1491,7 @@ void TaskGraph::printGraphStats()
   std::size_t indent = 0;
   BOLT_DEBUG(indent, 1, "------------------------------------------------------");
   BOLT_DEBUG(indent, 1, "TaskGraph stats:");
+  BOLT_DEBUG(indent, 1, "   Generation time:        " << generationDuration << " s");
   BOLT_DEBUG(indent, 1, "   Total vertices:         " << getNumVertices());
   BOLT_DEBUG(indent, 1, "   Total edges:            " << getNumEdges());
   BOLT_DEBUG(indent, 1, "   Average degree:         " << averageDegree);
@@ -1528,6 +1528,7 @@ otb::TaskAstarVisitor::TaskAstarVisitor(TaskVertex goal, TaskGraph *parent) : go
 {
 }
 
+#ifndef NDEBUG
 void otb::TaskAstarVisitor::discover_vertex(TaskVertex v, const TaskAdjList &) const
 {
   // Statistics
@@ -1536,9 +1537,11 @@ void otb::TaskAstarVisitor::discover_vertex(TaskVertex v, const TaskAdjList &) c
   if (parent_->visualizeAstar_)
     parent_->getVisual()->viz4()->state(parent_->getState(v), tools::SMALL, tools::GREEN, 1);
 }
+#endif
 
 void otb::TaskAstarVisitor::examine_vertex(TaskVertex v, const TaskAdjList &) const
 {
+#ifndef NDEBUG
   parent_->recordNodeClosed();  // Statistics
 
   if (parent_->visualizeAstar_)  // Visualize
@@ -1556,6 +1559,7 @@ void otb::TaskAstarVisitor::examine_vertex(TaskVertex v, const TaskAdjList &) co
     // usleep(parent_->visualizeAstarSpeed_ * 1000000);
     parent_->getVisual()->waitForUserFeedback("astar");
   }
+#endif
 
   if (v == goal_)
     throw FoundGoalException();

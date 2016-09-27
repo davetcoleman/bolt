@@ -363,7 +363,7 @@ public:
   void debugNN();
 
   /** \brief Information about the loaded graph */
-  void printGraphStats();
+  void printGraphStats(double generationDuration);
 
 protected:
   /** \brief Short name of this class */
@@ -483,7 +483,9 @@ public:
    * \param v current Vertex
    * \param g graph we are searching on
    */
+#ifndef NDEBUG
   void discover_vertex(TaskVertex v, const TaskAdjList& g) const;
+#endif
 
   /**
    * \brief Check if we have arrived at the goal.

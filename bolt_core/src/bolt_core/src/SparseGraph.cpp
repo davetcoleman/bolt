@@ -367,17 +367,6 @@ bool SparseGraph::astarSearch(const SparseVertex start, const SparseVertex goal,
 
   BOLT_DEBUG(indent, vSearch_, "Number nodes opened: " << numNodesOpened_
                                                        << ", Number nodes closed: " << numNodesClosed_);
-
-  if (std::isinf(vertexDistances[goal]))  // TODO(davetcoleman): test that this works
-  {
-    throw Exception(name_, "Distance to goal is infinity");
-
-    // Unload
-    delete[] vertexPredecessors;
-    delete[] vertexDistances;
-
-    return false;
-  }
 #endif
 
   // Only clear the vertexPath after we know we have a new solution, otherwise it might have a good

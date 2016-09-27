@@ -124,7 +124,13 @@ void Bolt::setup()
   }
 }
 
-void Bolt::clear(void)
+void Bolt::clearForNextPlan()
+{
+  boltPlanner_->clear();
+  pdef_->clearSolutionPaths();
+}
+
+void Bolt::clear()
 {
   sparseGraph_->clear();
   sparseCriteria_->clear();
@@ -149,8 +155,8 @@ base::PlannerStatus Bolt::solve(const base::PlannerTerminationCondition &ptc)
   time::point start = time::now();
 
   // Warn if there are queued paths that have not been added to the experience database
-  OMPL_INFORM("Num solved paths uninserted into the experience database in the post-proccessing queue: %u",
-              queuedSolutionPaths_.size());
+  // OMPL_INFORM("Num solved paths uninserted into the experience database in the post-proccessing queue: %u",
+  //             queuedSolutionPaths_.size());
 
   // SOLVE
   lastStatus_ = boltPlanner_->solve(ptc);

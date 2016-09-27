@@ -180,7 +180,7 @@ public:
   bool is_thunder_ = false;
 
   // Operation settings
-  std::size_t planning_runs_;
+  std::size_t num_problems_;
   int problem_type_;
   bool use_task_planning_;
   bool headless_;
