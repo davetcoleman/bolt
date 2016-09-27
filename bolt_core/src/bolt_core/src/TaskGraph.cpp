@@ -441,6 +441,63 @@ bool TaskGraph::isEmpty() const
   return (getNumVertices() == getNumQueryVertices() && getNumEdges() == 0);
 }
 
+void TaskGraph::generateMonoLevelTaskSpace(std::size_t indent)
+{
+  BOLT_FUNC(indent, verbose_, "TaskGraph.generateMonoLevelTaskTaskSpace()");
+  time::point startTime = time::now();  // Benchmark
+
+  // Clear pre-existing graphs
+  if (!isEmpty())
+  {
+    BOLT_DEBUG(indent, vGenerateTask_, "Clearing previous graph");
+    clear();
+  }
+
+  // Record a mapping from SparseVertex to the TaskVertex
+  std::vector<TaskVertex> sparseToTaskVertex0(sg_->getNumVertices());
+
+  // Loop through every vertex in sparse graph and copy twice to task graph
+  BOLT_DEBUG(indent + 2, vGenerateTask_, "Adding " << sg_->getNumVertices() << " task space vertices");
+  foreach (SparseVertex sparseV, boost::vertices(sg_->getGraph()))
+  {
+    // The first thread number of verticies are used for queries and should be skipped
+    if (sparseV < sg_->getNumQueryVertices())
+      continue;
+
+    const VertexType type = DISCRETIZED;  // TODO: remove this, seems meaningless
+    const base::State *state = sg_->getState(sparseV);
+
+    // Create level 0 vertex
+    VertexLevel level = 0;
+    TaskVertex taskV0 = addVertex(si_->cloneState(state), type, level, indent);
+    sparseToTaskVertex0[sparseV] = taskV0;  // record mapping
+  }
+
+  // Loop through every edge in sparse graph and copy to task graph
+  BOLT_DEBUG(indent + 2, vGenerateTask_, "Adding task space edges");
+  foreach (const SparseEdge sparseE, boost::edges(sg_->getGraph()))
+  {
+    const SparseVertex sparseE_v0 = boost::source(sparseE, sg_->getGraph());
+    const SparseVertex sparseE_v2 = boost::target(sparseE, sg_->getGraph());
+    EdgeType type = sg_->getEdgeTypeProperty(sparseE);
+
+    // Error check
+    BOLT_ASSERT(sparseE_v0 >= sg_->getNumQueryVertices(), "Found query vertex in sparse graph that has an edge!");
+    BOLT_ASSERT(sparseE_v2 >= sg_->getNumQueryVertices(), "Found query vertex in sparse graph that has an edge!");
+
+    // Create level 0 edge
+    addEdge(sparseToTaskVertex0[sparseE_v0], sparseToTaskVertex0[sparseE_v2], type, indent);
+  }
+
+  // Visualize
+  // displayDatabase();
+
+  printGraphStats(time::seconds(time::now() - startTime));
+
+  // Tell the planner to require task planning
+  taskPlanningEnabled_ = false;
+}
+
 void TaskGraph::generateTaskSpace(std::size_t indent)
 {
   BOLT_FUNC(indent, verbose_, "TaskGraph.generateTaskSpace()");

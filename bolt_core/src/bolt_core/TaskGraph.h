@@ -235,6 +235,9 @@ public:
    * Task Planning
    * --------------------------------------------------------------------------------- */
 
+  /** \brief Only create one level, basically provides non-task based planning but copies the graph */
+  void generateMonoLevelTaskSpace(std::size_t indent);
+
   /** \brief Copy the sparse graph into a new task graph, and mirror it into two layers */
   void generateTaskSpace(std::size_t indent);
 

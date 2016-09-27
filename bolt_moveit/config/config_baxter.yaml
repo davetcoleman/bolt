@@ -34,7 +34,7 @@ bolt_moveit:
   ee_tip_link: right_gripper_tip
 
   # other
-  use_task_planning: true  # cartesian hybrid planning
+  use_task_planning: false  # cartesian hybrid planning
   post_processing: false
   post_processing_interval: 20 # how often (in runs) to adjust the graphs
   seed_random: true

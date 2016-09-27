@@ -398,6 +398,10 @@ bool BoltMoveIt::runProblems()
         exit(-1);
       }
     }
+    else
+    {
+      bolt_->getTaskGraph()->generateMonoLevelTaskSpace(indent);
+    }
 
     // Do one plan
     plan();
@@ -475,7 +479,7 @@ bool BoltMoveIt::plan()
   // Solve -----------------------------------------------------------
 
   // Create the termination condition
-  double seconds = 600;
+  double seconds = 60;
   ob::PlannerTerminationCondition ptc = ob::timedPlannerTerminationCondition(seconds, 0.1);
 
   // Benchmark runtime

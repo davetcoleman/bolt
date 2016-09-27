@@ -659,8 +659,7 @@ bool BoltPlanner::convertVertexPathToStatePath(std::vector<TaskVertex> &vertexPa
 
 bool BoltPlanner::simplifyPath(og::PathGeometric &path, Termination &ptc, std::size_t indent)
 {
-  BOLT_FUNC(indent, verbose_, "BoltPlanner: simplifyPath()");
-  BOLT_ERROR(indent, true, "BoltPlanner: simplifyPath() - why no task??");
+  BOLT_FUNC(indent, verbose_, "BoltPlanner: simplifyPath(): non-task version");
 
   time::point simplifyStart = time::now();
   std::size_t numStates = path.getStateCount();
@@ -669,8 +668,8 @@ bool BoltPlanner::simplifyPath(og::PathGeometric &path, Termination &ptc, std::s
   double simplifyTime = time::seconds(time::now() - simplifyStart);
 
   int diff = numStates - path.getStateCount();
-  BOLT_DEBUG(indent, verbose_, "BoltPlanner: Path simplification took " << simplifyTime << " seconds and removed "
-                                                                        << diff << " states");
+  BOLT_DEBUG(indent, verbose_ || true, "BoltPlanner: Path simplification took " << simplifyTime << " seconds and removed "
+             << diff << " states");
 
   return true;
 }
