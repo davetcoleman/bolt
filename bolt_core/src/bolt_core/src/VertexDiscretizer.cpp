@@ -253,7 +253,7 @@ void VertexDiscretizer::generateVerticesThread(std::size_t threadID, double star
   base::State *candidateState = si->getStateSpace()->allocState();
 
   // Prepare for recursion
-  std::vector<double> values(si->getStateSpace()->getDimension(), 0);
+  std::vector<double> values(si->getStateSpace()->getDimension(), /*default value*/0);
 
   // Customize for different state spaces TODO more generic
   const std::size_t dim = si->getStateSpace()->getDimension();

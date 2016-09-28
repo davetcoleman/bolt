@@ -418,16 +418,17 @@ bool SparseGenerator::addSample(CandidateData &candidateD, std::size_t threadID,
 
       double duration = time::seconds(time::now() - timeRandSamplesStarted_);
       double addHz = numRandSamplesAdded_ / duration;
-      BOLT_DEBUG(indent, true, "Adding samples at rate: " << addHz << " hz");
 
       // Change save interval based on addition rate
-      const double saveEveryXMinutes = pow(2, si_->getStateDimension() * 1.5);
-      std::cout << "saveEveryXMinutes: " << saveEveryXMinutes << std::endl;
-      const std::size_t saveEveryXNodeAdditions = saveEveryXMinutes / addHz;
-      std::cout << "saveEveryXNodeAdditions: " << saveEveryXNodeAdditions << std::endl;
+      const double saveEveryXSeconds = pow(2, si_->getStateDimension());
+      const std::size_t saveEveryXNodeAdditions = saveEveryXSeconds / addHz;
       saveInterval_ = saveEveryXNodeAdditions;
 
-      // copyPasteState();
+      BOLT_DEBUG(indent, true, "Adding samples at rate: " << addHz << " hz");
+      BOLT_DEBUG(indent, true, "saveEveryXMinutes: " << saveEveryXSeconds / 60.0);
+      BOLT_DEBUG(indent, true, "saveEveryXNodeAdditions: " << saveEveryXNodeAdditions);
+
+      //copyPasteState();
     }
 
     // Increment statistics
@@ -474,7 +475,7 @@ bool SparseGenerator::addSample(CandidateData &candidateD, std::size_t threadID,
           if (!sparseCriteria_->getUseFourthCriteria())
           {
             BOLT_WARN(indent, true, "Pre-quality progress: " << percentComplete << "% (maxConsecutiveFailures: "
-                      << maxConsecutiveFailures_ << ")");
+                      << maxConsecutiveFailures_ << ", numRandSamplesAdded: " << numRandSamplesAdded_ << ")");
           }
           else
           {
@@ -1000,12 +1001,85 @@ void SparseGenerator::benchmarkSparseGraphGeneration(std::size_t indent)
   std::cout << std::endl;
 }
 
-void SparseGenerator::mirrorGraphDualArm(base::SpaceInformationPtr dualSpaceInfo)
+void SparseGenerator::mirrorGraphDualArm(base::SpaceInformationPtr dualSpaceInfo, std::size_t indent)
 {
-  // Create SparseGraph for dual arm
+  // Error check
+  BOLT_ASSERT(dualSpaceInfo->getStateSpace()->getDimension() == si_->getStateSpace()->getDimension() * 2,
+              "Number of dimensions in dual space info should be double the mono space info");
 
+  // -----------------------------------------------------------------------------
+  // Create SparseGraph for dual arm
+  SparseGraphPtr dualSparseGraph = SparseGraphPtr(new SparseGraph(dualSpaceInfo, visual_));
+
+  // Load criteria used to determine if samples are saved or rejected
+  // TODO: is Criteria actually needed?
+  SparseCriteriaPtr dualSparseCriteria = SparseCriteriaPtr(new SparseCriteria(dualSparseGraph));
+
+  // Give the sparse graph reference to the criteria, because sometimes it needs data from there
+  dualSparseGraph->setSparseCriteria(sparseCriteria_);
+
+  // -----------------------------------------------------------------------------
   // Insert mono SparseGraph into dual SparseGraph
 
+  // Record a mapping from SparseVertex to the SparseVertex
+  //std::vector<SparseVertex> sparseToSparseVertex0(sg_->getNumVertices());
+
+  // Loop through every vertex in sparse graph and copy twice to task graph
+  BOLT_DEBUG(indent + 2, true, "Adding " << sg_->getNumVertices() << " sparse graph vertices into dual arm graph");
+  foreach (SparseVertex sparseV1, boost::vertices(sg_->getGraph()))
+  {
+    // The first thread number of verticies are used for queries and should be skipped
+    if (sparseV1 < sg_->getNumQueryVertices())
+      continue;
+
+    const base::State *state1 = sg_->getState(sparseV1);
+
+    foreach (SparseVertex sparseV2, boost::vertices(sg_->getGraph()))
+    {
+      // The first thread number of verticies are used for queries and should be skipped
+      if (sparseV2 < sg_->getNumQueryVertices())
+        continue;
+
+      const base::State *state2 = sg_->getState(sparseV1);
+
+      // Create dual state
+      const base::State *stateCombined = combineStates(state1, state2, dualSpaceInfo, indent);
+
+      // Create level 0 vertex
+      VertexLevel level = 0;
+      //SparseVertex taskV0 = dualSparseGraph->addVertex(stateCombined, type, level, indent);
+    }
+  }
+
+  // Loop through every edge in sparse graph and copy to task graph
+  // BOLT_DEBUG(indent + 2, vGenerateSparse_, "Adding task space edges");
+  // foreach (const SparseEdge sparseE, boost::edges(sg_->getGraph()))
+  // {
+  //   const SparseVertex sparseE_v0 = boost::source(sparseE, sg_->getGraph());
+  //   const SparseVertex sparseE_v2 = boost::target(sparseE, sg_->getGraph());
+  //   EdgeType type = sg_->getEdgeTypeProperty(sparseE);
+
+  //   // Error check
+  //   BOLT_ASSERT(sparseE_v0 >= sg_->getNumQueryVertices(), "Found query vertex in sparse graph that has an edge!");
+  //   BOLT_ASSERT(sparseE_v2 >= sg_->getNumQueryVertices(), "Found query vertex in sparse graph that has an edge!");
+
+  //   // Create level 0 edge
+  //   addEdge(sparseToSparseVertex0[sparseE_v0], sparseToSparseVertex0[sparseE_v2], type, indent);
+  // }
+
+}
+
+const base::State* SparseGenerator::combineStates(const base::State *state1, const base::State *state2,
+                                                       base::SpaceInformationPtr dualSpaceInfo, std::size_t indent)
+{
+  base::State *stateCombined = dualSpaceInfo->getStateSpace()->allocState();
+
+  std::vector<double> values(dualSpaceInfo->getStateSpace()->getDimension(), /*default value*/0);
+
+  // Get the values of the individual states
+
+  // Fill the state with current values
+  dualSpaceInfo->getStateSpace()->populateState(stateCombined, values);
 }
 
 }  // namespace bolt

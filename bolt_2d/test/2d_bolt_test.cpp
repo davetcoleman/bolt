@@ -33,12 +33,10 @@
  *********************************************************************/
 
 /* Author: Dave Coleman
-   Desc:   Testing for package bolt_2d
+   Desc:   Testing for package
 */
 
-/** TEMPLATE NOTES
-
-    EXAMPLES:
+/** EXAMPLES:
     EXPECT_FALSE(robot_state.hasFixedLinks());
     EXPECT_EQ(robot_state.getFixedLinksCount(), 0);
     EXPECT_TRUE(robot_state.getPrimaryFixedLink() == NULL);
@@ -55,21 +53,22 @@
 // Testing
 #include <gtest/gtest.h>
 
+// OMPL
+#include <bolt_core/Bolt.h>
+#include <ompl/base/StateSpace.h>
+#include <ompl/base/spaces/RealVectorStateSpace.h>
+
+/* Class to hold general test data ------------------------------------------------------ */
 class TestingBase
 {
 public:
   // A shared node handle
   // ros::NodeHandle nh_;
 
-  // For visualizing things in rviz
-  rviz_visual_tools::RvizVisualToolsPtr visual_tools_;
-
   bool initialize()
   {
-    visual_tools_.reset(new rviz_visual_tools::RvizVisualTools("base", "/rviz_visual_tools"));
-
     // Allow time to publish messages
-    ROS_INFO_STREAM_NAMED("test", "Waiting 4 seconds to start test...");
+    ROS_INFO_STREAM_NAMED("test", "Starting test...");
     return true;
   }
 };  // class
@@ -78,20 +77,77 @@ public:
 TestingBase base;
 
 /* Run tests ------------------------------------------------------------------------------ */
+
+// Initialize
 TEST(TestingBase, initialize)
 {
   ASSERT_TRUE(base.initialize());
 }
 
-TEST(TestingBase, name_of_this_test)
+TEST(TestingBase, get_2d_state_by_vector)
 {
-  base.visual_tools_->convertToXYZRPY(expected_affine, xyzrpy);
+  namespace ob = ompl::base;
+  namespace ot = ompl::tools;
+  namespace otb = ompl::tools::bolt;
+
+  // Setup 2D space
+  std::size_t dimensions_ = 2;
+  ob::StateSpacePtr space_ = ob::StateSpacePtr(new ob::RealVectorStateSpace(dimensions_));
+  EXPECT_TRUE(space_ != NULL);
+
+  // Setup bounds
+  ob::RealVectorBounds bounds(dimensions_);
+  bounds.setLow(0);
+  bounds.setHigh(100);
+  space_->as<ob::RealVectorStateSpace>()->setBounds(bounds);
+  space_->setup();
+
+  otb::BoltPtr bolt_ = otb::BoltPtr(new otb::Bolt(space_));
+  EXPECT_TRUE(bolt_ != NULL);
+  bolt_->setup();
+  ob::SpaceInformationPtr si_ = bolt_->getSpaceInformation();
+  EXPECT_TRUE(si_ != NULL);
+  EXPECT_TRUE(si_->isSetup());
+
+  // Example data
+  std::vector<double> values(space_->getDimension(), /*default value*/0);
+  values[0] = 98;
+  values[1] = 99;
+  EXPECT_TRUE(values.size() == 2);
+
+  // Create state
+  ob::State *candidateState = space_->allocState();
+  EXPECT_TRUE(candidateState != NULL);
+
+  // Populate state
+  space_->copyFromReals(candidateState, values);
+  EXPECT_TRUE(candidateState != NULL);
+
+  // Convert to real vector
+  ob::RealVectorStateSpace::StateType *real_state =
+    static_cast<ob::RealVectorStateSpace::StateType *>(candidateState);
+  EXPECT_TRUE(real_state != NULL);
+  EXPECT_TRUE(real_state->values[0]);
+  EXPECT_TRUE(real_state->values[1]);
+  EXPECT_TRUE(real_state->values[0] == 98);
+  EXPECT_TRUE(real_state->values[1] == 99);
+
+  // Get value without real vector
+  EXPECT_TRUE((*space_->getValueAddressAtIndex(candidateState, 0)) == 98);
+  EXPECT_TRUE((*space_->getValueAddressAtIndex(candidateState, 1)) == 99);
+
+  // Get values into a vector again
+  std::vector<double> output_values;
+  space_->copyToReals(output_values, candidateState);
+  EXPECT_TRUE(output_values.size() == 2);
+  EXPECT_TRUE(output_values[0] == 98);
+  EXPECT_TRUE(output_values[1] == 99);
 }
 
 /* Main  ------------------------------------------------------------------------------------- */
 int main(int argc, char** argv)
 {
   testing::InitGoogleTest(&argc, argv);
-  ros::init(argc, argv, "2d_test");
+  ros::init(argc, argv, "ros_test");
   return RUN_ALL_TESTS();
 }

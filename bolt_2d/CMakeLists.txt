@@ -62,12 +62,12 @@ target_link_libraries(${PROJECT_NAME}
 
 if(CATKIN_ENABLE_TESTING)
 
-  # add_rostest_gtest(2d_test test/2d_test.cpp)
-  # target_link_libraries(2d_test
-  #   ${PROJECT_NAME}
-  #   ${catkin_LIBRARIES}
-  #   ${Boost_LIBRARIES}
-  # )
+  catkin_add_gtest(2d_bolt_test test/2d_bolt_test.cpp)
+  target_link_libraries(2d_bolt_test
+    ${PROJECT_NAME}
+    ${catkin_LIBRARIES}
+    ${Boost_LIBRARIES}
+  )
 
 endif()
 

@@ -56,7 +56,7 @@ bolt_moveit:
 sparse_generator:
 # VAR1
   fourth_criteria_after_failures: 5000 # mode change to 4th criteria after this many failures
-  terminate_after_failures: 1000 # total failures, including 4th criteria
+  terminate_after_failures: 10000 # total failures, including 4th criteria
 # VAR3
   use_discretized_samples: true
   use_random_samples: true
@@ -108,13 +108,13 @@ sparse_graph:
     add: false # debug when addVertex() and addEdge() are called
     search: false
   visualize:
-    spars_graph: false
+    spars_graph: true
     spars_graph_speed: 0.000001 # if 0, does not animate but only single image draw
     database_vertices: true # must have spars_graph enabled
     database_edges: true # must have spars_graph enabled
     database_coverage: false # the grey circles around vertices, must have spars_graph enabled
     projection: false # show the joint space in a nD grid
-    graph_after_loading: false # show graph after loading from file (can be slow!)
+    graph_after_loading: true # show graph after loading from file (can be slow!)
     quality_path_smoothing: false # simplification
     astar: false # show node expansions and openings
     astar_speed: 0.01 # how many seconds to wait between each visualization

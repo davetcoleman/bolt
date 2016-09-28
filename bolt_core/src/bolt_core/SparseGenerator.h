@@ -135,7 +135,9 @@ public:
   void benchmarkVisualizeSampling(std::size_t indent = 0);
   void benchmarkSparseGraphGeneration(std::size_t indent = 0);
 
-  void mirrorGraphDualArm(base::SpaceInformationPtr dualSpaceInfo);
+  void mirrorGraphDualArm(base::SpaceInformationPtr dualSpaceInfo, std::size_t indent);
+  const base::State* combineStates(const base::State *state1, const base::State *state2,
+                                   base::SpaceInformationPtr dualSpaceInfo, std::size_t indent);
 
   /** \brief Getter for vertexDiscretizer */
   VertexDiscretizerPtr &getVertexDiscretizer()
@@ -209,7 +211,7 @@ protected:
   std::vector<double> avgPathQuality_;
 
   /** \brief How often to save */
-  std::size_t saveInterval_ = 1000;
+  std::size_t saveInterval_ = 10;
 
 public:
   bool verbose_ = false;

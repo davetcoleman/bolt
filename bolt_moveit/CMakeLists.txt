@@ -14,10 +14,8 @@ find_package(catkin REQUIRED COMPONENTS
   rosparam_shortcuts
   bolt_core
   tf_conversions
-  # descartes_core
-  # descartes_planner
-  # descartes_moveit
-  #bolt_ur5
+  rostest
+  roslint
 )
 
 find_package(Eigen3 REQUIRED)
@@ -36,8 +34,6 @@ catkin_package(
     ${EIGEN3_INCLUDE_DIR}
     include
   LIBRARIES
-    ${PROJECT_NAME}_cart_path_planner
-    ${PROJECT_NAME}_imarker_robot_state
     ${PROJECT_NAME}
 )
 
@@ -117,6 +113,17 @@ target_link_libraries(${PROJECT_NAME}_test_pose_distance
 #############
 ## Testing ##
 #############
+
+if(CATKIN_ENABLE_TESTING)
+
+  catkin_add_gtest(moveit_bolt_test test/moveit_bolt_test.cpp)
+  target_link_libraries(moveit_bolt_test
+    ${PROJECT_NAME}
+    ${catkin_LIBRARIES}
+    ${Boost_LIBRARIES}
+  )
+
+endif()
 
 ## Test for correct C++ source code
 roslint_cpp()

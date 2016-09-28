@@ -15,24 +15,6 @@
     local-name: rosparam_shortcuts
     uri: https://github.com/davetcoleman/rosparam_shortcuts.git
     version: kinetic-devel
-
-# Others Code that is not released
-# - git:
-#     local-name: descartes
-#     uri: https://github.com/davetcoleman/descartes.git
-#     version: indigo-all-all
-# - git:
-#     local-name: hilgendorf
-#     uri: https://github.com/davetcoleman/hilgendorf.git
-#     version: indigo-dave
-# - git:
-#     local-name: robotiq
-#     uri: https://github.com/davetcoleman/robotiq.git
-#     version: jade-all
-# - git:
-#     local-name: universal_robot
-#     uri: https://github.com/davetcoleman/universal_robot.git
-#     version: indigo-dave
 - git:
     local-name: baxter_cpp
     uri: https://github.com/davetcoleman/baxter_cpp.git
@@ -46,7 +28,7 @@
 - git:
     local-name: bolt
     uri: https://github.com/davetcoleman/bolt.git
-    version: jade-devel
+    version: kinetic-devel
 - git:
     local-name: moveit_dashboard
     uri: https://github.com/davetcoleman/moveit_dashboard.git
@@ -55,7 +37,6 @@
     local-name: ompl
     uri: https://github.com/davetcoleman/ompl.git
     version: bolt
-
 - git:
     local-name: moveit
     uri: https://github.com/ros-planning/moveit.git

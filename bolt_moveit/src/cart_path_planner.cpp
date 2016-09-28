@@ -250,9 +250,8 @@ bool CartPathPlanner::rotateOnAxis(const Eigen::Affine3d& pose, const Orientatio
   for (int i = num_steps * -0.5; i < num_steps * 0.5; ++i)
   {
     double rotation_amount = i * tolerance_increment_;
-    if (verbose)
-      std::cout << std::string(axis * 2, ' ') << "axis: " << axis << " i: " << i
-                << " rotation_amount: " << rotation_amount << " num_steps: " << num_steps << std::endl;
+    BOLT_DEBUG(indent, verbose, std::string(axis * 2, ' ') << "axis: " << axis << " i: " << i
+               << " rotation_amount: " << rotation_amount << " num_steps: " << num_steps);
 
     // clang-format off
     switch (axis)
@@ -360,7 +359,6 @@ bool CartPathPlanner::populateBoltGraph(ompl::tools::bolt::TaskGraphPtr task_gra
     BOLT_ERROR(indent, true, "Must have at least 2 poses in trajectory");
     return false;
   }
-  std::cout << "exact_poses_.size(): " << exact_poses_.size() << std::endl;
 
   // Remove any previous Cartesian vertices/edges by simply re-creating the whole task graph
   task_graph_->generateTaskSpace(indent);
