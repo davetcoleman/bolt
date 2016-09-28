@@ -1,3 +1,4 @@
 ls -a
+apt-get -qq install wget
 wget https://raw.githubusercontent.com/ros-gbp/ompl-release/debian/kinetic/xenial/ompl/package.xml -O ompl/package.xml
-apt-get remove ros-kinetic-ompl
+apt-get -qq remove ros-kinetic-ompl
