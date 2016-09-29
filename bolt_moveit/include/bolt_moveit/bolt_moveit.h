@@ -117,6 +117,10 @@ public:
 
   void testMotionValidator();
 
+  std::string getFilePath(const std::string& planning_group_name);
+
+  void mirrorGraph(std::size_t indent);
+
   // --------------------------------------------------------
 
   // A shared node handle
@@ -170,6 +174,7 @@ public:
   bool eliminate_dense_disjoint_sets_;
   bool check_valid_vertices_;
   bool display_disjoint_sets_;
+  bool mirror_graph_;
   bool benchmark_performance_;
   bool post_processing_;
   int post_processing_interval_;

@@ -76,6 +76,7 @@ BoltMoveIt::BoltMoveIt(const std::string &hostname, const std::string &package_p
   error += !rosparam_shortcuts::get(name_, rpnh, "eliminate_dense_disjoint_sets", eliminate_dense_disjoint_sets_);
   error += !rosparam_shortcuts::get(name_, rpnh, "check_valid_vertices", check_valid_vertices_);
   error += !rosparam_shortcuts::get(name_, rpnh, "display_disjoint_sets", display_disjoint_sets_);
+  error += !rosparam_shortcuts::get(name_, rpnh, "mirror_graph", mirror_graph_);
   error += !rosparam_shortcuts::get(name_, rpnh, "benchmark_performance", benchmark_performance_);
 
   // run type
@@ -235,24 +236,35 @@ bool BoltMoveIt::loadOMPL()
   experience_setup_->setup();
   assert(si_->isSetup());
 
-  // Set the database file location
-  std::string file_path = "";
-  std::string file_name;
-  if (benchmark_performance_)
-    file_name = "benchmark_";
-  if (is_bolt_)
-    file_name = file_name + "bolt_" + planning_group_name_ + "_" +
-                std::to_string(bolt_->getSparseCriteria()->sparseDeltaFraction_) + "_database";
-  else
-    file_name = file_name + " thunder_" + planning_group_name_ + "_database";
-  moveit_ompl::getFilePath(file_path, file_name, "ros/ompl_storage");
-  experience_setup_->setFilePath(file_path);  // this is here because its how we do it in moveit_ompl
+  experience_setup_->setFilePath(getFilePath(planning_group_name_));  // this is here because its how we do it in moveit_ompl
 
   // Create start and goal states
   ompl_start_ = space_->allocState();
   ompl_goal_ = space_->allocState();
 
   return true;
+}
+
+std::string BoltMoveIt::getFilePath(const std::string& planning_group_name)
+{
+  // Set the database file location
+  std::string file_path;
+  std::string file_name;
+  if (benchmark_performance_)
+  {
+    file_name = "benchmark_";
+  }
+  if (is_bolt_)
+  {
+    file_name = file_name + "bolt_" + planning_group_name + "_" +
+                std::to_string(bolt_->getSparseCriteria()->sparseDeltaFraction_) + "_database";
+  }
+  else
+  {
+    file_name = file_name + " thunder_" + planning_group_name + "_database";
+  }
+  moveit_ompl::getFilePath(file_path, file_name, "ros/ompl_storage");
+  return file_path;
 }
 
 bool BoltMoveIt::loadData()
@@ -288,6 +300,8 @@ bool BoltMoveIt::loadData()
 
 void BoltMoveIt::run()
 {
+  std::size_t indent = 0;
+
   // Benchmark performance
   if (benchmark_performance_)
   {
@@ -341,6 +355,12 @@ void BoltMoveIt::run()
   //   experience_setup_->getSparseGraph()->removeInvalidVertices();
   //   experience_setup_->getSparseGraph()->saveIfChanged();
   // }
+
+  if (mirror_graph_)
+  {
+    mirrorGraph(indent);
+    exit(0);
+  }
 
   // Run the demo
   if (!run_problems_)
@@ -923,6 +943,31 @@ void BoltMoveIt::testMotionValidator()
                                                        *moveit_goal_);
 
   std::cout << "motion in collision: " << res.collision << std::endl;
+}
+
+void BoltMoveIt::mirrorGraph(std::size_t indent)
+{
+  const std::string planning_group_name = "both_arms";
+
+  // Choose planning group
+  moveit::core::JointModelGroup* both_arms = robot_model_->getJointModelGroup(planning_group_name);
+
+  // Setup space
+  moveit_ompl::ModelBasedStateSpaceSpecification mbss_spec(robot_model_, both_arms);
+
+  // Construct the state space we are planning in
+  ompl::base::StateSpacePtr space = ompl::base::StateSpacePtr(new moveit_ompl::ModelBasedStateSpace(mbss_spec));
+
+  // SpaceInfo
+  ompl::base::SpaceInformationPtr dualSpaceInfo = std::make_shared<ompl::base::SpaceInformation>(space);
+  si_->setup();
+
+  // Set the database file location
+  const std::string file_path = getFilePath(planning_group_name);
+
+  // Mirror graph
+  bolt_->getSparseGenerator()->mirrorGraphDualArm(dualSpaceInfo, file_path, indent);
+  BOLT_INFO(indent, true, "Done mirroring graph!");
 }
 
 }  // namespace bolt_moveit

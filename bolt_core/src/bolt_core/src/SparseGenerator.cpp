@@ -1002,7 +1002,7 @@ void SparseGenerator::benchmarkSparseGraphGeneration(std::size_t indent)
   std::cout << std::endl;
 }
 
-void SparseGenerator::mirrorGraphDualArm(base::SpaceInformationPtr dualSpaceInfo, std::size_t indent)
+void SparseGenerator::mirrorGraphDualArm(base::SpaceInformationPtr dualSpaceInfo, const std::string& outputFile, std::size_t indent)
 {
   // Error check
   BOLT_ASSERT(dualSpaceInfo->getStateSpace()->getDimension() == si_->getStateSpace()->getDimension() * 2,
@@ -1023,7 +1023,7 @@ void SparseGenerator::mirrorGraphDualArm(base::SpaceInformationPtr dualSpaceInfo
   // Insert mono SparseGraph into dual SparseGraph
 
   // Map from every sparseV1 vertex to every vertex in the new graph that has the same roots
-  std::vector<std::vector<SparseVertex>> vertexMapMatrix;
+  std::vector<std::vector<SparseVertex>> vertexMapMatrix(sg_->getNumVertices());
 
   // Loop through every vertex in sparse graph and copy twice to task graph
   BOLT_DEBUG(indent + 2, true, "Adding " << sg_->getNumVertices() << " sparse graph vertices into dual arm graph");
@@ -1032,25 +1032,26 @@ void SparseGenerator::mirrorGraphDualArm(base::SpaceInformationPtr dualSpaceInfo
     // The first thread number of verticies are used for queries and should be skipped
     if (sparseV1 < sg_->getNumQueryVertices())
       continue;
-
+    std::cout << "1 " << std::endl;
     const base::State *state1 = sg_->getState(sparseV1);
-
+    std::cout << "2 " << std::endl;
     // Record a mapping from the old vertex index to the new index
     std::vector<SparseVertex> sparseV2ToDualVertex(sg_->getNumVertices(), /* initial value */ 0);
-
+    std::cout << "3 " << std::endl;
     // Loop through every vertex again
     std::size_t skippedStates = 0;
     foreach (SparseVertex sparseV2, boost::vertices(sg_->getGraph()))
     {
+      std::cout << "4 " << std::endl;
       // The first thread number of verticies are used for queries and should be skipped
       if (sparseV2 < sg_->getNumQueryVertices())
         continue;
 
       const base::State *state2 = sg_->getState(sparseV1);
-
+      std::cout << "5 " << std::endl;
       // Create dual state
-      const base::State *stateCombined = combineStates(state1, state2, dualSpaceInfo, indent);
-
+      base::State *stateCombined = combineStates(state1, state2, dualSpaceInfo, indent);
+      std::cout << "6 " << std::endl;
       // Check that new state is still valid
       if (!dualSpaceInfo->isValid(stateCombined))
       {
@@ -1058,12 +1059,13 @@ void SparseGenerator::mirrorGraphDualArm(base::SpaceInformationPtr dualSpaceInfo
         skippedStates++;
         continue;
       }
-
+      std::cout << "6 " << std::endl;
       // Insert into new graph
       SparseVertex vertexCombined = dualSparseGraph->addVertex(stateCombined, DISCRETIZED, indent);
-
+      std::cout << "7 " << std::endl;
       // Short term mapping
       sparseV2ToDualVertex[sparseV2] = vertexCombined;
+      std::cout << "8 " << std::endl;
     }
     BOLT_DEBUG(indent, true, "Skipped " << skippedStates << " states out of total " << sg_->getNumRealVertices());
 
@@ -1071,8 +1073,8 @@ void SparseGenerator::mirrorGraphDualArm(base::SpaceInformationPtr dualSpaceInfo
     vertexMapMatrix[sparseV1] = sparseV2ToDualVertex;
 
     // Loop through every edge in sparse graph and connect this subgraph
-    BOLT_DEBUG(indent + 2, vGenerateSparse_, "Adding edges for vertex " << sparseV1);
-    addEdgesForDim(sparseV2ToDualVertex, dualSparseGraph, dualSpaceInfo);
+    BOLT_DEBUG(indent + 2, true, "Adding edges for vertex " << sparseV1);
+    addEdgesForDim(sparseV2ToDualVertex, dualSparseGraph, dualSpaceInfo, indent);
 
     visual_->waitForUserFeedback("Done copying edges for inner loop");
 
@@ -1113,16 +1115,18 @@ void SparseGenerator::mirrorGraphDualArm(base::SpaceInformationPtr dualSpaceInfo
     }
   }
 
+  // Save graph
+  dualSparseGraph->setFilePath(outputFile);
+  dualSparseGraph->save(indent);
+
+
   BOLT_DEBUG(indent, true, "Skipped " << skippedEdges << " edges because duplicate, " << skippedInvalidEdges
              << " due to collision, out of total: " << sg_->getNumEdges());
 }
 
-const base::State *SparseGenerator::combineStates(const base::State *state1, const base::State *state2,
-                                                  base::SpaceInformationPtr dualSpaceInfo, std::size_t indent)
+base::State *SparseGenerator::combineStates(const base::State *state1, const base::State *state2,
+                                            base::SpaceInformationPtr dualSpaceInfo, std::size_t indent)
 {
-  BOLT_ASSERT(values_combined.size() == si_->getStateSpace()->getDimension() * 2, "Mismatched state dimension size "
-                                                                                  "combined");
-
   base::State *stateCombined = dualSpaceInfo->getStateSpace()->allocState();
 
   // Get the values of the individual states
@@ -1140,8 +1144,10 @@ const base::State *SparseGenerator::combineStates(const base::State *state1, con
 }
 
 void SparseGenerator::addEdgesForDim(std::vector<SparseVertex> &sparseV2ToDualVertex, SparseGraphPtr &dualSparseGraph,
-                                     base::SpaceInformationPtr dualSpaceInfo)
+                                     base::SpaceInformationPtr dualSpaceInfo, std::size_t indent)
 {
+  BOLT_FUNC(indent, true, "addEdgesForDim");
+
   // Loop through every edge in sparse graph and connect this subgraph
   std::size_t skippedEdges = 0;
   std::size_t skippedInvalidEdges = 0;
