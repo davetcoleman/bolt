@@ -152,10 +152,10 @@ TEST(TestingBase, get_7d_state_by_vector)
 
   // SpaceInfo
   //ob::SpaceInformationPtr si_ = bolt_->getSpaceInformation();
-  ob::SpaceInformationPtr si_ = std::make_shared<base::SpaceInformation>(space_);
+  ob::SpaceInformationPtr si_ = std::make_shared<ob::SpaceInformation>(space_);
   EXPECT_TRUE(si_ != NULL);
+  si_->setup();
   EXPECT_TRUE(si_->isSetup());
-
 
   // Example data
   EXPECT_TRUE(space_->getDimension() == 7);
@@ -190,7 +190,7 @@ TEST(TestingBase, get_7d_state_by_vector)
   // Get value without real vector
   EXPECT_TRUE((*space_->getValueAddressAtIndex(candidateState, 0)) == 0.1);
   EXPECT_TRUE((*space_->getValueAddressAtIndex(candidateState, 1)) == 0.2);
-  EXPECT_TRUE((*space_->getValueAddressAtIndex(candidateState, 7)) == 0.3);
+  EXPECT_TRUE((*space_->getValueAddressAtIndex(candidateState, 6)) == 0.7);
 
   // Get values into a vector again
   std::vector<double> output_values;
