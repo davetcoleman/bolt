@@ -146,14 +146,16 @@ TEST(TestingBase, get_7d_state_by_vector)
   EXPECT_TRUE(space_ != NULL);
 
   // SimpleSetup
-  otb::BoltPtr bolt_ = otb::BoltPtr(new otb::Bolt(space_));
-  EXPECT_TRUE(bolt_ != NULL);
-  bolt_->setup();
+  // otb::BoltPtr bolt_ = otb::BoltPtr(new otb::Bolt(space_));
+  // EXPECT_TRUE(bolt_ != NULL);
+  // bolt_->setup();
 
   // SpaceInfo
-  ob::SpaceInformationPtr si_ = bolt_->getSpaceInformation();
+  //ob::SpaceInformationPtr si_ = bolt_->getSpaceInformation();
+  ob::SpaceInformationPtr si_ = std::make_shared<base::SpaceInformation>(space_);
   EXPECT_TRUE(si_ != NULL);
   EXPECT_TRUE(si_->isSetup());
+
 
   // Example data
   EXPECT_TRUE(space_->getDimension() == 7);
