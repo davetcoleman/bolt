@@ -64,7 +64,7 @@ if(CATKIN_ENABLE_TESTING)
 
   catkin_add_gtest(2d_bolt_test test/2d_bolt_test.cpp)
   target_link_libraries(2d_bolt_test
-    ${PROJECT_NAME}
+    #${PROJECT_NAME}
     ${catkin_LIBRARIES}
     ${Boost_LIBRARIES}
   )

@@ -122,6 +122,7 @@ if(CATKIN_ENABLE_TESTING)
     ${catkin_LIBRARIES}
     ${Boost_LIBRARIES}
   )
+  #add_rostest(test/moveit_bolt_test.test)
 
 endif()
 

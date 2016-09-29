@@ -53,6 +53,11 @@
 // Testing
 #include <gtest/gtest.h>
 
+// MoveIt
+#include <moveit/planning_scene_monitor/planning_scene_monitor.h>
+#include <moveit/rdf_loader/rdf_loader.h>
+#include <moveit_ompl/model_based_state_space.h>
+
 // OMPL
 #include <bolt_core/Bolt.h>
 #include <ompl/base/StateSpace.h>
@@ -62,13 +67,51 @@
 class TestingBase
 {
 public:
-  // A shared node handle
-  // ros::NodeHandle nh_;
+  robot_model_loader::RobotModelLoaderPtr robot_model_loader_;
+  robot_model::RobotModelPtr robot_model_;
+  planning_scene::PlanningScenePtr planning_scene_;
+  moveit::core::RobotStatePtr robot_state_;
+  moveit::core::JointModelGroup *jmg_;
 
   bool initialize()
   {
-    // Allow time to publish messages
-    ROS_INFO_STREAM_NAMED("test", "Starting test...");
+    std::vector<std::string> xacro_args;
+
+    static const std::string URDF_PACKAGE = "baxter_description";
+    static const std::string URDF_PATH = "urdf/baxter.urdf.xacro";
+    std::string urdf_string;
+    if (!rdf_loader::RDFLoader::loadPkgFileToString(urdf_string, URDF_PACKAGE, URDF_PATH, xacro_args))
+    {
+      ROS_ERROR_STREAM("Could not load URDF from file");
+      return false;
+    }
+
+    static const std::string SRDF_PACKAGE = "baxter_moveit_config";
+    static const std::string SRDF_PATH = "config/baxter.srdf";
+    std::string srdf_string;
+    if (!rdf_loader::RDFLoader::loadPkgFileToString(srdf_string, SRDF_PACKAGE, SRDF_PATH, xacro_args))
+    {
+      ROS_ERROR_STREAM("Could not load SRDF from file");
+      return false;
+    }
+
+    // Robot model loader
+    robot_model_loader::RobotModelLoader::Options options(urdf_string, srdf_string);
+    robot_model_loader_.reset(new robot_model_loader::RobotModelLoader(options));
+
+    // Load the robot model
+    robot_model_ = robot_model_loader_->getModel();  // Get a shared pointer to the robot
+
+    // Choose planning group
+    jmg_ = robot_model_->getJointModelGroup("right_arm");
+
+    // Create the planning scene
+    planning_scene_.reset(new planning_scene::PlanningScene(robot_model_));
+
+    // Create initial robot state
+    robot_state_.reset(new moveit::core::RobotState(planning_scene_->getCurrentState()));
+
+    ROS_INFO_STREAM_NAMED("test", "Done initializing MoveIt!");
     return true;
   }
 };  // class
@@ -82,38 +125,47 @@ TestingBase base;
 TEST(TestingBase, initialize)
 {
   ASSERT_TRUE(base.initialize());
+  ASSERT_TRUE(base.robot_model_ != NULL);
+  ASSERT_TRUE(base.robot_model_->getName() == "baxter");
+  ASSERT_TRUE(base.planning_scene_ != NULL);
+  ASSERT_TRUE(base.robot_state_ != NULL);
+  ASSERT_TRUE(base.jmg_ != NULL);
 }
 
-TEST(TestingBase, get_2d_state_by_vector)
+TEST(TestingBase, get_7d_state_by_vector)
 {
   namespace ob = ompl::base;
   namespace ot = ompl::tools;
   namespace otb = ompl::tools::bolt;
 
-  // Setup 2D space
-  std::size_t dimensions_ = 2;
-  ob::StateSpacePtr space_ = ob::StateSpacePtr(new ob::RealVectorStateSpace(dimensions_));
+  // Setup space
+  moveit_ompl::ModelBasedStateSpaceSpecification mbss_spec(base.robot_model_, base.jmg_);
+
+  // Construct the state space we are planning in
+  ob::StateSpacePtr space_ = ob::StateSpacePtr(new moveit_ompl::ModelBasedStateSpace(mbss_spec));
   EXPECT_TRUE(space_ != NULL);
 
-  // Setup bounds
-  ob::RealVectorBounds bounds(dimensions_);
-  bounds.setLow(0);
-  bounds.setHigh(100);
-  space_->as<ob::RealVectorStateSpace>()->setBounds(bounds);
-  space_->setup();
-
+  // SimpleSetup
   otb::BoltPtr bolt_ = otb::BoltPtr(new otb::Bolt(space_));
   EXPECT_TRUE(bolt_ != NULL);
   bolt_->setup();
+
+  // SpaceInfo
   ob::SpaceInformationPtr si_ = bolt_->getSpaceInformation();
   EXPECT_TRUE(si_ != NULL);
   EXPECT_TRUE(si_->isSetup());
 
   // Example data
+  EXPECT_TRUE(space_->getDimension() == 7);
   std::vector<double> values(space_->getDimension(), /*default value*/0);
-  values[0] = 98;
-  values[1] = 99;
-  EXPECT_TRUE(values.size() == 2);
+  values[0] = 0.1;
+  values[1] = 0.2;
+  values[2] = 0.3;
+  values[3] = 0.4;
+  values[4] = 0.5;
+  values[5] = 0.6;
+  values[6] = 0.7;
+  EXPECT_TRUE(values.size() == 7);
 
   // Create state
   ob::State *candidateState = space_->allocState();
@@ -129,25 +181,32 @@ TEST(TestingBase, get_2d_state_by_vector)
   EXPECT_TRUE(real_state != NULL);
   EXPECT_TRUE(real_state->values[0]);
   EXPECT_TRUE(real_state->values[1]);
-  EXPECT_TRUE(real_state->values[0] == 98);
-  EXPECT_TRUE(real_state->values[1] == 99);
+  EXPECT_TRUE(real_state->values[0] == 0.1);
+  EXPECT_TRUE(real_state->values[1] == 0.2);
+  EXPECT_TRUE(real_state->values[6] == 0.7);
 
   // Get value without real vector
-  EXPECT_TRUE((*space_->getValueAddressAtIndex(candidateState, 0)) == 98);
-  EXPECT_TRUE((*space_->getValueAddressAtIndex(candidateState, 1)) == 99);
+  EXPECT_TRUE((*space_->getValueAddressAtIndex(candidateState, 0)) == 0.1);
+  EXPECT_TRUE((*space_->getValueAddressAtIndex(candidateState, 1)) == 0.2);
+  EXPECT_TRUE((*space_->getValueAddressAtIndex(candidateState, 7)) == 0.3);
 
   // Get values into a vector again
   std::vector<double> output_values;
   space_->copyToReals(output_values, candidateState);
-  EXPECT_TRUE(output_values.size() == 2);
-  EXPECT_TRUE(output_values[0] == 98);
-  EXPECT_TRUE(output_values[1] == 99);
+  EXPECT_TRUE(output_values.size() == 7);
+  EXPECT_TRUE(output_values[0] == 0.1);
+  EXPECT_TRUE(output_values[1] == 0.2);
+  EXPECT_TRUE(output_values[2] == 0.3);
+  EXPECT_TRUE(output_values[3] == 0.4);
+  EXPECT_TRUE(output_values[4] == 0.5);
+  EXPECT_TRUE(output_values[5] == 0.6);
+  EXPECT_TRUE(output_values[6] == 0.7);
 }
 
 /* Main  ------------------------------------------------------------------------------------- */
 int main(int argc, char** argv)
 {
   testing::InitGoogleTest(&argc, argv);
-  ros::init(argc, argv, "ros_test");
+  ros::init(argc, argv, "moveit_bolt_test");
   return RUN_ALL_TESTS();
 }

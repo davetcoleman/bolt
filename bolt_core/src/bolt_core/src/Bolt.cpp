@@ -65,9 +65,11 @@ Bolt::Bolt(const base::StateSpacePtr &space) : ExperienceSetup(space)
 
 void Bolt::initialize()
 {
-  OMPL_INFORM("Initializing Bolt Framework");
+  std::size_t indent = 0;
+  BOLT_INFO(indent, true, "Initializing Bolt Framework");
 
   // Initalize visualizer class
+  BOLT_INFO(indent, verbose_, "Loading visualizer");
   visual_.reset(new Visualizer());
 
   recallEnabled_ = true;
@@ -75,22 +77,27 @@ void Bolt::initialize()
   filePath_ = std::move("unloaded");
 
   // Load the sparse graph datastructure
+  BOLT_INFO(indent, verbose_, "Loading SparseGraph");
   sparseGraph_.reset(new SparseGraph(si_, visual_));
 
   // Load criteria used to determine if samples are saved or rejected
+  BOLT_INFO(indent, verbose_, "Loading SparseCriteria");
   sparseCriteria_.reset(new SparseCriteria(sparseGraph_));
 
   // Give the sparse graph reference to the criteria, because sometimes it needs data from there
   sparseGraph_->setSparseCriteria(sparseCriteria_);
 
   // Load the generator of sparse vertices and edges, and give it reference to the criteria
+  BOLT_INFO(indent, verbose_, "Loading SparseGenerator");
   sparseGenerator_.reset(new SparseGenerator(sparseGraph_));
   sparseGenerator_->setSparseCriteria(sparseCriteria_);
 
   // Load the task graph used for combining multiple layers of sparse graph
+  BOLT_INFO(indent, verbose_, "Loading TaskGraph");
   taskGraph_.reset(new TaskGraph(sparseGraph_));
 
   // Load the Retrieve repair database. We do it here so that setRepairPlanner() works
+  BOLT_INFO(indent, verbose_, "Loading BoltPlanner");
   boltPlanner_ = BoltPlannerPtr(new BoltPlanner(si_, taskGraph_, visual_));
 
   std::size_t numThreads = boost::thread::hardware_concurrency();

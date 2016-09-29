@@ -230,6 +230,10 @@ protected:
   std::string benchmarkFilePath_;
 
 public:
+
+  /** \brief Verbose settings */
+  bool verbose_ = true;
+
   /** \brief Visualize original solution from graph before smoothing */
   bool visualizeRawTrajectory_ = false;
   /** \brief Visualize solution from graph after smoothing */

@@ -1416,7 +1416,7 @@ public:
       temp_values_[0] = x;
       temp_values_[1] = y;
       temp_values_[2] = 0.0;
-      si_->getStateSpace()->populateState(temp_state_, temp_values_);
+      si_->getStateSpace()->copyFromReals(temp_state_, temp_values_);
 
       // Find state's representative
       rep = bolt_->getSparseGraph()->getSparseRepresentative(temp_state_);

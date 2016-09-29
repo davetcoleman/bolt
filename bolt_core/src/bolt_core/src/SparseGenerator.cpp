@@ -1074,12 +1074,16 @@ const base::State* SparseGenerator::combineStates(const base::State *state1, con
 {
   base::State *stateCombined = dualSpaceInfo->getStateSpace()->allocState();
 
-  std::vector<double> values(dualSpaceInfo->getStateSpace()->getDimension(), /*default value*/0);
+  std::vector<double> values_combined(dualSpaceInfo->getStateSpace()->getDimension(), /*default value*/0);
+  BOLT_ASSERT(values_combined.size() == si_->getStateSpace()->getDimension() * 2, "Mismatched state dimension size combined");
 
   // Get the values of the individual states
+  std::vector<double> values1, values2;
+  si_->getStateSpace()->copyToReals(values1, state1);
+  si_->getStateSpace()->copyToReals(values2, state2);
 
   // Fill the state with current values
-  dualSpaceInfo->getStateSpace()->populateState(stateCombined, values);
+  dualSpaceInfo->getStateSpace()->copyFromReals(stateCombined, values_combined);
 }
 
 }  // namespace bolt

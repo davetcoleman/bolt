@@ -367,7 +367,7 @@ void VertexDiscretizer::createState(std::size_t threadID, std::vector<double> &v
   BOLT_FUNC(indent, vThread_, "createState()");
 
   // Fill the state with current values
-  si->getStateSpace()->populateState(candidateState, values);
+  si->getStateSpace()->copyFromReals(candidateState, values);
 
   bool useClearance = (sg_->getObstacleClearance() > std::numeric_limits<double>::epsilon());
 

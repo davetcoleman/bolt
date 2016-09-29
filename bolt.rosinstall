@@ -39,8 +39,8 @@
     version: bolt
 - git:
     local-name: moveit
-    uri: https://github.com/ros-planning/moveit.git
-    version: kinetic-devel
+    uri: https://github.com/davetcoleman/moveit.git
+    version: kinetic-all
 - git:
     local-name: moveit_msgs
     uri: https://github.com/ros-planning/moveit_msgs.git
