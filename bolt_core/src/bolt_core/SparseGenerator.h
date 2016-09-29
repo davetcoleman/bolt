@@ -138,6 +138,8 @@ public:
   void mirrorGraphDualArm(base::SpaceInformationPtr dualSpaceInfo, std::size_t indent);
   const base::State* combineStates(const base::State *state1, const base::State *state2,
                                    base::SpaceInformationPtr dualSpaceInfo, std::size_t indent);
+  void addEdgesForDim(std::vector<SparseVertex> &sparseV2ToDualVertex, SparseGraphPtr &dualSparseGraph,
+                      base::SpaceInformationPtr dualSpaceInfo);
 
   /** \brief Getter for vertexDiscretizer */
   VertexDiscretizerPtr &getVertexDiscretizer()
