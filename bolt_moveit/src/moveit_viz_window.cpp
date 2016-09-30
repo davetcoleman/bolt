@@ -58,8 +58,10 @@ namespace og = ompl::geometric;
 
 namespace bolt_moveit
 {
-MoveItVizWindow::MoveItVizWindow(moveit_visual_tools::MoveItVisualToolsPtr visuals, ompl::base::SpaceInformationPtr si)
-  : name_("moveit_viz_window"), visuals_(visuals), si_(si)
+MoveItVizWindow::MoveItVizWindow(moveit_visual_tools::MoveItVisualToolsPtr visuals, ob::SpaceInformationPtr si)
+  : ot::VizWindow(si)
+  , name_("moveit_viz_window")
+  , visuals_(visuals)
 {
   // with this OMPL interface to Rviz all pubs must be manually triggered
   // visuals_->enableBatchPublishing(false);
@@ -67,12 +69,12 @@ MoveItVizWindow::MoveItVizWindow(moveit_visual_tools::MoveItVisualToolsPtr visua
   ROS_DEBUG_STREAM_NAMED(name_, "Initializing MoveItVizWindow()");
 }
 
-void MoveItVizWindow::state(const ompl::base::State* state, ot::VizSizes size, ot::VizColors color, double extra_data)
+void MoveItVizWindow::state(const ob::State* state, ot::VizSizes size, ot::VizColors color, double extra_data, ob::SpaceInformationPtr si)
 {
   // We do not use stateToPoint() because the publishRobotState() function might need the robot state in this function
   visuals_->loadSharedRobotState();
   moveit_ompl::ModelBasedStateSpacePtr mb_state_space =
-      std::static_pointer_cast<moveit_ompl::ModelBasedStateSpace>(si_->getStateSpace());
+      std::static_pointer_cast<moveit_ompl::ModelBasedStateSpace>(si->getStateSpace());
 
   // We must use the root_robot_state here so that the virtual_joint isn't affected
   mb_state_space->copyToRobotState(*visuals_->getRootRobotState(), state);
@@ -121,7 +123,7 @@ void MoveItVizWindow::state(const ompl::base::State* state, ot::VizSizes size, o
   }  // end switch
 }
 
-void MoveItVizWindow::states(std::vector<const ompl::base::State*> states, std::vector<ot::VizColors> colors,
+void MoveItVizWindow::states(std::vector<const ob::State*> states, std::vector<ot::VizColors> colors,
                              ot::VizSizes size)
 {
   if (size == ompl::tools::ROBOT)
@@ -147,7 +149,7 @@ void MoveItVizWindow::states(std::vector<const ompl::base::State*> states, std::
   visuals_->publishSpheres(std::move(sphere_points), std::move(sphere_colors), visuals_->intToRvizScale(size));
 }
 
-void MoveItVizWindow::edge(const ompl::base::State* stateA, const ompl::base::State* stateB, double cost)
+void MoveItVizWindow::edge(const ob::State* stateA, const ob::State* stateB, double cost)
 {
   // Error check
   if (si_->getStateSpace()->equalStates(stateA, stateB))
@@ -180,7 +182,7 @@ void MoveItVizWindow::edge(const ompl::base::State* stateA, const ompl::base::St
   visuals_->publishLine(stateToPoint(stateA), stateToPoint(stateB), visuals_->getColorScale(percent), radius / 2.0);
 }
 
-void MoveItVizWindow::edge(const ompl::base::State* stateA, const ompl::base::State* stateB, ot::VizSizes size,
+void MoveItVizWindow::edge(const ob::State* stateA, const ob::State* stateB, ot::VizSizes size,
                            ot::VizColors color)
 {
   visuals_->publishCylinder(stateToPoint(stateA), stateToPoint(stateB), visuals_->intToRvizColor(color),
@@ -272,7 +274,7 @@ bool MoveItVizWindow::publishSpheres(const og::PathGeometric& path, const rvt::c
   return visuals_->publishSpheres(points, color, scale, ns);
 }
 
-// bool MoveItVizWindow::publishStates(std::vector<const ompl::base::State*> states)
+// bool MoveItVizWindow::publishStates(std::vector<const ob::State*> states)
 // {
 //   visualization_msgs::Marker marker;
 //   // Set the frame ID and timestamp.
@@ -325,7 +327,7 @@ bool MoveItVizWindow::publishSpheres(const og::PathGeometric& path, const rvt::c
 //   return visuals_->publishMarker(marker);
 // }
 
-bool MoveItVizWindow::publishRobotState(const ompl::base::State* state)
+bool MoveItVizWindow::publishRobotState(const ob::State* state)
 {
   // Make sure a robot state is available
   visuals_->loadSharedRobotState();
@@ -340,7 +342,7 @@ bool MoveItVizWindow::publishRobotState(const ompl::base::State* state)
   return visuals_->publishRobotState(visuals_->getSharedRobotState());
 }
 
-// bool MoveItVizWindow::publishTrajectoryPath(const ompl::base::PlannerDataPtr& path, robot_model::JointModelGroup*
+// bool MoveItVizWindow::publishTrajectoryPath(const ob::PlannerDataPtr& path, robot_model::JointModelGroup*
 // jmg,
 //                                             const std::vector<const robot_model::LinkModel*>& tips,
 //                                             bool show_trajectory_animated)

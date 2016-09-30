@@ -76,7 +76,7 @@ public:
 
   /** \brief Visualize a state during runtime, externally */
   void state(const ompl::base::State* state, ompl::tools::VizSizes size, ompl::tools::VizColors color,
-             double extraData);
+             double extraData, ompl::base::SpaceInformationPtr si);
 
   /** \brief Visualize multiple states during runtime, externally */
   void states(std::vector<const ompl::base::State*> states, std::vector<ompl::tools::VizColors> colors,
@@ -278,12 +278,6 @@ public:
     jmg_ = jmg;
   }
 
-  /** \brief Getter for SpaceInformation */
-  const ompl::base::SpaceInformationPtr& getSpaceInformation() const
-  {
-    return si_;
-  }
-
   void setEEFLinkName(const std::string& name)
   {
     eef_link_name_ = name;
@@ -295,9 +289,6 @@ private:
 
   /** \brief Rviz visualization tools */
   moveit_visual_tools::MoveItVisualToolsPtr visuals_;
-
-  /** \brief Remember what space we are working in */
-  ompl::base::SpaceInformationPtr si_;
 
   // From bolt_moveit ------------------------------------------------------
 

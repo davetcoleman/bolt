@@ -50,7 +50,7 @@ Visualization Manager:
         - Attached Body Color: 150; 50; 150
           Class: moveit_rviz_plugin/RobotState
           Collision Enabled: true
-          Enabled: false
+          Enabled: true
           Links:
             All Links Enabled: true
             Expand Joint Details: false
@@ -323,7 +323,7 @@ Visualization Manager:
           Robot State Topic: /baxter/robot_state1
           Show All Links: true
           Show Highlights: true
-          Value: false
+          Value: true
           Visual Enabled: false
         - Class: rviz/MarkerArray
           Enabled: true
@@ -336,7 +336,7 @@ Visualization Manager:
         - Attached Body Color: 150; 50; 150
           Class: moveit_rviz_plugin/RobotState
           Collision Enabled: false
-          Enabled: false
+          Enabled: true
           Links:
             All Links Enabled: true
             Expand Joint Details: false
@@ -609,7 +609,7 @@ Visualization Manager:
           Robot State Topic: /baxter/robot_state2
           Show All Links: true
           Show Highlights: true
-          Value: false
+          Value: true
           Visual Enabled: true
         - Class: rviz/MarkerArray
           Enabled: true
@@ -3197,7 +3197,6 @@ Visualization Manager:
           Marker Topic: /baxter/cartesian_trajectory
           Name: Cart
           Namespaces:
-            Arrow: true
             Axis Path: true
             Cylinder: true
           Queue Size: 100
@@ -3239,22 +3238,22 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 2.31662178
+      Distance: 18.8977547
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.926472127
-        Y: -0.445648342
-        Z: 1.78813934e-07
+        X: 0
+        Y: 0
+        Z: 0
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.419797182
+      Pitch: 0.250398576
       Target Frame: robot_table_link
       Value: XYOrbit (rviz)
-      Yaw: 5.17856169
+      Yaw: 0.125398606
     Saved: ~
 Window Geometry:
   Displays:

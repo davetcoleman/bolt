@@ -917,8 +917,6 @@ void SparseGenerator::benchmarkRandValidSampling(std::size_t indent)
   OMPL_INFORM("  sampleUniform() took %f seconds (%f per run)", totalDurationSampler,
               totalDurationSampler / benchmarkRuns);
   OMPL_INFORM("  Percent valid: %f", validCount / double(benchmarkRuns) * 100);
-  std::cout << "-------------------------------------------------------" << std::endl;
-  std::cout << std::endl;
 }
 
 void SparseGenerator::benchmarkVisualizeSampling(std::size_t indent)
@@ -1002,7 +1000,9 @@ void SparseGenerator::benchmarkSparseGraphGeneration(std::size_t indent)
   std::cout << std::endl;
 }
 
-void SparseGenerator::mirrorGraphDualArm(base::SpaceInformationPtr dualSpaceInfo, const std::string& outputFile, std::size_t indent)
+void SparseGenerator::mirrorGraphDualArm(base::SpaceInformationPtr dualSpaceInfo,
+                                         base::SpaceInformationPtr leftArmSpaceInfo, const std::string &outputFile,
+                                         std::size_t indent)
 {
   // Error check
   BOLT_ASSERT(dualSpaceInfo->getStateSpace()->getDimension() == si_->getStateSpace()->getDimension() * 2,
@@ -1012,12 +1012,15 @@ void SparseGenerator::mirrorGraphDualArm(base::SpaceInformationPtr dualSpaceInfo
   // Create SparseGraph for dual arm
   SparseGraphPtr dualSparseGraph = SparseGraphPtr(new SparseGraph(dualSpaceInfo, visual_));
 
+  visual_->viz1()->deleteAllMarkers();
+  visual_->viz1()->trigger();
+
   // Load criteria used to determine if samples are saved or rejected
   // TODO: is Criteria actually needed?
-  //SparseCriteriaPtr dualSparseCriteria = SparseCriteriaPtr(new SparseCriteria(dualSparseGraph));
+  // SparseCriteriaPtr dualSparseCriteria = SparseCriteriaPtr(new SparseCriteria(dualSparseGraph));
 
   // Give the sparse graph reference to the criteria, because sometimes it needs data from there
-  //dualSparseGraph->setSparseCriteria(sparseCriteria_);
+  // dualSparseGraph->setSparseCriteria(sparseCriteria_);
 
   // -----------------------------------------------------------------------------
   // Insert mono SparseGraph into dual SparseGraph
@@ -1032,26 +1035,33 @@ void SparseGenerator::mirrorGraphDualArm(base::SpaceInformationPtr dualSpaceInfo
     // The first thread number of verticies are used for queries and should be skipped
     if (sparseV1 < sg_->getNumQueryVertices())
       continue;
-    std::cout << "1 " << std::endl;
+
     const base::State *state1 = sg_->getState(sparseV1);
-    std::cout << "2 " << std::endl;
+    visual_->viz1()->state(state1, tools::ROBOT, tools::DEFAULT, 0);
+
     // Record a mapping from the old vertex index to the new index
     std::vector<SparseVertex> sparseV2ToDualVertex(sg_->getNumVertices(), /* initial value */ 0);
-    std::cout << "3 " << std::endl;
+
     // Loop through every vertex again
     std::size_t skippedStates = 0;
     foreach (SparseVertex sparseV2, boost::vertices(sg_->getGraph()))
     {
-      std::cout << "4 " << std::endl;
       // The first thread number of verticies are used for queries and should be skipped
       if (sparseV2 < sg_->getNumQueryVertices())
         continue;
 
       const base::State *state2 = sg_->getState(sparseV1);
-      std::cout << "5 " << std::endl;
+      base::State *state2_mirror = mirrorState(state2, indent);
+
+      visual_->viz2()->state(state2_mirror, tools::ROBOT, tools::DEFAULT, /*extraData*/ 0, leftArmSpaceInfo);
+
       // Create dual state
-      base::State *stateCombined = combineStates(state1, state2, dualSpaceInfo, indent);
-      std::cout << "6 " << std::endl;
+      base::State *stateCombined = combineStates(state1, state2_mirror, dualSpaceInfo, indent);
+      visual_->viz3()->state(stateCombined, tools::ROBOT, tools::DEFAULT, /*extraData*/ 0, dualSpaceInfo);
+      visual_->waitForUserFeedback("combined robot state");
+
+      si_->getStateSpace()->freeState(state2_mirror);
+
       // Check that new state is still valid
       if (!dualSpaceInfo->isValid(stateCombined))
       {
@@ -1059,13 +1069,12 @@ void SparseGenerator::mirrorGraphDualArm(base::SpaceInformationPtr dualSpaceInfo
         skippedStates++;
         continue;
       }
-      std::cout << "6 " << std::endl;
+
       // Insert into new graph
       SparseVertex vertexCombined = dualSparseGraph->addVertex(stateCombined, DISCRETIZED, indent);
-      std::cout << "7 " << std::endl;
+
       // Short term mapping
       sparseV2ToDualVertex[sparseV2] = vertexCombined;
-      std::cout << "8 " << std::endl;
     }
     BOLT_DEBUG(indent, true, "Skipped " << skippedStates << " states out of total " << sg_->getNumRealVertices());
 
@@ -1098,7 +1107,6 @@ void SparseGenerator::mirrorGraphDualArm(base::SpaceInformationPtr dualSpaceInfo
       {
         if (!dualSpaceInfo->checkMotion(dualSparseGraph->getState(dualVertex0), dualSparseGraph->getState(dualVertex1)))
         {
-          std::cout << "found invalid edge " << std::endl;
           skippedInvalidEdges++;
           continue;
         }
@@ -1119,9 +1127,8 @@ void SparseGenerator::mirrorGraphDualArm(base::SpaceInformationPtr dualSpaceInfo
   dualSparseGraph->setFilePath(outputFile);
   dualSparseGraph->save(indent);
 
-
   BOLT_DEBUG(indent, true, "Skipped " << skippedEdges << " edges because duplicate, " << skippedInvalidEdges
-             << " due to collision, out of total: " << sg_->getNumEdges());
+                                      << " due to collision, out of total: " << sg_->getNumEdges());
 }
 
 base::State *SparseGenerator::combineStates(const base::State *state1, const base::State *state2,
@@ -1138,6 +1145,8 @@ base::State *SparseGenerator::combineStates(const base::State *state1, const bas
   values1.insert(values1.end(), values2.begin(), values2.end());
 
   // Fill the state with current values
+  std::cout << "dim: " << dualSpaceInfo->getStateDimension() << std::endl;
+  std::cout << "values1: " << values1.size() << std::endl;
   dualSpaceInfo->getStateSpace()->copyFromReals(stateCombined, values1);
 
   return stateCombined;
@@ -1175,9 +1184,75 @@ void SparseGenerator::addEdgesForDim(std::vector<SparseVertex> &sparseV2ToDualVe
   }
 
   BOLT_DEBUG(indent, true, "Skipped " << skippedEdges << " edges for lack of endpoints, " << skippedInvalidEdges
-             << " due to collision, out of total: " << sg_->getNumEdges());
+                                      << " due to collision, out of total: " << sg_->getNumEdges());
 }
 
+base::State *SparseGenerator::mirrorState(const base::State *source, std::size_t indent)
+{
+  bool verbose = false;
+  base::State *mirrored = si_->getStateSpace()->allocState();
+
+  const std::vector<ompl::base::StateSpace::ValueLocation> &valueLocations = si_->getStateSpace()->getValueLocations();
+
+  // Loop through each value
+  for (std::size_t i = 0; i < valueLocations.size(); ++i)
+  {
+    double jointValue = *si_->getStateSpace()->getValueAddressAtLocation(source, valueLocations[i]);
+
+    BOLT_DEBUG(indent, verbose, "jointValue: " << jointValue << std::endl;
+    double newJointValue;
+
+    if (i % 2 == 0)
+    {
+      // Get bounds
+      const ompl::base::RealVectorBounds& bounds = si_->getStateSpace()->getBounds();
+
+      BOLT_DEBUG(indent, verbose, "bounds.high[i]: " << bounds.high[i]);
+      BOLT_DEBUG(indent, verbose, "bounds.low[i]: " << bounds.low[i]);
+      double range = bounds.high[i] - bounds.low[i];
+      BOLT_DEBUG(indent, verbose, "range: " << range);
+      double percent = (jointValue - bounds.low[i])/range;
+      BOLT_DEBUG(indent, verbose, "percent: " << percent);
+      double inversePercent = 1.0 - percent;
+      BOLT_DEBUG(indent, verbose, "inversePercent: " << inversePercent);
+      newJointValue = inversePercent*range + bounds.low[i];
+      BOLT_DEBUG(indent, verbose, "newJointValue: " << newJointValue);
+      printJointLimits(bounds.low[i], bounds.high[i], jointValue, "joint");
+      printJointLimits(bounds.low[i], bounds.high[i], newJointValue, "joint");
+      BOLT_DEBUG(indent, verbose, "-------------------------------------------------------");
+    }
+    else
+      newJointValue = jointValue;
+
+    *si_->getStateSpace()->getValueAddressAtLocation(mirrored, valueLocations[i]) = newJointValue;
+  }
+
+  return mirrored;
+}
+
+void SparseGenerator::printJointLimits(double min, double max, double value, const std::string &name)
+{
+  std:cout << "   " << std::fixed << std::setprecision(5) << min << "\t";
+  double delta = max - min;
+  // std:cout << "delta: " << delta << " ";
+  double step = delta / 20.0;
+
+  bool marker_shown = false;
+  for (double value_it = min; value_it < max; value_it += step)
+  {
+    // show marker of current value
+    if (!marker_shown && value < value_it)
+    {
+      std:cout << "|";
+      marker_shown = true;
+    }
+    else
+      std:cout << "-";
+  }
+  // show max position
+  std:cout << " \t" << std::fixed << std::setprecision(5) << max << "  \t" << name
+           << " current: " << std::fixed << std::setprecision(5) << value << std::endl;
+}
 
 }  // namespace bolt
 }  // namespace tools

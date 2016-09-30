@@ -181,32 +181,37 @@ bool MoveItBase::showJointLimits(JointModelGroup* jmg)
     if (out_of_bounds)
       std::cout << MOVEIT_CONSOLE_COLOR_RED;
 
-    std::cout << "   " << std::fixed << std::setprecision(5) << bound.min_position_ << "\t";
-    double delta = bound.max_position_ - bound.min_position_;
-    // std::cout << "delta: " << delta << " ";
-    double step = delta / 20.0;
-
-    bool marker_shown = false;
-    for (double value = bound.min_position_; value < bound.max_position_; value += step)
-    {
-      // show marker of current value
-      if (!marker_shown && current_value < value)
-      {
-        std::cout << "|";
-        marker_shown = true;
-      }
-      else
-        std::cout << "-";
-    }
-    // show max position
-    std::cout << " \t" << std::fixed << std::setprecision(5) << bound.max_position_ << "  \t" << joints[i]->getName()
-              << " current: " << std::fixed << std::setprecision(5) << current_value << std::endl;
+    printJointLimits(bound.min_position_, bound.max_position_, current_value, joints[i]->getName());
 
     if (out_of_bounds)
       std::cout << MOVEIT_CONSOLE_COLOR_RESET;
   }
 
   return true;
+}
+
+void MoveItBase::printJointLimits(double min, double max, double value, const std::string &name)
+{
+  std::cout << "   " << std::fixed << std::setprecision(5) << min << "\t";
+  double delta = max - min;
+  // std::cout << "delta: " << delta << " ";
+  double step = delta / 20.0;
+
+  bool marker_shown = false;
+  for (double value = min; value < max; value += step)
+  {
+    // show marker of current value
+    if (!marker_shown && value < value)
+    {
+      std::cout << "|";
+      marker_shown = true;
+    }
+    else
+      std::cout << "-";
+  }
+  // show max position
+  std::cout << " \t" << std::fixed << std::setprecision(5) << max << "  \t" << name
+            << " current: " << std::fixed << std::setprecision(5) << value << std::endl;
 }
 
 moveit::core::RobotStatePtr MoveItBase::getCurrentState()

@@ -89,6 +89,8 @@ public:
   /** \brief Output to console the current state of the robot's joint limits */
   bool showJointLimits(JointModelGroup *jmg);
 
+  void printJointLimits(double min, double max, double value, const std::string &name);
+
   /**
    * \brief Use the planning scene to get the robot's current state
    */

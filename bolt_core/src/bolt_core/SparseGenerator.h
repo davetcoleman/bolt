@@ -135,11 +135,17 @@ public:
   void benchmarkVisualizeSampling(std::size_t indent = 0);
   void benchmarkSparseGraphGeneration(std::size_t indent = 0);
 
-  void mirrorGraphDualArm(base::SpaceInformationPtr dualSpaceInfo, const std::string& outputFile, std::size_t indent);
+  void mirrorGraphDualArm(base::SpaceInformationPtr dualSpaceInfo, base::SpaceInformationPtr leftArmSpaceInfo,
+                          const std::string& outputFile, std::size_t indent);
+
   base::State* combineStates(const base::State *state1, const base::State *state2,
                              base::SpaceInformationPtr dualSpaceInfo, std::size_t indent);
   void addEdgesForDim(std::vector<SparseVertex> &sparseV2ToDualVertex, SparseGraphPtr &dualSparseGraph,
                       base::SpaceInformationPtr dualSpaceInfo, std::size_t indent);
+
+  base::State *mirrorState(const base::State *source);
+
+  void printJointLimits(double min, double max, double value, const std::string &name);
 
   /** \brief Getter for vertexDiscretizer */
   VertexDiscretizerPtr &getVertexDiscretizer()

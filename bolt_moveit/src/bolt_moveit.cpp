@@ -236,7 +236,8 @@ bool BoltMoveIt::loadOMPL()
   experience_setup_->setup();
   assert(si_->isSetup());
 
-  experience_setup_->setFilePath(getFilePath(planning_group_name_));  // this is here because its how we do it in moveit_ompl
+  // this is here because its how we do it in moveit_ompl
+  experience_setup_->setFilePath(getFilePath(planning_group_name_));
 
   // Create start and goal states
   ompl_start_ = space_->allocState();
@@ -245,7 +246,7 @@ bool BoltMoveIt::loadOMPL()
   return true;
 }
 
-std::string BoltMoveIt::getFilePath(const std::string& planning_group_name)
+std::string BoltMoveIt::getFilePath(const std::string &planning_group_name)
 {
   // Set the database file location
   std::string file_path;
@@ -538,7 +539,6 @@ bool BoltMoveIt::plan()
     bolt_->getTaskGraph()->checkTaskPathSolution(path, ompl_start_, ompl_goal_);
   }
 
-
   // Add more states between waypoints
   // state_count = path.getStateCount();
   // path.interpolate();
@@ -586,7 +586,7 @@ void BoltMoveIt::loadCollisionChecker()
 
   // The interval in which obstacles are checked for between states
   // seems that it default to 0.01 but doesn't do a good job at that level
-  si_->setStateValidityCheckingResolution(0.005);
+  // si_->setStateValidityCheckingResolution(0.005);
 }
 
 void BoltMoveIt::deleteAllMarkers(bool clearDatabase)
@@ -947,26 +947,50 @@ void BoltMoveIt::testMotionValidator()
 
 void BoltMoveIt::mirrorGraph(std::size_t indent)
 {
-  const std::string planning_group_name = "both_arms";
+  const std::string both_arms_group_name = "both_arms";
+  const std::string left_arm_group_name = "left_arm";
 
   // Choose planning group
-  moveit::core::JointModelGroup* both_arms = robot_model_->getJointModelGroup(planning_group_name);
+  moveit::core::JointModelGroup *both_arms = robot_model_->getJointModelGroup(both_arms_group_name);
+  moveit::core::JointModelGroup *left_arm = robot_model_->getJointModelGroup(left_arm_group_name);
 
   // Setup space
-  moveit_ompl::ModelBasedStateSpaceSpecification mbss_spec(robot_model_, both_arms);
+  moveit_ompl::ModelBasedStateSpaceSpecification both_arms_mbss_spec(robot_model_, both_arms);
+  moveit_ompl::ModelBasedStateSpaceSpecification left_arm_mbss_spec(robot_model_, left_arm);
 
   // Construct the state space we are planning in
-  ompl::base::StateSpacePtr space = ompl::base::StateSpacePtr(new moveit_ompl::ModelBasedStateSpace(mbss_spec));
+  moveit_ompl::ModelBasedStateSpacePtr both_arms_state_space =
+      moveit_ompl::ModelBasedStateSpacePtr(new moveit_ompl::ModelBasedStateSpace(both_arms_mbss_spec));
+  moveit_ompl::ModelBasedStateSpacePtr left_arm_state_space =
+      moveit_ompl::ModelBasedStateSpacePtr(new moveit_ompl::ModelBasedStateSpace(left_arm_mbss_spec));
+
+  both_arms_state_space->setup();
+  both_arms_state_space->setName(both_arms_group_name);
+  left_arm_state_space->setup();
+  left_arm_state_space->setName(left_arm_group_name);
 
   // SpaceInfo
-  ompl::base::SpaceInformationPtr dualSpaceInfo = std::make_shared<ompl::base::SpaceInformation>(space);
-  si_->setup();
+  ompl::base::SpaceInformationPtr both_arms_space_info =
+      std::make_shared<ompl::base::SpaceInformation>(both_arms_state_space);
+  ompl::base::SpaceInformationPtr left_arm_space_info =
+      std::make_shared<ompl::base::SpaceInformation>(left_arm_state_space);
+  both_arms_space_info->setup();
+  left_arm_space_info->setup();
+
+  // Create state validity checking for this space
+  moveit_ompl::StateValidityChecker *validity_checker;
+  validity_checker = new moveit_ompl::StateValidityChecker(both_arms_group_name, both_arms_space_info, *current_state_,
+                                                           planning_scene_, both_arms_state_space);
+  both_arms_space_info->setStateValidityChecker(ob::StateValidityCheckerPtr(validity_checker));
+  // The interval in which obstacles are checked for between states
+  // seems that it default to 0.01 but doesn't do a good job at that level
+  // si_->setStateValidityCheckingResolution(0.005);
 
   // Set the database file location
-  const std::string file_path = getFilePath(planning_group_name);
+  const std::string file_path = getFilePath(both_arms_group_name);
 
   // Mirror graph
-  bolt_->getSparseGenerator()->mirrorGraphDualArm(dualSpaceInfo, file_path, indent);
+  bolt_->getSparseGenerator()->mirrorGraphDualArm(both_arms_space_info, left_arm_space_info, file_path, indent);
   BOLT_INFO(indent, true, "Done mirroring graph!");
 }
 

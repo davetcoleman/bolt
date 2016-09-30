@@ -51,8 +51,6 @@
 #include <ompl/base/spaces/SE3StateSpace.h>
 #include <ompl/base/ScopedState.h>
 
-// Custom validity checker that accounts for cost
-//#include <bolt_moveit/costs/cost_map_2d_optimization_objective.h>
 
 // MoveIt
 #include <moveit_ompl/model_based_state_space.h>
@@ -66,7 +64,9 @@ namespace bolt_moveit
 {
 ProjectionVizWindow::ProjectionVizWindow(rviz_visual_tools::RvizVisualToolsPtr visuals,
                                          ompl::base::SpaceInformationPtr si)
-  : name_("projection_viz_window"), visuals_(visuals), si_(si)
+  : ot::VizWindow(si)
+  , name_("projection_viz_window")
+  , visuals_(visuals)
 {
   // Calculate ranges
   moveit_ompl::ModelBasedStateSpacePtr mb_state_space =
@@ -93,7 +93,7 @@ ProjectionVizWindow::ProjectionVizWindow(rviz_visual_tools::RvizVisualToolsPtr v
 }
 
 void ProjectionVizWindow::state(const ompl::base::State* state, ot::VizSizes size, ot::VizColors color,
-                                double extra_data)
+                                double extra_data, ob::SpaceInformationPtr si)
 {
   if (!enabled_)
     return;
