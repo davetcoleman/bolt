@@ -977,17 +977,29 @@ void BoltMoveIt::mirrorGraph(std::size_t indent)
   both_arms_space_info->setup();
   left_arm_space_info->setup();
 
-  // Create state validity checking for this space
-  moveit_ompl::StateValidityChecker *validity_checker;
-  validity_checker = new moveit_ompl::StateValidityChecker(both_arms_group_name, both_arms_space_info, *current_state_,
+  // Create state validity checking for both arms
+  moveit_ompl::StateValidityChecker *both_arms_validity_checker;
+  both_arms_validity_checker = new moveit_ompl::StateValidityChecker(both_arms_group_name, both_arms_space_info, *current_state_,
                                                            planning_scene_, both_arms_state_space);
-  both_arms_space_info->setStateValidityChecker(ob::StateValidityCheckerPtr(validity_checker));
-  // The interval in which obstacles are checked for between states
-  // seems that it default to 0.01 but doesn't do a good job at that level
-  // si_->setStateValidityCheckingResolution(0.005);
+  both_arms_space_info->setStateValidityChecker(ob::StateValidityCheckerPtr(both_arms_validity_checker));
+
+  // Create state validity checking for left arm
+  moveit_ompl::StateValidityChecker *left_arm_validity_checker;
+  left_arm_validity_checker = new moveit_ompl::StateValidityChecker(left_arm_group_name, left_arm_space_info, *current_state_,
+                                                           planning_scene_, left_arm_state_space);
+  left_arm_space_info->setStateValidityChecker(ob::StateValidityCheckerPtr(left_arm_validity_checker));
 
   // Set the database file location
   const std::string file_path = getFilePath(both_arms_group_name);
+
+  // Test all verticies
+  if (false)
+  {
+    BOLT_INFO(indent, true, "TESTING ALL VERTICES ON OTHER ARM");
+    bolt_->getSparseGenerator()->checkValidityOfArmMirror(both_arms_space_info, left_arm_space_info, indent);
+    std::cout << "success " << std::endl;
+    exit(0);
+  }
 
   // Mirror graph
   bolt_->getSparseGenerator()->mirrorGraphDualArm(both_arms_space_info, left_arm_space_info, file_path, indent);

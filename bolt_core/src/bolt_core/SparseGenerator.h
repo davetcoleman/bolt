@@ -143,9 +143,13 @@ public:
   void addEdgesForDim(std::vector<SparseVertex> &sparseV2ToDualVertex, SparseGraphPtr &dualSparseGraph,
                       base::SpaceInformationPtr dualSpaceInfo, std::size_t indent);
 
-  base::State *mirrorState(const base::State *source);
+  void mirrorState(const base::State *source, base::State *dest, std::size_t indent);
 
   void printJointLimits(double min, double max, double value, const std::string &name);
+
+  /** \brief Used to verify that the two arms are basically the same geometry/collision status. Just for testing */
+  void checkValidityOfArmMirror(base::SpaceInformationPtr dualSpaceInfo,
+                                base::SpaceInformationPtr leftArmSpaceInfo, std::size_t indent);
 
   /** \brief Getter for vertexDiscretizer */
   VertexDiscretizerPtr &getVertexDiscretizer()
@@ -225,6 +229,7 @@ public:
   bool verbose_ = false;
   bool vGuarantees_ = false;
   bool vFindGraphNeighbors_ = false;
+  bool vMirror_ = false;
 
   /** \brief Number of failed state insertion attempts before stopping the algorithm */
   std::size_t terminateAfterFailures_ = 1000;
@@ -237,6 +242,10 @@ public:
   bool useDiscretizedSamples_;
   bool useRandomSamples_;
   bool verifyGraphProperties_ = false;
+
+  /** \brief Visualization */
+  bool visualizeMiroring_ = false;
+
 };  // end SparseGenerator
 
 }  // namespace bolt

@@ -772,11 +772,11 @@ SparseVertex SparseGraph::addVertex(base::State *state, const VertexType &type, 
 
 // Clear all nearby interface data whenever a new vertex is added
 #ifdef ENABLE_QUALITY
-  if (sparseCriteria_->getUseFourthCriteria())
+  if (sparseCriteria_ && sparseCriteria_->getUseFourthCriteria())
     clearInterfaceData(state);
 #endif
 
-  if (sparseCriteria_->useConnectivityCriteria_)
+  if (sparseCriteria_ && sparseCriteria_->useConnectivityCriteria_)
     disjointSets_.make_set(v);
 
   // Add vertex to nearest neighbor structure
@@ -848,7 +848,7 @@ SparseVertex SparseGraph::addVertexFromFile(base::State *state, const VertexType
   // vertexPopularity_[v] = MAX_POPULARITY_WEIGHT;  // 100 means the vertex is very unpopular
 
   // Connected component tracking
-  if (sparseCriteria_->useConnectivityCriteria_)
+  if (sparseCriteria_ && sparseCriteria_->useConnectivityCriteria_)
     disjointSets_.make_set(v);
 
   return v;
@@ -930,7 +930,7 @@ void SparseGraph::removeDeletedVertices(std::size_t indent)
   nn_->clear();
 
   // Reset disjoint sets
-  if (sparseCriteria_->useConnectivityCriteria_)
+  if (sparseCriteria_ && sparseCriteria_->useConnectivityCriteria_)
     resetDisjointSets();
 
   // Reinsert vertices into nearest neighbor
@@ -940,12 +940,12 @@ void SparseGraph::removeDeletedVertices(std::size_t indent)
       continue;
 
     nn_->add(v);
-    if (sparseCriteria_->useConnectivityCriteria_)
+    if (sparseCriteria_ && sparseCriteria_->useConnectivityCriteria_)
       disjointSets_.make_set(v);
   }
 
   // Reinsert edges into disjoint sets
-  if (sparseCriteria_->useConnectivityCriteria_)
+  if (sparseCriteria_ && sparseCriteria_->useConnectivityCriteria_)
     foreach (SparseEdge e, boost::edges(g_))
     {
       SparseVertex v1 = boost::source(e, g_);
@@ -987,7 +987,7 @@ SparseEdge SparseGraph::addEdge(SparseVertex v1, SparseVertex v2, EdgeType type,
   edgeCollisionStatePropertySparse_[e] = NOT_CHECKED;
 
   // Add the edge to the incrementeal connected components datastructure
-  if (sparseCriteria_->useConnectivityCriteria_)
+  if (sparseCriteria_ && sparseCriteria_->useConnectivityCriteria_)
     disjointSets_.union_set(v1, v2);
 
   // Visualize
@@ -1087,7 +1087,7 @@ void SparseGraph::clearEdgesNearVertex(SparseVertex vertex, std::size_t indent)
   BOLT_FUNC(indent, false, "clearEdgesNearVertex()");
 
   // Optionally disable this feature
-  if (!sparseCriteria_->useClearEdgesNearVertex_)
+  if (sparseCriteria_ && !sparseCriteria_->useClearEdgesNearVertex_)
     return;
 
   // TODO(davetcoleman): combine this with clearInterfaceData and ensure that all interface data is equally cleared
@@ -1173,7 +1173,7 @@ void SparseGraph::displayDatabase(bool showVertices, bool showEdges, std::size_t
 
       // If desired show coverage, but we can't add to the main states array
       // TODO: add secondary array for this size spheres?
-      if (visualizeDatabaseCoverage_)
+      if (visualizeDatabaseCoverage_ && sparseCriteria_)
         visual_->viz(windowID)
             ->state(getState(v), tools::VARIABLE_SIZE, tools::TRANSLUCENT_LIGHT, sparseCriteria_->getSparseDelta());
 
@@ -1197,7 +1197,7 @@ void SparseGraph::visualizeVertex(SparseVertex v, const VertexType &type)
   const VizColors color = vertexTypeToColor(type);
 
   // Show visibility region around vertex
-  if (visualizeDatabaseCoverage_)
+  if (visualizeDatabaseCoverage_ && sparseCriteria_)
     visual_->viz1()->state(getState(v), tools::VARIABLE_SIZE, tools::TRANSLUCENT_LIGHT,
                            sparseCriteria_->getSparseDelta());
 
@@ -1210,7 +1210,7 @@ void SparseGraph::visualizeVertex(SparseVertex v, const VertexType &type)
   if (visualizeProjection_)  // For joint-space robots: project to 2D space
   {
     // Show visibility region around vertex
-    if (visualizeDatabaseCoverage_)
+    if (visualizeDatabaseCoverage_ && sparseCriteria_)
       visual_->viz7()->state(getState(v), tools::VARIABLE_SIZE, tools::TRANSLUCENT_LIGHT,
                              sparseCriteria_->getSparseDelta() * 2.0);
 
@@ -1364,9 +1364,12 @@ void SparseGraph::printGraphStats()
   BOLT_DEBUG(indent, 1, "      Max:                 " << maxEdgeLength);
   BOLT_DEBUG(indent, 1, "      Min:                 " << minEdgeLength);
   BOLT_DEBUG(indent, 1, "      Average:             " << averageEdgeLength);
-  BOLT_DEBUG(indent, 1, "      SparseDelta:         " << sparseCriteria_->getSparseDelta());
-  BOLT_DEBUG(indent, 1, "      Difference:          " << averageEdgeLength - sparseCriteria_->getSparseDelta());
-  BOLT_DEBUG(indent, 1, "      Penetration:         " << sparseCriteria_->getDiscretizePenetrationDist());
+  if (sparseCriteria_)
+  {
+    BOLT_DEBUG(indent, 1, "      SparseDelta:         " << sparseCriteria_->getSparseDelta());
+    BOLT_DEBUG(indent, 1, "      Difference:          " << averageEdgeLength - sparseCriteria_->getSparseDelta());
+    BOLT_DEBUG(indent, 1, "      Penetration:         " << sparseCriteria_->getDiscretizePenetrationDist());
+  }
   BOLT_DEBUG(indent, 1, "------------------------------------------------------");
 }
 
