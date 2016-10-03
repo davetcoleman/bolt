@@ -52,7 +52,7 @@ namespace bolt_moveit
 CartPathPlanner::CartPathPlanner(BoltMoveIt* parent) : nh_("~"), parent_(parent)
 {
   std::size_t indent = 0;
-  jmg_ = parent_->jmg_;
+  //jmg_ = parent_->jmg_;
 
   // loading parameters
   {
@@ -80,17 +80,9 @@ CartPathPlanner::CartPathPlanner(BoltMoveIt* parent) : nh_("~"), parent_(parent)
   // Load planning state
   ik_state_.reset(new moveit::core::RobotState(*parent_->moveit_start_));
 
-  // Get a pointer to the ee link
-  ee_link_ = parent_->ee_link_; //ik_state_->getRobotModel()->getJointModelGroup(tip_link_);
-  // if (!ee_link_)
-  // {
-  //   BOLT_ERROR(indent, true, "No joint model group found for " << tip_link_);
-  //   exit(0);
-  // }
-
   // Create cartesian start pose interactive marker
-  imarker_cartesian_.reset(new mvt::IMarkerRobotState(parent_->getPlanningSceneMonitor(), "cart", jmg_,
-                                                      ee_link_, rvt::BLUE, parent_->package_path_));
+  imarker_cartesian_.reset(new mvt::IMarkerRobotState(parent_->getPlanningSceneMonitor(), "cart", parent_->arm_jmgs_,
+                                                      parent_->ee_links_, rvt::BLUE, parent_->package_path_));
   imarker_cartesian_->setIMarkerCallback(
       std::bind(&CartPathPlanner::processIMarkerPose, this, std::placeholders::_1, std::placeholders::_2));
 
@@ -117,20 +109,27 @@ CartPathPlanner::CartPathPlanner(BoltMoveIt* parent) : nh_("~"), parent_(parent)
 void CartPathPlanner::processIMarkerPose(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback,
                                          const Eigen::Affine3d& feedback_pose)
 {
+  std::cout << "feedback: " << feedback << std::endl;
   std::size_t indent = 2;
   moveit::core::RobotStatePtr imarker_state = imarker_cartesian_->getRobotState();
-  Eigen::Affine3d start_pose = imarker_state->getGlobalLinkTransform(ee_link_);
 
-  generateExactPoses(start_pose, indent);
+  std::vector<Eigen::Affine3d> start_poses;
+  for (const moveit::core::LinkModel* ee_link : parent_->ee_links_)
+    start_poses.push_back(imarker_state->getGlobalLinkTransform(ee_link));
+
+  generateExactPoses(start_poses[0], indent); // TODO(davetcoleman):make for all poses
 }
 
 bool CartPathPlanner::generateExactPoses(std::size_t indent)
 {
   // Generate exact poses
   moveit::core::RobotStatePtr imarker_state = imarker_cartesian_->getRobotState();
-  Eigen::Affine3d start_pose = imarker_state->getGlobalLinkTransform(ee_link_);
 
-  generateExactPoses(start_pose, indent);
+  std::vector<Eigen::Affine3d> start_poses;
+  for (const moveit::core::LinkModel* ee_link : parent_->ee_links_)
+    start_poses.push_back(imarker_state->getGlobalLinkTransform(ee_link));
+
+  generateExactPoses(start_poses[0], indent); // TODO
 }
 
 bool CartPathPlanner::generateExactPoses(const Eigen::Affine3d& start_pose, std::size_t indent)
@@ -172,7 +171,7 @@ bool CartPathPlanner::debugShowAllIKSolutions(std::size_t indent)
     const Eigen::Affine3d& pose = exact_poses_[i];
 
     JointPoses local_joint_poses;
-    if (!getRedundantJointPosesForCartPoint(pose, local_joint_poses, indent))
+    if (!getRedundantJointPosesForCartPoint(pose, local_joint_poses, parent_->ee_links_[0], indent)) // TODO
     {
       BOLT_ERROR(indent, true, "Error when getting joint poses for cartesian point");
       continue;
@@ -380,7 +379,7 @@ bool CartPathPlanner::populateBoltGraph(ompl::tools::bolt::TaskGraphPtr task_gra
 
     // Calculate all possible joint solutions
     JointPoses joint_poses;
-    getRedundantJointPosesForCartPoint(pose, joint_poses, indent);
+    getRedundantJointPosesForCartPoint(pose, joint_poses, parent_->ee_links_[0], indent); // TODO
 
     // Handle error: no IK solutions found
     if (joint_poses.empty())
@@ -396,9 +395,9 @@ bool CartPathPlanner::populateBoltGraph(ompl::tools::bolt::TaskGraphPtr task_gra
         joint_poses.clear();  // reset vector
 
         // Get the joint poses from the last cartesian point
-        getRedundantJointPosesForCartPoint(exact_poses_[traj_id - 1], joint_poses, indent);
+        getRedundantJointPosesForCartPoint(exact_poses_[traj_id - 1], joint_poses, parent_->ee_links_[0], indent); // TODO
         BOOST_ASSERT_MSG(!joint_poses.empty(), "Should not happen - no joint poses found for previous cartesian point");
-        visual_tools_->publishRobotState(joint_poses.front(), jmg_, rvt::RED);
+        visual_tools_->publishRobotState(joint_poses.front(), parent_->jmg_, rvt::RED);
       }
 
       return false;
@@ -472,7 +471,7 @@ bool CartPathPlanner::addCartPointToBoltGraph(const JointPoses& joint_poses,
     const std::vector<double>& joints_pose = joint_poses[i];
 
     // Copy vector into moveit format
-    moveit_robot_state->setJointGroupPositions(jmg_, joints_pose);
+    moveit_robot_state->setJointGroupPositions(parent_->jmg_, joints_pose);
 
     // Create new OMPL state
     ompl::base::State* ompl_state = space->allocState();
@@ -540,7 +539,7 @@ bool CartPathPlanner::addEdgesToBoltGraph(const TaskVertexMatrix& graph_vertices
         //   edges_skipped_count++;
         //   continue;
         // }
-        if (!ik_state_->isValidVelocityMove(jmg_, start_array, end_array, space->getDimension(), timing_))
+        if (!ik_state_->isValidVelocityMove(parent_->jmg_, start_array, end_array, space->getDimension(), timing_))
         {
           edges_skipped_count++;
           continue;
@@ -632,6 +631,7 @@ bool CartPathPlanner::connectTrajectoryEndPoints(const TaskVertexMatrix& graph_v
 }
 
 bool CartPathPlanner::getRedundantJointPosesForCartPoint(const Eigen::Affine3d& pose, JointPoses& joint_poses,
+                                                         const moveit::core::LinkModel* ee_link,
                                                          std::size_t indent)
 {
   BOLT_FUNC(indent, verbose_, "getRedundantJointPosesForCartPoint()");
@@ -641,7 +641,7 @@ bool CartPathPlanner::getRedundantJointPosesForCartPoint(const Eigen::Affine3d& 
     return false;
 
   // Get the IK solver for a given planning group
-  const kinematics::KinematicsBasePtr& solver = jmg_->getSolverInstance();
+  const kinematics::KinematicsBasePtr& solver = parent_->jmg_->getSolverInstance();
 
   // Enumerate solvable joint poses for each candidate_pose
   for (const Eigen::Affine3d& candidate_pose : candidate_poses)
@@ -657,7 +657,7 @@ bool CartPathPlanner::getRedundantJointPosesForCartPoint(const Eigen::Affine3d& 
     const std::vector<std::string> &solver_tip_frames = solver->getTipFrames();
     BOOST_ASSERT_MSG(solver_tip_frames.size() == 1, "Currently only supports solvers for one tip");
     const std::string solver_tip_frame = solver_tip_frames.front();
-    std::string query_frame = ee_link_->getName();
+    std::string query_frame = ee_link->getName();
 
     if (query_frame != solver_tip_frame)
     {
@@ -687,10 +687,10 @@ bool CartPathPlanner::getRedundantJointPosesForCartPoint(const Eigen::Affine3d& 
     // Create seed state
     std::vector<double> ik_seed_state;
     std::vector<double> initial_values;
-    ik_state_->copyJointGroupPositions(jmg_, initial_values);
+    ik_state_->copyJointGroupPositions(parent_->jmg_, initial_values);
     ik_seed_state.resize(initial_values.size());
 
-    const std::vector<unsigned int>& bij = jmg_->getKinematicsSolverJointBijection();
+    const std::vector<unsigned int>& bij = parent_->jmg_->getKinematicsSolverJointBijection();
 
     for (std::size_t i = 0; i < bij.size(); ++i)
     {
@@ -732,7 +732,7 @@ void CartPathPlanner::visualizeAllJointPoses(const JointPoses& joint_poses, std:
 
   for (std::vector<double> joint_pose : joint_poses)
   {
-    visual_tools_->publishRobotState(joint_pose, jmg_);
+    visual_tools_->publishRobotState(joint_pose, parent_->jmg_);
     ros::Duration(visualize_show_all_solutions_sleep_).sleep();
 
     if (!ros::ok())

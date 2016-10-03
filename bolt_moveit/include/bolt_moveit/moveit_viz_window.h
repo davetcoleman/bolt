@@ -130,60 +130,32 @@ public:
    * \param ns - namespace of marker
    * \return true on success
    */
-  bool publishSpheres(const og::PathGeometric& path, const rviz_visual_tools::colors& color = rviz_visual_tools::RED,
+  void publishSpheres(const og::PathGeometric& path, const rviz_visual_tools::colors& color = rviz_visual_tools::RED,
                       double scale = 0.1, const std::string& ns = "path_spheres");
-  bool publishSpheres(const og::PathGeometric& path, const rviz_visual_tools::colors& color = rviz_visual_tools::RED,
+  void publishSpheres(const og::PathGeometric& path, const rviz_visual_tools::colors& color = rviz_visual_tools::RED,
                       const rviz_visual_tools::scales scale = rviz_visual_tools::SMALL,
                       const std::string& ns = "path_spheres");
-  bool publishSpheres(const og::PathGeometric& path, const rviz_visual_tools::colors& color,
+  void publishSpheres(const og::PathGeometric& path, const rviz_visual_tools::colors& color,
                       const geometry_msgs::Vector3& scale, const std::string& ns = "path_spheres");
-
-  /**
-   * \brief Display States
-   * \return true on success
-   */
-  // bool publishStates(std::vector<const ompl::base::State*> states);
 
   /**
    * \brief Convert an OMPL state to a MoveIt! robot state and publish it
    * \param OMPL format of a robot state
    * \return true on success
    */
-  bool publishRobotState(const ompl::base::State* state);
+  void publishRobotState(const ompl::base::State* state);
 
-  /**
-   * \brief Display resulting path from a solver, in the form of a planner_data
-   *        where the list of states is also the order of the path. This uses MoveIt's robot state for inverse
-   * kinematics
-   * \return true on success
-   */
-  // RVIZ_VISUAL_TOOLS_DEPRECATED
-  // bool publishRobotPath(const ompl::base::PlannerDataPtr& path, robot_model::JointModelGroup* jmg,
-  //                       const std::vector<const robot_model::LinkModel*>& tips, bool show_trajectory_animated)
-  // {
-  //   return publishTrajectoryPath(path, jmg, tips, show_trajectory_animated);
-  // }
-
-  // RVIZ_VISUAL_TOOLS_DEPRECATED
-  // bool publishRobotPath(const og::PathGeometric& path, const robot_model::JointModelGroup* jmg, const bool blocking)
-  // {
-  //   return publishTrajectoryPath(path, jmg, blocking);
-  // }
-
-  // bool publishTrajectoryPath(const ompl::base::PlannerDataPtr& path, robot_model::JointModelGroup* jmg,
-  //                            const std::vector<const robot_model::LinkModel*>& tips, bool show_trajectory_animated);
-
-  bool publishTrajectoryPath(const og::PathGeometric& path, const robot_model::JointModelGroup* jmg,
+  void publishTrajectoryPath(const og::PathGeometric& path, const robot_model::JointModelGroup* jmg,
                              const bool blocking);
 
   /**
    * \brief Display result path from a solver
    * \return true on success
    */
-  RVIZ_VISUAL_TOOLS_DEPRECATED
-  bool publishPath(const og::PathGeometric& path, const rviz_visual_tools::colors& color, const double thickness = 0.4,
-                   const std::string& ns = "result_path");
-  bool publish2DPath(const og::PathGeometric& path, const rvt::colors& color, const double thickness = 0.4,
+  //RVIZ_VISUAL_TOOLS_DEPRECATED
+  // void publishPath(const og::PathGeometric& path, const rviz_visual_tools::colors& color, const double thickness = 0.4,
+  //                  const std::string& ns = "result_path");
+  void publish3DPath(const og::PathGeometric& path, const rvt::colors& color, const double thickness = 0.4,
                      const std::string& ns = "result_path");
 
   /**
@@ -192,25 +164,25 @@ public:
    * \param result from an OMPL planner
    * \return geometry point msg with no z value filled in
    */
-  Eigen::Vector3d stateToPoint(const ob::ScopedState<> state);
-  Eigen::Vector3d stateToPoint(const ob::State* state);
+  Eigen::Vector3d stateToPoint(const ob::ScopedState<> state, const moveit::core::LinkModel* eef_link);
+  Eigen::Vector3d stateToPoint(const ob::State* state, const moveit::core::LinkModel* eef_link);
 
   /**
    * \brief Display the start and goal states on the image map
    * \param start state
    * \param color
    */
-  bool publishState(const ob::State* state, const rviz_visual_tools::colors& color,
+  void publishState(const ob::State* state, const rviz_visual_tools::colors& color,
                     const rviz_visual_tools::scales scale = rviz_visual_tools::REGULAR,
                     const std::string& ns = "state_sphere");
-  bool publishState(const ob::State* state, const rviz_visual_tools::colors& color, const double scale = 0.1,
+  void publishState(const ob::State* state, const rviz_visual_tools::colors& color, const double scale = 0.1,
                     const std::string& ns = "state_sphere");
-  bool publishState(const ob::ScopedState<> state, const rviz_visual_tools::colors& color,
+  void publishState(const ob::ScopedState<> state, const rviz_visual_tools::colors& color,
                     const rviz_visual_tools::scales scale = rviz_visual_tools::REGULAR,
                     const std::string& ns = "state_sphere");
-  bool publishState(const ob::ScopedState<> state, const rviz_visual_tools::colors& color, double scale = 0.1,
+  void publishState(const ob::ScopedState<> state, const rviz_visual_tools::colors& color, double scale = 0.1,
                     const std::string& ns = "state_sphere");
-  bool publishState(const ob::ScopedState<> state, const rviz_visual_tools::colors& color,
+  void publishState(const ob::ScopedState<> state, const rviz_visual_tools::colors& color,
                     const geometry_msgs::Vector3& scale, const std::string& ns = "state_sphere");
 
   /**
@@ -218,26 +190,7 @@ public:
    * \param state_area - the center point of the uniform sampler
    * \param distance - the radius around the center for sampling
    */
-  bool publishSampleRegion(const ob::ScopedState<>& state_area, const double& distance);
-
-  /**
-   * \brief Publish text to rviz at a given location
-   */
-  // bool publishText(const geometry_msgs::Point& point, const std::string& text,
-  //                  const rviz_visual_tools::colors& color = rviz_visual_tools::BLACK, bool static_id = true);
-
-  // bool publishText(const geometry_msgs::Pose& pose, const std::string& text,
-  //                  const rviz_visual_tools::colors& color = rviz_visual_tools::BLACK, bool static_id = true);
-
-  /**
-   * \brief Convet each vertex in a graph into a list of tip locations, as desired
-   * \param input - description
-   * \param input - description
-   * \return
-   */
-  // bool convertRobotStatesToTipPoints(const ompl::base::PlannerDataPtr& graph,
-  //                                    const std::vector<const robot_model::LinkModel*>& tips,
-  //                                    std::vector<std::vector<geometry_msgs::Point> >& vertex_tip_points);
+  void publishSampleRegion(const ob::ScopedState<>& state_area, const double& distance);
 
   /** \brief Convert path formats */
   bool convertPath(const og::PathGeometric& path, const robot_model::JointModelGroup* jmg,
@@ -267,20 +220,25 @@ public:
   }
 
   /** \brief Getter for JointModelGroup */
-  const robot_model::JointModelGroup* getJointModelGroup() const
+  const moveit::core::JointModelGroup* getJointModelGroup() const
   {
     return jmg_;
   }
 
   /** \brief Setter for JointModelGroup */
-  void setJointModelGroup(const robot_model::JointModelGroup* jmg)
+  void setJointModelGroup(const moveit::core::JointModelGroup* jmg)
   {
     jmg_ = jmg;
   }
 
-  void setEEFLinkName(const std::string& name)
+  void setEEFLink(moveit::core::LinkModel* link)
   {
-    eef_link_name_ = name;
+    eef_link_models_.push_back(link);
+  }
+
+  void setEEFLinks(std::vector<moveit::core::LinkModel*> links)
+  {
+    eef_link_models_ = links;
   }
 
 private:
@@ -293,8 +251,8 @@ private:
   // From bolt_moveit ------------------------------------------------------
 
   // Remember what joint model group we care about so that calls from OMPL don't have to
-  std::string eef_link_name_;
-  const robot_model::JointModelGroup* jmg_;
+  std::vector<moveit::core::LinkModel*> eef_link_models_;
+  const moveit::core::JointModelGroup* jmg_;
 
   // Cached Point object to reduce memory loading
   geometry_msgs::Point temp_point_;

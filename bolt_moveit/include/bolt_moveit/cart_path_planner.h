@@ -92,7 +92,8 @@ public:
                            ompl::tools::bolt::TaskVertex endingVertex, std::size_t indent);
   bool connectTrajectoryEndPoints(const TaskVertexMatrix& graph_vertices, double& shortest_path_across_cart, std::size_t indent);
   bool getRedundantJointPosesForCartPoint(const Eigen::Affine3d& pose, std::vector<std::vector<double>>& joint_poses,
-                                    std::size_t indent);
+                                          const moveit::core::LinkModel* ee_link,
+                                          std::size_t indent);
   void visualizeAllJointPoses(const std::vector<std::vector<double>>& joint_poses, std::size_t indent);
 
 private:
@@ -120,10 +121,7 @@ private:
   moveit_visual_tools::IMarkerRobotStatePtr imarker_cartesian_;
 
   // The planning group to work on
-  moveit::core::JointModelGroup* jmg_;
-
-  // End effector
-  moveit::core::LinkModel *ee_link_;
+  //moveit::core::JointModelGroup* jmg_;
 
   // Performs tasks specific to the Robot such IK, FK and collision detection
   // bolt_ur5::UR5RobotModelPtr ur5_robot_model_;

@@ -59,20 +59,20 @@ namespace og = ompl::geometric;
 namespace bolt_moveit
 {
 MoveItVizWindow::MoveItVizWindow(moveit_visual_tools::MoveItVisualToolsPtr visuals, ob::SpaceInformationPtr si)
-  : ot::VizWindow(si)
-  , name_("moveit_viz_window")
-  , visuals_(visuals)
+  : ot::VizWindow(si), name_("moveit_viz_window"), visuals_(visuals)
 {
   // with this OMPL interface to Rviz all pubs must be manually triggered
   // visuals_->enableBatchPublishing(false);
 
+  visuals_->loadSharedRobotState();
+
   ROS_DEBUG_STREAM_NAMED(name_, "Initializing MoveItVizWindow()");
 }
 
-void MoveItVizWindow::state(const ob::State* state, ot::VizSizes size, ot::VizColors color, double extra_data, ob::SpaceInformationPtr si)
+void MoveItVizWindow::state(const ob::State* state, ot::VizSizes size, ot::VizColors color, double extra_data,
+                            ob::SpaceInformationPtr si)
 {
   // We do not use stateToPoint() because the publishRobotState() function might need the robot state in this function
-  visuals_->loadSharedRobotState();
   moveit_ompl::ModelBasedStateSpacePtr mb_state_space =
       std::static_pointer_cast<moveit_ompl::ModelBasedStateSpace>(si->getStateSpace());
 
@@ -86,45 +86,47 @@ void MoveItVizWindow::state(const ob::State* state, ot::VizSizes size, ot::VizCo
     return;
   }
 
-  Eigen::Affine3d pose = visuals_->getRootRobotState()->getGlobalLinkTransform(eef_link_name_);
-  switch (size)
+  for (const moveit::core::LinkModel* link : eef_link_models_)
   {
-    case ompl::tools::SMALL:
-      visuals_->publishSphere(pose, visuals_->intToRvizColor(color), rvt::SMALL);
-      break;
-    case ompl::tools::MEDIUM:
-      visuals_->publishSphere(pose, visuals_->intToRvizColor(color), rvt::REGULAR);
-      break;
-    case ompl::tools::LARGE:
-      visuals_->publishSphere(pose, visuals_->intToRvizColor(color), rvt::LARGE);
-      break;
-    case ompl::tools::VARIABLE_SIZE:  // Medium purple, translucent outline
-      // Visual tools has a scaling feature that will mess up the exact scaling we desire, so we out-smart it
-      extra_data /= visuals_->getGlobalScale();
-      visuals_->publishSphere(visuals_->convertPose(pose), visuals_->intToRvizColor(color), extra_data * 2);
-      break;
-    case ompl::tools::SCALE:  // Display sphere based on value between 0-100
+    Eigen::Affine3d pose = visuals_->getRootRobotState()->getGlobalLinkTransform(link);
+    switch (size)
     {
-      const double percent = (extra_data - min_edge_cost_) / (max_edge_cost_ - min_edge_cost_);
-      double radius = ((max_state_radius_ - min_state_radius_) * percent + min_state_radius_);
+      case ompl::tools::SMALL:
+        visuals_->publishSphere(pose, visuals_->intToRvizColor(color), rvt::SMALL);
+        break;
+      case ompl::tools::MEDIUM:
+        visuals_->publishSphere(pose, visuals_->intToRvizColor(color), rvt::REGULAR);
+        break;
+      case ompl::tools::LARGE:
+        visuals_->publishSphere(pose, visuals_->intToRvizColor(color), rvt::LARGE);
+        break;
+      case ompl::tools::VARIABLE_SIZE:  // Medium purple, translucent outline
+        // Visual tools has a scaling feature that will mess up the exact scaling we desire, so we out-smart it
+        extra_data /= visuals_->getGlobalScale();
+        visuals_->publishSphere(visuals_->convertPose(pose), visuals_->intToRvizColor(color), extra_data * 2);
+        break;
+      case ompl::tools::SCALE:  // Display sphere based on value between 0-100
+      {
+        const double percent = (extra_data - min_edge_cost_) / (max_edge_cost_ - min_edge_cost_);
+        double radius = ((max_state_radius_ - min_state_radius_) * percent + min_state_radius_);
 
-      // Visual tools has a scaling feature that will mess up the exact scaling we desire, so we out-smart it
-      radius /= visuals_->getGlobalScale();
+        // Visual tools has a scaling feature that will mess up the exact scaling we desire, so we out-smart it
+        radius /= visuals_->getGlobalScale();
 
-      geometry_msgs::Vector3 scale;
-      scale.x = radius;
-      scale.y = radius;
-      scale.z = radius;
-      visuals_->publishSphere(pose, visuals_->getColorScale(percent), scale);
-    }
-    break;
-    default:
-      ROS_ERROR_STREAM_NAMED(name_, "vizStateRobot: Invalid state type value");
-  }  // end switch
+        geometry_msgs::Vector3 scale;
+        scale.x = radius;
+        scale.y = radius;
+        scale.z = radius;
+        visuals_->publishSphere(pose, visuals_->getColorScale(percent), scale);
+      }
+      break;
+      default:
+        ROS_ERROR_STREAM_NAMED(name_, "vizStateRobot: Invalid state type value");
+    }  // end switch
+  }    // end for
 }
 
-void MoveItVizWindow::states(std::vector<const ob::State*> states, std::vector<ot::VizColors> colors,
-                             ot::VizSizes size)
+void MoveItVizWindow::states(std::vector<const ob::State*> states, std::vector<ot::VizColors> colors, ot::VizSizes size)
 {
   if (size == ompl::tools::ROBOT)
   {
@@ -138,11 +140,14 @@ void MoveItVizWindow::states(std::vector<const ob::State*> states, std::vector<o
 
   for (std::size_t i = 0; i < states.size(); ++i)
   {
-    // Convert OMPL state to vector3
-    sphere_points.push_back(stateToPoint(states[i]));
+    for (const moveit::core::LinkModel* link : eef_link_models_)
+    {
+      // Convert OMPL state to vector3
+      sphere_points.push_back(stateToPoint(states[i], link));
 
-    // Convert OMPL color to Rviz color
-    sphere_colors.push_back(visuals_->intToRvizColor(colors[i]));
+      // Convert OMPL color to Rviz color
+      sphere_colors.push_back(visuals_->intToRvizColor(colors[i]));
+    }
   }
 
   // Publish
@@ -155,7 +160,10 @@ void MoveItVizWindow::edge(const ob::State* stateA, const ob::State* stateB, dou
   if (si_->getStateSpace()->equalStates(stateA, stateB))
   {
     ROS_WARN_STREAM_NAMED(name_, "Unable to visualize edge because states are the same");
-    visuals_->publishSphere(stateToPoint(stateA), rvt::RED, rvt::XLARGE);
+    for (const moveit::core::LinkModel* link : eef_link_models_)
+    {
+      visuals_->publishSphere(stateToPoint(stateA, link), rvt::RED, rvt::XLARGE);
+    }
     visuals_->trigger();
     ros::Duration(0.01).sleep();
     return;
@@ -179,17 +187,24 @@ void MoveItVizWindow::edge(const ob::State* stateA, const ob::State* stateB, dou
     std::cout << "max edge r: " << max_edge_radius_ << " min edge r: " << min_edge_radius_ << std::endl;
   }
 
-  visuals_->publishLine(stateToPoint(stateA), stateToPoint(stateB), visuals_->getColorScale(percent), radius / 2.0);
+  for (const moveit::core::LinkModel* link : eef_link_models_)
+  {
+    visuals_->publishLine(stateToPoint(stateA, link), stateToPoint(stateB, link), visuals_->getColorScale(percent),
+                          radius / 2.0);
+  }
 }
 
-void MoveItVizWindow::edge(const ob::State* stateA, const ob::State* stateB, ot::VizSizes size,
-                           ot::VizColors color)
+void MoveItVizWindow::edge(const ob::State* stateA, const ob::State* stateB, ot::VizSizes size, ot::VizColors color)
 {
-  visuals_->publishCylinder(stateToPoint(stateA), stateToPoint(stateB), visuals_->intToRvizColor(color),
-                            visuals_->intToRvizScale(size));
+  for (const moveit::core::LinkModel* link : eef_link_models_)
+  {
+    visuals_->publishCylinder(stateToPoint(stateA, link), stateToPoint(stateB, link), visuals_->intToRvizColor(color),
+                              visuals_->intToRvizScale(size));
+  }
 }
 
-void MoveItVizWindow::path(ompl::geometric::PathGeometric* path, ompl::tools::VizSizes type, ompl::tools::VizColors vertexColor, ompl::tools::VizColors edgeColor)
+void MoveItVizWindow::path(ompl::geometric::PathGeometric* path, ompl::tools::VizSizes type,
+                           ompl::tools::VizColors vertexColor, ompl::tools::VizColors edgeColor)
 {
   // Convert
   const og::PathGeometric& geometric_path = *path;  // static_cast<og::PathGeometric&>(*path);
@@ -197,15 +212,15 @@ void MoveItVizWindow::path(ompl::geometric::PathGeometric* path, ompl::tools::Vi
   switch (type)
   {
     case ompl::tools::SMALL:  // Basic line with vertiices
-      publish2DPath(geometric_path, visuals_->intToRvizColor(edgeColor), min_edge_radius_);
+      publish3DPath(geometric_path, visuals_->intToRvizColor(edgeColor), min_edge_radius_);
       publishSpheres(geometric_path, visuals_->intToRvizColor(vertexColor), rvt::SMALL);
       break;
     case ompl::tools::MEDIUM:  // Basic line with vertiices
-      publish2DPath(geometric_path, visuals_->intToRvizColor(edgeColor), (max_edge_radius_ - min_edge_radius_) / 2.0);
+      publish3DPath(geometric_path, visuals_->intToRvizColor(edgeColor), (max_edge_radius_ - min_edge_radius_) / 2.0);
       publishSpheres(geometric_path, visuals_->intToRvizColor(vertexColor), rvt::SMALL);
       break;
     case ompl::tools::LARGE:  // Basic line with vertiices
-      publish2DPath(geometric_path, visuals_->intToRvizColor(edgeColor), max_edge_radius_);
+      publish3DPath(geometric_path, visuals_->intToRvizColor(edgeColor), max_edge_radius_);
       publishSpheres(geometric_path, visuals_->intToRvizColor(vertexColor), rvt::SMALL);
       break;
     case ompl::tools::ROBOT:  // Playback motion for real robot
@@ -248,90 +263,35 @@ bool MoveItVizWindow::shutdownRequested()
 
 // From bolt_moveit ------------------------------------------------------
 
-bool MoveItVizWindow::publishSpheres(const og::PathGeometric& path, const rvt::colors& color, double scale,
+void MoveItVizWindow::publishSpheres(const og::PathGeometric& path, const rvt::colors& color, double scale,
                                      const std::string& ns)
 {
   geometry_msgs::Vector3 scale_vector;
   scale_vector.x = scale;
   scale_vector.y = scale;
   scale_vector.z = scale;
-  return publishSpheres(path, color, scale_vector, ns);
+  publishSpheres(path, color, scale_vector, ns);
 }
 
-bool MoveItVizWindow::publishSpheres(const og::PathGeometric& path, const rvt::colors& color, const rvt::scales scale,
+void MoveItVizWindow::publishSpheres(const og::PathGeometric& path, const rvt::colors& color, const rvt::scales scale,
                                      const std::string& ns)
 {
-  return publishSpheres(path, color, visuals_->getScale(scale), ns);
+  publishSpheres(path, color, visuals_->getScale(scale), ns);
 }
 
-bool MoveItVizWindow::publishSpheres(const og::PathGeometric& path, const rvt::colors& color,
+void MoveItVizWindow::publishSpheres(const og::PathGeometric& path, const rvt::colors& color,
                                      const geometry_msgs::Vector3& scale, const std::string& ns)
 {
   std::vector<geometry_msgs::Point> points;
   for (std::size_t i = 0; i < path.getStateCount(); ++i)
-    points.push_back(visuals_->convertPoint(stateToPoint(path.getState(i))));
+    for (const moveit::core::LinkModel* link : eef_link_models_)
+      points.push_back(visuals_->convertPoint(stateToPoint(path.getState(i), link)));
 
-  return visuals_->publishSpheres(points, color, scale, ns);
+  visuals_->publishSpheres(points, color, scale, ns);
 }
 
-// bool MoveItVizWindow::publishStates(std::vector<const ob::State*> states)
-// {
-//   visualization_msgs::Marker marker;
-//   // Set the frame ID and timestamp.
-//   marker.header.frame_id = visuals_->getBaseFrame();
-//   marker.header.stamp = ros::Time();
-
-//   // Set the namespace and id for this marker.  This serves to create a unique ID
-//   marker.ns = "states";
-
-//   // Set the marker type.
-//   marker.type = visualization_msgs::Marker::SPHERE_LIST;
-
-//   // Set the marker action.  Options are ADD and DELETE
-//   marker.action = visualization_msgs::Marker::ADD;
-//   marker.id = 0;
-
-//   marker.pose.position.x = 0.0;
-//   marker.pose.position.y = 0.0;
-//   marker.pose.position.z = 0.0;
-
-//   marker.pose.orientation.x = 0.0;
-//   marker.pose.orientation.y = 0.0;
-//   marker.pose.orientation.z = 0.0;
-//   marker.pose.orientation.w = 1.0;
-
-//   marker.scale.x = 0.4;
-//   marker.scale.y = 0.4;
-//   marker.scale.z = 0.4;
-
-//   marker.color = visuals_->getColor(rvt::RED);
-
-//   // Make line color
-//   std_msgs::ColorRGBA color = visuals_->getColor(rvt::RED);
-
-//   // Point
-//   geometry_msgs::Point point_a;
-
-//   // Loop through all verticies
-//   for (int vertex_id = 0; vertex_id < int(states.size()); ++vertex_id)
-//   {
-//     // First point
-//     point_a = visuals_->convertPoint(stateToPoint(states[vertex_id]));
-
-//     // Add the point pair to the line message
-//     marker.points.push_back(point_a);
-//     marker.colors.push_back(color);
-//   }
-
-//   // Send to Rviz
-//   return visuals_->publishMarker(marker);
-// }
-
-bool MoveItVizWindow::publishRobotState(const ob::State* state)
+void MoveItVizWindow::publishRobotState(const ob::State* state)
 {
-  // Make sure a robot state is available
-  visuals_->loadSharedRobotState();
-
   moveit_ompl::ModelBasedStateSpacePtr mb_state_space =
       std::static_pointer_cast<moveit_ompl::ModelBasedStateSpace>(si_->getStateSpace());
 
@@ -339,91 +299,10 @@ bool MoveItVizWindow::publishRobotState(const ob::State* state)
   mb_state_space->copyToRobotState(*visuals_->getSharedRobotState(), state);
 
   // Show the robot visualized in Rviz
-  return visuals_->publishRobotState(visuals_->getSharedRobotState());
+  visuals_->publishRobotState(visuals_->getSharedRobotState());
 }
 
-// bool MoveItVizWindow::publishTrajectoryPath(const ob::PlannerDataPtr& path, robot_model::JointModelGroup*
-// jmg,
-//                                             const std::vector<const robot_model::LinkModel*>& tips,
-//                                             bool show_trajectory_animated)
-// {
-//   // Make sure a robot state is available
-//   visuals_->loadSharedRobotState();
-
-//   // Vars
-//   Eigen::Affine3d pose;
-//   std::vector<std::vector<geometry_msgs::Point> > paths_msgs(tips.size());  // each tip has its own path of points
-//   robot_trajectory::RobotTrajectoryPtr robot_trajectory;
-
-//   moveit_ompl::ModelBasedStateSpacePtr mb_state_space =
-//       std::static_pointer_cast<moveit_ompl::ModelBasedStateSpace>(si_->getStateSpace());
-
-//   // Optionally save the trajectory
-//   if (show_trajectory_animated)
-//   {
-//     robot_trajectory.reset(new robot_trajectory::RobotTrajectory(visuals_->getRobotModel(), jmg->getName()));
-//   }
-
-//   // Each state in the path
-//   for (std::size_t state_id = 0; state_id < path->numVertices(); ++state_id)
-//   {
-//     // Check if program is shutting down
-//     if (!ros::ok())
-//       return false;
-
-//     // Convert to robot state
-//     mb_state_space->copyToRobotState(*visuals_->getSharedRobotState(), path->getVertex(state_id).getState());
-//     ROS_WARN_STREAM_NAMED("temp", "updateStateWithFakeBase disabled");
-//     // visuals_->getSharedRobotState()->updateStateWithFakeBase();
-
-//     visuals_->publishRobotState(visuals_->getSharedRobotState());
-
-//     // Each tip in the robot state
-//     for (std::size_t tip_id = 0; tip_id < tips.size(); ++tip_id)
-//     {
-//       // Forward kinematics
-//       pose = visuals_->getSharedRobotState()->getGlobalLinkTransform(tips[tip_id]);
-
-//       // Optionally save the trajectory
-//       if (show_trajectory_animated)
-//       {
-//         robot_state::RobotState robot_state_copy = *visuals_->getSharedRobotState();
-//         robot_trajectory->addSuffixWayPoint(robot_state_copy, 0.01);  // 1 second interval
-//       }
-
-//       // Debug pose
-//       // std::cout << "Pose: " << state_id << " of link " << tips[tip_id]->getName() << ": \n" << pose.translation()
-//       <<
-//       // std::endl;
-
-//       paths_msgs[tip_id].push_back(visuals_->convertPose(pose).position);
-
-//       // Show goal state arrow
-//       if (state_id == path->numVertices() - 1)
-//       {
-//         visuals_->publishArrow(pose, rvt::BLACK);
-//       }
-//     }
-//   }  // for each state
-
-//   for (std::size_t tip_id = 0; tip_id < tips.size(); ++tip_id)
-//   {
-//     visuals_->publishPath(paths_msgs[tip_id], rvt::RAND, rvt::SMALL);
-//     ros::Duration(0.05).sleep();
-//     visuals_->publishSpheres(paths_msgs[tip_id], rvt::ORANGE, rvt::SMALL);
-//     ros::Duration(0.05).sleep();
-//   }
-
-//   // Debugging - Convert to trajectory
-//   if (show_trajectory_animated)
-//   {
-//     visuals_->publishTrajectoryPath(*robot_trajectory, true);
-//   }
-
-//   return true;
-// }
-
-bool MoveItVizWindow::publishTrajectoryPath(const og::PathGeometric& path, const robot_model::JointModelGroup* jmg,
+void MoveItVizWindow::publishTrajectoryPath(const og::PathGeometric& path, const robot_model::JointModelGroup* jmg,
                                             const bool blocking)
 {
   // Convert to MoveIt! format
@@ -431,64 +310,62 @@ bool MoveItVizWindow::publishTrajectoryPath(const og::PathGeometric& path, const
   double speed = 0.01;
   if (!convertPath(path, jmg, traj, speed))
   {
-    return false;
+    return;
   }
 
-  return visuals_->publishTrajectoryPath(*traj, blocking);
+  visuals_->publishTrajectoryPath(*traj, blocking);
 }
 
-// Deprecated
-bool MoveItVizWindow::publishPath(const og::PathGeometric& path, const rvt::colors& color, const double thickness,
-                                  const std::string& ns)
-{
-  return publish2DPath(path, color, thickness, ns);
-}
-
-bool MoveItVizWindow::publish2DPath(const og::PathGeometric& path, const rvt::colors& color, const double thickness,
+void MoveItVizWindow::publish3DPath(const og::PathGeometric& path, const rvt::colors& color, const double thickness,
                                     const std::string& ns)
 {
+  std::cout << "publish3DPath() " << std::endl;
+
   // Error check
   if (path.getStateCount() <= 0)
   {
     ROS_WARN_STREAM_NAMED(name_, "No states found in path");
-    return false;
+    return;
   }
 
-  // Initialize first vertex
-  Eigen::Vector3d prev_vertex = stateToPoint(path.getState(0));
-  Eigen::Vector3d this_vertex;
-
-  // Convert path coordinates
-  for (std::size_t i = 1; i < path.getStateCount(); ++i)
+  for (const moveit::core::LinkModel* link : eef_link_models_)
   {
-    // Get current coordinates
-    this_vertex = stateToPoint(path.getState(i));
+    std::cout << "  link: " << link->getName() << std::endl;
 
-    // Create line
-    visuals_->publishCylinder(prev_vertex, this_vertex, color, thickness, ns);
+    // Initialize first vertex
+    Eigen::Vector3d prev_vertex = stateToPoint(path.getState(0), link);
+    Eigen::Vector3d this_vertex;
 
-    // Save these coordinates for next line
-    prev_vertex = this_vertex;
+    visuals_->printTranslation(prev_vertex);
+
+    // Convert path coordinates
+    for (std::size_t i = 1; i < path.getStateCount(); ++i)
+    {
+      // Get current coordinates
+      this_vertex = stateToPoint(path.getState(i), link);
+      visuals_->printTranslation(this_vertex);
+
+      // Create line
+      visuals_->publishCylinder(prev_vertex, this_vertex, color, thickness, ns);
+
+      // Save these coordinates for next line
+      prev_vertex = this_vertex;
+    }
   }
-
-  return true;
 }
 
-Eigen::Vector3d MoveItVizWindow::stateToPoint(const ob::ScopedState<> state)
+Eigen::Vector3d MoveItVizWindow::stateToPoint(const ob::ScopedState<> state, const moveit::core::LinkModel* eef_link)
 {
-  return stateToPoint(state.get());
+  stateToPoint(state.get(), eef_link);
 }
 
-Eigen::Vector3d MoveItVizWindow::stateToPoint(const ob::State* state)
+Eigen::Vector3d MoveItVizWindow::stateToPoint(const ob::State* state, const moveit::core::LinkModel* eef_link)
 {
   if (!state)
   {
     ROS_FATAL_NAMED(name_, "No state found for vertex");
     exit(1);
   }
-
-  // Make sure a robot state is available
-  visuals_->loadSharedRobotState();
 
   moveit_ompl::ModelBasedStateSpacePtr mb_state_space =
       std::static_pointer_cast<moveit_ompl::ModelBasedStateSpace>(si_->getStateSpace());
@@ -497,42 +374,47 @@ Eigen::Vector3d MoveItVizWindow::stateToPoint(const ob::State* state)
   mb_state_space->copyToRobotState(*visuals_->getRootRobotState(), state);
 
   // Get pose
-  Eigen::Affine3d pose = visuals_->getRootRobotState()->getGlobalLinkTransform(eef_link_name_);
+  Eigen::Affine3d pose = visuals_->getRootRobotState()->getGlobalLinkTransform(eef_link);
 
-  return pose.translation();
+  pose.translation();
 }
 
-bool MoveItVizWindow::publishState(const ob::State* state, const rvt::colors& color, const rvt::scales scale,
+void MoveItVizWindow::publishState(const ob::State* state, const rvt::colors& color, const rvt::scales scale,
                                    const std::string& ns)
 {
-  return visuals_->publishSphere(stateToPoint(state), color, scale, ns);
+  for (const moveit::core::LinkModel* link : eef_link_models_)
+    visuals_->publishSphere(stateToPoint(state, link), color, scale, ns);
 }
 
-bool MoveItVizWindow::publishState(const ob::State* state, const rvt::colors& color, const double scale,
+void MoveItVizWindow::publishState(const ob::State* state, const rvt::colors& color, const double scale,
                                    const std::string& ns)
 {
-  return visuals_->publishSphere(stateToPoint(state), color, scale, ns);
+  for (const moveit::core::LinkModel* link : eef_link_models_)
+    visuals_->publishSphere(stateToPoint(state, link), color, scale, ns);
 }
 
-bool MoveItVizWindow::publishState(const ob::ScopedState<> state, const rvt::colors& color, const rvt::scales scale,
+void MoveItVizWindow::publishState(const ob::ScopedState<> state, const rvt::colors& color, const rvt::scales scale,
                                    const std::string& ns)
 {
-  return visuals_->publishSphere(stateToPoint(state), color, scale, ns);
+  for (const moveit::core::LinkModel* link : eef_link_models_)
+    visuals_->publishSphere(stateToPoint(state, link), color, scale, ns);
 }
 
-bool MoveItVizWindow::publishState(const ob::ScopedState<> state, const rvt::colors& color, double scale,
+void MoveItVizWindow::publishState(const ob::ScopedState<> state, const rvt::colors& color, double scale,
                                    const std::string& ns)
 {
-  return visuals_->publishSphere(stateToPoint(state), color, scale, ns);
+  for (const moveit::core::LinkModel* link : eef_link_models_)
+    visuals_->publishSphere(stateToPoint(state, link), color, scale, ns);
 }
 
-bool MoveItVizWindow::publishState(const ob::ScopedState<> state, const rvt::colors& color,
+void MoveItVizWindow::publishState(const ob::ScopedState<> state, const rvt::colors& color,
                                    const geometry_msgs::Vector3& scale, const std::string& ns)
 {
-  return visuals_->publishSphere(stateToPoint(state), color, scale.x, ns);
+  for (const moveit::core::LinkModel* link : eef_link_models_)
+    visuals_->publishSphere(stateToPoint(state, link), color, scale.x, ns);
 }
 
-bool MoveItVizWindow::publishSampleRegion(const ob::ScopedState<>& state_area, const double& distance)
+void MoveItVizWindow::publishSampleRegion(const ob::ScopedState<>& state_area, const double& distance)
 {
   temp_point_.x = state_area[0];
   temp_point_.y = state_area[1];
@@ -540,7 +422,7 @@ bool MoveItVizWindow::publishSampleRegion(const ob::ScopedState<>& state_area, c
 
   visuals_->publishSphere(temp_point_, rvt::BLACK, rvt::REGULAR, "sample_region");  // mid point
   // outer sphere (x2 b/c its a radius, x0.1 to make it look nicer)
-  return visuals_->publishSphere(temp_point_, rvt::TRANSLUCENT, rvt::REGULAR, "sample_region");
+  visuals_->publishSphere(temp_point_, rvt::TRANSLUCENT, rvt::REGULAR, "sample_region");
 }
 
 bool MoveItVizWindow::convertPath(const og::PathGeometric& path, const robot_model::JointModelGroup* jmg,
@@ -571,6 +453,7 @@ bool MoveItVizWindow::convertPath(const og::PathGeometric& path, const robot_mod
     // Add to trajectory
     traj->addSuffixWayPoint(state, speed);
   }
+
   return true;
 }
 

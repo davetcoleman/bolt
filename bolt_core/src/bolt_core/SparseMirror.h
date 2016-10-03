@@ -107,10 +107,12 @@ protected:
 public:
   bool verbose_ = false;
   bool vMirror_ = false;
-  bool vMirrorStatus_ = false;
+  bool vMirrorStatus_ = true;
 
   /** \brief Visualization */
   bool visualizeMiroring_ = false;
+
+  bool collisionCheckMirror_ = true;
 
 };  // end SparseMirror
 

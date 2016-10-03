@@ -64,8 +64,13 @@ namespace bolt_moveit
 BoltMoveIt::BoltMoveIt(const std::string &hostname, const std::string &package_path)
   : MoveItBase(), nh_("~"), remote_control_(nh_), package_path_(package_path)
 {
+  std::size_t indent = 0;
+
   // Profiler
   CALLGRIND_TOGGLE_COLLECT;
+
+  std::vector<std::string> ee_tip_links;
+  std::vector<std::string> arm_jmgs;
 
   bool seed_random;
   // Load rosparams
@@ -90,7 +95,8 @@ BoltMoveIt::BoltMoveIt(const std::string &hostname, const std::string &package_p
   error += !rosparam_shortcuts::get(name_, rpnh, "problem_type", problem_type_);
   error += !rosparam_shortcuts::get(name_, rpnh, "use_task_planning", use_task_planning_);
   error += !rosparam_shortcuts::get(name_, rpnh, "planning_group_name", planning_group_name_);
-  error += !rosparam_shortcuts::get(name_, rpnh, "ee_tip_link", ee_tip_link_);
+  error += !rosparam_shortcuts::get(name_, rpnh, "arm_jmgs", arm_jmgs);
+  error += !rosparam_shortcuts::get(name_, rpnh, "ee_tip_links", ee_tip_links);
   error += !rosparam_shortcuts::get(name_, rpnh, "seed_random", seed_random);
   error += !rosparam_shortcuts::get(name_, rpnh, "post_processing", post_processing_);
   error += !rosparam_shortcuts::get(name_, rpnh, "post_processing_interval", post_processing_interval_);
@@ -128,7 +134,24 @@ BoltMoveIt::BoltMoveIt(const std::string &hostname, const std::string &package_p
 
   // Get the two arms jmg
   jmg_ = robot_model_->getJointModelGroup(planning_group_name_);
-  ee_link_ = robot_model_->getLinkModel(ee_tip_link_);
+
+  for (auto arm_jmg : arm_jmgs)
+  {
+    arm_jmgs_.push_back(robot_model_->getJointModelGroup(arm_jmg));
+    if(!arm_jmgs_.back())
+    {
+      BOLT_ERROR(indent, true, "No joint model group found for jmg name " << arm_jmg);
+    }
+  }
+
+  for (auto ee_tip_link : ee_tip_links)
+  {
+    ee_links_.push_back(robot_model_->getLinkModel(ee_tip_link));
+    if(!ee_links_.back())
+    {
+      BOLT_ERROR(indent, true, "No link model found for link name " << ee_tip_link);
+    }
+  }
 
   // Load planning
   if (!loadOMPL())
@@ -172,9 +195,9 @@ BoltMoveIt::BoltMoveIt(const std::string &hostname, const std::string &package_p
     cart_path_planner_.reset(new CartPathPlanner(this));
 
     imarker_start_.reset(
-        new mvt::IMarkerRobotState(planning_scene_monitor_, "start", jmg_, ee_link_, rvt::GREEN, package_path_));
+        new mvt::IMarkerRobotState(planning_scene_monitor_, "start", arm_jmgs_, ee_links_, rvt::GREEN, package_path_));
     imarker_goal_.reset(
-        new mvt::IMarkerRobotState(planning_scene_monitor_, "goal", jmg_, ee_link_, rvt::ORANGE, package_path_));
+        new mvt::IMarkerRobotState(planning_scene_monitor_, "goal", arm_jmgs_, ee_links_, rvt::ORANGE, package_path_));
 
     // imarker_start_->setCollisionCheckingVerbose(true);
     // imarker_start_->setOnlyCheckSelfCollision(true);
@@ -191,7 +214,7 @@ BoltMoveIt::BoltMoveIt(const std::string &hostname, const std::string &package_p
     waitForNextStep("run first problem");
 
   // Run application
-  run();
+  run(indent);
 
   // Profiler
   CALLGRIND_TOGGLE_COLLECT;
@@ -302,9 +325,9 @@ bool BoltMoveIt::loadData()
   return true;
 }
 
-void BoltMoveIt::run()
+void BoltMoveIt::run(std::size_t indent)
 {
-  std::size_t indent = 0;
+
 
   // Benchmark performance
   if (benchmark_performance_)
@@ -639,7 +662,7 @@ void BoltMoveIt::loadVisualTools()
 
     MoveItVizWindowPtr viz = MoveItVizWindowPtr(new MoveItVizWindow(moveit_visual, si_));
     viz->setJointModelGroup(jmg_);
-    viz->setEEFLinkName(ee_tip_link_);
+    viz->setEEFLinks(ee_links_);
 
     bool blocking = false;
     if (!headless_)
@@ -810,7 +833,7 @@ void BoltMoveIt::visualizeRawTrajectory(og::PathGeometric &path)
   viz3_->convertPath(path, jmg_, traj, speed);
 
   // Show trajectory line
-  viz3_->getVisualTools()->publishTrajectoryLine(traj, ee_link_, rvt::GREY);
+  viz3_->getVisualTools()->publishTrajectoryLine(traj, ee_links_[0], rvt::GREY);
   viz3_->trigger();
 }
 

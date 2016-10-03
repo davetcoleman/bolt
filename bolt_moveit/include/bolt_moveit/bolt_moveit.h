@@ -86,7 +86,7 @@ public:
 
   bool loadData();
 
-  void run();
+  void run(std::size_t indent);
 
   bool runProblems();
 
@@ -162,9 +162,11 @@ public:
 
   // Planning groups
   std::string planning_group_name_;
-  std::string ee_tip_link_;
   moveit::core::JointModelGroup* jmg_;
-  moveit::core::LinkModel* ee_link_;
+
+  // End effectors
+  std::vector<const moveit::core::JointModelGroup *> arm_jmgs_;
+  std::vector<moveit::core::LinkModel*> ee_links_;
 
   // Modes
   bool run_problems_;
