@@ -41,6 +41,9 @@
 
 #include <bolt_moveit/projection_viz_window.h>
 
+// OMPL
+#include <bolt_core/SparseMirror.h>
+
 // this package
 #include <bolt_moveit/bolt_moveit.h>
 
@@ -947,8 +950,8 @@ void BoltMoveIt::testMotionValidator()
 
 void BoltMoveIt::mirrorGraph(std::size_t indent)
 {
-  const std::string both_arms_group_name = "both_arms";
-  const std::string left_arm_group_name = "left_arm";
+  const std::string both_arms_group_name = "both_arms_minus_one";
+  const std::string left_arm_group_name = "left_arm_minus_one";
 
   // Choose planning group
   moveit::core::JointModelGroup *both_arms = robot_model_->getJointModelGroup(both_arms_group_name);
@@ -996,13 +999,13 @@ void BoltMoveIt::mirrorGraph(std::size_t indent)
   if (false)
   {
     BOLT_INFO(indent, true, "TESTING ALL VERTICES ON OTHER ARM");
-    bolt_->getSparseGenerator()->checkValidityOfArmMirror(both_arms_space_info, left_arm_space_info, indent);
+    bolt_->getSparseMirror()->checkValidityOfArmMirror(both_arms_space_info, left_arm_space_info, indent);
     std::cout << "success " << std::endl;
     exit(0);
   }
 
   // Mirror graph
-  bolt_->getSparseGenerator()->mirrorGraphDualArm(both_arms_space_info, left_arm_space_info, file_path, indent);
+  bolt_->getSparseMirror()->mirrorGraphDualArm(both_arms_space_info, left_arm_space_info, file_path, indent);
   BOLT_INFO(indent, true, "Done mirroring graph!");
 }
 

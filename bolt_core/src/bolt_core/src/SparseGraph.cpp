@@ -1064,6 +1064,38 @@ VizColors SparseGraph::edgeTypeToColor(EdgeType edgeType)
   return ORANGE;  // dummy return value
 }
 
+base::State*& SparseGraph::getQueryStateNonConst(std::size_t threadID)
+{
+  BOLT_ASSERT(threadID < queryVertices_.size(), "Attempted to request state of regular vertex using query "
+              "function");
+  return queryStates_[threadID];
+}
+
+SparseVertex SparseGraph::getQueryVertices(std::size_t threadID)
+{
+  BOLT_ASSERT(threadID < queryVertices_.size(), "Attempted to request vertex beyond threadID count");
+  return queryVertices_[threadID];
+}
+
+/** \brief Shortcut function for getting the state of a vertex */
+base::State*& SparseGraph::getStateNonConst(SparseVertex v)
+{
+  BOLT_ASSERT(v >= queryVertices_.size(), "Attempted to request state of query vertex using wrong function");
+  return vertexStateProperty_[v];
+}
+
+const base::State* SparseGraph::getState(SparseVertex v) const
+{
+  BOLT_ASSERT(v >= queryVertices_.size(), "Attempted to request state of query vertex using wrong function");
+  return vertexStateProperty_[v];
+}
+
+/** \brief Determine if a vertex has been deleted (but not fully removed yet) */
+bool SparseGraph::stateDeleted(SparseVertex v) const
+{
+  return vertexStateProperty_[v] == nullptr;
+}
+
 SparseVertex SparseGraph::getSparseRepresentative(base::State *state)
 {
   std::vector<SparseVertex> graphNeighbors;

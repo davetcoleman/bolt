@@ -322,7 +322,7 @@ void SparseStorage::loadVertices(unsigned int numVertices, boost::archive::binar
 
     // Feedback
     if ((i + 1) % feedbackFrequency == 0)
-      std::cout << static_cast<int>(i / double(numVertices) * 100.0) << "% " << std::flush;
+      std::cout << static_cast<int>(ceil(i / double(numVertices) * 100.0)) << "% " << std::flush;
   }
   std::cout << std::endl;
 
@@ -395,7 +395,7 @@ void SparseStorage::loadEdges(unsigned int numEdges, boost::archive::binary_iarc
 
     // Feedback
     if ((i + 1) % feedbackFrequency == 0)
-      std::cout << static_cast<int>(i / static_cast<double>(numEdges) * 100.0) << "% " << std::flush;
+      std::cout << static_cast<int>(ceil(i / static_cast<double>(numEdges) * 100.0)) << "% " << std::flush;
   }
   std::cout << std::endl;
 }

@@ -179,6 +179,12 @@ public:
     return boost::num_vertices(g_);
   }
 
+  /** \brief Get the number of vertices in the task roadmap not including query vertices. */
+  unsigned int getNumRealVertices() const
+  {
+    return boost::num_vertices(g_) - queryVertices_.size();
+  }
+
   /** \brief Get the number of edges in the task roadmap. */
   unsigned int getNumEdges() const
   {

@@ -1549,7 +1549,7 @@ void TaskGraph::printGraphStats(double generationDuration)
   BOLT_DEBUG(indent, 1, "------------------------------------------------------");
   BOLT_DEBUG(indent, 1, "TaskGraph stats:");
   BOLT_DEBUG(indent, 1, "   Generation time:        " << generationDuration << " s");
-  BOLT_DEBUG(indent, 1, "   Total vertices:         " << getNumVertices());
+  BOLT_DEBUG(indent, 1, "   Total vertices:         " << getNumRealVertices());
   BOLT_DEBUG(indent, 1, "   Total edges:            " << getNumEdges());
   BOLT_DEBUG(indent, 1, "   Average degree:         " << averageDegree);
   BOLT_DEBUG(indent, 1, "   Connected Components:   " << numSets);

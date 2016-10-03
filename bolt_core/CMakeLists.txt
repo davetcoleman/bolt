@@ -51,6 +51,7 @@ add_library(${PROJECT_NAME}
   src/bolt_core/src/BoltPlanner.cpp
   src/bolt_core/src/SparseGraph.cpp
   src/bolt_core/src/SparseGenerator.cpp
+  src/bolt_core/src/SparseMirror.cpp
   src/bolt_core/src/SparseCriteria.cpp
   src/bolt_core/src/SparseStorage.cpp
   src/bolt_core/src/TaskGraph.cpp

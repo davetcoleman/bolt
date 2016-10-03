@@ -334,37 +334,17 @@ public:
   VizColors edgeTypeToColor(EdgeType edgeType);
 
   /** \brief Get the state of a vertex used for querying - i.e. vertices 0-11 for 12 thread system */
-  inline base::State*& getQueryStateNonConst(std::size_t threadID)
-  {
-    BOLT_ASSERT(threadID < queryVertices_.size(), "Attempted to request state of regular vertex using query "
-                                                  "function");
-    return queryStates_[threadID];
-  }
+  base::State*& getQueryStateNonConst(std::size_t threadID);
 
-  inline SparseVertex getQueryVertices(std::size_t threadID)
-  {
-    BOLT_ASSERT(threadID < queryVertices_.size(), "Attempted to request vertex beyond threadID count");
-    return queryVertices_[threadID];
-  }
+  SparseVertex getQueryVertices(std::size_t threadID);
 
   /** \brief Shortcut function for getting the state of a vertex */
-  inline base::State*& getStateNonConst(SparseVertex v)
-  {
-    BOLT_ASSERT(v >= queryVertices_.size(), "Attempted to request state of query vertex using wrong function");
-    return vertexStateProperty_[v];
-  }
+  base::State*& getStateNonConst(SparseVertex v);
 
-  inline const base::State* getState(SparseVertex v) const
-  {
-    BOLT_ASSERT(v >= queryVertices_.size(), "Attempted to request state of query vertex using wrong function");
-    return vertexStateProperty_[v];
-  }
+  const base::State* getState(SparseVertex v) const;
 
   /** \brief Determine if a vertex has been deleted (but not fully removed yet) */
-  inline bool stateDeleted(SparseVertex v) const
-  {
-    return vertexStateProperty_[v] == nullptr;
-  }
+  bool stateDeleted(SparseVertex v) const;
 
   /** \brief Used for creating a voronoi diagram */
   SparseVertex getSparseRepresentative(base::State* state);

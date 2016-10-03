@@ -75,6 +75,7 @@ namespace bolt
 OMPL_CLASS_FORWARD(Bolt);
 OMPL_CLASS_FORWARD(SparseGenerator);
 OMPL_CLASS_FORWARD(SparseCriteria);
+OMPL_CLASS_FORWARD(SparseMirror);
 /// @endcond
 
 /** \class BoltPtr
@@ -199,6 +200,11 @@ public:
     return sparseCriteria_;
   }
 
+  SparseMirrorPtr getSparseMirror()
+  {
+    return sparseMirror_;
+  }
+
   SparseGeneratorPtr getSparseGenerator()
   {
     return sparseGenerator_;
@@ -219,6 +225,9 @@ protected:
 
   /** \brief Generator of sparse vertices and edges */
   SparseGeneratorPtr sparseGenerator_;
+
+  /** \brief Duplicate one arm to second arm */
+  SparseMirrorPtr sparseMirror_;
 
   /** \brief Graph used for combining multiple layers of sparse graph */
   TaskGraphPtr taskGraph_;

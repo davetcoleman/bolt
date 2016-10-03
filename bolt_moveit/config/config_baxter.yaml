@@ -31,7 +31,8 @@ bolt_moveit:
   #planning_group_name: right_3dof
   #planning_group_name: right_4dof
   #planning_group_name: right_5dof
-  planning_group_name: right_arm
+  planning_group_name: right_arm_minus_one
+  #planning_group_name: both_arms_minus_one
   ee_tip_link: right_gripper_tip
 
   # other
@@ -68,7 +69,7 @@ sparse_generator:
 
 # ====================================================
 sparse_criteria:
-  sparse_delta_fraction: 0.2 # for 6dof
+  sparse_delta_fraction: 0.3 # for 6dof
   #sparse_delta_fraction: 0.2 # for 12dof
   penetration_overlap_fraction: 0.01
   near_sample_points_multiple: 2 # multiply this times number of dimensions

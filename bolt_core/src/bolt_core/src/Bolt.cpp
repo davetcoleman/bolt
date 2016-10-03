@@ -42,6 +42,7 @@
 #include <bolt_core/Bolt.h>
 #include <bolt_core/SparseGenerator.h>
 #include <bolt_core/SparseCriteria.h>
+#include <bolt_core/SparseMirror.h>
 
 namespace og = ompl::geometric;
 namespace ob = ompl::base;
@@ -91,6 +92,10 @@ void Bolt::initialize()
   BOLT_INFO(indent, verbose_, "Loading SparseGenerator");
   sparseGenerator_.reset(new SparseGenerator(sparseGraph_));
   sparseGenerator_->setSparseCriteria(sparseCriteria_);
+
+  // Load mirror for duplicating arm
+  BOLT_INFO(indent, verbose_, "Loading SparseMirror");
+  sparseMirror_.reset(new SparseMirror(sparseGraph_));
 
   // Load the task graph used for combining multiple layers of sparse graph
   BOLT_INFO(indent, verbose_, "Loading TaskGraph");
