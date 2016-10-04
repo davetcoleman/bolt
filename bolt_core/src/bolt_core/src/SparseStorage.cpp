@@ -389,6 +389,8 @@ void SparseStorage::loadEdges(unsigned int numEdges, boost::archive::binary_iarc
     const SparseVertex v1 = edgeData.endpoints_.first += numQueryVertices_;
     const SparseVertex v2 = edgeData.endpoints_.second += numQueryVertices_;
 
+    // TODO: edge weight is currently not loaded, so this should really just be removed
+
     // Add
     EdgeType type = static_cast<EdgeType>(edgeData.type_);
     sparseGraph_->addEdge(v1, v2, type, indent);

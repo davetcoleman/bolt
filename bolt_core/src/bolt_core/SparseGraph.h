@@ -428,6 +428,16 @@ public:
     return savingEnabled_;
   }
 
+  void setFastMirrorMode(bool enabled)
+  {
+    fastMirrorMode_ = enabled;
+  }
+
+  void setHasUnsavedChanges(bool unsaved)
+  {
+    hasUnsavedChanges_ = unsaved;
+  }
+
 protected:
   /** \brief Short name of this class */
   const std::string name_ = "SparseGraph";
@@ -505,6 +515,9 @@ protected:
 
   /** \brief Instance of random number generator */
   RNG rng_;
+
+  /** \brief Fast mirror mode is for populating a graph without extra features */
+  bool fastMirrorMode_ = false;
 
 public:  // user settings from other applications
   /** \brief For statistics */

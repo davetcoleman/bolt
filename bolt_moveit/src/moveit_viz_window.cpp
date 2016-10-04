@@ -330,21 +330,15 @@ void MoveItVizWindow::publish3DPath(const og::PathGeometric& path, const rvt::co
 
   for (const moveit::core::LinkModel* link : eef_link_models_)
   {
-    std::cout << "  link: " << link->getName() << std::endl;
-
     // Initialize first vertex
     Eigen::Vector3d prev_vertex = stateToPoint(path.getState(0), link);
     Eigen::Vector3d this_vertex;
-
-    visuals_->printTranslation(prev_vertex);
 
     // Convert path coordinates
     for (std::size_t i = 1; i < path.getStateCount(); ++i)
     {
       // Get current coordinates
       this_vertex = stateToPoint(path.getState(i), link);
-      visuals_->printTranslation(this_vertex);
-
       // Create line
       visuals_->publishCylinder(prev_vertex, this_vertex, color, thickness, ns);
 
@@ -356,7 +350,7 @@ void MoveItVizWindow::publish3DPath(const og::PathGeometric& path, const rvt::co
 
 Eigen::Vector3d MoveItVizWindow::stateToPoint(const ob::ScopedState<> state, const moveit::core::LinkModel* eef_link)
 {
-  stateToPoint(state.get(), eef_link);
+  return stateToPoint(state.get(), eef_link);
 }
 
 Eigen::Vector3d MoveItVizWindow::stateToPoint(const ob::State* state, const moveit::core::LinkModel* eef_link)
@@ -367,6 +361,10 @@ Eigen::Vector3d MoveItVizWindow::stateToPoint(const ob::State* state, const move
     exit(1);
   }
 
+  // Make sure a robot state is available
+  //visuals_->loadSharedRobotState();
+
+  // Get StateSpace
   moveit_ompl::ModelBasedStateSpacePtr mb_state_space =
       std::static_pointer_cast<moveit_ompl::ModelBasedStateSpace>(si_->getStateSpace());
 
@@ -376,7 +374,7 @@ Eigen::Vector3d MoveItVizWindow::stateToPoint(const ob::State* state, const move
   // Get pose
   Eigen::Affine3d pose = visuals_->getRootRobotState()->getGlobalLinkTransform(eef_link);
 
-  pose.translation();
+  return pose.translation();
 }
 
 void MoveItVizWindow::publishState(const ob::State* state, const rvt::colors& color, const rvt::scales scale,

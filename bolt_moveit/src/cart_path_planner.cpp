@@ -47,29 +47,28 @@
 // moveit_boilerplate
 #include <moveit_boilerplate/namespaces.h>
 
+// visual tools
+#include <moveit_visual_tools/imarker_end_effector.h>
+
 namespace bolt_moveit
 {
 CartPathPlanner::CartPathPlanner(BoltMoveIt* parent) : nh_("~"), parent_(parent)
 {
   std::size_t indent = 0;
-  //jmg_ = parent_->jmg_;
+  // jmg_ = parent_->jmg_;
 
   // loading parameters
   {
     using namespace rosparam_shortcuts;
     ros::NodeHandle rpnh(nh_, name_);
     std::size_t error = 0;
-    error += !get(name_, rpnh, "group_name", group_name_);
-    //error += !get(name_, rpnh, "tip_link", tip_link_);
-    error += !get(name_, rpnh, "base_link", base_link_);
-    error += !get(name_, rpnh, "world_frame", world_frame_);
+    error += !get(name_, rpnh, "ik_discretization", ik_discretization_);
     error += !get(name_, rpnh, "trajectory_discretization", trajectory_discretization_);
     error += !get(name_, rpnh, "timing", timing_);
     error += !get(name_, rpnh, "tolerance_increment", tolerance_increment_);
     error += !get(name_, rpnh, "tolerance_roll", tolerance_roll_);
     error += !get(name_, rpnh, "tolerance_pitch", tolerance_pitch_);
     error += !get(name_, rpnh, "tolerance_yaw", tolerance_yaw_);
-    error += !get(name_, rpnh, "ik_discretization", ik_discretization_);
     error += !get(name_, rpnh, "verbose", verbose_);
     error += !get(name_, rpnh, "visualize/show_all_solutions", visualize_show_all_solutions_);
     error += !get(name_, rpnh, "visualize/show_all_solutions_sleep", visualize_show_all_solutions_sleep_);
@@ -109,45 +108,55 @@ CartPathPlanner::CartPathPlanner(BoltMoveIt* parent) : nh_("~"), parent_(parent)
 void CartPathPlanner::processIMarkerPose(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback,
                                          const Eigen::Affine3d& feedback_pose)
 {
-  std::cout << "feedback: " << feedback << std::endl;
   std::size_t indent = 2;
+
+  // For now both the Cartesian paths are driven only by the right arm
+  if (feedback->marker_name == "cart_left")
+    return;
+
   moveit::core::RobotStatePtr imarker_state = imarker_cartesian_->getRobotState();
+  const moveit::core::LinkModel* ee_link = imarker_cartesian_->getEEF(feedback->marker_name)->getEELink();
+  Eigen::Affine3d start_pose = imarker_state->getGlobalLinkTransform(ee_link);
 
-  std::vector<Eigen::Affine3d> start_poses;
-  for (const moveit::core::LinkModel* ee_link : parent_->ee_links_)
-    start_poses.push_back(imarker_state->getGlobalLinkTransform(ee_link));
-
-  generateExactPoses(start_poses[0], indent); // TODO(davetcoleman):make for all poses
+  generateExactPoses(start_pose, indent);
 }
 
-bool CartPathPlanner::generateExactPoses(std::size_t indent)
+void CartPathPlanner::generateExactPoses(std::size_t indent)
 {
   // Generate exact poses
   moveit::core::RobotStatePtr imarker_state = imarker_cartesian_->getRobotState();
 
-  std::vector<Eigen::Affine3d> start_poses;
-  for (const moveit::core::LinkModel* ee_link : parent_->ee_links_)
-    start_poses.push_back(imarker_state->getGlobalLinkTransform(ee_link));
+  // For now only use right arm
+  generateExactPoses(imarker_state->getGlobalLinkTransform(parent_->ee_links_[0]), indent);
 
-  generateExactPoses(start_poses[0], indent); // TODO
+  // std::vector<Eigen::Affine3d> start_poses;
+  // for (std::size_t i = 0; i < parent_->ee_links_.size(); ++i)
+  // {
+  //   start_poses.push_back(imarker_state->getGlobalLinkTransform(parent_->ee_links_[i]));
+  //   generateExactPoses(start_poses[i], indent);
+  // }
 }
 
-bool CartPathPlanner::generateExactPoses(const Eigen::Affine3d& start_pose, std::size_t indent)
+void CartPathPlanner::generateExactPoses(const Eigen::Affine3d& start_pose, std::size_t indent)
 {
-  BOLT_FUNC(indent, true, "generateExactPoses()");
+  BOLT_FUNC(indent, verbose_, "generateExactPoses()");
 
-  if (!transform2DPath(start_pose, exact_poses_, indent))
+  if (!transform2DPaths(start_pose, exact_poses_, indent))
   {
     BOLT_ERROR(indent, true, "Trajectory generation failed");
     exit(-1);
   }
 
-  BOLT_DEBUG(indent, true, "Generated exact Cartesian traj with " << exact_poses_.size() << " points");
+  BOLT_DEBUG(indent, true, "Generated exact Cartesian traj with " << exact_poses_.front().size() << " points for "
+                                                                  << exact_poses_.size() << " dimensions");
 
   // Publish trajectory poses for visualization
   visual_tools_->deleteAllMarkers();
-  visual_tools_->publishPath(exact_poses_, rvt::ORANGE, rvt::XXSMALL);
-  visual_tools_->publishAxisPath(exact_poses_, rvt::XXXSMALL);
+  for (std::size_t i = 0; i < exact_poses_.size(); ++i)
+  {
+    visual_tools_->publishPath(exact_poses_[i], rvt::ORANGE, rvt::XXSMALL);
+    visual_tools_->publishAxisPath(exact_poses_[i], rvt::XXXSMALL);
+  }
   visual_tools_->trigger();
 
   // Specify tolerance for new exact_poses
@@ -156,8 +165,6 @@ bool CartPathPlanner::generateExactPoses(const Eigen::Affine3d& start_pose, std:
 
   if (visualize_show_all_solutions_)
     debugShowAllIKSolutions(indent);
-
-  return true;
 }
 
 bool CartPathPlanner::debugShowAllIKSolutions(std::size_t indent)
@@ -165,33 +172,37 @@ bool CartPathPlanner::debugShowAllIKSolutions(std::size_t indent)
   BOLT_FUNC(indent, true, "debugShowAllIKSolutions()");
   std::size_t total_redundant_joint_poses = 0;
 
-  // Enumerate the potential poses within tolerance
-  for (std::size_t i = 0; i < exact_poses_.size(); ++i)
+  // For each dimension
+  for (std::size_t j = 0; j < exact_poses_.size(); ++j)
   {
-    const Eigen::Affine3d& pose = exact_poses_[i];
-
-    JointPoses local_joint_poses;
-    if (!getRedundantJointPosesForCartPoint(pose, local_joint_poses, parent_->ee_links_[0], indent)) // TODO
+    // Enumerate the potential poses within tolerance
+    for (std::size_t i = 0; i < exact_poses_[j].size(); ++i)
     {
-      BOLT_ERROR(indent, true, "Error when getting joint poses for cartesian point");
-      continue;
+      const Eigen::Affine3d& pose = exact_poses_[j][i];
+
+      JointPoses local_joint_poses;
+      if (!getRedundantJointPosesForCartPoint(pose, local_joint_poses, parent_->ee_links_[0], indent))  // TODO
+      {
+        BOLT_ERROR(indent, true, "Error when getting joint poses for cartesian point");
+        continue;
+      }
+
+      // Handle error: no IK solutions found
+      if (local_joint_poses.empty())
+      {
+        BOLT_ERROR(indent, true, "No joint solutions found for cartesian pose " << i);
+
+        visual_tools_->publishAxis(pose, rvt::XXSMALL);
+        visual_tools_->trigger();
+
+        return false;
+      }
+
+      // Show all possible configurations
+      visualizeAllJointPoses(local_joint_poses, indent);
+
+      total_redundant_joint_poses += local_joint_poses.size();
     }
-
-    // Handle error: no IK solutions found
-    if (local_joint_poses.empty())
-    {
-      BOLT_ERROR(indent, true, "No joint solutions found for cartesian pose " << i);
-
-      visual_tools_->publishAxis(pose, rvt::XXSMALL);
-      visual_tools_->trigger();
-
-      return false;
-    }
-
-    // Show all possible configurations
-    visualizeAllJointPoses(local_joint_poses, indent);
-
-    total_redundant_joint_poses += local_joint_poses.size();
   }
   BOLT_INFO(indent, true, "Found " << total_redundant_joint_poses << " total redundant joint poses");
 
@@ -216,7 +227,7 @@ bool CartPathPlanner::computeRedundantPosesForCartPoint(const Eigen::Affine3d& p
   }
   double total_num_steps = num_steps_per_axis[0] * num_steps_per_axis[1] * num_steps_per_axis[2];
   BOLT_DEBUG(indent, verbose_, "Generating " << total_num_steps << " under-constrained poses for this "
-                                                               "cartesian point");
+                                                                   "cartesian point");
   candidate_poses.reserve(total_num_steps);
 
   // Start recursion
@@ -249,8 +260,8 @@ bool CartPathPlanner::rotateOnAxis(const Eigen::Affine3d& pose, const Orientatio
   for (int i = num_steps * -0.5; i < num_steps * 0.5; ++i)
   {
     double rotation_amount = i * tolerance_increment_;
-    BOLT_DEBUG(indent, verbose, std::string(axis * 2, ' ') << "axis: " << axis << " i: " << i
-               << " rotation_amount: " << rotation_amount << " num_steps: " << num_steps);
+    BOLT_DEBUG(indent, verbose, std::string(axis * 2, ' ') << "axis: " << axis << " i: " << i << " rotation_amount: "
+                                                           << rotation_amount << " num_steps: " << num_steps);
 
     // clang-format off
     switch (axis)
@@ -277,18 +288,38 @@ bool CartPathPlanner::rotateOnAxis(const Eigen::Affine3d& pose, const Orientatio
   return true;
 }
 
-bool CartPathPlanner::transform2DPath(const Eigen::Affine3d& starting_pose, EigenSTL::vector_Affine3d& exact_poses,
-                                      std::size_t indent)
+bool CartPathPlanner::transform2DPaths(const Eigen::Affine3d& starting_pose,
+                                       std::vector<EigenSTL::vector_Affine3d>& exact_poses, std::size_t indent)
 {
-  BOLT_FUNC(indent, verbose_, "transform2DPath()");
-  exact_poses.clear();
+  BOLT_FUNC(indent, verbose_, "transform2DPaths()");
 
   if (path_from_file_.empty())
+  {
+    BOLT_ERROR(indent, true, "Unable to create drawing: no paths loaded from file");
+    return false;
+  }
+
+  exact_poses.clear();
+  exact_poses.resize(path_from_file_.size());
+
+  for (std::size_t i = 0; i < path_from_file_.size(); ++i)
+  {
+    transform2DPath(starting_pose, path_from_file_[i], exact_poses[i], indent);
+  }
+
+  return true;
+}
+
+bool CartPathPlanner::transform2DPath(const Eigen::Affine3d& starting_pose, EigenSTL::vector_Affine3d& path_from_file,
+                                      EigenSTL::vector_Affine3d& exact_poses, std::size_t indent)
+{
+  if (path_from_file.empty())
   {
     BOLT_ERROR(indent, true, "Unable to create drawing: no path loaded from file");
     return false;
   }
-  if (path_from_file_.size() == 1)
+
+  if (path_from_file.size() == 1)
   {
     BOLT_ERROR(indent, true, "Unable to create drawing: path only has 1 point");
     return false;
@@ -296,9 +327,9 @@ bool CartPathPlanner::transform2DPath(const Eigen::Affine3d& starting_pose, Eige
 
   // Transform each point read from file
   EigenSTL::vector_Affine3d transformed_poses;
-  for (std::size_t i = 0; i < path_from_file_.size(); ++i)
+  for (std::size_t i = 0; i < path_from_file.size(); ++i)
   {
-    Eigen::Affine3d point = starting_pose * path_from_file_[i];
+    Eigen::Affine3d point = starting_pose * path_from_file[i];
 
     // Rotate 90 so that the x axis points down
     // point = point * Eigen::AngleAxisd(-M_PI / 2.0, Eigen::Vector3d::UnitY());
@@ -556,7 +587,8 @@ bool CartPathPlanner::addEdgesToBoltGraph(const TaskVertexMatrix& graph_vertices
       exit(0);
   }  // for
   BOLT_DEBUG(indent, true, "Added " << new_edge_count << " new edges, rejected " << edges_skipped_count << " (rejected "
-             << edges_skipped_count / (new_edge_count + double(edges_skipped_count)) * 100.0 << "%)");
+                                    << edges_skipped_count / (new_edge_count + double(edges_skipped_count)) * 100.0
+                                    << "%)");
 
   std::size_t warning_factor = 4;
   if (edges_skipped_count * warning_factor > new_edge_count)
@@ -631,8 +663,7 @@ bool CartPathPlanner::connectTrajectoryEndPoints(const TaskVertexMatrix& graph_v
 }
 
 bool CartPathPlanner::getRedundantJointPosesForCartPoint(const Eigen::Affine3d& pose, JointPoses& joint_poses,
-                                                         const moveit::core::LinkModel* ee_link,
-                                                         std::size_t indent)
+                                                         const moveit::core::LinkModel* ee_link, std::size_t indent)
 {
   BOLT_FUNC(indent, verbose_, "getRedundantJointPosesForCartPoint()");
 
@@ -654,18 +685,18 @@ bool CartPathPlanner::getRedundantJointPosesForCartPoint(const Eigen::Affine3d& 
 
     // Convert pose to tip of ik solver
     // TODO: make this a helper function in robot_state
-    const std::vector<std::string> &solver_tip_frames = solver->getTipFrames();
+    const std::vector<std::string>& solver_tip_frames = solver->getTipFrames();
     BOOST_ASSERT_MSG(solver_tip_frames.size() == 1, "Currently only supports solvers for one tip");
     const std::string solver_tip_frame = solver_tip_frames.front();
     std::string query_frame = ee_link->getName();
 
     if (query_frame != solver_tip_frame)
     {
-      const robot_model::LinkModel *lm = ik_state_->getLinkModel(query_frame);
+      const robot_model::LinkModel* lm = ik_state_->getLinkModel(query_frame);
       BOOST_ASSERT_MSG(lm, "No link model found for query frame (ee_link name)");
 
-      const robot_model::LinkTransformMap &fixed_links = lm->getAssociatedFixedTransforms();
-      for (robot_model::LinkTransformMap::const_iterator it = fixed_links.begin() ; it != fixed_links.end() ; ++it)
+      const robot_model::LinkTransformMap& fixed_links = lm->getAssociatedFixedTransforms();
+      for (robot_model::LinkTransformMap::const_iterator it = fixed_links.begin(); it != fixed_links.end(); ++it)
       {
         if (moveit::core::Transforms::sameFrame(it->first->getName(), solver_tip_frame))
         {

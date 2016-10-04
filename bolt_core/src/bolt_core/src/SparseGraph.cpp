@@ -762,15 +762,20 @@ SparseVertex SparseGraph::addVertex(base::State *state, const VertexType &type, 
   // Create vertex
   SparseVertex v = boost::add_vertex(g_);
 
+  // Add properties
+  vertexStateProperty_[v] = state;
+
+  // Quit early if just mirroring graph
+  if (fastMirrorMode_)
+    return v;
+
   // Feedback
   BOLT_FUNC(indent, vAdd_, "addVertex(): new_vertex: " << v << ", type " << type);
 
   // Add properties
   vertexTypeProperty_[v] = type;
-  vertexStateProperty_[v] = state;
-// vertexPopularity_[v] = MAX_POPULARITY_WEIGHT;  // 100 means the vertex is very unpopular
 
-// Clear all nearby interface data whenever a new vertex is added
+  // Clear all nearby interface data whenever a new vertex is added
 #ifdef ENABLE_QUALITY
   if (sparseCriteria_ && sparseCriteria_->getUseFourthCriteria())
     clearInterfaceData(state);
@@ -958,8 +963,6 @@ void SparseGraph::removeDeletedVertices(std::size_t indent)
 
 SparseEdge SparseGraph::addEdge(SparseVertex v1, SparseVertex v2, EdgeType type, std::size_t indent)
 {
-  BOLT_FUNC(indent, vAdd_ && false, "addEdge(): from vertex " << v1 << " to " << v2 << " type " << type);
-
   if (superDebug_)  // Extra checks
   {
     BOLT_ASSERT(v1 <= getNumVertices(), "Vertex1 is larger than max vertex id");
@@ -977,11 +980,17 @@ SparseEdge SparseGraph::addEdge(SparseVertex v1, SparseVertex v2, EdgeType type,
   // Create the new edge
   SparseEdge e = (boost::add_edge(v1, v2, g_)).first;
 
-  // Weight properties
-  edgeWeightProperty_[e] = distanceFunction(v1, v2);
+  // Quit early if just mirroring graph
+  if (fastMirrorMode_)
+    return e;
+
+  BOLT_FUNC(indent, vAdd_, "addEdge(): from vertex " << v1 << " to " << v2 << " type " << type);
 
   // Reason edge was added to spanner in SPARS
   edgeTypeProperty_[e] = type;
+
+  // Weight properties
+  edgeWeightProperty_[e] = distanceFunction(v1, v2);
 
   // Collision properties
   edgeCollisionStatePropertySparse_[e] = NOT_CHECKED;
@@ -1015,24 +1024,8 @@ SparseEdge SparseGraph::addEdge(SparseVertex v1, SparseVertex v2, EdgeType type,
     // }
   }
 
-  // if (sparseCriteria_->getUseFourthCriteria() &&
-  //     vertexTypeProperty_[v1] == DISCRETIZED && vertexTypeProperty_[v2] == DISCRETIZED
-  //     && edgeWeightProperty_[e] > sparseCriteria_->getDiscretization() + 0.0001)
-  // {
-  //   visual_->viz2()->deleteAllMarkers();
-  //   visualizeEdge(e, type, /*windowID*/ 2);
-  //   visual_->viz2()->trigger();
-
-  //   std::cout << "just added edge where both are discretized " << std::endl;
-  //   visual_->waitForUserFeedback("just added edge where both are discretized");
-  // }
-
   // Enable saving
   hasUnsavedChanges_ = true;
-
-  // Debugging
-  // if (!sparseCriteria_->getDiscretizedSamplesInsertion())
-  //   visual_->waitForUserFeedback("Added edge randomly");
 
   return e;
 }

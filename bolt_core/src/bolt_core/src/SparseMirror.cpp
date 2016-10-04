@@ -90,6 +90,12 @@ void SparseMirror::mirrorGraphDualArm(base::SpaceInformationPtr dualSpaceInfo,
   SparseGraphPtr dualSparseGraph = SparseGraphPtr(new SparseGraph(dualSpaceInfo, visual_));
   dualSparseGraph->setFilePath(outputFile + ".ompl");
 
+  // Improve sparsegraph speed
+  dualSparseGraph->setFastMirrorMode(true);
+  dualSparseGraph->setHasUnsavedChanges(true); // because this is not automatically enabled when in fast mirror mode
+  BOLT_ASSERT(dualSparseGraph->getSparseCriteria() == false, "SparseCriteria should not be initialized so that disjoint sets is not used");
+
+  // Visualize
   if (visualizeMiroring_)
   {
     visual_->viz1()->deleteAllMarkers();
@@ -303,7 +309,8 @@ void SparseMirror::addEdgesForAll(std::vector<std::vector<SparseVertex>> &vertex
   std::size_t skippedEdges = 0;
   std::size_t skippedInvalidEdges = 0;
   std::size_t count = 1;
-  const std::size_t showEvery = std::max((unsigned int)(1), sg_->getNumEdges() / 100);
+  const std::size_t showEvery = std::max((unsigned int)(1), sg_->getNumEdges() / 1000);
+  std::cout << "showEvery: " << showEvery << std::endl;
   foreach (const SparseEdge sparseE, boost::edges(sg_->getGraph()))
   {
     const SparseVertex sparseE_v0 = boost::source(sparseE, sg_->getGraph());

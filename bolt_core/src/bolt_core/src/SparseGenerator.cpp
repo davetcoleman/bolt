@@ -420,7 +420,7 @@ bool SparseGenerator::addSample(CandidateData &candidateD, std::size_t threadID,
       double addHz = numRandSamplesAdded_ / duration;
 
       // Change save interval based on addition rate
-      const double saveEveryXSeconds = 5*60.0; //5*pow(2, si_->getStateDimension());
+      const double saveEveryXSeconds = 60.0; //5*pow(2, si_->getStateDimension());
       const std::size_t saveEveryXNodeAdditions = saveEveryXSeconds * addHz;
       saveInterval_ = saveEveryXNodeAdditions;
 

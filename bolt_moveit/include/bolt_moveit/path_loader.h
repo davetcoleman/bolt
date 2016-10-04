@@ -46,6 +46,12 @@
 // Boost
 #include <boost/filesystem.hpp>
 
+// C++
+#include <algorithm>
+#include <functional>
+#include <cctype>
+#include <locale>
+
 namespace bolt_moveit
 {
 class PathLoader
@@ -61,7 +67,8 @@ public:
       exit(-1);
   }
 
-  bool get2DPath(EigenSTL::vector_Affine3d &path, bool debug = false)
+  /** \brief Get a set of paths, one for each end effector */
+  bool get2DPath(std::vector<EigenSTL::vector_Affine3d> &path, bool debug = false)
   {
     if (!boost::filesystem::exists(file_path_))
     {
@@ -72,8 +79,19 @@ public:
 
     std::string line;
 
+    std::size_t path_id = 0;
+    path.resize(path_id+1);
     while (std::getline(input_file, line))
     {
+      // Check if new path has been started
+      if (line == "---")
+      {
+        ROS_DEBUG_STREAM_NAMED(name_, "New path found");
+        path_id++;
+        path.resize(path_id+1);
+        continue;
+      }
+
       std::stringstream lineStream(line);
       std::string cell;
 
@@ -91,6 +109,7 @@ public:
 
         try
         {
+          trim(cell);
           point.translation()[i] = boost::lexical_cast<double>(cell.c_str());
         }
         catch (...)
@@ -100,7 +119,7 @@ public:
         }
       }  // for
 
-      path.push_back(point);
+      path[path_id].push_back(point);
     }  // while
 
     if (debug)
@@ -109,14 +128,18 @@ public:
     return true;
   }
 
-  void printPath(EigenSTL::vector_Affine3d &path)
+  void printPath(std::vector<EigenSTL::vector_Affine3d> &path)
   {
     std::cout << "Printing path: " << std::endl;
-    for (std::size_t i = 0; i < path.size(); ++i)
+    for (std::size_t j = 0; j < path.size(); ++j)
     {
-      const Eigen::Affine3d &point = path[i];
-      std::cout << "  Point: " << i << " x: " << point.translation().x() << " y: " << point.translation().y()
-                << std::endl;
+      for (std::size_t i = 0; i < path[j].size(); ++i)
+      {
+        const Eigen::Affine3d &point = path[j][i];
+        std::cout << "  Point: " << i << " x: " << point.translation().x() << " y: " << point.translation().y()
+                  << std::endl;
+      }
+      std::cout << "--- " << std::endl;
     }
   }
 
@@ -149,6 +172,25 @@ public:
   }
 
 private:
+
+  // trim from start (in place)
+  static inline void ltrim(std::string &s) {
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(),
+                                    std::not1(std::ptr_fun<int, int>(std::isspace))));
+  }
+
+  // trim from end (in place)
+  static inline void rtrim(std::string &s) {
+    s.erase(std::find_if(s.rbegin(), s.rend(),
+                         std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
+  }
+
+  // trim from both ends (in place)
+  static inline void trim(std::string &s) {
+    ltrim(s);
+    rtrim(s);
+  }
+
   // --------------------------------------------------------
 
   // The short name of this class

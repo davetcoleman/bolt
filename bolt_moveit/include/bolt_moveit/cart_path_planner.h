@@ -58,7 +58,6 @@
 
 namespace bolt_moveit
 {
-
 typedef std::vector<std::vector<double>> JointPoses;
 typedef std::vector<std::vector<ompl::tools::bolt::TaskVertex>> TaskVertexMatrix;
 
@@ -75,25 +74,35 @@ public:
   void processIMarkerPose(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback,
                           const Eigen::Affine3d& feedback_pose);
 
-  bool generateExactPoses(std::size_t indent);
-  bool generateExactPoses(const Eigen::Affine3d& start_pose, std::size_t indent);
+  void generateExactPoses(std::size_t indent);
+
+  void generateExactPoses(const Eigen::Affine3d& start_pose, std::size_t indent);
 
   bool debugShowAllIKSolutions(std::size_t indent);
+
   bool computeRedundantPosesForCartPoint(const Eigen::Affine3d& pose, const OrientationTol& orientation_tol,
-                                       EigenSTL::vector_Affine3d& candidate_poses, std::size_t indent);
+                                         EigenSTL::vector_Affine3d& candidate_poses, std::size_t indent);
+
   bool rotateOnAxis(const Eigen::Affine3d& pose, const OrientationTol& orientation_tol, const Axis axis,
                     EigenSTL::vector_Affine3d& candidate_poses, std::size_t indent);
-  bool transform2DPath(const Eigen::Affine3d& starting_pose, EigenSTL::vector_Affine3d& poses, std::size_t indent);
+
+  bool transform2DPaths(const Eigen::Affine3d& starting_pose, std::vector<EigenSTL::vector_Affine3d>& exact_poses,
+                        std::size_t indent);
+
+  bool transform2DPath(const Eigen::Affine3d& starting_pose, EigenSTL::vector_Affine3d& path_from_file,
+                       EigenSTL::vector_Affine3d& exact_poses, std::size_t indent);
+
   bool populateBoltGraph(ompl::tools::bolt::TaskGraphPtr task_graph, std::size_t indent);
+
   bool addCartPointToBoltGraph(const std::vector<std::vector<double>>& joint_poses,
                                std::vector<ompl::tools::bolt::TaskVertex>& point_vertices,
                                moveit::core::RobotStatePtr moveit_robot_state, std::size_t indent);
   bool addEdgesToBoltGraph(const TaskVertexMatrix& graph_vertices, ompl::tools::bolt::TaskVertex startingVertex,
                            ompl::tools::bolt::TaskVertex endingVertex, std::size_t indent);
-  bool connectTrajectoryEndPoints(const TaskVertexMatrix& graph_vertices, double& shortest_path_across_cart, std::size_t indent);
+  bool connectTrajectoryEndPoints(const TaskVertexMatrix& graph_vertices, double& shortest_path_across_cart,
+                                  std::size_t indent);
   bool getRedundantJointPosesForCartPoint(const Eigen::Affine3d& pose, std::vector<std::vector<double>>& joint_poses,
-                                          const moveit::core::LinkModel* ee_link,
-                                          std::size_t indent);
+                                          const moveit::core::LinkModel* ee_link, std::size_t indent);
   void visualizeAllJointPoses(const std::vector<std::vector<double>>& joint_poses, std::size_t indent);
 
 private:
@@ -120,14 +129,8 @@ private:
   // Interactive markers
   moveit_visual_tools::IMarkerRobotStatePtr imarker_cartesian_;
 
-  // The planning group to work on
-  //moveit::core::JointModelGroup* jmg_;
-
-  // Performs tasks specific to the Robot such IK, FK and collision detection
-  // bolt_ur5::UR5RobotModelPtr ur5_robot_model_;
-
   // The exact trajectory to follow
-  EigenSTL::vector_Affine3d exact_poses_;
+  std::vector<EigenSTL::vector_Affine3d> exact_poses_;
   // The trajectory's associated tolernaces
   OrientationTol orientation_tol_;
   // Timing between each pose in exact_poses
@@ -135,15 +138,11 @@ private:
 
   double ik_discretization_ = M_PI / 4;
 
-  // Robot settings
-  std::string group_name_;
-  std::string tip_link_;
-  std::string base_link_;
-  std::string world_frame_;
+  // Trajectory settings
   double trajectory_discretization_;
 
   // Desired path to draw
-  EigenSTL::vector_Affine3d path_from_file_;
+  std::vector<EigenSTL::vector_Affine3d> path_from_file_;
 
   bool verbose_ = false;
   bool visualize_show_all_solutions_ = false;
