@@ -17,7 +17,7 @@ Start Rviz:
 
 Run example demo:
 
-    wmctrl -a RViz && roslaunch bolt_moveit baxter_demo.launch
+    wmctrl -a RViz && roslaunch bolt_moveit bolt_baxter.launch
 
 Note: the first time you run the program, it will discretize the configuration space in a brute-force manner, using the ``sparse_delta`` config. This will likely take ~1 hour. It will then save the database in the folder:
 
