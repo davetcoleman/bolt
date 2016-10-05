@@ -264,8 +264,6 @@ void SparseMirror::addEdgesForDim(std::vector<SparseVertex> &sparseV2ToDualVerte
       continue;
     }
 
-    EdgeType type = sg_->getEdgeTypeProperty(sparseE);
-
     if (collisionCheckMirror_ &&
         !dualSpaceInfo->checkMotion(dualSparseGraph->getState(sparseE_v0), dualSparseGraph->getState(sparseE_v1)))
     {
@@ -288,7 +286,7 @@ void SparseMirror::addEdgesForDim(std::vector<SparseVertex> &sparseV2ToDualVerte
     // dualSparseGraph->visualizeSparseGraphSpeed_ = 0.001;
     // dualSparseGraph->visualizeDatabaseVertices_ = false;
     // dualSparseGraph->visualizeDatabaseEdges_ = true;
-    dualSparseGraph->addEdge(sparseE_v0, sparseE_v1, type, indent);
+    dualSparseGraph->addEdge(sparseE_v0, sparseE_v1, eUNKNOWN, indent);
   }
 
   BOLT_DEBUG(indent, vMirrorStatus_,
@@ -315,8 +313,6 @@ void SparseMirror::addEdgesForAll(std::vector<std::vector<SparseVertex>> &vertex
   {
     const SparseVertex sparseE_v0 = boost::source(sparseE, sg_->getGraph());
     const SparseVertex sparseE_v1 = boost::target(sparseE, sg_->getGraph());
-
-    EdgeType type = sg_->getEdgeTypeProperty(sparseE);
 
     // Duplicate this edge for all verticies derived from this pair of vertices
     for (const SparseVertex dualVertex0 : vertexMapMatrix[sparseE_v0])
@@ -345,7 +341,7 @@ void SparseMirror::addEdgesForAll(std::vector<std::vector<SparseVertex>> &vertex
         }
 
         // Create edge
-        dualSparseGraph->addEdge(dualVertex0, dualVertex1, type, indent);
+        dualSparseGraph->addEdge(dualVertex0, dualVertex1, eUNKNOWN, indent);
       }
 
       if (visual_->viz1()->shutdownRequested())

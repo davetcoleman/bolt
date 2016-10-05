@@ -77,24 +77,25 @@ static const double POPULARITY_WEIGHT_REDUCTION = 5;
 
 /** \brief Enumeration which specifies the reason a guard is added to the spanner. */
 enum VertexType
-{
-  START,
-  GOAL,
-  COVERAGE,
-  CONNECTIVITY,
-  INTERFACE,
-  QUALITY,
-  CARTESIAN,
-  DISCRETIZED
-};
+  {
+    START,
+    GOAL,
+    COVERAGE,
+    CONNECTIVITY,
+    INTERFACE,
+    QUALITY,
+    CARTESIAN,
+    DISCRETIZED
+  };
 enum EdgeType
-{
-  eCONNECTIVITY,
-  eINTERFACE,
-  eQUALITY,
-  eCARTESIAN,
-  eDISCRETIZED
-};
+  {
+    eCONNECTIVITY,
+    eINTERFACE,
+    eQUALITY,
+    eCARTESIAN,
+    eDISCRETIZED,
+    eUNKNOWN
+  };
 
 /** \brief The type used internally for representing vertex IDs */
 typedef std::size_t VertexIndexType;
@@ -104,9 +105,6 @@ typedef std::pair<VertexIndexType, VertexIndexType> VertexPair;
 
 /** \brief the hash which maps pairs of neighbor points to pairs of states */
 typedef std::unordered_map<VertexPair, InterfaceData> InterfaceHash;
-
-/** \brief Identification for states in the StateCache */
-// typedef VertexIndexType StateID;
 
 /** \brief Task level dimension data type */
 typedef std::size_t VertexLevel;  // TODO(davetcoleman): rename to TaskLevel
@@ -204,20 +202,17 @@ enum EdgeCollisionState
 // clang-format off
 typedef boost::property<vertex_state_t, base::State*, // State
         boost::property<boost::vertex_predecessor_t, VertexIndexType, // Disjoint Sets
-        boost::property<boost::vertex_rank_t, VertexIndexType, // Disjoint Sets
-        boost::property<vertex_type_t, VertexType // Sparse Type
-        //boost::property<vertex_popularity_t, double, // Popularity
+        boost::property<boost::vertex_rank_t, VertexIndexType // Disjoint Sets
 #ifdef ENABLE_QUALITY
         , boost::property<vertex_interface_data_t, InterfaceHash> // Sparse meta data
 #endif
-         > > > > SparseVertexProperties;
+         > > > SparseVertexProperties;
 // clang-format on
 
 /** Wrapper for the double assigned to an edge as its weight property. */
 // clang-format off
 typedef boost::property<boost::edge_weight_t, double,
-        boost::property<edge_type_t, EdgeType,
-        boost::property<edge_collision_state_t, int> > > SparseEdgeProperties;
+        boost::property<edge_collision_state_t, int > > SparseEdgeProperties;
 // clang-format on
 
 /** The underlying boost graph type (undirected weighted-edge adjacency list with above properties). */
@@ -257,7 +252,6 @@ typedef boost::property_map<SparseAdjList, edge_collision_state_t>::type SparseE
    - vertex_state_t: an ompl::base::State* is required for OMPL
    - vertex_predecessor_t: The incremental connected components algorithm requires it
    - vertex_rank_t: The incremental connected components algorithm requires it
-   - vertex_type_t - Type of vertex/guard in SPARS
 
    Note: If boost::vecS is not used for vertex storage, then there must also
    be a boost:vertex_index_t property manually added.
@@ -271,18 +265,14 @@ typedef boost::property_map<SparseAdjList, edge_collision_state_t>::type SparseE
 /** Wrapper for the vertex's multiple as its property. */
 // clang-format off
 typedef boost::property<vertex_state_t, base::State*, // State
-        boost::property<boost::vertex_predecessor_t, VertexIndexType, // Disjoint Sets
-        boost::property<boost::vertex_rank_t, VertexIndexType, // Disjoint Sets
-        boost::property<vertex_type_t, VertexType, // Task Type TODO is this needed?
         boost::property<vertex_task_mirror_t, VertexIndexType // Link to corresponding free space TaskVertex, if one exists TODO is this needed?
-        > > > > > TaskVertexProperties;
+        >> TaskVertexProperties;
 // clang-format on
 
 /** Wrapper for the double assigned to an edge as its weight property. */
 // clang-format off
 typedef boost::property<boost::edge_weight_t, double,
-        boost::property<edge_collision_state_t, int
-        > > TaskEdgeProperties;
+        boost::property<edge_collision_state_t, int>> TaskEdgeProperties;
 // clang-format on
 
 /** The underlying boost graph type (undirected weighted-edge adjacency list with above properties). */
@@ -457,16 +447,6 @@ typedef boost::disjoint_sets<boost::property_map<SparseAdjList, boost::vertex_ra
 
 // Ability to copy the disjoint sets data into a hashtable
 typedef std::map<SparseVertex, std::vector<SparseVertex> > SparseDisjointSetsMap;
-
-////////////////////////////////////////////////////////////////////////////////////////
-/**
- * \brief Task disjoint sets structure
- */
-typedef boost::disjoint_sets<boost::property_map<TaskAdjList, boost::vertex_rank_t>::type,
-                             boost::property_map<TaskAdjList, boost::vertex_predecessor_t>::type> TaskDisjointSetType;
-
-// Ability to copy the disjoint sets data into a hashtable
-typedef std::map<TaskVertex, std::vector<TaskVertex> > TaskDisjointSetsMap;
 
 ////////////////////////////////////////////////////////////////////////////////////////
 /**

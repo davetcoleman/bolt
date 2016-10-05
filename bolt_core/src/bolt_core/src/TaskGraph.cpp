@@ -54,7 +54,7 @@
 // C++
 #include <limits>
 #include <queue>
-#include <algorithm>  // std::random_shuffle
+//#include <algorithm>  // std::random_shuffle
 
 // Profiling
 //#include <valgrind/callgrind.h>
@@ -79,10 +79,7 @@ TaskGraph::TaskGraph(SparseGraphPtr sg)
   , edgeCollisionStatePropertyTask_(boost::get(edge_collision_state_t(), g_))
   // Property accessors of vertices
   , vertexStateProperty_(boost::get(vertex_state_t(), g_))
-  , vertexTypeProperty_(boost::get(vertex_type_t(), g_))
   , vertexTaskMirrorProperty_(boost::get(vertex_task_mirror_t(), g_))
-  // Disjoint set accessors
-  , disjointSets_(boost::get(boost::vertex_rank, g_), boost::get(boost::vertex_predecessor, g_))
 {
   // Save number of threads available
   numThreads_ = boost::thread::hardware_concurrency();
@@ -464,12 +461,11 @@ void TaskGraph::generateMonoLevelTaskSpace(std::size_t indent)
     if (sparseV < sg_->getNumQueryVertices())
       continue;
 
-    const VertexType type = DISCRETIZED;  // TODO: remove this, seems meaningless
     const base::State *state = sg_->getState(sparseV);
 
     // Create level 0 vertex
     VertexLevel level = 0;
-    TaskVertex taskV0 = addVertex(si_->cloneState(state), type, level, indent);
+    TaskVertex taskV0 = addVertex(si_->cloneState(state), level, indent);
     sparseToTaskVertex0[sparseV] = taskV0;  // record mapping
   }
 
@@ -479,14 +475,13 @@ void TaskGraph::generateMonoLevelTaskSpace(std::size_t indent)
   {
     const SparseVertex sparseE_v0 = boost::source(sparseE, sg_->getGraph());
     const SparseVertex sparseE_v2 = boost::target(sparseE, sg_->getGraph());
-    EdgeType type = sg_->getEdgeTypeProperty(sparseE);
 
     // Error check
     BOLT_ASSERT(sparseE_v0 >= sg_->getNumQueryVertices(), "Found query vertex in sparse graph that has an edge!");
     BOLT_ASSERT(sparseE_v2 >= sg_->getNumQueryVertices(), "Found query vertex in sparse graph that has an edge!");
 
     // Create level 0 edge
-    addEdge(sparseToTaskVertex0[sparseE_v0], sparseToTaskVertex0[sparseE_v2], type, indent);
+    addEdge(sparseToTaskVertex0[sparseE_v0], sparseToTaskVertex0[sparseE_v2], indent);
   }
 
   // Visualize
@@ -522,17 +517,16 @@ void TaskGraph::generateTaskSpace(std::size_t indent)
     if (sparseV < sg_->getNumQueryVertices())
       continue;
 
-    const VertexType type = DISCRETIZED;  // TODO: remove this, seems meaningless
     const base::State *state = sg_->getState(sparseV);
 
     // Create level 0 vertex
     VertexLevel level = 0;
-    TaskVertex taskV0 = addVertex(si_->cloneState(state), type, level, indent);
+    TaskVertex taskV0 = addVertex(si_->cloneState(state), level, indent);
     sparseToTaskVertex0[sparseV] = taskV0;  // record mapping
 
     // Create level 2 vertex
     level = 2;
-    TaskVertex taskV2 = addVertex(si_->cloneState(state), type, level, indent);
+    TaskVertex taskV2 = addVertex(si_->cloneState(state), level, indent);
     sparseToTaskVertex2[sparseV] = taskV2;  // record mapping
 
     // Link the two vertices to each other for future bookkeeping
@@ -546,7 +540,6 @@ void TaskGraph::generateTaskSpace(std::size_t indent)
   {
     const SparseVertex sparseE_v0 = boost::source(sparseE, sg_->getGraph());
     const SparseVertex sparseE_v2 = boost::target(sparseE, sg_->getGraph());
-    EdgeType type = sg_->getEdgeTypeProperty(sparseE);
 
     // Error check
     BOLT_ASSERT(sparseE_v0 >= sg_->getNumQueryVertices(), "Found query vertex in sparse graph that has an edge!");
@@ -554,11 +547,11 @@ void TaskGraph::generateTaskSpace(std::size_t indent)
 
     // Create level 0 edge
     // TaskEdge taskEdge0 =
-    addEdge(sparseToTaskVertex0[sparseE_v0], sparseToTaskVertex0[sparseE_v2], type, indent);
+    addEdge(sparseToTaskVertex0[sparseE_v0], sparseToTaskVertex0[sparseE_v2], indent);
 
     // Create level 2 edge
     // TaskEdge taskEdge2 =
-    addEdge(sparseToTaskVertex2[sparseE_v0], sparseToTaskVertex2[sparseE_v2], type, indent);
+    addEdge(sparseToTaskVertex2[sparseE_v0], sparseToTaskVertex2[sparseE_v2], indent);
   }
 
   // Visualize
@@ -587,8 +580,8 @@ bool TaskGraph::addCartPath(std::vector<base::State *> path, std::size_t indent)
 
   // Create verticies for the extremas - start & goal
   VertexLevel level = 1;  // middle layer
-  TaskVertex startVertex = addVertex(path.front(), CARTESIAN, level, indent);
-  TaskVertex goalVertex = addVertex(path.back(), CARTESIAN, level, indent);
+  TaskVertex startVertex = addVertex(path.front(), level, indent);
+  TaskVertex goalVertex = addVertex(path.back(), level, indent);
 
   // Record min cost for cost-to-go heurstic distance function later
   shortestDistAcrossCartGraph_ = distanceFunction(startVertex, goalVertex);
@@ -628,10 +621,10 @@ bool TaskGraph::addCartPath(std::vector<base::State *> path, std::size_t indent)
     }
     else
     {
-      v2 = addVertex(path[i], CARTESIAN, cartLevel, indent);
+      v2 = addVertex(path[i], cartLevel, indent);
     }
 
-    addEdge(v1, v2, eCARTESIAN, indent);
+    addEdge(v1, v2, indent);
     v1 = v2;
   }
 
@@ -639,90 +632,6 @@ bool TaskGraph::addCartPath(std::vector<base::State *> path, std::size_t indent)
   taskPlanningEnabled_ = true;
 
   return true;
-}
-
-void TaskGraph::clearCartesianVerticesDeprecated(std::size_t indent)
-{
-  BOLT_FUNC(indent, verbose_, "TaskGraph.clearCartesianVerticesDeprecated()");
-
-  time::point startTime = time::now();  // Benchmark
-
-  // Remove all vertices that are of type CARTESIAN
-  std::size_t numRemoved = 0;
-
-  // Iterate manually through graph
-  typedef boost::graph_traits<TaskAdjList>::vertex_iterator VertexIterator;
-  for (VertexIterator v = boost::vertices(g_).first; v != boost::vertices(g_).second; /* manually iterate */)
-  {
-    if (*v < getNumQueryVertices())  // Skip query vertices
-    {
-      v++;
-      continue;
-    }
-
-    if (getVertexTypeProperty(*v) == CARTESIAN)  // Found vertex to delete
-    {
-      BOLT_DEBUG(indent, vClear_, "Removing CARTESIAN TaskVertex " << *v << " total removed: " << numRemoved);
-
-      boost::clear_vertex(*v, g_);  // delete the edges
-      boost::remove_vertex(*v, g_);
-
-      numRemoved++;
-    }
-    else  // only proceed if no deletion happened
-    {
-      v++;
-    }
-  }
-  BOLT_DEBUG(indent, verbose_, "Removed " << numRemoved << " vertices from graph of type CARTESIAN");
-  OMPL_INFORM("took %f seconds", time::seconds(time::now() - startTime));  // Benchmark
-
-  startTime = time::now();  // Benchmark
-
-  // Reset min connector vars
-  startConnectorVertex_ = 0;
-  goalConnectorVertex_ = 0;
-  startConnectorMinCost_ = std::numeric_limits<double>::infinity();
-  goalConnectorMinCost_ = std::numeric_limits<double>::infinity();
-
-  if (numRemoved == 0)
-  {
-    BOLT_DEBUG(indent, vClear_, "No verticies deleted, skipping resetting NN and disjointSets");
-    return;
-  }
-
-  // Reset the nearest neighbor tree
-  nn_->clear();
-
-  // Reset disjoint sets
-  disjointSets_ = TaskDisjointSetType(boost::get(boost::vertex_rank, g_), boost::get(boost::vertex_predecessor, g_));
-
-  // Reinsert vertices into nearest neighbor
-  foreach (TaskVertex v, boost::vertices(g_))
-  {
-    if (v < numThreads_)  // Skip the query vertices
-      continue;
-
-    if (getTaskLevel(v) == 0)
-      nn_->add(v);
-
-    disjointSets_.make_set(v);
-  }
-
-  // Reinsert edges into disjoint sets
-  foreach (TaskEdge e, boost::edges(g_))
-  {
-    TaskVertex v1 = boost::source(e, g_);
-    TaskVertex v2 = boost::target(e, g_);
-    disjointSets_.union_set(v1, v2);
-  }
-
-  // Clear the visualization and redisplay
-  // bool showVertices = true;
-  // displayDatabase(showVertices, indent);
-
-  BOLT_DEBUG(indent, verbose_, "TaskGraph.clearCartesianVerticesDeprecated() completed");
-  OMPL_INFORM("took %f seconds", time::seconds(time::now() - startTime));  // Benchmark
 }
 
 bool TaskGraph::connectVertexToNeighborsAtLevel(TaskVertex fromVertex, const VertexLevel level, bool isStart,
@@ -754,7 +663,7 @@ bool TaskGraph::connectVertexToNeighborsAtLevel(TaskVertex fromVertex, const Ver
   {
     // Add edge from nearby graph vertex to cart path goal
     double connectorCost = distanceFunction(fromVertex, v);
-    addEdge(fromVertex, v, eCARTESIAN, indent);
+    addEdge(fromVertex, v, indent);
 
     // Remember which cartesian start/goal states should be used for distanceFunction
     if (isStart && connectorCost < startConnectorMinCost_)
@@ -1017,167 +926,17 @@ bool TaskGraph::smoothQualityPath(geometric::PathGeometric *path, double clearan
   return true;
 }
 
-std::size_t TaskGraph::getDisjointSetsCount(bool verbose)
-{
-  std::size_t numSets = 0;
-  foreach (TaskVertex v, boost::vertices(g_))
-  {
-    // Do not count the search vertex within the sets
-    if (v <= queryVertices_.back())
-      continue;
-
-    if (boost::get(boost::get(boost::vertex_predecessor, g_), v) == v)
-    {
-      std::size_t indent = 0;
-      BOLT_DEBUG(indent, verbose, "Disjoint set: " << v);
-      ++numSets;
-    }
-  }
-
-  return numSets;
-}
-
-void TaskGraph::getDisjointSets(TaskDisjointSetsMap &disjointSets)
-{
-  disjointSets.clear();
-
-  // Flatten the parents tree so that the parent of every element is its representative.
-  disjointSets_.compress_sets(boost::vertices(g_).first, boost::vertices(g_).second);
-
-  // Count size of each disjoint set and group its containing vertices
-  typedef boost::graph_traits<TaskAdjList>::vertex_iterator VertexIterator;
-  for (VertexIterator v = boost::vertices(g_).first; v != boost::vertices(g_).second; ++v)
-  {
-    // Do not count the search vertex within the sets
-    if (*v <= queryVertices_.back())
-      continue;
-
-    disjointSets[boost::get(boost::get(boost::vertex_predecessor, g_), *v)].push_back(*v);
-  }
-}
-
-void TaskGraph::printDisjointSets(TaskDisjointSetsMap &disjointSets, std::size_t indent)
-{
-  BOLT_DEBUG(indent, verbose_, "Print disjoint sets");
-  for (TaskDisjointSetsMap::const_iterator iterator = disjointSets.begin(); iterator != disjointSets.end(); iterator++)
-  {
-    const TaskVertex v = iterator->first;
-    const std::size_t freq = iterator->second.size();
-    BOLT_DEBUG(indent, verbose_, "Parent: " << v << " frequency " << freq);
-  }
-}
-
-void TaskGraph::visualizeDisjointSets(TaskDisjointSetsMap &disjointSets, std::size_t indent)
-{
-  BOLT_DEBUG(indent, verbose_, "Visualizing disjoint sets");
-
-  // Find the disjoint set that is the 'main' large one
-  std::size_t maxDisjointSetSize = 0;
-  TaskVertex maxDisjointSetParent;
-  for (TaskDisjointSetsMap::const_iterator iterator = disjointSets.begin(); iterator != disjointSets.end(); iterator++)
-  {
-    const TaskVertex v = iterator->first;
-    const std::size_t freq = iterator->second.size();
-
-    if (freq > maxDisjointSetSize)
-    {
-      maxDisjointSetSize = freq;
-      maxDisjointSetParent = v;
-    }
-  }
-  BOLT_DEBUG(indent, verbose_, "The largest disjoint set is of size " << maxDisjointSetSize << " and parent vertex "
-                                                                      << maxDisjointSetParent);
-
-  // Display size of disjoint sets and visualize small ones
-  for (TaskDisjointSetsMap::const_iterator iterator = disjointSets.begin(); iterator != disjointSets.end(); iterator++)
-  {
-    const TaskVertex v1 = iterator->first;
-    const std::size_t freq = iterator->second.size();
-
-    BOLT_ASSERT(freq > 0, "Frequency must be at least 1");
-
-    if (freq == maxDisjointSetSize)  // any subgraph that is smaller than the full graph
-      continue;                      // the main disjoint set is not considered a disjoint set
-
-    // Visualize sets of size one
-    if (freq == 1)
-    {
-      visual_->viz5()->state(getState(v1), tools::LARGE, tools::RED, 0);
-      visual_->viz5()->trigger();
-      visual_->waitForUserFeedback("showing disjoint set");
-      continue;
-    }
-
-    // Visualize large disjoint sets (greater than one)
-    if (freq > 1 && freq < 1000)
-    {
-      // Clear markers
-      visual_->viz4()->deleteAllMarkers();
-
-      // Visualize this subgraph that is disconnected
-      // Loop through every every vertex and check if its part of this group
-      typedef boost::graph_traits<TaskAdjList>::vertex_iterator VertexIterator;
-      for (VertexIterator v2 = boost::vertices(g_).first; v2 != boost::vertices(g_).second; ++v2)
-      {
-        if (boost::get(boost::get(boost::vertex_predecessor, g_), *v2) == v1)
-        {
-          visual_->viz4()->state(getState(*v2), tools::LARGE, tools::RED, 0);
-
-          // Show state's edges
-          foreach (TaskEdge edge, boost::out_edges(*v2, g_))
-          {
-            TaskVertex e_v1 = boost::source(edge, g_);
-            TaskVertex e_v2 = boost::target(edge, g_);
-            visual_->viz4()->edge(getState(e_v1), getState(e_v2), edgeWeightProperty_[edge]);
-          }
-          visual_->viz4()->trigger();
-
-          // Show this robot state
-          // visual_->viz4()->state(getState(*v2), tools::ROBOT, tools::DEFAULT, 0);
-          visual_->viz4()->state(getState(*v2), tools::SMALL, tools::RED, 0);
-
-          usleep(0.1 * 1000000);
-        }  // if
-      }    // for
-
-      visual_->waitForUserFeedback("showing large disjoint set");
-    }  // if
-  }
-}
-
-std::size_t TaskGraph::checkConnectedComponents()
-{
-  // Check how many disjoint sets are in the task graph (should be none)
-  std::size_t numSets = getDisjointSetsCount();
-  if (numSets > 1)
-  {
-    std::size_t indent = 0;
-    BOLT_WARN(indent, true, "More than 1 connected component is in the TaskGraph: " << numSets);
-  }
-
-  return numSets;
-}
-
-bool TaskGraph::sameComponent(TaskVertex v1, TaskVertex v2)
-{
-  return boost::same_component(v1, v2, disjointSets_);
-}
-
-TaskVertex TaskGraph::addVertex(base::State *state, const VertexType &type, VertexLevel level, std::size_t indent)
+TaskVertex TaskGraph::addVertex(base::State *state, VertexLevel level, std::size_t indent)
 {
   // Create vertex
   TaskVertex v = boost::add_vertex(g_);
-  BOLT_FUNC(indent, vAdd_, "TaskGraph.addVertex(): v: " << v << " type " << type << " level: " << level);
+  BOLT_FUNC(indent, vAdd_, "TaskGraph.addVertex(): v: " << v << " level: " << level);
 
   // Add level to state
   setStateTaskLevel(state, level);
 
   // Add properties
-  vertexTypeProperty_[v] = type;  // TODO(davetcoleman): remove?
   vertexStateProperty_[v] = state;
-
-  // Connected component tracking
-  disjointSets_.make_set(v);
 
   // Add vertex to nearest neighbor structure - except only do this for level 0
   if (level == 0)
@@ -1208,11 +967,6 @@ void TaskGraph::removeVertex(TaskVertex v)
   // Delete state
   si_->freeState(vertexStateProperty_[v]);
   vertexStateProperty_[v] = NULL;
-
-  // TODO: disjointSets is now inaccurate
-  // Our checkAddConnectivity() criteria is broken
-  // because we frequntly delete edges and nodes..
-  // disjointSets_.remove_set(v);
 
   // Remove all edges to and from vertex
   boost::clear_vertex(v, g_);
@@ -1255,15 +1009,12 @@ void TaskGraph::removeDeletedVertices(std::size_t indent)
 
   if (numRemoved == 0)
   {
-    BOLT_DEBUG(indent, verbose, "No verticies deleted, skipping resetting NN and disjointSets");
+    BOLT_DEBUG(indent, verbose, "No verticies deleted, skipping resetting NN");
     return;
   }
 
   // Reset the nearest neighbor tree
   nn_->clear();
-
-  // Reset disjoint sets
-  disjointSets_ = TaskDisjointSetType(boost::get(boost::vertex_rank, g_), boost::get(boost::vertex_predecessor, g_));
 
   // Reinsert vertices into nearest neighbor
   foreach (TaskVertex v, boost::vertices(g_))
@@ -1272,21 +1023,12 @@ void TaskGraph::removeDeletedVertices(std::size_t indent)
       continue;
 
     nn_->add(v);
-    disjointSets_.make_set(v);
-  }
-
-  // Reinsert edges into disjoint sets
-  foreach (TaskEdge e, boost::edges(g_))
-  {
-    TaskVertex v1 = boost::source(e, g_);
-    TaskVertex v2 = boost::target(e, g_);
-    disjointSets_.union_set(v1, v2);
   }
 }
 
-TaskEdge TaskGraph::addEdge(TaskVertex v1, TaskVertex v2, EdgeType type, std::size_t indent)
+TaskEdge TaskGraph::addEdge(TaskVertex v1, TaskVertex v2, std::size_t indent)
 {
-  BOLT_FUNC(indent, vAdd_, "TaskGraph.addEdge(): from vertex " << v1 << " to " << v2 << " type " << type);
+  BOLT_FUNC(indent, vAdd_, "TaskGraph.addEdge(): from vertex " << v1 << " to " << v2);
 
   BOLT_ASSERT(v1 <= getNumVertices(), "Vertex1 is larger than max vertex id");
   BOLT_ASSERT(v2 <= getNumVertices(), "Vertex2 is larger than max vertex id");
@@ -1306,9 +1048,6 @@ TaskEdge TaskGraph::addEdge(TaskVertex v1, TaskVertex v2, EdgeType type, std::si
 
   // Collision properties
   edgeCollisionStatePropertyTask_[e] = NOT_CHECKED;
-
-  // Add the edge to the incrementeal connected components datastructure
-  disjointSets_.union_set(v1, v2);
 
   // Visualize
   if (visualizeTaskGraph_)
@@ -1527,9 +1266,6 @@ void TaskGraph::printGraphStats(double generationDuration)
   // Get the average vertex degree (number of connected edges)
   double averageDegree = (getNumEdges() * 2) / static_cast<double>(getNumVertices());
 
-  // Check how many disjoint sets are in the task graph (should be none)
-  std::size_t numSets = checkConnectedComponents();
-
   // Find min, max, and average edge length
   double totalEdgeLength = 0;
   double maxEdgeLength = -1 * std::numeric_limits<double>::infinity();
@@ -1551,8 +1287,7 @@ void TaskGraph::printGraphStats(double generationDuration)
   BOLT_DEBUG(indent, 1, "   Generation time:        " << generationDuration << " s");
   BOLT_DEBUG(indent, 1, "   Total vertices:         " << getNumRealVertices());
   BOLT_DEBUG(indent, 1, "   Total edges:            " << getNumEdges());
-  BOLT_DEBUG(indent, 1, "   Average degree:         " << averageDegree);
-  BOLT_DEBUG(indent, 1, "   Connected Components:   " << numSets);
+ BOLT_DEBUG(indent, 1, "   Average degree:         " << averageDegree);
   BOLT_DEBUG(indent, 1, "   Edge Lengths:           ");
   BOLT_DEBUG(indent, 1, "      Max:                 " << maxEdgeLength);
   BOLT_DEBUG(indent, 1, "      Min:                 " << minEdgeLength);

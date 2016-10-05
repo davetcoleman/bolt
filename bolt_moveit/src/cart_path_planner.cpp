@@ -654,7 +654,7 @@ bool CartPathPlanner::addCartPointToBoltGraph(const CombinedPoints& combined_poi
     space->copyToOMPLState(ompl_state, *moveit_robot_state);
 
     // Add vertex to task graph
-    point_vertices[i] = task_graph_->addVertex(ompl_state, vertex_type, level, indent);
+    point_vertices[i] = task_graph_->addVertex(ompl_state, level, indent);
 
     new_vertex_count++;
   }
@@ -721,7 +721,7 @@ bool CartPathPlanner::addEdgesToBoltGraph(const TaskVertexMatrix& graphVertices,
         }
 
         // BOLT_DEBUG(indent, true, "Adding edge " << v0 << " to " << v1);
-        task_graph_->addEdge(v0, v1, edge_type, indent);
+        task_graph_->addEdge(v0, v1, indent);
 
         new_edge_count++;
       }  // for

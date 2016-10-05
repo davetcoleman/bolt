@@ -82,11 +82,9 @@ SparseGraph::SparseGraph(base::SpaceInformationPtr si, VisualizerPtr visual)
   , visual_(visual)
   // Property accessors of edges
   , edgeWeightProperty_(boost::get(boost::edge_weight, g_))
-  , edgeTypeProperty_(boost::get(edge_type_t(), g_))
   , edgeCollisionStatePropertySparse_(boost::get(edge_collision_state_t(), g_))
   // Property accessors of vertices
   , vertexStateProperty_(boost::get(vertex_state_t(), g_))
-  , vertexTypeProperty_(boost::get(vertex_type_t(), g_))
 #ifdef ENABLE_QUALITY
   , vertexInterfaceProperty_(boost::get(vertex_interface_data_t(), g_))
 #endif
@@ -772,9 +770,6 @@ SparseVertex SparseGraph::addVertex(base::State *state, const VertexType &type, 
   // Feedback
   BOLT_FUNC(indent, vAdd_, "addVertex(): new_vertex: " << v << ", type " << type);
 
-  // Add properties
-  vertexTypeProperty_[v] = type;
-
   // Clear all nearby interface data whenever a new vertex is added
 #ifdef ENABLE_QUALITY
   if (sparseCriteria_ && sparseCriteria_->getUseFourthCriteria())
@@ -842,13 +837,12 @@ SparseVertex SparseGraph::addVertex(base::State *state, const VertexType &type, 
   return v;
 }
 
-SparseVertex SparseGraph::addVertexFromFile(base::State *state, const VertexType &type, std::size_t indent)
+SparseVertex SparseGraph::addVertexFromFile(base::State *state, std::size_t indent)
 {
   // Create vertex
   SparseVertex v = boost::add_vertex(g_);
 
   // Add properties
-  vertexTypeProperty_[v] = type;
   vertexStateProperty_[v] = state;
   // vertexPopularity_[v] = MAX_POPULARITY_WEIGHT;  // 100 means the vertex is very unpopular
 
@@ -985,9 +979,6 @@ SparseEdge SparseGraph::addEdge(SparseVertex v1, SparseVertex v2, EdgeType type,
     return e;
 
   BOLT_FUNC(indent, vAdd_, "addEdge(): from vertex " << v1 << " to " << v2 << " type " << type);
-
-  // Reason edge was added to spanner in SPARS
-  edgeTypeProperty_[e] = type;
 
   // Weight properties
   edgeWeightProperty_[e] = distanceFunction(v1, v2);
@@ -1166,7 +1157,7 @@ void SparseGraph::displayDatabase(bool showVertices, bool showEdges, std::size_t
     // Loop through each edge
     foreach (SparseEdge e, boost::edges(g_))
     {
-      visualizeEdge(e, edgeTypeProperty_[e], windowID);
+      visualizeEdge(e, eUNKNOWN, windowID);
     }
   }
 
@@ -1203,7 +1194,7 @@ void SparseGraph::displayDatabase(bool showVertices, bool showEdges, std::size_t
             ->state(getState(v), tools::VARIABLE_SIZE, tools::TRANSLUCENT_LIGHT, sparseCriteria_->getSparseDelta());
 
       // Populate properties
-      colors.push_back(vertexTypeToColor(vertexTypeProperty_[v]));
+      colors.push_back(tools::BLACK); //vertexTypeToColor(vertexTypeProperty_[v]));
       states.push_back(getState(v));
     }
 

@@ -191,11 +191,6 @@ public:
     return boost::num_edges(g_);
   }
 
-  VertexType getVertexTypeProperty(TaskVertex v) const
-  {
-    return vertexTypeProperty_[v];
-  }
-
   double getEdgeWeightProperty(TaskEdge e) const
   {
     return edgeWeightProperty_[e];
@@ -252,12 +247,6 @@ public:
    */
   bool addCartPath(std::vector<base::State*> path, std::size_t indent);
 
-  /** \brief Remove all vertices associated with a cartesian path
-   *         This function is deprecated because it is too slow when the number of cartesian vertices is
-   *         much greater than the number of sparse graph vertices
-   */
-  void clearCartesianVerticesDeprecated(std::size_t indent);
-
   /**
    * \brief Helper for connecting both sides of a cartesian path into a dual level graph
    * \param fromVertex - the endpoint (start or goal) we are connecting from the cartesian path to the graph
@@ -307,23 +296,11 @@ public:
   bool smoothQualityPath(geometric::PathGeometric* path, double clearance, std::size_t indent);
 
   /* ---------------------------------------------------------------------------------
-   * Disjoint Sets
-   * --------------------------------------------------------------------------------- */
-
-  /** \brief Disjoint sets analysis tools */
-  std::size_t getDisjointSetsCount(bool verbose = false);
-  void getDisjointSets(TaskDisjointSetsMap& disjointSets);
-  void printDisjointSets(TaskDisjointSetsMap& disjointSets, std::size_t indent);
-  void visualizeDisjointSets(TaskDisjointSetsMap& disjointSets, std::size_t indent);
-  std::size_t checkConnectedComponents();
-  bool sameComponent(TaskVertex v1, TaskVertex v2);
-
-  /* ---------------------------------------------------------------------------------
    * Add/remove vertices, edges, states
    * --------------------------------------------------------------------------------- */
 
   /** \brief Add vertices to graph. The state passed in will be owned by the AdjList graph */
-  TaskVertex addVertex(base::State* state, const VertexType& type, VertexLevel level, std::size_t indent);
+  TaskVertex addVertex(base::State* state, VertexLevel level, std::size_t indent);
 
   /** \brief Remove vertex from graph */
   void removeVertex(TaskVertex v);
@@ -332,7 +309,7 @@ public:
   void removeDeletedVertices(std::size_t indent);
 
   /** \brief Add edge to graph */
-  TaskEdge addEdge(TaskVertex v1, TaskVertex v2, EdgeType type, std::size_t indent);
+  TaskEdge addEdge(TaskVertex v1, TaskVertex v2, std::size_t indent);
 
   /** \brief Check graph for edge existence */
   bool hasEdge(TaskVertex v1, TaskVertex v2);
@@ -406,14 +383,8 @@ protected:
   /** \brief Access to the internal base::state at each Vertex */
   boost::property_map<TaskAdjList, vertex_state_t>::type vertexStateProperty_;
 
-  /** \brief Access to type TODO(davetcoleman): needed? */
-  boost::property_map<TaskAdjList, vertex_type_t>::type vertexTypeProperty_;
-
   /** \brief Access to corresponding free space SparseVertex, if one exists TODO is this needed? */
   boost::property_map<TaskAdjList, vertex_task_mirror_t>::type vertexTaskMirrorProperty_;
-
-  /** \brief Data structure that maintains the connected components */
-  TaskDisjointSetType disjointSets_;
 
   /** \brief A path simplifier used to simplify dense paths added to S */
   geometric::PathSimplifierPtr pathSimplifier_;

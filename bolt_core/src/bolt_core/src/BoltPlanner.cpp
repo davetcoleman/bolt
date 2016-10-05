@@ -418,15 +418,6 @@ bool BoltPlanner::lazyCollisionSearch(const TaskVertex &start, const TaskVertex 
   assert(taskGraph_->getState(start));
   assert(taskGraph_->getState(goal));
 
-  // Check that our states are on the same connected component
-  // TODO: in the future the graph should always just be fully connected
-  // so perhaps this check would not be necessary
-  if (!taskGraph_->sameComponent(start, goal))
-  {
-    OMPL_WARN("Found start and goal states that are on different connected components!");
-    return false;
-  }
-
   // Visualize start vertex
   const bool visualize = false;
   if (visualize)

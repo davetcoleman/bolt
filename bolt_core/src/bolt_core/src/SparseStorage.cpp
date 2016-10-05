@@ -147,7 +147,7 @@ void SparseStorage::saveVertices(boost::archive::binary_oarchive &oa)
     BoltVertexData vertexData;
 
     // Record the type of the vertex
-    vertexData.type_ = sparseGraph_->getVertexTypeProperty(v);
+    vertexData.type_ = 0; // TODO remove
 
     // Serializing the state contained in this vertex
     space->serialize(&state[0], sparseGraph_->getStateNonConst(v));
@@ -185,7 +185,7 @@ void SparseStorage::saveEdges(boost::archive::binary_oarchive &oa)
 
     // Other properties
     edgeData.weight_ = sparseGraph_->getEdgeWeightProperty(e);
-    edgeData.type_ = sparseGraph_->getEdgeTypeProperty(e);
+    edgeData.type_ = 0; // TODO: remove
 
     // Copy to file
     oa << edgeData;
@@ -317,8 +317,7 @@ void SparseStorage::loadVertices(unsigned int numVertices, boost::archive::binar
     space->deserialize(state, &vertexData.stateSerialized_[0]);
 
     // Add to Sparse graph
-    VertexType type = static_cast<VertexType>(vertexData.type_);
-    sparseGraph_->addVertexFromFile(state, type, indent);
+    sparseGraph_->addVertexFromFile(state, indent);
 
     // Feedback
     if ((i + 1) % feedbackFrequency == 0)
@@ -392,8 +391,7 @@ void SparseStorage::loadEdges(unsigned int numEdges, boost::archive::binary_iarc
     // TODO: edge weight is currently not loaded, so this should really just be removed
 
     // Add
-    EdgeType type = static_cast<EdgeType>(edgeData.type_);
-    sparseGraph_->addEdge(v1, v2, type, indent);
+    sparseGraph_->addEdge(v1, v2, eUNKNOWN, indent);
 
     // Feedback
     if ((i + 1) % feedbackFrequency == 0)
