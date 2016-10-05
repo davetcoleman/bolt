@@ -138,9 +138,6 @@ protected:
 
   // Allocated memory for robot state
   moveit::core::RobotStatePtr current_state_;
-
-  // Desired planning group to work with
-  JointModelGroup *jmg_;
 };  // end class
 
 }  // namespace bolt_moveit

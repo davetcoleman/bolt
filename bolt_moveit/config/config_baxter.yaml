@@ -2,10 +2,10 @@
 # Main program
 bolt_moveit:
   # run mode
-  auto_run: true # do not wait to move interactive markers. note: 'autonomous' setting must be 'false'
+  auto_run: false # do not wait to move interactive markers. note: 'autonomous' setting must be 'false'
   benchmark_performance: false
   display_disjoint_sets: false
-  mirror_graph: true # take a single-arm graph and turn into dual-arm graph
+  mirror_graph: false # take a single-arm graph and turn into dual-arm graph
   eliminate_dense_disjoint_sets: false
   check_valid_vertices: false
 
@@ -28,8 +28,8 @@ bolt_moveit:
   #experience_planner: spars2
 
   # robot setup
-  planning_group_name: right_arm_minus_one
-  #planning_group_name: both_arms_minus_one
+  #planning_group_name: right_arm_minus_one
+  planning_group_name: both_arms_minus_one
   arm_jmgs: [right_arm, left_arm]
   ee_tip_links: [right_gripper_tip, left_gripper_tip]
 

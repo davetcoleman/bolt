@@ -133,23 +133,27 @@ BoltMoveIt::BoltMoveIt(const std::string &hostname, const std::string &package_p
   moveit_goal_.reset(new moveit::core::RobotState(*current_state_));
 
   // Get the two arms jmg
-  jmg_ = robot_model_->getJointModelGroup(planning_group_name_);
+  planning_jmg_ = robot_model_->getJointModelGroup(planning_group_name_);
 
-  for (auto arm_jmg : arm_jmgs)
+  if (arm_jmgs.size() != ee_tip_links.size())
   {
-    arm_jmgs_.push_back(robot_model_->getJointModelGroup(arm_jmg));
-    if(!arm_jmgs_.back())
-    {
-      BOLT_ERROR(indent, true, "No joint model group found for jmg name " << arm_jmg);
-    }
+    BOLT_ERROR(indent, true, "Joint model groups array must match size of EEF tip links array");
+    exit(-1);
   }
 
-  for (auto ee_tip_link : ee_tip_links)
+  for (std::size_t i = 0; i < arm_jmgs.size(); ++i)
   {
-    ee_links_.push_back(robot_model_->getLinkModel(ee_tip_link));
-    if(!ee_links_.back())
+    arm_datas_.push_back(
+        mvt::ArmData(robot_model_->getJointModelGroup(arm_jmgs[i]), robot_model_->getLinkModel(ee_tip_links[i])));
+    if (!arm_datas_.back().jmg_)
     {
-      BOLT_ERROR(indent, true, "No link model found for link name " << ee_tip_link);
+      BOLT_ERROR(indent, true, "No joint model group found for jmg name " << arm_jmgs[i]);
+      exit(-1);
+    }
+    if (!arm_datas_.back().ee_link_)
+    {
+      BOLT_ERROR(indent, true, "No link model found for link name " << ee_tip_links[i]);
+      exit(-1);
     }
   }
 
@@ -195,9 +199,9 @@ BoltMoveIt::BoltMoveIt(const std::string &hostname, const std::string &package_p
     cart_path_planner_.reset(new CartPathPlanner(this));
 
     imarker_start_.reset(
-        new mvt::IMarkerRobotState(planning_scene_monitor_, "start", arm_jmgs_, ee_links_, rvt::GREEN, package_path_));
+        new mvt::IMarkerRobotState(planning_scene_monitor_, "start", arm_datas_, rvt::GREEN, package_path_));
     imarker_goal_.reset(
-        new mvt::IMarkerRobotState(planning_scene_monitor_, "goal", arm_jmgs_, ee_links_, rvt::ORANGE, package_path_));
+        new mvt::IMarkerRobotState(planning_scene_monitor_, "goal", arm_datas_, rvt::ORANGE, package_path_));
 
     // imarker_start_->setCollisionCheckingVerbose(true);
     // imarker_start_->setOnlyCheckSelfCollision(true);
@@ -230,7 +234,7 @@ BoltMoveIt::~BoltMoveIt()
 
 bool BoltMoveIt::loadOMPL()
 {
-  moveit_ompl::ModelBasedStateSpaceSpecification mbss_spec(robot_model_, jmg_);
+  moveit_ompl::ModelBasedStateSpaceSpecification mbss_spec(robot_model_, planning_jmg_);
 
   // Construct the state space we are planning in
   space_.reset(new moveit_ompl::ModelBasedStateSpace(mbss_spec));
@@ -327,8 +331,6 @@ bool BoltMoveIt::loadData()
 
 void BoltMoveIt::run(std::size_t indent)
 {
-
-
   // Benchmark performance
   if (benchmark_performance_)
   {
@@ -573,7 +575,7 @@ bool BoltMoveIt::plan()
   // Convert trajectory
   robot_trajectory::RobotTrajectoryPtr traj;
   const double speed = 0.025;
-  viz3_->convertPath(path, jmg_, traj, speed);
+  viz3_->convertPath(path, planning_jmg_, traj, speed);
 
   // Check/test the solution for errors
   checkMoveItPathSolution(traj);
@@ -661,8 +663,11 @@ void BoltMoveIt::loadVisualTools()
     moveit_visual->enableBatchPublishing();
 
     MoveItVizWindowPtr viz = MoveItVizWindowPtr(new MoveItVizWindow(moveit_visual, si_));
-    viz->setJointModelGroup(jmg_);
-    viz->setEEFLinks(ee_links_);
+    viz->setJointModelGroup(planning_jmg_);
+    for (std::size_t i = 0; i < arm_datas_.size(); ++i)
+    {
+      viz->setEEFLink(arm_datas_[i].ee_link_);
+    }
 
     bool blocking = false;
     if (!headless_)
@@ -830,10 +835,10 @@ void BoltMoveIt::visualizeRawTrajectory(og::PathGeometric &path)
   // Convert trajectory
   robot_trajectory::RobotTrajectoryPtr traj;
   const double speed = 0.05;
-  viz3_->convertPath(path, jmg_, traj, speed);
+  viz3_->convertPath(path, planning_jmg_, traj, speed);
 
   // Show trajectory line
-  viz3_->getVisualTools()->publishTrajectoryLine(traj, ee_links_[0], rvt::GREY);
+  viz3_->getVisualTools()->publishTrajectoryLine(traj, arm_datas_[0].ee_link_, rvt::GREY); // TODO multiple EEs
   viz3_->trigger();
 }
 
@@ -921,7 +926,7 @@ bool BoltMoveIt::getRandomState(moveit::core::RobotStatePtr &robot_state)
   static const std::size_t MAX_ATTEMPTS = 1000;
   for (std::size_t i = 0; i < MAX_ATTEMPTS; ++i)
   {
-    robot_state->setToRandomPositions(jmg_);
+    robot_state->setToRandomPositions(planning_jmg_);
     robot_state->update();
 
     // Error check
@@ -948,8 +953,8 @@ void BoltMoveIt::testMotionValidator()
 
   // moveit::core::RobotStatePtr start = moveit::core::RobotStatePtr(new moveit::core::RobotState(*current_state_));
   // moveit::core::RobotStatePtr goal = moveit::core::RobotStatePtr(new moveit::core::RobotState(*current_state_));
-  moveit_start_->setToRandomPositions(jmg_);
-  moveit_goal_->setToRandomPositions(jmg_);
+  moveit_start_->setToRandomPositions(planning_jmg_);
+  moveit_goal_->setToRandomPositions(planning_jmg_);
 
   // visual_moveit_start_->publishRobotState(moveit_start_, rvt::GREEN);
   visual_moveit_goal_->publishRobotState(moveit_goal_, rvt::ORANGE);
@@ -1005,14 +1010,14 @@ void BoltMoveIt::mirrorGraph(std::size_t indent)
 
   // Create state validity checking for both arms
   moveit_ompl::StateValidityChecker *both_arms_validity_checker;
-  both_arms_validity_checker = new moveit_ompl::StateValidityChecker(both_arms_group_name, both_arms_space_info, *current_state_,
-                                                           planning_scene_, both_arms_state_space);
+  both_arms_validity_checker = new moveit_ompl::StateValidityChecker(
+      both_arms_group_name, both_arms_space_info, *current_state_, planning_scene_, both_arms_state_space);
   both_arms_space_info->setStateValidityChecker(ob::StateValidityCheckerPtr(both_arms_validity_checker));
 
   // Create state validity checking for left arm
   moveit_ompl::StateValidityChecker *left_arm_validity_checker;
-  left_arm_validity_checker = new moveit_ompl::StateValidityChecker(left_arm_group_name, left_arm_space_info, *current_state_,
-                                                           planning_scene_, left_arm_state_space);
+  left_arm_validity_checker = new moveit_ompl::StateValidityChecker(
+      left_arm_group_name, left_arm_space_info, *current_state_, planning_scene_, left_arm_state_space);
   left_arm_space_info->setStateValidityChecker(ob::StateValidityCheckerPtr(left_arm_validity_checker));
 
   // Set the database file location

@@ -57,14 +57,12 @@ bool MoveItBase::init(ros::NodeHandle& nh)
 {
   nh_ = nh;
   std::string joint_state_topic;
-  std::string joint_model_group;
   std::string execution_command_mode;
 
   // Load rosparams
   ros::NodeHandle rpnh(nh_, name_);
   int error = 0;
   error += !rosparam_shortcuts::get(name_, rpnh, "joint_state_topic", joint_state_topic);
-  error += !rosparam_shortcuts::get(name_, rpnh, "joint_model_group", joint_model_group);
   error += !rosparam_shortcuts::get(name_, rpnh, "planning_scene_topic", planning_scene_topic_);
   rosparam_shortcuts::shutdownIfError(name_, error);
 
@@ -73,9 +71,6 @@ bool MoveItBase::init(ros::NodeHandle& nh)
 
   // Load the robot model
   robot_model_ = robot_model_loader_->getModel();  // Get a shared pointer to the robot
-
-  // Choose planning group
-  jmg_ = robot_model_->getJointModelGroup(joint_model_group);
 
   // Create the planning scene
   planning_scene_.reset(new planning_scene::PlanningScene(robot_model_));

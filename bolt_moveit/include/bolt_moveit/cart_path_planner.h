@@ -34,6 +34,7 @@
 
 /* Author: Dave Coleman
    Desc:   Creates a cartesian path to be inserted into a planning roadmap
+           Note: all ordering of multiple end effectors corresponds to order of eefs in parent_->ee_links_
 */
 
 #ifndef BOLT_MOVEIT_CART_PATH_PLANNER_H
@@ -58,7 +59,15 @@
 
 namespace bolt_moveit
 {
-typedef std::vector<std::vector<double>> JointPoses;
+typedef std::vector<double> JointSpacePoint;
+
+typedef std::vector<JointSpacePoint> RedunJointPoses;
+typedef std::vector<RedunJointPoses> RedunJointTrajectory;
+
+typedef std::vector<JointSpacePoint> BothArmsJointPose;
+typedef std::vector<BothArmsJointPose> CombinedPoints;
+typedef std::vector<CombinedPoints> CombinedTrajectory;
+
 typedef std::vector<std::vector<ompl::tools::bolt::TaskVertex>> TaskVertexMatrix;
 
 class BoltMoveIt;
@@ -80,8 +89,8 @@ public:
 
   bool debugShowAllIKSolutions(std::size_t indent);
 
-  bool computeRedundantPosesForCartPoint(const Eigen::Affine3d& pose, const OrientationTol& orientation_tol,
-                                         EigenSTL::vector_Affine3d& candidate_poses, std::size_t indent);
+  bool computeRedunPosesForCartPoint(const Eigen::Affine3d& pose, const OrientationTol& orientation_tol,
+                                     EigenSTL::vector_Affine3d& candidate_poses, std::size_t indent);
 
   bool rotateOnAxis(const Eigen::Affine3d& pose, const OrientationTol& orientation_tol, const Axis axis,
                     EigenSTL::vector_Affine3d& candidate_poses, std::size_t indent);
@@ -94,16 +103,29 @@ public:
 
   bool populateBoltGraph(ompl::tools::bolt::TaskGraphPtr task_graph, std::size_t indent);
 
-  bool addCartPointToBoltGraph(const std::vector<std::vector<double>>& joint_poses,
+  bool createSingleDimTrajectory(const EigenSTL::vector_Affine3d& exact_poses, RedunJointTrajectory& redun_poses,
+                                 const moveit::core::LinkModel* ee_link, moveit::core::JointModelGroup* jmg,
+                                 std::size_t indent);
+
+  bool combineEETrajectories(const std::vector<RedunJointTrajectory>& redun_traj_per_eef,
+                             CombinedTrajectory& combined_traj_points, std::size_t indent);
+
+  bool addCartPointToBoltGraph(const CombinedPoints& combined_points,
                                std::vector<ompl::tools::bolt::TaskVertex>& point_vertices,
                                moveit::core::RobotStatePtr moveit_robot_state, std::size_t indent);
-  bool addEdgesToBoltGraph(const TaskVertexMatrix& graph_vertices, ompl::tools::bolt::TaskVertex startingVertex,
+
+  bool addEdgesToBoltGraph(const TaskVertexMatrix& graphVertices, ompl::tools::bolt::TaskVertex startingVertex,
                            ompl::tools::bolt::TaskVertex endingVertex, std::size_t indent);
-  bool connectTrajectoryEndPoints(const TaskVertexMatrix& graph_vertices, double& shortest_path_across_cart,
+
+  bool connectTrajectoryEndPoints(const TaskVertexMatrix& graphVertices, double& shortest_path_across_cart,
                                   std::size_t indent);
-  bool getRedundantJointPosesForCartPoint(const Eigen::Affine3d& pose, std::vector<std::vector<double>>& joint_poses,
-                                          const moveit::core::LinkModel* ee_link, std::size_t indent);
-  void visualizeAllJointPoses(const std::vector<std::vector<double>>& joint_poses, std::size_t indent);
+
+  bool getRedunJointPosesForCartPoint(const Eigen::Affine3d& pose, RedunJointPoses& joint_poses,
+                                      const moveit::core::LinkModel* ee_link, moveit::core::JointModelGroup* jmg,
+                                      std::size_t indent);
+
+  void visualizeAllJointPoses(const RedunJointPoses& joint_poses, const moveit::core::JointModelGroup* jmg,
+                              std::size_t indent);
 
 private:
   // --------------------------------------------------------
@@ -116,6 +138,9 @@ private:
 
   // Parent class
   BoltMoveIt* parent_;
+
+  // Data about the arms
+  std::vector<moveit_visual_tools::ArmData> arm_datas_;
 
   // The main graph
   ompl::tools::bolt::TaskGraphPtr task_graph_;

@@ -162,11 +162,10 @@ public:
 
   // Planning groups
   std::string planning_group_name_;
-  moveit::core::JointModelGroup* jmg_;
+  moveit::core::JointModelGroup* planning_jmg_;
 
-  // End effectors
-  std::vector<const moveit::core::JointModelGroup *> arm_jmgs_;
-  std::vector<moveit::core::LinkModel*> ee_links_;
+  // End effector data including joint model groups
+  std::vector<mvt::ArmData> arm_datas_;
 
   // Modes
   bool run_problems_;
