@@ -80,8 +80,8 @@ CartPathPlanner::CartPathPlanner(BoltMoveIt* parent) : nh_("~"), parent_(parent)
   ik_state_.reset(new moveit::core::RobotState(*parent_->moveit_start_));
 
   // Create cartesian start pose interactive marker
-  imarker_cartesian_.reset(new mvt::IMarkerRobotState(parent_->getPlanningSceneMonitor(), "cart", arm_datas_,
-                                                      rvt::BLUE, parent_->package_path_));
+  imarker_cartesian_.reset(new mvt::IMarkerRobotState(parent_->getPlanningSceneMonitor(), "cart", arm_datas_, rvt::BLUE,
+                                                      parent_->package_path_));
   imarker_cartesian_->setIMarkerCallback(
       std::bind(&CartPathPlanner::processIMarkerPose, this, std::placeholders::_1, std::placeholders::_2));
 
@@ -412,7 +412,7 @@ bool CartPathPlanner::populateBoltGraph(ompl::tools::bolt::TaskGraphPtr task_gra
   {
     const moveit::core::LinkModel* ee_link = arm_datas_[i].ee_link_;
     moveit::core::JointModelGroup* arm_jmg = arm_datas_[i].jmg_;
-    BOLT_DEBUG(indent, true, "Creating redun poses for end effector " << ee_link->getName());
+    BOLT_DEBUG(indent, true, "Creating redundant poses for end effector " << ee_link->getName());
     if (!createSingleDimTrajectory(exact_poses_[i], redun_traj_per_eef[i], ee_link, arm_jmg, indent))
     {
       BOLT_ERROR(indent, true, "Error creating single dim trajectory");
@@ -424,7 +424,11 @@ bool CartPathPlanner::populateBoltGraph(ompl::tools::bolt::TaskGraphPtr task_gra
   CombinedTrajectory combined_traj_points;
   combineEETrajectories(redun_traj_per_eef, combined_traj_points, indent);
 
-  BOLT_ASSERT(combined_traj_points.size() == graphVertices.size(), "Mismatching sizes of vectors");
+  BOLT_ASSERT(combined_traj_points.size() == graphVertices.size(),
+              "Mismatching sizes of vectors. combined_traj_points.size(): "
+                  << combined_traj_points.size() << ", graphVertices.size(): " << graphVertices.size());
+
+  BOLT_DEBUG(indent, true, "Converting combined trajectories into TaskGraph vertices");
 
   std::size_t total_vertices = 0;
   for (std::size_t traj_id = 0; traj_id < combined_traj_points.size(); + traj_id)
@@ -523,6 +527,8 @@ bool CartPathPlanner::createSingleDimTrajectory(const EigenSTL::vector_Affine3d&
       visualizeAllJointPoses(joint_poses, jmg, indent);
   }
 
+  BOLT_DEBUG(indent, true, "Trajectory " << ee_link->getName() << " has redun_poses: " << redun_poses.size());
+
   return true;
 }
 
@@ -559,22 +565,29 @@ bool CartPathPlanner::combineEETrajectories(const std::vector<RedunJointTrajecto
 
     // Check that both have a poses for this trajectory point
     // it is possible they would not because one trajectory is longer than the other
-    if (trajectory_eef0.size() < i - 1)
+    if (trajectory_eef0.size() <= i)
     {
       // just use the last set of redun poses in the shorter trajectory
+      // BOLT_INFO(indent, true, "eef0: using last set of redundant poses in shorter trajectory");
       poses0 = &trajectory_eef0.back();
     }
     else
       poses0 = &redun_traj_per_eef[0][i];
 
-    if (trajectory_eef1.size() < i - 1)
+    if (trajectory_eef1.size() <= i)
     {
       // just use the last set of redun poses in the shorter trajectory
+      // BOLT_INFO(indent, true, "eef1: using last set of redundant poses in shorter trajectory");
       poses1 = &trajectory_eef1.back();
     }
     else
       poses1 = &redun_traj_per_eef[1][i];
 
+    std::cout << "eef0.size(): " << trajectory_eef0.size() << ", eef1.size(): " << trajectory_eef1.size()
+              << ", i: " << i << std::endl;
+
+    BOLT_ASSERT(poses0, "Poses0 null");
+    BOLT_ASSERT(poses1, "Poses1 null");
     BOLT_ASSERT(!poses0->empty(), "No redun poses for eef 0");
     BOLT_ASSERT(!poses1->empty(), "No redun poses for eef 1");
 
@@ -584,8 +597,12 @@ bool CartPathPlanner::combineEETrajectories(const std::vector<RedunJointTrajecto
     // Loop through each pair of poses across end effectors
     for (std::size_t pose0_id = 0; pose0_id < poses0->size(); ++pose0_id)
     {
+      // std::cout << "pose0_id: " << pose0_id << " size: " << poses0->size() << std::endl;
       for (std::size_t pose1_id = 0; pose1_id < poses1->size(); ++pose1_id)
       {
+        BOLT_ERROR(indent, (poses0->size() < pose0_id), "Pose 0 is null at id " << pose0_id);
+        BOLT_ERROR(indent, (poses1->size() < pose1_id), "Pose 1 is null at id " << pose1_id);
+
         // Create new trajectory point
         BothArmsJointPose point;
         point.push_back((*poses0)[pose0_id]);
@@ -599,6 +616,8 @@ bool CartPathPlanner::combineEETrajectories(const std::vector<RedunJointTrajecto
     // Add set of points to trajectory
     combined_traj_points.push_back(combined_points);
   }
+
+  BOLT_DEBUG(indent, true, "Total size of combined traj points vector: " << combined_traj_points.size());
 }
 
 bool CartPathPlanner::addCartPointToBoltGraph(const CombinedPoints& combined_points,
@@ -694,7 +713,8 @@ bool CartPathPlanner::addEdgesToBoltGraph(const TaskVertexMatrix& graphVertices,
         //   edges_skipped_count++;
         //   continue;
         // }
-        if (!ik_state_->isValidVelocityMove(parent_->planning_jmg_, start_array, end_array, space->getDimension(), timing_))
+        if (!ik_state_->isValidVelocityMove(parent_->planning_jmg_, start_array, end_array, space->getDimension(),
+                                            timing_))
         {
           edges_skipped_count++;
           continue;
@@ -882,8 +902,8 @@ bool CartPathPlanner::getRedunJointPosesForCartPoint(const Eigen::Affine3d& pose
   return true;
 }
 
-void CartPathPlanner::visualizeAllJointPoses(const RedunJointPoses& joint_poses, const moveit::core::JointModelGroup* jmg,
-                                             std::size_t indent)
+void CartPathPlanner::visualizeAllJointPoses(const RedunJointPoses& joint_poses,
+                                             const moveit::core::JointModelGroup* jmg, std::size_t indent)
 {
   BOLT_FUNC(indent, true, "visualizeAllJointPoses()");
 

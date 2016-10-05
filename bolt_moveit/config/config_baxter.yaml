@@ -2,7 +2,7 @@
 # Main program
 bolt_moveit:
   # run mode
-  auto_run: false # do not wait to move interactive markers. note: 'autonomous' setting must be 'false'
+  auto_run: true # do not wait to move interactive markers. note: 'autonomous' setting must be 'false'
   benchmark_performance: false
   display_disjoint_sets: false
   mirror_graph: false # take a single-arm graph and turn into dual-arm graph
@@ -67,8 +67,8 @@ sparse_generator:
 
 # ====================================================
 sparse_criteria:
-  sparse_delta_fraction: 0.35 # for 6dof
-  #sparse_delta_fraction: 0.2 # for 12dof
+  #sparse_delta_fraction: 0.35 # for 6dof
+  sparse_delta_fraction: 0.4
   penetration_overlap_fraction: 0.01
   near_sample_points_multiple: 2 # multiply this times number of dimensions
 # VAR4
