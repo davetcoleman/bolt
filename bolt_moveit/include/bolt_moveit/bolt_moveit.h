@@ -121,6 +121,8 @@ public:
 
   void mirrorGraph(std::size_t indent);
 
+  ob::State *combineStates(const ob::State *state1, const ob::State *state2);
+
   // --------------------------------------------------------
 
   // A shared node handle
@@ -142,6 +144,13 @@ public:
   // Configuration space
   moveit_ompl::ModelBasedStateSpacePtr space_;
   ompl::base::SpaceInformationPtr si_;
+
+  // Mirroring config
+  moveit::core::JointModelGroup *both_arms_jmg_;
+  moveit::core::JointModelGroup *left_arm_jmg_;
+  moveit_ompl::ModelBasedStateSpacePtr both_arms_state_space_;
+  moveit_ompl::ModelBasedStateSpacePtr left_arm_state_space_;
+  moveit::core::RobotStatePtr mirror_state_;
 
   // The visual tools for interfacing with Rviz
   std::vector<bolt_moveit::MoveItVizWindowPtr> vizs_;
@@ -175,7 +184,6 @@ public:
   bool eliminate_dense_disjoint_sets_;
   bool check_valid_vertices_;
   bool display_disjoint_sets_;
-  bool mirror_graph_;
   bool benchmark_performance_;
   bool post_processing_;
   int post_processing_interval_;
@@ -184,6 +192,11 @@ public:
   std::string experience_planner_;
   bool is_bolt_ = false;
   bool is_thunder_ = false;
+
+  // Mirroring
+  bool mirror_graph_;
+  std::string opposite_arm_name_;
+  std::string both_arms_group_name_;
 
   // Operation settings
   std::size_t num_problems_;

@@ -108,6 +108,9 @@ public:
   bool addSample(base::State *state, std::size_t threadID, bool &usedState, std::size_t indent);
   bool addSample(CandidateData &candidateD, std::size_t threadID, bool &usedState, std::size_t indent);
 
+  void showStatus(std::size_t indent);
+  void showNoQualityStatus(std::size_t indent);
+
   /**
    * \brief Get neighbors within sparseDelta radius
    * \param indent - debugging tool

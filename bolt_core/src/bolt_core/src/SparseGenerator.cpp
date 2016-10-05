@@ -420,7 +420,7 @@ bool SparseGenerator::addSample(CandidateData &candidateD, std::size_t threadID,
       double addHz = numRandSamplesAdded_ / duration;
 
       // Change save interval based on addition rate
-      const double saveEveryXSeconds = 60.0; //5*pow(2, si_->getStateDimension());
+      const double saveEveryXSeconds = 5*60.0; //5*pow(2, si_->getStateDimension());
       const std::size_t saveEveryXNodeAdditions = saveEveryXSeconds * addHz;
       saveInterval_ = saveEveryXNodeAdditions;
 
@@ -453,43 +453,11 @@ bool SparseGenerator::addSample(CandidateData &candidateD, std::size_t threadID,
     {
       maxConsecutiveFailures_ = numConsecutiveFailures_;
 
-      std::size_t percentComplete;
-      if (!sparseCriteria_->getUseFourthCriteria())
-      {
-        percentComplete = ceil(maxConsecutiveFailures_ / double(fourthCriteriaAfterFailures_) * 100.0);
-      }
+      if (sparseCriteria_->useQualityCriteria_)
+        showStatus(indent);
       else
-      {
-        percentComplete = ceil(maxConsecutiveFailures_ / double(terminateAfterFailures_) * 100.0);
-      }
-
-      // Every time the whole number of percent compelete changes, show to user
-      if (percentComplete > maxPercentComplete_)
-      {
-        maxPercentComplete_ = percentComplete;
-
-        // Show varying granularity based on number of dimensions
-        const std::size_t showEvery = std::max(1, int(12 - si_->getStateDimension() * 2));
-        if (percentComplete % showEvery == 0)
-        {
-          if (!sparseCriteria_->getUseFourthCriteria())
-          {
-            BOLT_WARN(indent, true, "Pre-quality progress: "
-                                        << percentComplete << "% (maxConsecutiveFailures: " << maxConsecutiveFailures_
-                                        << ", numRandSamplesAdded: " << numRandSamplesAdded_ << ")");
-          }
-          else
-          {
-            BOLT_GREEN(indent, true, "Quality termination progress: " << percentComplete << "%");
-          }
-          // copyPasteState();
-        }
-      }
+        showNoQualityStatus(indent);
     }
-    // if (numConsecutiveFailures_ % 500 == 0)
-    // {
-    //   BOLT_INFO(indent, true, "Random sample failed, consecutive failures: " << numConsecutiveFailures_);
-    // }
   }
 
   // Check consecutive failures to determine if quality criteria needs to be enabled
@@ -527,6 +495,63 @@ bool SparseGenerator::addSample(CandidateData &candidateD, std::size_t threadID,
   }
 
   return true;
+}
+
+void SparseGenerator::showStatus(std::size_t indent)
+{
+  std::size_t percentComplete;
+  if (!sparseCriteria_->getUseFourthCriteria())
+  {
+    percentComplete = ceil(maxConsecutiveFailures_ / double(fourthCriteriaAfterFailures_) * 100.0);
+  }
+  else
+  {
+    percentComplete = ceil(maxConsecutiveFailures_ / double(terminateAfterFailures_) * 100.0);
+  }
+
+  // Every time the whole number of percent compelete changes, show to user
+  if (percentComplete > maxPercentComplete_)
+  {
+    maxPercentComplete_ = percentComplete;
+
+    // Show varying granularity based on number of dimensions
+    const std::size_t showEvery = std::max(1, int(12 - si_->getStateDimension() * 2));
+    if (percentComplete % showEvery == 0)
+    {
+      if (!sparseCriteria_->getUseFourthCriteria())
+      {
+        BOLT_WARN(indent, true, "Pre-quality progress: "
+                  << percentComplete << "% (maxConsecutiveFailures: " << maxConsecutiveFailures_
+                  << ", numRandSamplesAdded: " << numRandSamplesAdded_ << ")");
+      }
+      else
+      {
+        BOLT_GREEN(indent, true, "Quality termination progress: " << percentComplete << "%");
+      }
+      // copyPasteState();
+    }
+  }
+}
+
+void SparseGenerator::showNoQualityStatus(std::size_t indent)
+{
+  std::size_t percentComplete = ceil(maxConsecutiveFailures_ / double(terminateAfterFailures_) * 100.0);
+
+  // Every time the whole number of percent complete changes, show to user
+  if (percentComplete > maxPercentComplete_)
+  {
+    maxPercentComplete_ = percentComplete;
+
+    // Show varying granularity based on number of dimensions
+    const std::size_t showEvery = std::max(1, int(12 - si_->getStateDimension() * 2));
+    if (percentComplete % showEvery == 0)
+    {
+      BOLT_WARN(indent, true, "Progress: " << percentComplete
+                << "% (maxConsecutiveFailures: " << maxConsecutiveFailures_
+                << ", numRandSamplesAdded: " << numRandSamplesAdded_ << ")");
+      // copyPasteState();
+    }
+  }
 }
 
 void SparseGenerator::findGraphNeighbors(CandidateData &candidateD, std::size_t threadID, std::size_t indent)

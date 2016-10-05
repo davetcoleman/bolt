@@ -84,8 +84,10 @@ void SparseMirror::mirrorGraphDualArm(base::SpaceInformationPtr dualSpaceInfo,
   BOLT_FUNC(indent, true, "mirrorGraphDualArm()");
 
   // Error check
-  BOLT_ASSERT(dualSpaceInfo->getStateSpace()->getDimension() == monoSI_->getStateSpace()->getDimension() * 2,
-              "Number of dimensions in dual space info should be double the mono space info");
+  BOLT_ASSERT(monoSI_->getStateSpace()->getDimension() == leftArmSpaceInfo->getStateSpace()->getDimension(),
+              "Number of dimensions for both arms must be the same");
+  BOLT_ASSERT(dualSpaceInfo->getStateSpace()->getDimension() >= monoSI_->getStateSpace()->getDimension() * 2,
+              "Number of dimensions in dual space info should be double or more the mono space number of dimension");
 
   // -----------------------------------------------------------------------------
   // Create SparseGraph for dual arm
@@ -178,8 +180,8 @@ void SparseMirror::mirrorGraphDualArm(base::SpaceInformationPtr dualSpaceInfo,
       if (visualizeMiroring_)
         visual_->viz2()->state(state2Mirrored, tools::ROBOT, tools::DEFAULT, /*extraData*/ 0, leftArmSpaceInfo);
 
-      // Create dual state
-      base::State *stateCombined = combineStates(state1, state2Mirrored, dualSpaceInfo, indent);
+      // Create dual state via callback
+      base::State *stateCombined = combineStatesCallback_(state1, state2Mirrored);
 
       // Check that new state is still valid
       if (collisionCheckMirror_ && !dualSpaceInfo->isValid(stateCombined))
@@ -243,41 +245,6 @@ void SparseMirror::mirrorGraphDualArm(base::SpaceInformationPtr dualSpaceInfo,
   dualSG->save(indent);
 }
 
-base::State *SparseMirror::combineStates(const base::State *state1, const base::State *state2,
-                                         base::SpaceInformationPtr dualSpaceInfo, std::size_t indent)
-{
-  base::State *stateCombined = dualSpaceInfo->getStateSpace()->allocState();
-
-  // Get the values of the individual states
-  std::vector<double> values1, values2;
-  monoSI_->getStateSpace()->copyToReals(values1, state1);
-  monoSI_->getStateSpace()->copyToReals(values2, state2);
-
-  // TODO: this is specific to Baxter, NOT robot agnostic
-  // Combine vector2 into vector1
-  values2.insert(values2.end(), values1.begin(), values1.end());
-
-  // Fill the state with current values
-  dualSpaceInfo->getStateSpace()->copyFromReals(stateCombined, values2);
-
-  if (vMirror_)
-  {
-    std::cout << std::endl;
-    std::cout << "-------------------------------------------------------" << std::endl;
-    monoSI_->getStateSpace()->printState(state1);
-
-    std::cout << std::endl;
-    std::cout << "-------------------------------------------------------" << std::endl;
-    monoSI_->getStateSpace()->printState(state2);
-
-    std::cout << std::endl;
-    std::cout << "-------------------------------------------------------" << std::endl;
-    dualSpaceInfo->getStateSpace()->printState(stateCombined);
-  }
-
-  return stateCombined;
-}
-
 void SparseMirror::addEdgesForDim(std::vector<SparseVertex> &sparseV2ToDualVertex, SparseGraphPtr &dualSG,
                                   base::SpaceInformationPtr dualSpaceInfo, std::size_t indent)
 {
@@ -285,7 +252,7 @@ void SparseMirror::addEdgesForDim(std::vector<SparseVertex> &sparseV2ToDualVerte
 
   // Loop through every edge in sparse graph and connect this subgraph
   std::size_t skippedUnconnectedEdges = 0;
-  std::size_t skippedInvalidEdges = 0;
+  std::size_t skippedCollisionEdges = 0;
   std::size_t skippedTooLongEdges = 0;
   foreach (const SparseEdge sparseE, boost::edges(monoSG_->getGraph()))
   {
@@ -311,16 +278,16 @@ void SparseMirror::addEdgesForDim(std::vector<SparseVertex> &sparseV2ToDualVerte
     if (collisionCheckMirror_ &&
         !dualSpaceInfo->checkMotion(dualSG->getState(sparseE_v0), dualSG->getState(sparseE_v1)))
     {
-      BOLT_DEBUG(indent, vMirror_, "found invalid combined state");
+      BOLT_DEBUG(indent, vMirror_, "found collision combined state");
 
       if (vMirror_)
       {
         visual_->viz3()->state(dualSG->getState(sparseE_v0), tools::ROBOT, tools::RED, /*extraData*/ 0, dualSpaceInfo);
         usleep(0.001 * 1000000);
-        visual_->waitForUserFeedback("found invalid combined state");
+        visual_->waitForUserFeedback("found collision combined state");
       }
 
-      skippedInvalidEdges++;
+      skippedCollisionEdges++;
       continue;
     }
 
@@ -332,12 +299,12 @@ void SparseMirror::addEdgesForDim(std::vector<SparseVertex> &sparseV2ToDualVerte
     dualSG->addEdge(sparseE_v0, sparseE_v1, newEdgeDist, eUNKNOWN, indent);
   }
 
-  BOLT_DEBUG(indent, vMirrorStatus_,
-             "Total edges skipped: " << (double(skippedUnconnectedEdges + skippedInvalidEdges) /
-                                         monoSG_->getNumEdges() * 100) << "%. Skipped edges: " << skippedUnconnectedEdges
-                                     << " no endpoints, " << skippedInvalidEdges << " collision, "
-                                     << skippedTooLongEdges << " length, "
-                                     << "out of total: " << monoSG_->getNumEdges());
+  BOLT_DEBUG(indent, vMirrorStatus_, "Total edges skipped: " << (double(skippedUnconnectedEdges + skippedCollisionEdges) /
+                                                                 monoSG_->getNumEdges() * 100)
+                                                             << "%. Skipped edges: " << skippedUnconnectedEdges
+                                                             << " no endpoints, " << skippedCollisionEdges
+                                                             << " collision, " << skippedTooLongEdges << " length, "
+                                                             << "out of total: " << monoSG_->getNumEdges());
 }
 
 void SparseMirror::addEdgesForAll(std::vector<std::vector<SparseVertex>> &vertexMapMatrix, SparseGraphPtr dualSG,
@@ -350,7 +317,7 @@ void SparseMirror::addEdgesForAll(std::vector<std::vector<SparseVertex>> &vertex
   std::size_t skippedDuplicateEdges = 0;
   std::size_t skippedTooLongEdges = 0;
   std::size_t skippedAstarPath = 0;
-  std::size_t skippedInvalidEdges = 0;
+  std::size_t skippedCollisionEdges = 0;
   std::size_t skippedUnconnectedEdges = 0;
   std::size_t addedPath = 0;
   std::size_t count = 1;
@@ -394,28 +361,28 @@ void SparseMirror::addEdgesForAll(std::vector<std::vector<SparseVertex>> &vertex
           continue;
 
         // Check duplicate
-        //time::point startTime0 = time::now(); // Benchmark
+        // time::point startTime0 = time::now(); // Benchmark
         if (dualSG->hasEdge(dualVertex0, dualVertex1))
         {
           skippedDuplicateEdges++;
           continue;
         }
-        //OMPL_INFORM("duplicate took %f seconds", time::seconds(time::now() - startTime0)); // Benchmark
+        // OMPL_INFORM("duplicate took %f seconds", time::seconds(time::now() - startTime0)); // Benchmark
 
         // Check if edge is too long
-        //time::point startTime1 = time::now(); // Benchmark
+        // time::point startTime1 = time::now(); // Benchmark
         double newEdgeDist = monoSI_->distance(dualSG->getState(dualVertex0), dualSG->getState(dualVertex1));
-        // TODO: note this is not a full mirror, but rather only half the SparseDelta it should be
-        if (newEdgeDist > 2*sparseDelta_)
+        if (newEdgeDist > 2 * sparseDelta_)
         {
-          //BOLT_WARN(indent, true, "Edge is longer than 2*sparseDelta=" << 2 * sparseDelta_ << ", value=" << newEdgeDist);
+          // BOLT_WARN(indent, true, "Edge is longer than 2*sparseDelta=" << 2 * sparseDelta_ << ", value=" <<
+          // newEdgeDist);
           skippedTooLongEdges++;
           continue;
         }
-        //OMPL_INFORM("length    took %f seconds", time::seconds(time::now() - startTime1)); // Benchmark
+        // OMPL_INFORM("length    took %f seconds", time::seconds(time::now() - startTime1)); // Benchmark
 
         // Check if there already is a path of equal distance in graph
-        //time::point startTime2 = time::now(); // Benchmark
+        // time::point startTime2 = time::now(); // Benchmark
         // if (!dualSG->checkPathLength(dualVertex0, dualVertex1, newEdgeDist, indent))
         // {
         //   //BOLT_WARN(indent, true, "There is already a path through graph the same length or shorter");
@@ -425,14 +392,14 @@ void SparseMirror::addEdgesForAll(std::vector<std::vector<SparseVertex>> &vertex
         // //OMPL_INFORM("astar     took %f seconds", time::seconds(time::now() - startTime2)); // Benchmark
 
         // Check if edge is in collision
-        //time::point startTime3 = time::now(); // Benchmark
+        // time::point startTime3 = time::now(); // Benchmark
         if (collisionCheckMirror_ &&
             !dualSpaceInfo->checkMotion(dualSG->getState(dualVertex0), dualSG->getState(dualVertex1)))
         {
-          skippedInvalidEdges++;
+          skippedCollisionEdges++;
           continue;
         }
-        //OMPL_INFORM("collision took %f seconds", time::seconds(time::now() - startTime3)); // Benchmark
+        // OMPL_INFORM("collision took %f seconds", time::seconds(time::now() - startTime3)); // Benchmark
 
         // Create edge
         dualSG->addEdge(dualVertex0, dualVertex1, newEdgeDist, eUNKNOWN, indent);
@@ -451,25 +418,27 @@ void SparseMirror::addEdgesForAll(std::vector<std::vector<SparseVertex>> &vertex
                << ", unconnected: " << skippedUnconnectedEdges
                << ", length: " << skippedTooLongEdges
                << ", astar: " << skippedAstarPath
-               << ", invalid: " << skippedInvalidEdges
+               << ", collision: " << skippedCollisionEdges
                << ", ADDED: " << addedPath
                << ", Total edge: " << dualSG->getNumEdges());
     // clang-format on
 
-    count++; // Status
+    count++;  // Status
 
     if (visual_->viz1()->shutdownRequested())
       break;
   }
 
   BOLT_DEBUG(indent, vMirrorStatus_, "Skipped " << skippedDuplicateEdges << " edges because duplicate, "
-                                                << skippedInvalidEdges
+                                                << skippedCollisionEdges
                                                 << " due to collision, out of total: " << monoSG_->getNumEdges());
 }
 
+// TODO: convert this function into a callback that is application specific
 void SparseMirror::mirrorState(const base::State *source, base::State *dest, std::size_t indent)
 {
-  const std::vector<ompl::base::StateSpace::ValueLocation> &valueLocations = monoSI_->getStateSpace()->getValueLocations();
+  const std::vector<ompl::base::StateSpace::ValueLocation> &valueLocations =
+      monoSI_->getStateSpace()->getValueLocations();
 
   // Loop through each value
   for (std::size_t i = 0; i < valueLocations.size(); ++i)

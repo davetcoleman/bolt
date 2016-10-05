@@ -84,8 +84,12 @@ BoltMoveIt::BoltMoveIt(const std::string &hostname, const std::string &package_p
   error += !rosparam_shortcuts::get(name_, rpnh, "eliminate_dense_disjoint_sets", eliminate_dense_disjoint_sets_);
   error += !rosparam_shortcuts::get(name_, rpnh, "check_valid_vertices", check_valid_vertices_);
   error += !rosparam_shortcuts::get(name_, rpnh, "display_disjoint_sets", display_disjoint_sets_);
-  error += !rosparam_shortcuts::get(name_, rpnh, "mirror_graph", mirror_graph_);
   error += !rosparam_shortcuts::get(name_, rpnh, "benchmark_performance", benchmark_performance_);
+
+  // mirror
+  error += !rosparam_shortcuts::get(name_, rpnh, "mirror_graph", mirror_graph_);
+  error += !rosparam_shortcuts::get(name_, rpnh, "opposite_arm_name", opposite_arm_name_);
+  error += !rosparam_shortcuts::get(name_, rpnh, "both_arms_group_name", both_arms_group_name_);
 
   // run type
   error += !rosparam_shortcuts::get(name_, rpnh, "auto_run", auto_run_);
@@ -128,9 +132,14 @@ BoltMoveIt::BoltMoveIt(const std::string &hostname, const std::string &package_p
   // Initialize MoveIt base
   MoveItBase::init(nh_);
 
-  // Load 2 more robot states
+  // Load more robot states
   moveit_start_.reset(new moveit::core::RobotState(*current_state_));
   moveit_goal_.reset(new moveit::core::RobotState(*current_state_));
+
+  // State for copying one arm to another (mirroring)
+  mirror_state_.reset(new moveit::core::RobotState(*current_state_));
+  // set default wrist position (and all other joints)
+  mirror_state_->setToDefaultValues();
 
   // Get the two arms jmg
   planning_jmg_ = robot_model_->getJointModelGroup(planning_group_name_);
@@ -978,50 +987,45 @@ void BoltMoveIt::testMotionValidator()
 
 void BoltMoveIt::mirrorGraph(std::size_t indent)
 {
-  const std::string both_arms_group_name = "both_arms_minus_one";
-  const std::string left_arm_group_name = "left_arm_minus_one";
-
   // Choose planning group
-  moveit::core::JointModelGroup *both_arms = robot_model_->getJointModelGroup(both_arms_group_name);
-  moveit::core::JointModelGroup *left_arm = robot_model_->getJointModelGroup(left_arm_group_name);
+  both_arms_jmg_ = robot_model_->getJointModelGroup(both_arms_group_name_);
+  left_arm_jmg_ = robot_model_->getJointModelGroup(opposite_arm_name_);
 
   // Setup space
-  moveit_ompl::ModelBasedStateSpaceSpecification both_arms_mbss_spec(robot_model_, both_arms);
-  moveit_ompl::ModelBasedStateSpaceSpecification left_arm_mbss_spec(robot_model_, left_arm);
+  moveit_ompl::ModelBasedStateSpaceSpecification both_arms_mbss_spec(robot_model_, both_arms_jmg_);
+  moveit_ompl::ModelBasedStateSpaceSpecification left_arm_mbss_spec(robot_model_, left_arm_jmg_);
 
   // Construct the state space we are planning in
-  moveit_ompl::ModelBasedStateSpacePtr both_arms_state_space =
-      moveit_ompl::ModelBasedStateSpacePtr(new moveit_ompl::ModelBasedStateSpace(both_arms_mbss_spec));
-  moveit_ompl::ModelBasedStateSpacePtr left_arm_state_space =
-      moveit_ompl::ModelBasedStateSpacePtr(new moveit_ompl::ModelBasedStateSpace(left_arm_mbss_spec));
+  both_arms_state_space_.reset(new moveit_ompl::ModelBasedStateSpace(both_arms_mbss_spec));
+  left_arm_state_space_.reset(new moveit_ompl::ModelBasedStateSpace(left_arm_mbss_spec));
 
-  both_arms_state_space->setup();
-  both_arms_state_space->setName(both_arms_group_name);
-  left_arm_state_space->setup();
-  left_arm_state_space->setName(left_arm_group_name);
+  both_arms_state_space_->setup();
+  both_arms_state_space_->setName(both_arms_group_name_);
+  left_arm_state_space_->setup();
+  left_arm_state_space_->setName(opposite_arm_name_);
 
   // SpaceInfo
   ompl::base::SpaceInformationPtr both_arms_space_info =
-      std::make_shared<ompl::base::SpaceInformation>(both_arms_state_space);
+      std::make_shared<ompl::base::SpaceInformation>(both_arms_state_space_);
   ompl::base::SpaceInformationPtr left_arm_space_info =
-      std::make_shared<ompl::base::SpaceInformation>(left_arm_state_space);
+      std::make_shared<ompl::base::SpaceInformation>(left_arm_state_space_);
   both_arms_space_info->setup();
   left_arm_space_info->setup();
 
   // Create state validity checking for both arms
   moveit_ompl::StateValidityChecker *both_arms_validity_checker;
   both_arms_validity_checker = new moveit_ompl::StateValidityChecker(
-      both_arms_group_name, both_arms_space_info, *current_state_, planning_scene_, both_arms_state_space);
+      both_arms_group_name_, both_arms_space_info, *current_state_, planning_scene_, both_arms_state_space_);
   both_arms_space_info->setStateValidityChecker(ob::StateValidityCheckerPtr(both_arms_validity_checker));
 
   // Create state validity checking for left arm
   moveit_ompl::StateValidityChecker *left_arm_validity_checker;
   left_arm_validity_checker = new moveit_ompl::StateValidityChecker(
-      left_arm_group_name, left_arm_space_info, *current_state_, planning_scene_, left_arm_state_space);
+      opposite_arm_name_, left_arm_space_info, *current_state_, planning_scene_, left_arm_state_space_);
   left_arm_space_info->setStateValidityChecker(ob::StateValidityCheckerPtr(left_arm_validity_checker));
 
   // Set the database file location
-  const std::string file_path = getFilePath(both_arms_group_name);
+  const std::string file_path = getFilePath(both_arms_group_name_);
 
   // Test all verticies
   if (false)
@@ -1032,9 +1036,61 @@ void BoltMoveIt::mirrorGraph(std::size_t indent)
     exit(0);
   }
 
+  // Set callback for how to combine two arms into one state
+  bolt_->getSparseMirror()->setCombineStatesCallback(boost::bind(&BoltMoveIt::combineStates, this, _1, _2));
+
   // Mirror graph
   bolt_->getSparseMirror()->mirrorGraphDualArm(both_arms_space_info, left_arm_space_info, file_path, indent);
   BOLT_INFO(indent, true, "Done mirroring graph!");
+}
+
+ob::State *BoltMoveIt::combineStates(const ob::State *state1, const ob::State *state2)
+{
+  /* Notes:
+     state1
+       state space: space_
+       jmg: planning_jmg_
+     state2
+       state space: left_arm_state_space_
+       jmg: left_arm_jmg_
+     return state
+       state space: both_arms_state_space_
+       jmg: both_arms_jmg_
+  */
+
+  ob::State *both_arms_state = both_arms_state_space_->allocState();
+
+  // Get the values of the individual states
+  std::vector<double> values1, values2;
+  si_->getStateSpace()->copyToReals(values1, state1);
+  si_->getStateSpace()->copyToReals(values2, state2);
+
+  // Set the vectors for each joint model group
+  // TODO: its possible the vectors do not align correctly for some robots, but I'm not sure
+  mirror_state_->setJointGroupPositions(planning_jmg_, values1);
+  mirror_state_->setJointGroupPositions(left_arm_jmg_, values2);
+
+  // Fill the state with current values
+  both_arms_state_space_->copyToOMPLState(both_arms_state, *mirror_state_);
+
+  if (false)
+  {
+    std::cout << std::endl;
+    std::cout << "-------------------------------------------------------" << std::endl;
+    space_->printState(state1);
+
+    std::cout << std::endl;
+    std::cout << "-------------------------------------------------------" << std::endl;
+    left_arm_state_space_->printState(state2);
+
+    std::cout << std::endl;
+    std::cout << "-------------------------------------------------------" << std::endl;
+    both_arms_state_space_->printState(both_arms_state);
+
+    waitForNextStep("compare combination");
+  }
+
+  return both_arms_state;
 }
 
 }  // namespace bolt_moveit

@@ -146,9 +146,6 @@ void SparseStorage::saveVertices(boost::archive::binary_oarchive &oa)
     // Convert to new structure
     BoltVertexData vertexData;
 
-    // Record the type of the vertex
-    vertexData.type_ = 0; // TODO remove
-
     // Serializing the state contained in this vertex
     space->serialize(&state[0], sparseGraph_->getStateNonConst(v));
     vertexData.stateSerialized_ = state;
@@ -185,7 +182,6 @@ void SparseStorage::saveEdges(boost::archive::binary_oarchive &oa)
 
     // Other properties
     edgeData.weight_ = sparseGraph_->getEdgeWeightProperty(e);
-    edgeData.type_ = 0; // TODO: remove
 
     // Copy to file
     oa << edgeData;
@@ -387,8 +383,6 @@ void SparseStorage::loadEdges(unsigned int numEdges, boost::archive::binary_iarc
     // Note: we increment all vertex indexes by the number of query vertices
     const SparseVertex v1 = edgeData.endpoints_.first += numQueryVertices_;
     const SparseVertex v2 = edgeData.endpoints_.second += numQueryVertices_;
-
-    // TODO: edge weight is currently not loaded, so this should really just be removed
 
     // Add
     sparseGraph_->addEdge(v1, v2, eUNKNOWN, indent);

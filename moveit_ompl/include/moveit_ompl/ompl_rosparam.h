@@ -50,6 +50,7 @@
 #include <bolt_core/Bolt.h>
 #include <bolt_core/SparseCriteria.h>
 #include <bolt_core/SparseGenerator.h>
+#include <bolt_core/SparseMirror.h>
 
 // Boost
 #include <boost/filesystem.hpp>
@@ -71,14 +72,14 @@ void loadOMPLParameters(ros::NodeHandle nh, const std::string &name, ompl::tools
   BOLT_ASSERT(sparseCriteria, "Sparse criteria is not initialized");
   ompl::tools::bolt::SparseGeneratorPtr sparseGenerator = bolt->getSparseGenerator();
   BOLT_ASSERT(sparseGenerator, "Sparse generator is not initialized");
+  ompl::tools::bolt::SparseMirrorPtr sparseMirror = bolt->getSparseMirror();
+  BOLT_ASSERT(sparseMirror, "Sparse mirror is not initialized");
   ompl::tools::bolt::BoltPlannerPtr boltPlanner = bolt->getBoltPlanner();
   BOLT_ASSERT(boltPlanner, "boltPlanner is not initialized");
   ompl::tools::bolt::VertexDiscretizerPtr vertexDiscret = sparseGenerator->getVertexDiscretizer();
   BOLT_ASSERT(vertexDiscret, "vertexDiscret is not initialized");
   ompl::tools::bolt::CandidateQueuePtr candidateQueue = sparseGenerator->getCandidateQueue();
   BOLT_ASSERT(candidateQueue, "candidateQueue is not initialized");
-  // ompl::tools::bolt::SamplingQueuePtr samplingQueue = sparseGenerator->getSamplingQueue();
-  // BOLT_ASSERT(samplingQueue, "samplingQueue is not initialized");
 
   // Bolt
   {
@@ -166,6 +167,12 @@ void loadOMPLParameters(ros::NodeHandle nh, const std::string &name, ompl::tools
     error += !get(name, rpnh, "verify_graph_properties", sparseGenerator->verifyGraphProperties_);
     error += !get(name, rpnh, "verbose", sparseGenerator->verbose_);
     error += !get(name, rpnh, "verbose/guarantees", sparseGenerator->vGuarantees_);
+  }
+
+  // SparseMirror
+  {
+    ros::NodeHandle rpnh(nh, "sparse_mirror");
+    error += !get(name, rpnh, "verbose/verbose", sparseMirror->verbose_);
   }
 
   // TaskGraph

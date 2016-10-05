@@ -112,11 +112,9 @@ public:
     void serialize(Archive &ar, const unsigned int /*version*/)
     {
       ar &stateSerialized_;
-      ar &type_; // TODO: remove
     }
 
     std::vector<unsigned char> stateSerialized_;
-    int type_; // TODO: remove
   };
 
   /* \brief The object containing all edge data that will be stored */
@@ -127,12 +125,10 @@ public:
     {
       ar &endpoints_;
       ar &weight_;
-      ar &type_; // TODO: remove
     }
 
     std::pair<unsigned int, unsigned int> endpoints_;
     double weight_;
-    int type_; // TODO: remove
   };
 
   /** \brief Constructor */

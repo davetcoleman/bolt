@@ -68,7 +68,8 @@ typedef std::vector<JointSpacePoint> BothArmsJointPose;
 typedef std::vector<BothArmsJointPose> CombinedPoints;
 typedef std::vector<CombinedPoints> CombinedTrajectory;
 
-typedef std::vector<std::vector<ompl::tools::bolt::TaskVertex>> TaskVertexMatrix;
+typedef std::vector<ompl::tools::bolt::TaskVertex> TaskVertexPoint;
+typedef std::vector<TaskVertexPoint> TaskVertexMatrix;
 
 class BoltMoveIt;
 
@@ -111,7 +112,7 @@ public:
                              CombinedTrajectory& combined_traj_points, std::size_t indent);
 
   bool addCartPointToBoltGraph(const CombinedPoints& combined_points,
-                               std::vector<ompl::tools::bolt::TaskVertex>& point_vertices,
+                               TaskVertexPoint& point_vertices,
                                moveit::core::RobotStatePtr moveit_robot_state, std::size_t indent);
 
   bool addEdgesToBoltGraph(const TaskVertexMatrix& graphVertices, ompl::tools::bolt::TaskVertex startingVertex,
@@ -126,6 +127,8 @@ public:
 
   void visualizeAllJointPoses(const RedunJointPoses& joint_poses, const moveit::core::JointModelGroup* jmg,
                               std::size_t indent);
+
+  void visualizeAllPointVertices(const TaskVertexMatrix& point_vertices, std::size_t indent);
 
 private:
   // --------------------------------------------------------
@@ -146,10 +149,12 @@ private:
   ompl::tools::bolt::TaskGraphPtr task_graph_;
 
   // State used for solving IK
-  moveit::core::RobotStatePtr ik_state_;
+  moveit::core::RobotStatePtr ik_state0_;
+  moveit::core::RobotStatePtr ik_state1_;
 
   // Rviz
   moveit_visual_tools::MoveItVisualToolsPtr visual_tools_;
+  moveit_visual_tools::MoveItVisualToolsPtr visual_tools2_;
 
   // Interactive markers
   moveit_visual_tools::IMarkerRobotStatePtr imarker_cartesian_;
@@ -173,6 +178,7 @@ private:
   bool visualize_show_all_solutions_ = false;
   double visualize_show_all_solutions_sleep_ = 0.001;
   bool visualize_show_all_cart_poses_ = false;
+  bool visualize_show_combined_solutions_ = false;
 
   double tolerance_increment_ = 0.5;
   double tolerance_roll_;

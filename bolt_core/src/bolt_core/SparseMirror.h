@@ -56,6 +56,8 @@ OMPL_CLASS_FORWARD(SparseMirror);
 /** \class ompl::tools::bolt::::SparseMirrorPtr
     \brief A boost shared pointer wrapper for ompl::tools::SparseMirror */
 
+typedef std::function<base::State*(const base::State *state1, const base::State *state2)> CombineStatesCallback;
+
 class SparseMirror
 {
 public:
@@ -75,8 +77,6 @@ public:
   void mirrorGraphDualArm(base::SpaceInformationPtr dualSpaceInfo, base::SpaceInformationPtr leftArmSpaceInfo,
                           const std::string &outputFile, std::size_t indent);
 
-  base::State *combineStates(const base::State *state1, const base::State *state2,
-                             base::SpaceInformationPtr dualSpaceInfo, std::size_t indent);
   void addEdgesForDim(std::vector<SparseVertex> &sparseV2ToDualVertex, SparseGraphPtr &dualSG,
                       base::SpaceInformationPtr dualSpaceInfo, std::size_t indent);
 
@@ -90,6 +90,12 @@ public:
   /** \brief Used to verify that the two arms are basically the same geometry/collision status. Just for testing */
   void checkValidityOfArmMirror(base::SpaceInformationPtr dualSpaceInfo, base::SpaceInformationPtr leftArmSpaceInfo,
                                 std::size_t indent);
+
+  /** \brief Set the callback to combine robot arms into unified state */
+  void setCombineStatesCallback(ompl::tools::bolt::CombineStatesCallback callback)
+  {
+    combineStatesCallback_ = callback;
+  }
 
 protected:
   /** \brief Short name of this class */
@@ -107,6 +113,9 @@ protected:
   /** \brief Sparse criteria properties */
   double sparseDelta_ = 0;
 
+  /** \brief Callback to combine robot arms into unified state */
+  CombineStatesCallback combineStatesCallback_;
+
 public:
   bool verbose_ = false;
   bool vMirror_ = false;
@@ -115,7 +124,7 @@ public:
   /** \brief Visualization */
   bool visualizeMiroring_ = false;
 
-  bool collisionCheckMirror_ = false;
+  bool collisionCheckMirror_ = true;
 
 };  // end SparseMirror
 
