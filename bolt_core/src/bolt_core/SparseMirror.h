@@ -99,7 +99,7 @@ protected:
   SparseGraphPtr monoSG_;
 
   /** \brief The created space information */
-  base::SpaceInformationPtr si_;
+  base::SpaceInformationPtr monoSI_;
 
   /** \brief Class for managing various visualization features */
   VisualizerPtr visual_;

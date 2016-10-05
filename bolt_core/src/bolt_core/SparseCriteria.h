@@ -85,7 +85,6 @@ public:
   bool checkAddCoverage(CandidateData& candidateD, std::size_t indent);
   bool checkAddConnectivity(CandidateData& candidateD, std::size_t indent);
   bool checkAddInterface(CandidateData& candidateD, std::size_t indent);
-  bool checkPathLength(SparseVertex v1, SparseVertex v2, std::size_t indent);
 #ifdef ENABLE_QUALITY
   bool checkAddQuality(CandidateData& candidateD, std::size_t threadID, std::size_t indent);
   void visualizeCheckAddQuality(base::State* candidateState, SparseVertex candidateRep);

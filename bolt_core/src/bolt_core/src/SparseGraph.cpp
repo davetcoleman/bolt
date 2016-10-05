@@ -401,7 +401,6 @@ bool SparseGraph::astarSearch(const SparseVertex start, const SparseVertex goal,
       const SparseVertex v2 = vertexPredecessors[v1];
       if (v1 != v2)
       {
-        // std::cout << "Edge " << v1 << " to " << v2 << std::endl;
         visual_->viz4()->edge(getState(v1), getState(v2), 10);
       }
     }
@@ -421,34 +420,33 @@ bool SparseGraph::astarSearchLength(SparseVertex start, SparseVertex goal, doubl
 {
   BOLT_FUNC(indent, vSearch_, "astarSearchLength()");
 
-  // Hold a list of the shortest path parent to each vertex
-  SparseVertex *vertexPredecessors = new SparseVertex[getNumVertices()];
-
   bool foundGoal = false;
+
+  // Hold a list of the shortest path parent to each vertex
+  // TODO: reuse this initialized memory!
+  SparseVertex *vertexPredecessors = new SparseVertex[getNumVertices()];
   double *vertexDistances = new double[getNumVertices()];
+
   distance = std::numeric_limits<double>::infinity();
 
 #ifndef NDEBUG
   // Reset statistics
   numNodesOpened_ = 0;
   numNodesClosed_ = 0;
-#endif
 
   if (visualizeAstar_)
   {
     visual_->viz4()->deleteAllMarkers();
   }
+#endif
 
   try
   {
-    // double popularityBias = 0;  // TODO: remove this functionality
-    // bool popularityBiasEnabled = false;
     boost::astar_search(g_,                                                              // graph
                         start,                                                           // start state
                         boost::bind(&otb::SparseGraph::astarHeuristic, this, _1, goal),  // the heuristic
                         // ability to disable edges (set cost to inifinity):
                         boost::weight_map(SparseEdgeWeightMap(g_, edgeCollisionStatePropertySparse_))
-                            // popularityBias, popularityBiasEnabled))
                             .predecessor_map(vertexPredecessors)
                             .distance_map(&vertexDistances[0])
                             .visitor(SparsestarVisitor(goal, this)));
@@ -457,8 +455,10 @@ bool SparseGraph::astarSearchLength(SparseVertex start, SparseVertex goal, doubl
   {
     distance = vertexDistances[goal];
 
-    if (!std::isinf(vertexDistances[goal]))  // TODO(davetcoleman): test that this works
+    if (!std::isinf(vertexDistances[goal]))
+    {
       foundGoal = true;
+    }
   }
 
   // Unload
@@ -467,6 +467,31 @@ bool SparseGraph::astarSearchLength(SparseVertex start, SparseVertex goal, doubl
 
   // No solution found from start to goal
   return foundGoal;
+}
+
+bool SparseGraph::checkPathLength(SparseVertex v1, SparseVertex v2, std::size_t indent)
+{
+  return checkPathLength(v1, v2, si_->distance(getState(v1), getState(v2)), indent);
+}
+
+bool SparseGraph::checkPathLength(SparseVertex v1, SparseVertex v2, double distance, std::size_t indent)
+{
+  static const double SMALL_EPSILON = 0.0001;
+
+  double pathLength;
+  if (!astarSearchLength(v1, v2, pathLength, indent))
+    return true;
+
+  if (pathLength < distance + SMALL_EPSILON)
+  {
+    BOLT_ERROR(indent, true, "New interface edge does not help enough, edge length: " << distance
+               << ", astar: " << pathLength << ", difference between distances: "
+               << fabs(distance - pathLength));
+    return false;
+  }
+
+  BOLT_WARN(indent, false, "Interface edge qualifies - diff: " << (distance + SMALL_EPSILON - pathLength));
+  return true;
 }
 
 double SparseGraph::astarHeuristic(SparseVertex a, SparseVertex b) const
@@ -957,6 +982,11 @@ void SparseGraph::removeDeletedVertices(std::size_t indent)
 
 SparseEdge SparseGraph::addEdge(SparseVertex v1, SparseVertex v2, EdgeType type, std::size_t indent)
 {
+  return addEdge(v1, v2, distanceFunction(v1, v2), type, indent);
+}
+
+SparseEdge SparseGraph::addEdge(SparseVertex v1, SparseVertex v2, double distance, EdgeType type, std::size_t indent)
+{
   if (superDebug_)  // Extra checks
   {
     BOLT_ASSERT(v1 <= getNumVertices(), "Vertex1 is larger than max vertex id");
@@ -974,14 +1004,14 @@ SparseEdge SparseGraph::addEdge(SparseVertex v1, SparseVertex v2, EdgeType type,
   // Create the new edge
   SparseEdge e = (boost::add_edge(v1, v2, g_)).first;
 
+  // Weight properties
+  edgeWeightProperty_[e] = distance;
+
   // Quit early if just mirroring graph
   if (fastMirrorMode_)
     return e;
 
   BOLT_FUNC(indent, vAdd_, "addEdge(): from vertex " << v1 << " to " << v2 << " type " << type);
-
-  // Weight properties
-  edgeWeightProperty_[e] = distanceFunction(v1, v2);
 
   // Collision properties
   edgeCollisionStatePropertySparse_[e] = NOT_CHECKED;

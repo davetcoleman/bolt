@@ -380,7 +380,7 @@ bool SparseCriteria::checkAddInterface(CandidateData &candidateD, std::size_t in
   }
 
   // Don't add an interface edge if dist between the two verticies on graph are already the minimum in L1 space
-  if (!checkPathLength(v1, v2, indent))
+  if (!sg_->checkPathLength(v1, v2, indent))
     return false;
 
   // If they can be directly connected
@@ -433,35 +433,6 @@ bool SparseCriteria::checkAddInterface(CandidateData &candidateD, std::size_t in
   BOLT_DEBUG(indent, vCriteria_, "INTERFACE: connected two neighbors through new interface node");
 
   // Report success
-  return true;
-}
-
-bool SparseCriteria::checkPathLength(SparseVertex v1, SparseVertex v2, std::size_t indent)
-{
-  static const double SMALL_EPSILON = 0.0001;
-
-  double pathLength = 0;
-  if (sg_->astarSearchLength(v1, v2, pathLength, indent))
-  {
-    double newEdgeDist = si_->distance(sg_->getState(v1), sg_->getState(v2));
-    if (pathLength < newEdgeDist + SMALL_EPSILON)
-    {
-      if (false)  // Debug
-      {
-        BOLT_ERROR(indent, true, "New interface edge does not help enough, difference between distances: "
-                                     << fabs(newEdgeDist - pathLength));
-        visual_->viz4()->edge(sg_->getState(v1), sg_->getState(v2), tools::MEDIUM, tools::RED);
-        visual_->viz4()->trigger();
-        usleep(0.001 * 1000000);
-      }
-
-      return false;
-    }
-    else
-    {
-      BOLT_WARN(indent, false, "Interface edge qualifies - diff: " << (newEdgeDist + SMALL_EPSILON - pathLength));
-    }
-  }
   return true;
 }
 

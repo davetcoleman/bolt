@@ -67,7 +67,7 @@ sparse_generator:
 
 # ====================================================
 sparse_criteria:
-  #sparse_delta_fraction: 0.35 # for 6dof
+  #sparse_delta_fraction: 0.35
   sparse_delta_fraction: 0.4
   penetration_overlap_fraction: 0.01
   near_sample_points_multiple: 2 # multiply this times number of dimensions

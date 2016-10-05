@@ -29,6 +29,7 @@ catkin_package(
 add_definitions(-DENABLE_DEBUG_MACRO)
 # If enabled, use quality criteria data structures
 #add_definitions(-DENABLE_QUALITY)
+# Note: NDEBUG is enabled when the CMake build type is Debug
 
 ###########
 ## Build ##

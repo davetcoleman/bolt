@@ -211,6 +211,13 @@ public:
   /** \brief Same as astarSearch except does not return vertexPath for performance reasons */
   bool astarSearchLength(SparseVertex start, SparseVertex goal, double& distance, std::size_t indent);
 
+  /** \brief Determine if there is already a path the same length between the two vertices
+   *  \param distance (optional): pass in a pre-calculated distance between vertices
+   *  \return if true, path is necessary. if false, do not add path to graph
+   */
+  bool checkPathLength(SparseVertex v1, SparseVertex v2, std::size_t indent);
+  bool checkPathLength(SparseVertex v1, SparseVertex v2, double distance, std::size_t indent);
+
   /** \brief Distance between two states with special bias using popularity */
   double astarHeuristic(SparseVertex a, SparseVertex b) const;
 
@@ -313,6 +320,7 @@ public:
 
   /** \brief Add edge to graph */
   SparseEdge addEdge(SparseVertex v1, SparseVertex v2, EdgeType type, std::size_t indent);
+  SparseEdge addEdge(SparseVertex v1, SparseVertex v2, double distance, EdgeType type, std::size_t indent);
 
   /** \brief Check graph for edge existence */
   inline bool hasEdge(SparseVertex v1, SparseVertex v2)
