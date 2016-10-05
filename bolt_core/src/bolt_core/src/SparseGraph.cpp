@@ -484,7 +484,7 @@ bool SparseGraph::checkPathLength(SparseVertex v1, SparseVertex v2, double dista
 
   if (pathLength < distance + SMALL_EPSILON)
   {
-    BOLT_ERROR(indent, true, "New interface edge does not help enough, edge length: " << distance
+    BOLT_ERROR(indent, false, "New interface edge does not help enough, edge length: " << distance
                << ", astar: " << pathLength << ", difference between distances: "
                << fabs(distance - pathLength));
     return false;

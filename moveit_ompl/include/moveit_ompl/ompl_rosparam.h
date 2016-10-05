@@ -199,6 +199,7 @@ void loadOMPLParameters(ros::NodeHandle nh, const std::string &name, ompl::tools
   {
     ros::NodeHandle rpnh(nh, "bolt_planner");
     error += !get(name, rpnh, "verbose/verbose", boltPlanner->verbose_);
+    error += !get(name, rpnh, "visualize/smoothed_trajectory", boltPlanner->visualizeSmoothedTrajectory_);
     shutdownIfError(name, error);
   }
 

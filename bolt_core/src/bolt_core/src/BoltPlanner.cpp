@@ -167,8 +167,14 @@ base::PlannerStatus BoltPlanner::solve(Termination &ptc)
   else
     BOLT_WARN(indent, true, "Smoothing not enabled");
 
-  // Add more points to path
-  // geometricSolution.interpolate();
+  // Show the smoothed path
+  if (visualizeSmoothedTrajectory_)
+  {
+    visual_->viz4()->deleteAllMarkers();
+    visual_->viz4()->path(&geometricSolution, tools::MEDIUM, tools::BLACK, tools::BLACK);
+    visual_->viz4()->trigger();
+    visual_->waitForUserFeedback("before add solution path");
+  }
 
   // Save solution
   double approximateDifference = -1;
@@ -667,7 +673,7 @@ bool BoltPlanner::simplifyPath(og::PathGeometric &path, Termination &ptc, std::s
 
 bool BoltPlanner::simplifyTaskPath(og::PathGeometric &path, Termination &ptc, std::size_t indent)
 {
-  BOLT_FUNC(indent, verbose_, "BoltPlanner: simplifyTaskPath()");
+  BOLT_FUNC(indent, true || verbose_, "BoltPlanner: simplifyTaskPath()");
 
   time::point simplifyStart = time::now();
   std::size_t origNumStates = path.getStateCount();
@@ -706,9 +712,9 @@ bool BoltPlanner::simplifyTaskPath(og::PathGeometric &path, Termination &ptc, st
     std::size_t seg0Size = pathSegment[0].getStateCount();
     std::size_t seg1Size = pathSegment[1].getStateCount();
     std::size_t seg2Size = pathSegment[2].getStateCount();
-    (void)seg0Size;  // silence unused warning
-    (void)seg1Size;  // silence unused warning
-    (void)seg2Size;  // silence unused warning
+    // (void)seg0Size;  // silence unused warning
+    // (void)seg1Size;  // silence unused warning
+    // (void)seg2Size;  // silence unused warning
 
     // Move first state
     pathSegment[0].append(pathSegment[1].getStates().front());
@@ -739,7 +745,7 @@ bool BoltPlanner::simplifyTaskPath(og::PathGeometric &path, Termination &ptc, st
     {
       base::State *state = pathSegment[segmentLevel].getState(i);
 
-      // Enforce the correct level on the state because the OMPL components don't understand the concept
+      // Enforce the correct level on the state because the OMPL smoothing components don't understand the concept
       si_->getStateSpace()->setLevel(state, segmentLevel);
 
       // Add to solution path

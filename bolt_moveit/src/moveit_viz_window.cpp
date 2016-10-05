@@ -319,8 +319,6 @@ void MoveItVizWindow::publishTrajectoryPath(const og::PathGeometric& path, const
 void MoveItVizWindow::publish3DPath(const og::PathGeometric& path, const rvt::colors& color, const double thickness,
                                     const std::string& ns)
 {
-  std::cout << "publish3DPath() " << std::endl;
-
   // Error check
   if (path.getStateCount() <= 0)
   {

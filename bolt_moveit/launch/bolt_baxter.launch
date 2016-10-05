@@ -24,7 +24,8 @@
   <arg     if="$(arg valgrind)" name="launch_prefix3" value="valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all" />
 
   <!-- Main process -->
-  <node name="$(anon bolt_baxter)" pkg="bolt_moveit" type="bolt_moveit_main" respawn="false"
+  <!-- <node name="$(anon bolt_baxter)" pkg="bolt_moveit" type="bolt_moveit_main" respawn="false" -->
+  <node name="baxter" pkg="bolt_moveit" type="bolt_moveit_main" respawn="false"
     launch-prefix="$(arg launch_prefix) $(arg launch_prefix2) $(arg launch_prefix3)" output="screen">
 
     <!-- Robot-specific settings -->

@@ -207,6 +207,8 @@ public:
   /** \brief Output user feedback to console */
   bool verbose_ = true;
 
+  bool visualizeSmoothedTrajectory_;
+
   int numStartGoalStatesAddedToTask_ = 0;
 };
 }  // namespace bolt

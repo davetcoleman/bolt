@@ -454,7 +454,7 @@ void TaskGraph::generateMonoLevelTaskSpace(std::size_t indent)
   std::vector<TaskVertex> sparseToTaskVertex0(sg_->getNumVertices());
 
   // Loop through every vertex in sparse graph and copy twice to task graph
-  BOLT_DEBUG(indent + 2, vGenerateTask_, "Adding " << sg_->getNumVertices() << " task space vertices");
+  BOLT_DEBUG(indent + 2, true || vGenerateTask_, "Adding " << sg_->getNumVertices() << " task space vertices");
   foreach (SparseVertex sparseV, boost::vertices(sg_->getGraph()))
   {
     // The first thread number of verticies are used for queries and should be skipped
@@ -470,15 +470,17 @@ void TaskGraph::generateMonoLevelTaskSpace(std::size_t indent)
   }
 
   // Loop through every edge in sparse graph and copy to task graph
-  BOLT_DEBUG(indent + 2, vGenerateTask_, "Adding task space edges");
+  BOLT_DEBUG(indent + 2, true || vGenerateTask_, "Adding " << sg_->getNumEdges() << " task space edges");
   foreach (const SparseEdge sparseE, boost::edges(sg_->getGraph()))
   {
     const SparseVertex sparseE_v0 = boost::source(sparseE, sg_->getGraph());
     const SparseVertex sparseE_v2 = boost::target(sparseE, sg_->getGraph());
 
     // Error check
+#ifndef NDEBUG
     BOLT_ASSERT(sparseE_v0 >= sg_->getNumQueryVertices(), "Found query vertex in sparse graph that has an edge!");
     BOLT_ASSERT(sparseE_v2 >= sg_->getNumQueryVertices(), "Found query vertex in sparse graph that has an edge!");
+#endif
 
     // Create level 0 edge
     addEdge(sparseToTaskVertex0[sparseE_v0], sparseToTaskVertex0[sparseE_v2], indent);
@@ -510,7 +512,7 @@ void TaskGraph::generateTaskSpace(std::size_t indent)
   std::vector<TaskVertex> sparseToTaskVertex2(sg_->getNumVertices());
 
   // Loop through every vertex in sparse graph and copy twice to task graph
-  BOLT_DEBUG(indent + 2, vGenerateTask_, "Adding " << sg_->getNumVertices() << " task space vertices");
+  BOLT_DEBUG(indent + 2, true || vGenerateTask_, "Adding " << 2*sg_->getNumVertices() << " task space vertices");
   foreach (SparseVertex sparseV, boost::vertices(sg_->getGraph()))
   {
     // The first thread number of verticies are used for queries and should be skipped
@@ -535,22 +537,22 @@ void TaskGraph::generateTaskSpace(std::size_t indent)
   }
 
   // Loop through every edge in sparse graph and copy twice to task graph
-  BOLT_DEBUG(indent + 2, vGenerateTask_, "Adding task space edges");
+  BOLT_DEBUG(indent + 2, true || vGenerateTask_, "Adding " << 2*sg_->getNumEdges() << " task space edges");
   foreach (const SparseEdge sparseE, boost::edges(sg_->getGraph()))
   {
     const SparseVertex sparseE_v0 = boost::source(sparseE, sg_->getGraph());
     const SparseVertex sparseE_v2 = boost::target(sparseE, sg_->getGraph());
 
     // Error check
+#ifndef NDEBUG
     BOLT_ASSERT(sparseE_v0 >= sg_->getNumQueryVertices(), "Found query vertex in sparse graph that has an edge!");
     BOLT_ASSERT(sparseE_v2 >= sg_->getNumQueryVertices(), "Found query vertex in sparse graph that has an edge!");
+#endif
 
     // Create level 0 edge
-    // TaskEdge taskEdge0 =
     addEdge(sparseToTaskVertex0[sparseE_v0], sparseToTaskVertex0[sparseE_v2], indent);
 
     // Create level 2 edge
-    // TaskEdge taskEdge2 =
     addEdge(sparseToTaskVertex2[sparseE_v0], sparseToTaskVertex2[sparseE_v2], indent);
   }
 

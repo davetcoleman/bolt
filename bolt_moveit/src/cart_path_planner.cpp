@@ -618,14 +618,14 @@ bool CartPathPlanner::combineEETrajectories(const std::vector<RedunJointTrajecto
     combined_traj_points.push_back(combined_points);
   }
 
-  BOLT_DEBUG(indent, true, "Total size of combined traj points vector: " << combined_traj_points.size());
+  BOLT_DEBUG(indent, verbose_, "Total size of combined traj points vector: " << combined_traj_points.size());
 }
 
 bool CartPathPlanner::addCartPointToBoltGraph(const CombinedPoints& combined_points,
                                               TaskVertexPoint& point_vertices,
                                               moveit::core::RobotStatePtr moveit_robot_state, std::size_t indent)
 {
-  BOLT_FUNC(indent, true, "addCartPointToBoltGraph() - total points: " << combined_points.size());
+  BOLT_FUNC(indent, verbose_, "addCartPointToBoltGraph() - total points: " << combined_points.size());
 
   moveit_ompl::ModelBasedStateSpacePtr space = parent_->space_;
 
@@ -639,14 +639,14 @@ bool CartPathPlanner::addCartPointToBoltGraph(const CombinedPoints& combined_poi
     const BothArmsJointPose& joints_pose = combined_points[i];
     BOLT_ASSERT(joints_pose.size() == 2, "TODO: invalid number of arm joint poses, currently can only be 2");
 
-    std::cout << "-------------------------------------------------------" << std::endl;
-    std::cout << "i: " << i << std::endl;
-    std::cout << "joint0 " << std::endl;
-    std::copy(joints_pose[0].begin(), joints_pose[0].end(), std::ostream_iterator<double>(std::cout, ", "));
-    std::cout << std::endl;
-    std::cout << "joint1 " << std::endl;
-    std::copy(joints_pose[1].begin(), joints_pose[1].end(), std::ostream_iterator<double>(std::cout, ","));
-    std::cout << std::endl;
+    // std::cout << "-------------------------------------------------------" << std::endl;
+    // std::cout << "i: " << i << std::endl;
+    // std::cout << "joint0 " << std::endl;
+    // std::copy(joints_pose[0].begin(), joints_pose[0].end(), std::ostream_iterator<double>(std::cout, ", "));
+    // std::cout << std::endl;
+    // std::cout << "joint1 " << std::endl;
+    // std::copy(joints_pose[1].begin(), joints_pose[1].end(), std::ostream_iterator<double>(std::cout, ","));
+    // std::cout << std::endl;
 
     // Copy vector into moveit format
     // TODO: this is hard coded for 2 arms currently
@@ -662,7 +662,7 @@ bool CartPathPlanner::addCartPointToBoltGraph(const CombinedPoints& combined_poi
     // Add vertex to task graph
     point_vertices[i] = task_graph_->addVertex(ompl_state, level, indent);
 
-    std::cout << "point_vertices[i]: " << point_vertices[i] << std::endl;
+    //std::cout << "point_vertices[i]: " << point_vertices[i] << std::endl;
 
     if (visualize_show_combined_solutions_)
     {
@@ -692,13 +692,13 @@ bool CartPathPlanner::addEdgesToBoltGraph(const TaskVertexMatrix& point_vertices
   const ompl::tools::bolt::EdgeType edge_type = ompl::tools::bolt::eCARTESIAN;
 
   // Debug
-  //if (false)
+  if (false)
     visualizeAllPointVertices(point_vertices, indent);
 
   // Step through each cartesian point, starting at second point
   for (std::size_t traj_id = 1; traj_id < point_vertices.size(); ++traj_id)
   {
-    std::cout << "traj_id: " << traj_id << " out of " << point_vertices.size() << std::endl;
+    //std::cout << "traj_id: " << traj_id << " out of " << point_vertices.size() << std::endl;
 
     // Get all vertices at previous cartesian point
     const TaskVertexPoint& point_vertices0 = point_vertices[traj_id - 1];
@@ -714,7 +714,7 @@ bool CartPathPlanner::addEdgesToBoltGraph(const TaskVertexMatrix& point_vertices
       BOLT_ASSERT(v1 > startingVertex && v1 <= endingVertex, "Attempting to create edge with out of range vertex");
 
       // Visualize
-      visual_tools2_->publishRobotState(ik_state1_, rvt::ORANGE);
+      //visual_tools2_->publishRobotState(ik_state1_, rvt::ORANGE);
 
       // Connect to every vertex in *previous* cartesian point
       for (std::size_t vertex0_id = 0; vertex0_id < point_vertices0.size(); ++vertex0_id)
@@ -724,25 +724,25 @@ bool CartPathPlanner::addEdgesToBoltGraph(const TaskVertexMatrix& point_vertices
 
         // Convert OMPL state to MoveIt! state
         space->copyToRobotState(*ik_state0_, task_graph_->getState(v0));
-        visual_tools_->publishRobotState(ik_state0_, rvt::RED);
 
         if (!ik_state0_->isValidVelocityMove(*ik_state1_, parent_->planning_jmg_, timing_))
         {
-          BOLT_DEBUG(indent, true, "Skipping edge, total skipped: " << edges_skipped_count);
+          //BOLT_DEBUG(indent, true, "Skipping edge, total skipped: " << edges_skipped_count);
           edges_skipped_count++;
 
           continue;
         }
 
-        BOLT_DEBUG(indent, true, "Adding edge " << v0 << " to " << v1);
+        //visual_tools_->publishRobotState(ik_state0_, rvt::GREEN);
+
+        //BOLT_DEBUG(indent, true, "Adding edge " << v0 << " to " << v1);
         task_graph_->addEdge(v0, v1, indent);
-        parent_->waitForNextStep("added edge!");
 
         new_edge_count++;
       }  // for
     }    // for
 
-    BOLT_DEBUG(indent, true, "Point " << traj_id << " current edge count: " << new_edge_count);
+    //BOLT_DEBUG(indent, true, "Point " << traj_id << " current edge count: " << new_edge_count);
 
     if (!ros::ok())
       exit(0);
@@ -954,7 +954,6 @@ void CartPathPlanner::visualizeAllPointVertices(const TaskVertexMatrix& point_ve
       space->copyToRobotState(*ik_state0_, task_graph_->getState(v0));
       visual_tools2_->publishRobotState(ik_state0_, rvt::RAND);
       //usleep(0.0001*1000000);
-      parent_->waitForNextStep("visualizing");
     }
   }
 }

@@ -735,13 +735,15 @@ void BoltMoveIt::loadVisualTools()
   // Block until all visualizers are finished loading
   if (!headless_)
   {
-    const double wait_time = 0.05;
+    ros::Duration(0.5).sleep();
+    const double wait_time = 0.2;
     for (std::size_t i = 1; i <= NUM_VISUALS; ++i)
     {
       vizs_[i - 1]->getVisualTools()->waitForMarkerPub(wait_time);
 
       // Show the initial robot state
       MoveItVisualToolsPtr moveit_visual = vizs_[i - 1]->getVisualTools();
+      usleep(0.001*1000000);
       moveit_visual->publishRobotState(moveit_start_);
     }
   }
