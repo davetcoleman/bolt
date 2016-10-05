@@ -77,10 +77,10 @@ public:
 
   base::State *combineStates(const base::State *state1, const base::State *state2,
                              base::SpaceInformationPtr dualSpaceInfo, std::size_t indent);
-  void addEdgesForDim(std::vector<SparseVertex> &sparseV2ToDualVertex, SparseGraphPtr &dualSparseGraph,
+  void addEdgesForDim(std::vector<SparseVertex> &sparseV2ToDualVertex, SparseGraphPtr &dualSG,
                       base::SpaceInformationPtr dualSpaceInfo, std::size_t indent);
 
-  void addEdgesForAll(std::vector<std::vector<SparseVertex>> &vertexMapMatrix, SparseGraphPtr dualSparseGraph,
+  void addEdgesForAll(std::vector<std::vector<SparseVertex>> &vertexMapMatrix, SparseGraphPtr dualSG,
                       base::SpaceInformationPtr dualSpaceInfo, std::size_t indent);
 
   void mirrorState(const base::State *source, base::State *dest, std::size_t indent);
@@ -96,13 +96,16 @@ protected:
   const std::string name_ = "SparseMirror";
 
   /** \brief Sparse graph main datastructure that this class operates on */
-  SparseGraphPtr sg_;
+  SparseGraphPtr monoSG_;
 
   /** \brief The created space information */
   base::SpaceInformationPtr si_;
 
   /** \brief Class for managing various visualization features */
   VisualizerPtr visual_;
+
+  /** \brief Sparse criteria properties */
+  double sparseDelta_ = 0;
 
 public:
   bool verbose_ = false;
@@ -112,7 +115,7 @@ public:
   /** \brief Visualization */
   bool visualizeMiroring_ = false;
 
-  bool collisionCheckMirror_ = true;
+  bool collisionCheckMirror_ = false;
 
 };  // end SparseMirror
 
