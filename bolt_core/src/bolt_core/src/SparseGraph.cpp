@@ -339,7 +339,7 @@ bool SparseGraph::astarSearch(const SparseVertex start, const SparseVertex goal,
                         boost::weight_map(boost::get(&SparseEdgeStruct::weight_, g_))
                         .predecessor_map(vertexPredecessors)
                         .distance_map(&vertexDistances[0])
-                        .visitor(SparsestarVisitor(goal, this)));
+                        .visitor(SparseAstarVisitor(goal, this)));
   }
   catch (FoundGoalException &)
   {
@@ -362,7 +362,7 @@ bool SparseGraph::astarSearch(const SparseVertex start, const SparseVertex goal,
   distance = vertexDistances[goal];
 
 #ifndef NDEBUG
-  // the custom exception from SparsestarVisitor
+  // the custom exception from SparseAstarVisitor
   BOLT_DEBUG(indent, vSearch_, "AStar found solution. Distance to goal: " << vertexDistances[goal]);
 
   BOLT_DEBUG(indent, vSearch_, "Number nodes opened: " << numNodesOpened_
@@ -455,7 +455,7 @@ bool SparseGraph::astarSearchLength(SparseVertex start, SparseVertex goal, doubl
                         boost::weight_map(boost::get(&SparseEdgeStruct::weight_, g_))
                         .predecessor_map(vertexPredecessors)
                         .distance_map(&vertexDistances[0])
-                        .visitor(SparsestarVisitor(goal, this)));
+                        .visitor(SparseAstarVisitor(goal, this)));
   }
   catch (FoundGoalException &)
   {
@@ -1528,16 +1528,16 @@ base::ValidStateSamplerPtr SparseGraph::getSampler(base::SpaceInformationPtr si,
 // BOOST_CONCEPT_ASSERT(
 //                      (boost::ReadablePropertyMapConcept<ompl::tools::bolt::SparseEdgeWeightMap, ompl::tools::bolt::SparseEdge>));
 
-// SparsestarVisitor methods ////////////////////////////////////////////////////////////////////////////
+// SparseAstarVisitor methods ////////////////////////////////////////////////////////////////////////////
 
-BOOST_CONCEPT_ASSERT((boost::AStarVisitorConcept<otb::SparsestarVisitor, otb::SparseAdjList>));
+BOOST_CONCEPT_ASSERT((boost::AStarVisitorConcept<otb::SparseAstarVisitor, otb::SparseAdjList>));
 
-otb::SparsestarVisitor::SparsestarVisitor(SparseVertex goal, SparseGraph *parent) : goal_(goal), parent_(parent)
+otb::SparseAstarVisitor::SparseAstarVisitor(SparseVertex goal, SparseGraph *parent) : goal_(goal), parent_(parent)
 {
 }
 
 #ifndef NDEBUG
-void otb::SparsestarVisitor::discover_vertex(SparseVertex v, const SparseAdjList &) const
+void otb::SparseAstarVisitor::discover_vertex(SparseVertex v, const SparseAdjList &) const
 {
   // Statistics
   parent_->recordNodeOpened();
@@ -1547,7 +1547,7 @@ void otb::SparsestarVisitor::discover_vertex(SparseVertex v, const SparseAdjList
 }
 #endif
 
-void otb::SparsestarVisitor::examine_vertex(SparseVertex v, const SparseAdjList &) const
+void otb::SparseAstarVisitor::examine_vertex(SparseVertex v, const SparseAdjList &) const
 {
 #ifndef NDEBUG
   // Statistics

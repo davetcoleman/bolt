@@ -181,53 +181,26 @@ enum EdgeCollisionState
    \par Any BGL graph representation could be used here. Because we
    expect the roadmap to be sparse (m<n^2), an adjacency_list is more
    appropriate than an adjacency_matrix. Edges are undirected.
-
-   *Properties of vertices*
-   - vertex_state_t:
-   - vertex_predecessor_t: Requred by incremental connected components algorithm (disjoint sets)
-   - vertex_rank_t: Requred by incremental connected components algorithm (disjoint sets)
-   - vertex_type_t: The type of guard this node is
-   - vertex_list_t: non interface list property?
-
-   Note: If boost::vecS is not used for vertex storage, then there must also
-   be a boost:vertex_index_t property manually added.
-
-   *Properties of edges*
-   - edge_weight_t - cost/distance between two vertices
-   - edge_collision_state_t - used for lazy collision checking, determines if an edge has been checked
-   already for collision. 0 = not checked/unknown, 1 = in collision, 2 = free
 */
 
+// Vertex Properties
 struct SparseVertexStruct
 {
   base::State* state_;
-  std::size_t vertex_predecessor_;
-  std::size_t vertex_rank_;
+  std::size_t vertex_predecessor_; // Required by incremental connected components algorithm (disjoint sets)
+  std::size_t vertex_rank_; // Required by incremental connected components algorithm (disjoint sets)
 #ifdef ENABLE_QUALITY
   boost::property<vertex_interface_data_t, InterfaceHash> // Sparse meta data
 #endif
 };
 
+// Edge Properties
 struct SparseEdgeStruct
 {
-  double weight_;
-  char collision_state_;
+  double weight_; // cost/distance between two vertices
+  char collision_state_; // used for lazy collision checking, determines if an edge has been checked
+  // already for collision. 0 = not checked/unknown, 1 = in collision, 2 = free
 };
-
-/** Wrapper for the vertex's multiple as its property. */
-// clang-format off
-// typedef boost::property<vertex_state_t, base::State*, // State
-//         boost::property<boost::vertex_predecessor_t, VertexIndexType, // Disjoint Sets
-//         boost::property<boost::vertex_rank_t, VertexIndexType // Disjoint Sets
-
-//          > > > SparseVertexProperties;
-// clang-format on
-
-/** Wrapper for the double assigned to an edge as its weight property. */
-// clang-format off
-// typedef boost::property<boost::edge_weight_t, double,
-//         boost::property<edge_collision_state_t, int > > SparseEdgeProperties;
-// clang-format on
 
 /** The underlying boost graph type (undirected weighted-edge adjacency list with above properties). */
 typedef boost::adjacency_list<boost::vecS,  // store OutEdgeList in std::vector
@@ -250,7 +223,7 @@ typedef boost::graph_traits<SparseAdjList>::edge_descriptor SparseEdge;
 ////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////
-// BOOST GRAPH - DENSE
+// BOOST GRAPH - TASK
 ////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -262,39 +235,28 @@ typedef boost::graph_traits<SparseAdjList>::edge_descriptor SparseEdge;
    \par Any BGL graph representation could be used here. Because we
    expect the roadmap to be sparse (m<n^2), an adjacency_list is more
    appropriate than an adjacency_matrix. Edges are undirected.
-
-   *Properties of vertices*
-   - vertex_state_t: an ompl::base::State* is required for OMPL
-   - vertex_predecessor_t: The incremental connected components algorithm requires it
-   - vertex_rank_t: The incremental connected components algorithm requires it
-
-   Note: If boost::vecS is not used for vertex storage, then there must also
-   be a boost:vertex_index_t property manually added.
-
-   *Properties of edges*
-   - edge_weight_t - cost/distance between two vertices
-   - edge_collision_state_t - used for lazy collision checking, determines if an edge has been checked
-   already for collision. 0 = not checked/unknown, 1 = in collision, 2 = free
 */
 
-/** Wrapper for the vertex's multiple as its property. */
-// clang-format off
-typedef boost::property<vertex_state_t, base::State*, // State
-        boost::property<vertex_task_mirror_t, VertexIndexType // Link to corresponding free space TaskVertex, if one exists TODO is this needed?
-        >> TaskVertexProperties;
-// clang-format on
+// Vertex Properties
+struct TaskVertexStruct
+{
+  base::State* state_;
+  std::size_t task_mirror_; // Link to corresponding free space TaskVertex, if one exists TODO is this needed?
+};
 
-/** Wrapper for the double assigned to an edge as its weight property. */
-// clang-format off
-typedef boost::property<boost::edge_weight_t, double,
-        boost::property<edge_collision_state_t, int>> TaskEdgeProperties;
-// clang-format on
+// Edge Properties
+struct TaskEdgeStruct
+{
+  double weight_; // cost/distance between two vertices
+  char collision_state_; // used for lazy collision checking, determines if an edge has been checked
+  // already for collision. 0 = not checked/unknown, 1 = in collision, 2 = free
+};
 
 /** The underlying boost graph type (undirected weighted-edge adjacency list with above properties). */
 typedef boost::adjacency_list<boost::vecS,  // store OutEdgeList in std::vector
                               boost::vecS,  // store VertexList in std::vector
                               boost::undirectedS, // Undirected
-                              TaskVertexProperties, TaskEdgeProperties> TaskAdjList;
+                              TaskVertexStruct, TaskEdgeStruct> TaskAdjList;
 
 /** \brief Vertex in Graph */
 typedef boost::graph_traits<TaskAdjList>::vertex_descriptor TaskVertex;
@@ -309,76 +271,76 @@ typedef boost::graph_traits<TaskAdjList>::edge_descriptor TaskEdge;
 // Typedefs for property maps
 
 /** \brief Access map that stores the lazy collision checking status of each edge */
-typedef boost::property_map<TaskAdjList, edge_collision_state_t>::type TaskEdgeCollisionStateMap;
+//typedef boost::property_map<TaskAdjList, edge_collision_state_t>::type TaskEdgeCollisionStateMap;
 
 ////////////////////////////////////////////////////////////////////////////////////////
 /**
  * Used to artifically supress edges during A* search.
  * \implements ReadablePropertyMapConcept
  */
-class TaskEdgeWeightMap
-{
-private:
-  const TaskAdjList& g_;  // Graph used
-  const TaskEdgeCollisionStateMap& collisionStates_;
-  const double popularityBias_;
-  const bool popularityBiasEnabled_;
+// class TaskEdgeWeightMap
+// {
+// private:
+//   const TaskAdjList& g_;  // Graph used
+//   const TaskEdgeCollisionStateMap& collisionStates_;
+//   const double popularityBias_;
+//   const bool popularityBiasEnabled_;
 
-public:
-  /** Map key type. */
-  typedef TaskEdge key_type;
-  /** Map value type. */
-  typedef double value_type;
-  /** Map auxiliary value type. */
-  typedef double& reference;
-  /** Map type. */
-  typedef boost::readable_property_map_tag category;
+// public:
+//   /** Map key type. */
+//   typedef TaskEdge key_type;
+//   /** Map value type. */
+//   typedef double value_type;
+//   /** Map auxiliary value type. */
+//   typedef double& reference;
+//   /** Map type. */
+//   typedef boost::readable_property_map_tag category;
 
-  /**
-   * Construct map for certain constraints.
-   * \param graph         Graph to use
-   */
-  TaskEdgeWeightMap(const TaskAdjList& graph, const TaskEdgeCollisionStateMap& collisionStates,
-                    const double& popularityBias, const bool popularityBiasEnabled)
-    : g_(graph)
-    , collisionStates_(collisionStates)
-    , popularityBias_(popularityBias)
-    , popularityBiasEnabled_(popularityBiasEnabled)
-  {
-  }
+//   /**
+//    * Construct map for certain constraints.
+//    * \param graph         Graph to use
+//    */
+//   TaskEdgeWeightMap(const TaskAdjList& graph, const TaskEdgeCollisionStateMap& collisionStates,
+//                     const double& popularityBias, const bool popularityBiasEnabled)
+//     : g_(graph)
+//     , collisionStates_(collisionStates)
+//     , popularityBias_(popularityBias)
+//     , popularityBiasEnabled_(popularityBiasEnabled)
+//   {
+//   }
 
-  /**
-   * Get the weight of an edge.
-   * \param e the edge
-   * \return infinity if \a e lies in a forbidden neighborhood; actual weight of \a e otherwise
-   */
-  double get(TaskEdge e) const
-  {
-    // Get the status of collision checking for this edge
-    if (collisionStates_[e] == IN_COLLISION)
-      return std::numeric_limits<double>::infinity();
+//   /**
+//    * Get the weight of an edge.
+//    * \param e the edge
+//    * \return infinity if \a e lies in a forbidden neighborhood; actual weight of \a e otherwise
+//    */
+//   double get(TaskEdge e) const
+//   {
+//     // Get the status of collision checking for this edge
+//     if (collisionStates_[e] == IN_COLLISION)
+//       return std::numeric_limits<double>::infinity();
 
-    double weight;
-    if (popularityBiasEnabled_)
-    {
-      // static const double popularityBias = 10;
-      weight = boost::get(boost::edge_weight, g_, e) / MAX_POPULARITY_WEIGHT * popularityBias_;
-      // std::cout << "getting popularity weight of edge " << e << " with value " << weight << std::endl;
-    }
-    else
-    {
-      weight = boost::get(boost::edge_weight, g_, e);
-    }
+//     double weight;
+//     if (popularityBiasEnabled_)
+//     {
+//       // static const double popularityBias = 10;
+//       weight = boost::get(boost::edge_weight, g_, e) / MAX_POPULARITY_WEIGHT * popularityBias_;
+//       // std::cout << "getting popularity weight of edge " << e << " with value " << weight << std::endl;
+//     }
+//     else
+//     {
+//       weight = boost::get(boost::edge_weight, g_, e);
+//     }
 
-    // Method 3 - less optimal but faster planning time
-    // const double weighted_astar = 0.8;
-    // const double weight = boost::get(boost::edge_weight, g_, e) * weighted_astar;
+//     // Method 3 - less optimal but faster planning time
+//     // const double weighted_astar = 0.8;
+//     // const double weight = boost::get(boost::edge_weight, g_, e) * weighted_astar;
 
-    // std::cout << "getting weight of edge " << e << " with value " << weight << std::endl;
+//     // std::cout << "getting weight of edge " << e << " with value " << weight << std::endl;
 
-    return weight;
-  }
-};
+//     return weight;
+//   }
+// };
 
 ////////////////////////////////////////////////////////////////////////////////////////
 /**

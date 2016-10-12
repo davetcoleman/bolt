@@ -564,7 +564,7 @@ public:  // user settings from other applications
  * \implements AStarVisitorConcept
  * See http://www.boost.org/doc/libs/1_58_0/libs/graph/doc/AStarVisitor.html
  */
-class SparsestarVisitor : public boost::default_astar_visitor
+class SparseAstarVisitor : public boost::default_astar_visitor
 {
 private:
   SparseVertex goal_;  // Goal Vertex of the search
@@ -575,7 +575,7 @@ public:
    * Construct a visitor for a given search.
    * \param goal  goal vertex of the search
    */
-  SparsestarVisitor(SparseVertex goal, SparseGraph* parent);
+  SparseAstarVisitor(SparseVertex goal, SparseGraph* parent);
 
 /**
  * \brief Invoked when a vertex is first discovered and is added to the OPEN list.

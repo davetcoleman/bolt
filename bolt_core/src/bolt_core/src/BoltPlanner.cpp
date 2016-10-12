@@ -511,7 +511,7 @@ bool BoltPlanner::lazyCollisionCheck(std::vector<TaskVertex> &vertexPath, Termin
     TaskEdge thisEdge = boost::edge(fromVertex, toVertex, taskGraph_->g_).first;
 
     // Has this edge already been checked before?
-    if (taskGraph_->edgeCollisionStatePropertyTask_[thisEdge] == NOT_CHECKED)
+    if (taskGraph_->getGraphNonConst()[thisEdge].collision_state_ == NOT_CHECKED)
     {
       // Check path between states
       if (!si_->checkMotion(taskGraph_->getState(fromVertex), taskGraph_->getState(toVertex)))
@@ -533,22 +533,22 @@ bool BoltPlanner::lazyCollisionCheck(std::vector<TaskVertex> &vertexPath, Termin
         }
 
         // Disable edge
-        taskGraph_->edgeCollisionStatePropertyTask_[thisEdge] = IN_COLLISION;
+        taskGraph_->getGraphNonConst()[thisEdge].collision_state_ = IN_COLLISION;
       }
       else
       {
         // Mark edge as free so we no longer need to check for collision
-        taskGraph_->edgeCollisionStatePropertyTask_[thisEdge] = FREE;
+        taskGraph_->getGraphNonConst()[thisEdge].collision_state_ = FREE;
       }
     }
-    else if (taskGraph_->edgeCollisionStatePropertyTask_[thisEdge] == IN_COLLISION)
+    else if (taskGraph_->getGraphNonConst()[thisEdge].collision_state_ == IN_COLLISION)
     {
       BOLT_ERROR(indent, true, "Somehow a path was found that is already in collision before lazy collision checking");
       visual_->waitForUserFeedback("error");
     }
 
     // Check final result
-    if (taskGraph_->edgeCollisionStatePropertyTask_[thisEdge] == IN_COLLISION)
+    if (taskGraph_->getGraphNonConst()[thisEdge].collision_state_ == IN_COLLISION)
     {
       // Remember that this path is no longer valid, but keep checking remainder of path edges
       hasInvalidEdges = true;
@@ -603,7 +603,7 @@ bool BoltPlanner::findGraphNeighbors(const base::State *state, std::vector<TaskV
       TaskVertex nearVertex = neighbors[i];
 
       // Get the vertex on the opposite level and replace it in the vector
-      TaskVertex newVertex = taskGraph_->vertexTaskMirrorProperty_[nearVertex];
+      TaskVertex newVertex = taskGraph_->getGraphNonConst()[nearVertex].task_mirror_;
 
       // Replace
       neighbors[i] = newVertex;
@@ -655,11 +655,11 @@ bool BoltPlanner::convertVertexPathToStatePath(std::vector<TaskVertex> &vertexPa
       TaskEdge edge = boost::edge(vertexPath[i - 1], vertexPath[i - 2], taskGraph_->g_).first;
 
       // Check if any edges in path are not free (then it an approximate path)
-      if (taskGraph_->edgeCollisionStatePropertyTask_[edge] == IN_COLLISION)
+      if (taskGraph_->getGraphNonConst()[edge].collision_state_ == IN_COLLISION)
       {
         OMPL_ERROR("Found invalid edge / approximate solution - how did this happen?");
       }
-      else if (taskGraph_->edgeCollisionStatePropertyTask_[edge] == NOT_CHECKED)
+      else if (taskGraph_->getGraphNonConst()[edge].collision_state_ == NOT_CHECKED)
       {
         OMPL_ERROR("A chosen path has an edge that has not been checked for collision. This should not happen");
       }

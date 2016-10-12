@@ -75,11 +75,11 @@ namespace bolt
 TaskGraph::TaskGraph(SparseGraphPtr sg)
   : sg_(sg)
   // Property accessors of edges
-  , edgeWeightProperty_(boost::get(boost::edge_weight, g_))
-  , edgeCollisionStatePropertyTask_(boost::get(edge_collision_state_t(), g_))
+  //, edgeWeightProperty_(boost::get(boost::edge_weight, g_))
+  //, edgeCollisionStatePropertyTask_(boost::get(edge_collision_state_t(), g_))
   // Property accessors of vertices
-  , vertexStateProperty_(boost::get(vertex_state_t(), g_))
-  , vertexTaskMirrorProperty_(boost::get(vertex_task_mirror_t(), g_))
+  //, vertexStateProperty_(boost::get(vertex_state_t(), g_))
+  //, vertexTaskMirrorProperty_(boost::get(vertex_task_mirror_t(), g_))
 {
   // Save number of threads available
   numThreads_ = boost::thread::hardware_concurrency();
@@ -127,9 +127,9 @@ void TaskGraph::freeMemory()
 {
   foreach (TaskVertex v, boost::vertices(g_))
   {
-    if (vertexStateProperty_[v] != nullptr)
-      si_->freeState(vertexStateProperty_[v]);
-    vertexStateProperty_[v] = nullptr;  // TODO(davetcoleman): is this needed??
+    if (g_[v].state_ != nullptr)
+      si_->freeState(g_[v].state_);
+    g_[v].state_ = nullptr;  // TODO(davetcoleman): is this needed??
   }
 
   g_.clear();
@@ -152,7 +152,7 @@ void TaskGraph::initializeQueryState()
   {
     // Add a fake vertex to the graph
     queryVertices_[threadID] = boost::add_vertex(g_);
-    vertexStateProperty_[queryVertices_[threadID]] = NULL;  // set stateID to the zeroth stateID - NULL
+    g_[queryVertices_[threadID]].state_ = NULL;  // set stateID to the zeroth stateID - NULL
   }
 }
 
@@ -182,18 +182,21 @@ bool TaskGraph::astarSearch(const TaskVertex start, const TaskVertex goal, std::
 
   try
   {
-    double popularityBias = 0;
-    bool popularityBiasEnabled = false;
-    boost::astar_search(
-        g_,     // graph
-        start,  // start state
-        // boost::bind(&otb::TaskGraph::astarHeuristic, this, _1, goal),  // the heuristic
-        boost::bind(&otb::TaskGraph::astarTaskHeuristic, this, _1, goal),  // the heuristic
-        // ability to disable edges (set cost to inifinity):
-        boost::weight_map(TaskEdgeWeightMap(g_, edgeCollisionStatePropertyTask_, popularityBias, popularityBiasEnabled))
-            .predecessor_map(vertexPredecessors)
-            .distance_map(&vertexDistances[0])
-            .visitor(TaskAstarVisitor(goal, this)));
+    boost::astar_search(g_, start, // graph, start state
+                        [this, goal](TaskVertex v)
+                        {
+                          return astarHeuristic(v, goal); // the heuristic
+                        },
+                        // ability to disable edges (set cost to inifinity):
+                        // boost::weight_map(TaskEdgeWeightMap(g_, edgeCollisionStatePropertyTask_))
+                        // popularityBias, popularityBiasEnabled))
+                        boost::weight_map(boost::get(&TaskEdgeStruct::weight_, g_))
+                        .predecessor_map(vertexPredecessors)
+                        .distance_map(&vertexDistances[0])
+                        .visitor(TaskAstarVisitor(goal, this)));
+    // ability to disable edges (set cost to inifinity):
+    //boost::weight_map(TaskEdgeWeightMap(g_, edgeCollisionStatePropertyTask_, popularityBias, popularityBiasEnabled))
+
   }
   catch (FoundGoalException &)
   {
@@ -350,30 +353,30 @@ double TaskGraph::astarTaskHeuristic(const TaskVertex a, const TaskVertex b) con
   static const double TASK_LEVEL_COST = 100.0;  // cost to change levels/tasks
 
   // Error check
-  assert(vertexStateProperty_[a]);
-  assert(vertexStateProperty_[b]);
-  assert(vertexStateProperty_[startConnectorVertex_]);
-  assert(vertexStateProperty_[goalConnectorVertex_]);
+  assert(g_[a].state_);
+  assert(g_[b].state_);
+  assert(g_[startConnectorVertex_].state_);
+  assert(g_[goalConnectorVertex_].state_);
 
   if (taskLevelA == 0)
   {
     if (taskLevelB == 0)  // regular distance for bottom level
     {
       BOLT_DEBUG(indent, vHeuristic_, "Distance Mode a");
-      dist = si_->distance(vertexStateProperty_[a], vertexStateProperty_[b]);
+      dist = si_->distance(g_[a].state_, g_[b].state_);
     }
     else if (taskLevelB == 1)
     {
       BOLT_DEBUG(indent, vHeuristic_, "Distance Mode b");
-      dist = si_->distance(vertexStateProperty_[a], vertexStateProperty_[startConnectorVertex_]) + TASK_LEVEL_COST +
-             si_->distance(vertexStateProperty_[startConnectorVertex_], vertexStateProperty_[b]);
+      dist = si_->distance(g_[a].state_, g_[startConnectorVertex_].state_) + TASK_LEVEL_COST +
+             si_->distance(g_[startConnectorVertex_].state_, g_[b].state_);
     }
     else if (taskLevelB == 2)
     {
       BOLT_DEBUG(indent, vHeuristic_, "Distance Mode c");
-      dist = si_->distance(vertexStateProperty_[a], vertexStateProperty_[startConnectorVertex_]) + TASK_LEVEL_COST +
+      dist = si_->distance(g_[a].state_, g_[startConnectorVertex_].state_) + TASK_LEVEL_COST +
              shortestDistAcrossCartGraph_ + TASK_LEVEL_COST +
-             si_->distance(vertexStateProperty_[goalConnectorVertex_], vertexStateProperty_[b]);
+             si_->distance(g_[goalConnectorVertex_].state_, g_[b].state_);
     }
     else
     {
@@ -391,14 +394,14 @@ double TaskGraph::astarTaskHeuristic(const TaskVertex a, const TaskVertex b) con
     else if (taskLevelB == 1)
     {
       BOLT_DEBUG(indent, vHeuristic_, "Distance Mode d");
-      dist = si_->distance(vertexStateProperty_[a], vertexStateProperty_[b]);
+      dist = si_->distance(g_[a].state_, g_[b].state_);
     }
     else if (taskLevelB == 2)
     {
       BOLT_DEBUG(indent, vHeuristic_, "Distance Mode e");
 
-      dist = si_->distance(vertexStateProperty_[a], vertexStateProperty_[goalConnectorVertex_]) + TASK_LEVEL_COST +
-             si_->distance(vertexStateProperty_[goalConnectorVertex_], vertexStateProperty_[b]);
+      dist = si_->distance(g_[a].state_, g_[goalConnectorVertex_].state_) + TASK_LEVEL_COST +
+             si_->distance(g_[goalConnectorVertex_].state_, g_[b].state_);
     }
     else
     {
@@ -415,7 +418,7 @@ double TaskGraph::astarTaskHeuristic(const TaskVertex a, const TaskVertex b) con
     else if (taskLevelB == 2)
     {
       BOLT_DEBUG(indent, vHeuristic_, "Distance Mode f");
-      dist = si_->distance(vertexStateProperty_[a], vertexStateProperty_[b]);
+      dist = si_->distance(g_[a].state_, g_[b].state_);
     }
     else
     {
@@ -532,8 +535,8 @@ void TaskGraph::generateTaskSpace(std::size_t indent)
     sparseToTaskVertex2[sparseV] = taskV2;  // record mapping
 
     // Link the two vertices to each other for future bookkeeping
-    vertexTaskMirrorProperty_[taskV0] = taskV2;
-    vertexTaskMirrorProperty_[taskV2] = taskV0;
+    g_[taskV0].task_mirror_ = taskV2;
+    g_[taskV2].task_mirror_ = taskV0;
   }
 
   // Loop through every edge in sparse graph and copy twice to task graph
@@ -726,7 +729,7 @@ void TaskGraph::getNeighborsAtLevel(const TaskVertex origVertex, const VertexLev
       const TaskVertex nearVertex = neighbors[i];
 
       // Get the vertex on the opposite level and replace it in the vector
-      neighbors[i] = vertexTaskMirrorProperty_[nearVertex];
+      neighbors[i] = g_[nearVertex].task_mirror_;
     }
   }
 }
@@ -799,7 +802,7 @@ bool TaskGraph::checkTaskPathSolution(og::PathGeometric &path, ob::State *start,
 void TaskGraph::clearEdgeCollisionStates()
 {
   foreach (const TaskEdge e, boost::edges(g_))
-    edgeCollisionStatePropertyTask_[e] = NOT_CHECKED;  // each edge has an unknown state
+    g_[e].collision_state_ = NOT_CHECKED;  // each edge has an unknown state
 }
 
 void TaskGraph::errorCheckDuplicateStates(std::size_t indent)
@@ -932,7 +935,7 @@ TaskVertex TaskGraph::addVertex(base::State *state, VertexLevel level, std::size
   setStateTaskLevel(state, level);
 
   // Add properties
-  vertexStateProperty_[v] = state;
+  g_[v].state_ = state;
 
   // Add vertex to nearest neighbor structure - except only do this for level 0
   if (level == 0)
@@ -961,8 +964,8 @@ void TaskGraph::removeVertex(TaskVertex v)
   nn_->remove(v);
 
   // Delete state
-  si_->freeState(vertexStateProperty_[v]);
-  vertexStateProperty_[v] = NULL;
+  si_->freeState(g_[v].state_);
+  g_[v].state_ = NULL;
 
   // Remove all edges to and from vertex
   boost::clear_vertex(v, g_);
@@ -1045,10 +1048,10 @@ TaskEdge TaskGraph::addEdge(TaskVertex v1, TaskVertex v2, std::size_t indent)
   TaskEdge e = (boost::add_edge(v1, v2, g_)).first;
 
   // Weight properties
-  edgeWeightProperty_[e] = distanceFunction(v1, v2);
+  g_[e].weight_ = distanceFunction(v1, v2);
 
   // Collision properties
-  edgeCollisionStatePropertyTask_[e] = NOT_CHECKED;
+  g_[e].collision_state_ = NOT_CHECKED;
 
   // Visualize
   if (visualizeTaskGraph_)
@@ -1079,13 +1082,13 @@ base::State *&TaskGraph::getQueryStateNonConst(TaskVertex v)
 base::State *&TaskGraph::getStateNonConst(TaskVertex v)
 {
   BOLT_ASSERT(v >= queryVertices_.size(), "Attempted to request state of query vertex using wrong function");
-  return vertexStateProperty_[v];
+  return g_[v].state_;
 }
 
 const base::State *TaskGraph::getState(TaskVertex v) const
 {
   BOLT_ASSERT(v >= queryVertices_.size(), "Attempted to request state of query vertex using wrong function");
-  return vertexStateProperty_[v];
+  return g_[v].state_;
 }
 
 void TaskGraph::displayDatabase(bool showVertices, std::size_t indent)
@@ -1147,7 +1150,7 @@ void TaskGraph::displayDatabase(bool showVertices, std::size_t indent)
         continue;
 
       // Skip deleted vertices
-      if (vertexStateProperty_[v] == NULL)
+      if (g_[v].state_ == NULL)
       {
         std::cout << "skipped deleted vertex " << v << std::endl;
         continue;
@@ -1273,7 +1276,7 @@ void TaskGraph::printGraphStats(double generationDuration)
   double minEdgeLength = std::numeric_limits<double>::infinity();
   foreach (const TaskEdge e, boost::edges(g_))
   {
-    const double length = edgeWeightProperty_[e];
+    const double length = g_[e].weight_;
     totalEdgeLength += length;
     if (maxEdgeLength < length)
       maxEdgeLength = length;
@@ -1302,16 +1305,16 @@ void TaskGraph::printGraphStats(double generationDuration)
 
 // TaskEdgeWeightMap methods ////////////////////////////////////////////////////////////////////////////
 
-namespace boost
-{
-double get(const ompl::tools::bolt::TaskEdgeWeightMap &m, const ompl::tools::bolt::TaskEdge &e)
-{
-  return m.get(e);
-}
-}
+// namespace boost
+// {
+// double get(const ompl::tools::bolt::TaskEdgeWeightMap &m, const ompl::tools::bolt::TaskEdge &e)
+// {
+//   return m.get(e);
+// }
+// }
 
-BOOST_CONCEPT_ASSERT(
-    (boost::ReadablePropertyMapConcept<ompl::tools::bolt::TaskEdgeWeightMap, ompl::tools::bolt::TaskEdge>));
+// BOOST_CONCEPT_ASSERT(
+//     (boost::ReadablePropertyMapConcept<ompl::tools::bolt::TaskEdgeWeightMap, ompl::tools::bolt::TaskEdge>));
 
 // TaskAstarVisitor methods ////////////////////////////////////////////////////////////////////////////
 

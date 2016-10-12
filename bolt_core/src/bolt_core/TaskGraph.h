@@ -193,7 +193,7 @@ public:
 
   double getEdgeWeightProperty(TaskEdge e) const
   {
-    return edgeWeightProperty_[e];
+    return g_[e].weight_;
   }
 
   /** \brief Determine if no nodes or edges have been added to the graph except query vertices */
@@ -204,7 +204,7 @@ public:
    * --------------------------------------------------------------------------------- */
   inline int getTaskLevel(const TaskVertex v) const
   {
-    return si_->getStateSpace()->getLevel(vertexStateProperty_[v]);
+    return si_->getStateSpace()->getLevel(g_[v].state_);
   }
 
   inline int getTaskLevel(const base::State* state) const
@@ -214,7 +214,7 @@ public:
 
   inline void setVertexTaskLevel(TaskVertex v, int level)
   {
-    si_->getStateSpace()->setLevel(vertexStateProperty_[v], level);
+    si_->getStateSpace()->setLevel(g_[v].state_, level);
   }
 
   inline void setStateTaskLevel(base::State* state, int level)
@@ -375,16 +375,16 @@ protected:
   std::vector<base::State*> queryStates_;
 
   /** \brief Access to the weights of each Edge */
-  boost::property_map<TaskAdjList, boost::edge_weight_t>::type edgeWeightProperty_;
+  //boost::property_map<TaskAdjList, boost::edge_weight_t>::type edgeWeightProperty_;
 
   /** \brief Access to the collision checking state of each Edge */
-  TaskEdgeCollisionStateMap edgeCollisionStatePropertyTask_;
+  //TaskEdgeCollisionStateMap edgeCollisionStatePropertyTask_;
 
   /** \brief Access to the internal base::state at each Vertex */
-  boost::property_map<TaskAdjList, vertex_state_t>::type vertexStateProperty_;
+  //boost::property_map<TaskAdjList, vertex_state_t>::type vertexStateProperty_;
 
   /** \brief Access to corresponding free space SparseVertex, if one exists TODO is this needed? */
-  boost::property_map<TaskAdjList, vertex_task_mirror_t>::type vertexTaskMirrorProperty_;
+  //boost::property_map<TaskAdjList, vertex_task_mirror_t>::type vertexTaskMirrorProperty_;
 
   /** \brief A path simplifier used to simplify dense paths added to S */
   geometric::PathSimplifierPtr pathSimplifier_;
