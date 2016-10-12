@@ -41,9 +41,8 @@
 namespace mo = moveit_ompl;
 namespace ob = ompl::base;
 
-mo::ModelBasedStateSpace::ModelBasedStateSpace(const ModelBasedStateSpaceSpecification &spec,
-                                               moveit_visual_tools::MoveItVisualToolsPtr visual_tools)
-  : ob::StateSpace(), spec_(spec), visual_tools_(visual_tools)
+mo::ModelBasedStateSpace::ModelBasedStateSpace(const ModelBasedStateSpaceSpecification &spec)
+  : ob::StateSpace(), spec_(spec)
 {
   // set the state space name
   setName(spec_.joint_model_group_->getName());
@@ -152,6 +151,8 @@ void mo::ModelBasedStateSpace::serialize(void *serialization, const ob::State *s
 void mo::ModelBasedStateSpace::deserialize(ob::State *state, const void *serialization) const
 {
   state->as<StateType>()->level = *reinterpret_cast<const int *>(serialization);
+
+  state->as<StateType>()->values[0] = 1;
   memcpy(state->as<StateType>()->values, reinterpret_cast<const char *>(serialization) + sizeof(int),
          state_values_size_);
 }
@@ -186,11 +187,6 @@ double mo::ModelBasedStateSpace::getMeasure() const
 double mo::ModelBasedStateSpace::distance(const ob::State *state1, const ob::State *state2) const
 {
   return spec_.joint_model_group_->distance(state1->as<StateType>()->values, state2->as<StateType>()->values);
-
-  // if (distance_function_)
-  //   return distance_function_(state1, state2);
-  // else
-  // return spec_.joint_model_group_->distance(state1->as<StateType>()->values, state2->as<StateType>()->values);
 }
 
 bool mo::ModelBasedStateSpace::equalStates(const ob::State *state1, const ob::State *state2) const

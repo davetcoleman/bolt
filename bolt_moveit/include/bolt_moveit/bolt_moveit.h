@@ -123,6 +123,8 @@ public:
 
   ob::State *combineStates(const ob::State *state1, const ob::State *state2);
 
+  void benchmarkMemoryAllocation(std::size_t indent);
+
   // --------------------------------------------------------
 
   // A shared node handle

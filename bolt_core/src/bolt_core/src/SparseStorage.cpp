@@ -311,10 +311,8 @@ void SparseStorage::loadVertices(unsigned int numVertices, boost::archive::binar
     // Allocating a new state and deserializing it from the buffer
     base::State *state = space->allocState();
     space->deserialize(state, &vertexData.stateSerialized_[0]);
-
     // Add to Sparse graph
     sparseGraph_->addVertexFromFile(state, indent);
-
     // Feedback
     if ((i + 1) % feedbackFrequency == 0)
       std::cout << static_cast<int>(ceil(i / double(numVertices) * 100.0)) << "% " << std::flush;

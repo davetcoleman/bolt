@@ -205,6 +205,52 @@ TEST(TestingBase, get_7d_state_by_vector)
   EXPECT_TRUE(output_values[6] == 0.7);
 }
 
+TEST(TestingBase, alloc_memory_efficient)
+{
+  namespace ob = ompl::base;
+  namespace ot = ompl::tools;
+  namespace otb = ompl::tools::bolt;
+
+  // Setup space
+  moveit_ompl::ModelBasedStateSpaceSpecification mbss_spec(base.robot_model_, base.jmg_);
+
+  // Construct the state space we are planning in
+  ob::StateSpacePtr space_ = ob::StateSpacePtr(new moveit_ompl::ModelBasedStateSpace(mbss_spec));
+  EXPECT_TRUE(space_ != NULL);
+
+  // SimpleSetup
+  // otb::BoltPtr bolt_ = otb::BoltPtr(new otb::Bolt(space_));
+  // EXPECT_TRUE(bolt_ != NULL);
+  // bolt_->setup();
+
+  // SpaceInfo
+  //ob::SpaceInformationPtr si_ = bolt_->getSpaceInformation();
+  ob::SpaceInformationPtr si_ = std::make_shared<ob::SpaceInformation>(space_);
+  EXPECT_TRUE(si_ != NULL);
+  si_->setup();
+  EXPECT_TRUE(si_->isSetup());
+
+  // Example data
+  EXPECT_TRUE(space_->getDimension() == 7);
+  std::vector<double> values(space_->getDimension(), /*default value*/0);
+  values[0] = 0.1;
+  values[1] = 0.2;
+  values[2] = 0.3;
+  values[3] = 0.4;
+  values[4] = 0.5;
+  values[5] = 0.6;
+  values[6] = 0.7;
+  EXPECT_TRUE(values.size() == 7);
+
+  // Create state
+  ob::State *candidateState = space_->allocState();
+  EXPECT_TRUE(candidateState != NULL);
+
+  // Populate state
+  space_->copyFromReals(candidateState, values);
+  EXPECT_TRUE(candidateState != NULL);
+}
+
 /* Main  ------------------------------------------------------------------------------------- */
 int main(int argc, char** argv)
 {

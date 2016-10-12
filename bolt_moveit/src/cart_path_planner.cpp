@@ -696,6 +696,8 @@ bool CartPathPlanner::addEdgesToBoltGraph(const TaskVertexMatrix& point_vertices
     visualizeAllPointVertices(point_vertices, indent);
 
   // Step through each cartesian point, starting at second point
+  std::size_t feedbackFrequency = std::max(10.0, point_vertices.size() / 10.0);
+  std::cout << "      Trajectory Point: ";
   for (std::size_t traj_id = 1; traj_id < point_vertices.size(); ++traj_id)
   {
     //std::cout << "traj_id: " << traj_id << " out of " << point_vertices.size() << std::endl;
@@ -746,6 +748,11 @@ bool CartPathPlanner::addEdgesToBoltGraph(const TaskVertexMatrix& point_vertices
 
     if (!ros::ok())
       exit(0);
+
+    // Feedback
+    if ((traj_id + 1) % feedbackFrequency == 0)
+      std::cout << static_cast<int>(ceil(traj_id / static_cast<double>(point_vertices.size()) * 100.0)) << "% " << std::flush;
+
   }  // for
   BOLT_DEBUG(indent, true, "Added " << new_edge_count << " new edges, rejected " << edges_skipped_count << " (rejected "
                                     << edges_skipped_count / (new_edge_count + double(edges_skipped_count)) * 100.0
@@ -836,6 +843,11 @@ bool CartPathPlanner::getRedunJointPosesForCartPoint(const Eigen::Affine3d& pose
   // Get the IK solver for a given planning group
   const kinematics::KinematicsBasePtr& solver = jmg->getSolverInstance();
 
+  // Discretization setting
+  kinematics::KinematicsQueryOptions options;
+  //options.discretization_method = kinematics::DiscretizationMethods::DiscretizationMethod::ALL_DISCRETIZED;
+  options.discretization_method = kinematics::DiscretizationMethods::DiscretizationMethod::NO_DISCRETIZATION;
+
   // Enumerate solvable joint poses for each candidate_pose
   for (const Eigen::Affine3d& candidate_pose : candidate_poses)
   {
@@ -889,10 +901,6 @@ bool CartPathPlanner::getRedunJointPosesForCartPoint(const Eigen::Affine3d& pose
     {
       ik_seed_state[i] = initial_values[bij[i]];
     }
-
-    // Discretization setting
-    kinematics::KinematicsQueryOptions options;
-    options.discretization_method = kinematics::DiscretizationMethods::DiscretizationMethod::ALL_DISCRETIZED;
 
     // Solution
     RedunJointPoses solutions;

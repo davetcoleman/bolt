@@ -137,6 +137,7 @@ public:
   void benchmarkRandValidSampling(std::size_t indent = 0);
   void benchmarkVisualizeSampling(std::size_t indent = 0);
   void benchmarkSparseGraphGeneration(std::size_t indent = 0);
+  void benchmarkMemoryAllocation(std::size_t indent = 0);
 
   /** \brief Getter for vertexDiscretizer */
   VertexDiscretizerPtr &getVertexDiscretizer()

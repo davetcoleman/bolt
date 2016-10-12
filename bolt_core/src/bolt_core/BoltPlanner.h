@@ -207,7 +207,9 @@ public:
   /** \brief Output user feedback to console */
   bool verbose_ = true;
 
-  bool visualizeSmoothedTrajectory_;
+  bool visualizeSmoothedTrajectory_ = false;
+  bool visualizeStartGoal_ = false;
+  bool visualizeLazyCollisionCheck_ = true;
 
   int numStartGoalStatesAddedToTask_ = 0;
 };

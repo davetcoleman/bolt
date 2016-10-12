@@ -52,14 +52,19 @@ typedef std::function<double(const ompl::base::State *state1, const ompl::base::
 
 struct ModelBasedStateSpaceSpecification
 {
-  ModelBasedStateSpaceSpecification(const robot_model::RobotModelConstPtr &robot_model,
-                                    const robot_model::JointModelGroup *jmg)
-    : robot_model_(robot_model), joint_model_group_(jmg)
+  ModelBasedStateSpaceSpecification(
+      const robot_model::RobotModelConstPtr &robot_model, const robot_model::JointModelGroup *jmg,
+      moveit_visual_tools::MoveItVisualToolsPtr visual_tools = moveit_visual_tools::MoveItVisualToolsPtr())
+    : robot_model_(robot_model), joint_model_group_(jmg), visual_tools_(visual_tools)
   {
   }
 
-  ModelBasedStateSpaceSpecification(const robot_model::RobotModelConstPtr &robot_model, const std::string &group_name)
-    : robot_model_(robot_model), joint_model_group_(robot_model_->getJointModelGroup(group_name))
+  ModelBasedStateSpaceSpecification(
+      const robot_model::RobotModelConstPtr &robot_model, const std::string &group_name,
+      moveit_visual_tools::MoveItVisualToolsPtr visual_tools = moveit_visual_tools::MoveItVisualToolsPtr())
+    : robot_model_(robot_model)
+    , joint_model_group_(robot_model_->getJointModelGroup(group_name))
+    , visual_tools_(visual_tools)
   {
     if (!joint_model_group_)
       throw std::runtime_error("Group '" + group_name + "'  was not found");
@@ -68,6 +73,9 @@ struct ModelBasedStateSpaceSpecification
   robot_model::RobotModelConstPtr robot_model_;
   const robot_model::JointModelGroup *joint_model_group_;
   robot_model::JointBoundsVector joint_bounds_;
+
+  // For visualizing things in rviz
+  moveit_visual_tools::MoveItVisualToolsPtr visual_tools_;
 };
 
 class ModelBasedStateSpace : public ompl::base::StateSpace
@@ -84,9 +92,7 @@ public:
     int level;
   };
 
-  ModelBasedStateSpace(
-      const ModelBasedStateSpaceSpecification &spec,
-      moveit_visual_tools::MoveItVisualToolsPtr visual_tools = moveit_visual_tools::MoveItVisualToolsPtr());
+  ModelBasedStateSpace(const ModelBasedStateSpaceSpecification &spec);
   virtual ~ModelBasedStateSpace();
 
   void setInterpolationFunction(const InterpolationFunction &fun)
@@ -101,6 +107,21 @@ public:
 
   virtual ompl::base::State *allocState() const;
   virtual void freeState(ompl::base::State *state) const;
+
+  /** \brief Allocate an array of states */
+  virtual void allocStates(std::size_t numStates, ompl::base::State *) const
+  {
+    ROS_ERROR_STREAM("allocStates() Not implemented!");
+    exit(-1);
+  }
+
+  /** \brief Free an array of states */
+  virtual void freeStates(ompl::base::State *states) const
+  {
+    ROS_ERROR_STREAM("freeStates() Not implemented!");
+    exit(-1);
+  }
+
   virtual void copyFromReals(ompl::base::State *destination, const std::vector<double> &reals) const;
   virtual unsigned int getDimension() const;
   virtual void enforceBounds(ompl::base::State *state) const;
@@ -188,9 +209,6 @@ protected:
 
   InterpolationFunction interpolation_function_;
   DistanceFunction distance_function_;
-
-  // For visualizing things in rviz
-  moveit_visual_tools::MoveItVisualToolsPtr visual_tools_;
 };
 
 typedef std::shared_ptr<ModelBasedStateSpace> ModelBasedStateSpacePtr;

@@ -173,7 +173,6 @@ base::PlannerStatus BoltPlanner::solve(Termination &ptc)
     visual_->viz4()->deleteAllMarkers();
     visual_->viz4()->path(&geometricSolution, tools::MEDIUM, tools::BLACK, tools::BLACK);
     visual_->viz4()->trigger();
-    visual_->waitForUserFeedback("before add solution path");
   }
 
   // Save solution
@@ -425,8 +424,7 @@ bool BoltPlanner::lazyCollisionSearch(const TaskVertex &start, const TaskVertex 
   assert(taskGraph_->getState(goal));
 
   // Visualize start vertex
-  const bool visualize = false;
-  if (visualize)
+  if (visualizeStartGoal_)
   {
     BOLT_DEBUG(indent, verbose_, "viz start -----------------------------");
     visual_->viz5()->state(taskGraph_->getState(start), tools::VARIABLE_SIZE, tools::PURPLE, 1);
@@ -445,7 +443,7 @@ bool BoltPlanner::lazyCollisionSearch(const TaskVertex &start, const TaskVertex 
   // Keep looking for paths between chosen start and goal until one is found that is valid,
   // or no further paths can be found between them because of disabled edges
   // this is necessary for lazy collision checking i.e. rerun after marking invalid edges we found
-  while (true)
+  while (visual_->viz1()->shutdownRequested())
   {
     BOLT_DEBUG(indent, verbose_, "  AStar: looking for path through graph between start and goal");
 
@@ -516,8 +514,20 @@ bool BoltPlanner::lazyCollisionCheck(std::vector<TaskVertex> &vertexPath, Termin
       if (!si_->checkMotion(taskGraph_->getState(fromVertex), taskGraph_->getState(toVertex)))
       {
         // Path between (from, to) states not valid, disable the edge
-        // BOLT_GREEN(indent, verbose_, "LAZY CHECK: disabling edge from vertex " << fromVertex << " to vertex "
-        // << toVertex);
+
+        if (visualizeLazyCollisionCheck_)
+        {
+          BOLT_GREEN(indent, verbose_, "LAZY CHECK: disabling edge from vertex " << fromVertex << " to vertex "
+                     << toVertex);
+          visual_->viz6()->edge(taskGraph_->getState(fromVertex), taskGraph_->getState(toVertex), tools::MEDIUM, tools::BLUE);
+          visual_->viz6()->state(taskGraph_->getState(fromVertex), tools::ROBOT, tools::DEFAULT, 0);
+          visual_->viz6()->trigger();
+          usleep(0.1*1000000);
+          visual_->viz6()->state(taskGraph_->getState(toVertex), tools::ROBOT, tools::DEFAULT, 0);
+          visual_->viz6()->trigger();
+          //usleep(0.1*1000000);
+          visual_->waitForUserFeedback("collision");
+        }
 
         // Disable edge
         taskGraph_->edgeCollisionStatePropertyTask_[thisEdge] = IN_COLLISION;
@@ -527,6 +537,11 @@ bool BoltPlanner::lazyCollisionCheck(std::vector<TaskVertex> &vertexPath, Termin
         // Mark edge as free so we no longer need to check for collision
         taskGraph_->edgeCollisionStatePropertyTask_[thisEdge] = FREE;
       }
+    }
+    else if (taskGraph_->edgeCollisionStatePropertyTask_[thisEdge] == IN_COLLISION)
+    {
+      BOLT_ERROR(indent, true, "Somehow a path was found that is already in collision before lazy collision checking");
+      visual_->waitForUserFeedback("error");
     }
 
     // Check final result
@@ -538,7 +553,10 @@ bool BoltPlanner::lazyCollisionCheck(std::vector<TaskVertex> &vertexPath, Termin
 
     // switch vertex focus
     fromVertex = toVertex;
-  }
+
+    if (!visual_->viz1()->shutdownRequested())
+      break;
+  } // for
 
   BOLT_DEBUG(indent, verbose_, "Done lazy collision checking");
 

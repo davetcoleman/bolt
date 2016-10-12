@@ -186,6 +186,8 @@ public:
   /** \brief Where to save auditing data about size of graph, etc */
   std::string loggingPath_;
 
+  bool verbose_ = true;
+
 };  // end of class SparseStorage
 
 }  // namespace bolt

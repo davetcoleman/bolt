@@ -50,6 +50,8 @@
 // Interface for loading rosparam settings into OMPL
 #include <moveit_ompl/ompl_rosparam.h>
 
+#include <moveit_ompl/model_size_state_space.h>
+
 // Profiling
 #include <valgrind/callgrind.h>
 
@@ -246,7 +248,7 @@ bool BoltMoveIt::loadOMPL()
   moveit_ompl::ModelBasedStateSpaceSpecification mbss_spec(robot_model_, planning_jmg_);
 
   // Construct the state space we are planning in
-  space_.reset(new moveit_ompl::ModelBasedStateSpace(mbss_spec));
+  space_ = moveit_ompl::chooseModelBasedStateSpace(mbss_spec);
 
   // Create SimpleSetup
   if (experience_planner_ == "bolt")
@@ -343,11 +345,13 @@ void BoltMoveIt::run(std::size_t indent)
   // Benchmark performance
   if (benchmark_performance_)
   {
+    benchmarkMemoryAllocation(indent);
     // testMotionValidator();
     // bolt_->getSparseGenerator()->benchmarkSparseGraphGeneration();
-    bolt_->getSparseGenerator()->benchmarkValidClearanceSampler();
+    // bolt_->getSparseGenerator()->benchmarkValidClearanceSampler();
     // bolt_->getSparseGenerator()->benchmarkRandValidSampling();
     // bolt_->getSparseGenerator()->benchmarkVisualizeSampling();
+    // bolt_->getSparseGenerator()->benchmarkMemoryAllocation();
     ROS_INFO_STREAM_NAMED(name_, "Finished benchmarking");
     exit(0);
   }
@@ -374,7 +378,7 @@ void BoltMoveIt::run(std::size_t indent)
   {
     std::cout << std::endl;
     ROS_INFO_STREAM_NAMED(name_, "Displaying disjoint sets ----------- ");
-    ompl::tools::bolt::SparseDisjointSetsMap disjointSets;
+    ot::bolt::SparseDisjointSetsMap disjointSets;
     bolt_->getSparseGraph()->getDisjointSets(disjointSets);
     bolt_->getSparseGraph()->printDisjointSets(disjointSets);
     bolt_->getSparseGraph()->visualizeDisjointSets(disjointSets);
@@ -743,7 +747,7 @@ void BoltMoveIt::loadVisualTools()
 
       // Show the initial robot state
       MoveItVisualToolsPtr moveit_visual = vizs_[i - 1]->getVisualTools();
-      usleep(0.001*1000000);
+      usleep(0.001 * 1000000);
       moveit_visual->publishRobotState(moveit_start_);
     }
   }
@@ -751,7 +755,7 @@ void BoltMoveIt::loadVisualTools()
   deleteAllMarkers();
 
   // Set Rviz visuals in OMPL planner
-  ompl::tools::VisualizerPtr visual = experience_setup_->getVisual();
+  ot::VisualizerPtr visual = experience_setup_->getVisual();
 
   visual->setVizWindow(1, viz1_);
   visual->setVizWindow(2, viz2_);
@@ -808,7 +812,7 @@ void BoltMoveIt::waitForNextStep(const std::string &msg)
 
 void BoltMoveIt::testConnectionToGraphOfRandStates()
 {
-  ompl::base::State *random_state = space_->allocState();
+  ob::State *random_state = space_->allocState();
 
   std::size_t successful_connections = 0;
   for (std::size_t run_id = 0; run_id < num_problems_; ++run_id)
@@ -827,7 +831,7 @@ void BoltMoveIt::testConnectionToGraphOfRandStates()
     space_->copyToOMPLState(random_state, *moveit_start_);
 
     // Test
-    const ompl::base::PlannerTerminationCondition ptc = ompl::base::timedPlannerTerminationCondition(60.0);
+    const ob::PlannerTerminationCondition ptc = ob::timedPlannerTerminationCondition(60.0);
     std::size_t indent = 0;
     bool result = bolt_->getBoltPlanner()->canConnect(random_state, ptc, indent);
     if (result)
@@ -849,7 +853,7 @@ void BoltMoveIt::visualizeRawTrajectory(og::PathGeometric &path)
   viz3_->convertPath(path, planning_jmg_, traj, speed);
 
   // Show trajectory line
-  viz3_->getVisualTools()->publishTrajectoryLine(traj, arm_datas_[0].ee_link_, rvt::GREY); // TODO multiple EEs
+  viz3_->getVisualTools()->publishTrajectoryLine(traj, arm_datas_[0].ee_link_, rvt::GREY);  // TODO multiple EEs
   viz3_->trigger();
 }
 
@@ -998,8 +1002,8 @@ void BoltMoveIt::mirrorGraph(std::size_t indent)
   moveit_ompl::ModelBasedStateSpaceSpecification left_arm_mbss_spec(robot_model_, left_arm_jmg_);
 
   // Construct the state space we are planning in
-  both_arms_state_space_.reset(new moveit_ompl::ModelBasedStateSpace(both_arms_mbss_spec));
-  left_arm_state_space_.reset(new moveit_ompl::ModelBasedStateSpace(left_arm_mbss_spec));
+  both_arms_state_space_ = moveit_ompl::chooseModelBasedStateSpace(both_arms_mbss_spec);
+  left_arm_state_space_ = moveit_ompl::chooseModelBasedStateSpace(left_arm_mbss_spec);
 
   both_arms_state_space_->setup();
   both_arms_state_space_->setName(both_arms_group_name_);
@@ -1007,10 +1011,8 @@ void BoltMoveIt::mirrorGraph(std::size_t indent)
   left_arm_state_space_->setName(opposite_arm_name_);
 
   // SpaceInfo
-  ompl::base::SpaceInformationPtr both_arms_space_info =
-      std::make_shared<ompl::base::SpaceInformation>(both_arms_state_space_);
-  ompl::base::SpaceInformationPtr left_arm_space_info =
-      std::make_shared<ompl::base::SpaceInformation>(left_arm_state_space_);
+  ob::SpaceInformationPtr both_arms_space_info = std::make_shared<ob::SpaceInformation>(both_arms_state_space_);
+  ob::SpaceInformationPtr left_arm_space_info = std::make_shared<ob::SpaceInformation>(left_arm_state_space_);
   both_arms_space_info->setup();
   left_arm_space_info->setup();
 
@@ -1093,6 +1095,107 @@ ob::State *BoltMoveIt::combineStates(const ob::State *state1, const ob::State *s
   }
 
   return both_arms_state;
+}
+
+void BoltMoveIt::benchmarkMemoryAllocation(std::size_t indent)
+{
+  std::cout << "-------------------------------------------------------" << std::endl;
+  OMPL_INFORM("Running memory allocation benchmark");
+
+  // std::size_t numStates = 10000000;
+  std::size_t numStates = 2;
+  std::size_t dim = 14;
+  std::size_t tests = 2;
+
+  moveit_ompl::ModelBasedStateSpaceSpecification mbss_spec(robot_model_, planning_jmg_);
+  // moveit_ompl::ModelBasedStateSpace space_old(mbss_spec);
+  moveit_ompl::ModelBasedStateSpacePtr space = moveit_ompl::chooseModelBasedStateSpace(mbss_spec);
+
+  // METHOD 1
+  // ros::Time start_time = ros::Time::now(); // Benchmark runtime
+  // for (std::size_t test = 0; test < tests; ++test)
+  // {
+  //   // Allocate
+  //   std::vector<ob::State*> states;
+  //   for (std::size_t i = 0; i < numStates; ++i)
+  //     states.push_back(space_old.allocState());
+
+  //   // Free
+  //   for (std::size_t i = 0; i < numStates; ++i)
+  //     space_old.freeState(states[i]);
+  // }
+  // ROS_INFO_STREAM_NAMED(name_, "Old state - Total time: " << (ros::Time::now() - start_time).toSec() << " seconds");
+
+  // // METHOD 2
+  // ros::Time start_time2 = ros::Time::now(); // Benchmark runtime
+  // for (std::size_t test = 0; test < tests; ++test)
+  // {
+  //   // Allocate
+  //   std::vector<ob::State*> states;
+  //   for (std::size_t i = 0; i < numStates; ++i)
+  //     states.push_back(space->allocState());
+
+  //   // Free
+  //   for (std::size_t i = 0; i < numStates; ++i)
+  //     space->freeState(states[i]);
+  // }
+  // ROS_INFO_STREAM_NAMED(name_, "New state - Total time: " << (ros::Time::now() - start_time2).toSec() << " seconds");
+
+  // METHOD 3
+  ros::Time start_time0 = ros::Time::now();  // Benchmark runtime
+  for (std::size_t test = 0; test < tests; ++test)
+  {
+    using namespace moveit_ompl;
+
+    // Allocate
+    // ompl::base::State* states;
+    // space->allocStates(numStates, states);
+    ModelSize14StateSpace::StateType *states = new ModelSize14StateSpace::StateType[numStates];
+
+    std::cout << "allocStates: " << std::endl;
+    for (std::size_t i = 0; i < numStates; ++i)
+    {
+      std::cout << " - states[i]: " << &states[i] << std::endl;
+      for (std::size_t j = 0; j < 14; ++j)
+      {
+        std::cout << "     - value " << j << ": " << states[i].as<ModelSize14StateSpace::StateType>()->values[j] << std::endl;
+      }
+    }
+
+    std::cout << "allocated states " << std::endl;
+
+    // Free
+    // space->freeStates(states);
+    for (std::size_t i = 0; i < numStates; ++i)
+    {
+      std::cout << "i: " << i << std::endl;
+      // std::cout << "states[i]: " << states[i] << std::endl;
+      std::cout << &states[i] << " &states[i]" << std::endl;
+      std::cout << (&states[i])->as<ModelSize14StateSpace::StateType>() << " (&states[i])->as<ModelSize14StateSpace::StateType>()" << std::endl;
+      std::cout << (&states[i])->as<ModelSize14StateSpace::StateType>()->values << " (&states[i])->as<ModelSize14StateSpace::StateType>()->values" << std::endl;
+
+      for (std::size_t j = 0; j < 14; ++j)
+      {
+        std::cout << " - " << (&states[i])->as<ModelSize14StateSpace::StateType>()->values[j] << std::endl;
+      }
+
+      std::cout << "1 " << std::endl;
+      (&states[i])->as<ModelSize14StateSpace::StateType>()->values[0] = 0;
+      std::cout << "2 " << std::endl;
+      (&states[i])->as<ModelSize14StateSpace::StateType>()->values[7] = 7;
+      (&states[i])->as<ModelSize14StateSpace::StateType>()->values[13] = 13;
+
+      std::cout << "delete: " << std::endl;
+      delete[] states;
+      // space->freeState(&states[i]);
+    }
+  }
+  ROS_INFO_STREAM_NAMED(name_, "Array Total time: " << (ros::Time::now() - start_time0).toSec() << " seconds");
+
+  waitForNextStep("finished running");
+
+  std::cout << "-------------------------------------------------------" << std::endl;
+  std::cout << std::endl;
 }
 
 }  // namespace bolt_moveit

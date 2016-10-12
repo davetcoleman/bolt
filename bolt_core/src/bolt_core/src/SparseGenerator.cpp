@@ -40,6 +40,7 @@
 #include <bolt_core/SparseGenerator.h>
 #include <bolt_core/SparseCriteria.h>
 #include <ompl/base/DiscreteMotionValidator.h>
+#include <ompl/base/spaces/RealVectorStateSpace.h>
 
 // Boost
 #include <boost/foreach.hpp>
@@ -1020,6 +1021,71 @@ void SparseGenerator::benchmarkSparseGraphGeneration(std::size_t indent)
   // loggingFile.open(benchmarkFilePath_.c_str(), std::ios::app);  // append
   // loggingFile << time << ", " << sg_->getNumEdges() << ", " << sg_->getNumVertices() << std::endl;
   // loggingFile.close();
+
+  std::cout << "-------------------------------------------------------" << std::endl;
+  std::cout << std::endl;
+}
+
+void SparseGenerator::benchmarkMemoryAllocation(std::size_t indent)
+{
+  std::cout << "-------------------------------------------------------" << std::endl;
+  OMPL_INFORM("Running memory allocation benchmark");
+
+  std::size_t numberStates = 10000000;
+  //std::size_t numberStates = 5;
+  std::size_t dim = 14;
+  std::size_t tests = 4;
+  base::RealVectorStateSpace space(dim);
+
+  // METHOD 1
+  time::point startTime0 = time::now(); // Benchmark
+  for (std::size_t test = 0; test < tests; ++test)
+  {
+    // Allocate
+    std::vector<base::State*> states;
+    for (std::size_t i = 0; i < numberStates; ++i)
+      states.push_back(space.allocState());
+
+    // Free
+    for (std::size_t i = 0; i < numberStates; ++i)
+      space.freeState(states[i]);
+  }
+  OMPL_INFORM("naive took  %f seconds", time::seconds(time::now() - startTime0)); // Benchmark
+  //visual_->waitForUserFeedback("test2");
+
+  // METHOD 2
+  time::point startTime1 = time::now(); // Benchmark
+  for (std::size_t test = 0; test < tests; ++test)
+  {
+    // Allocate
+    double* allValues = new double[dim*numberStates];
+    base::RealVectorStateSpace::StateType* states = new base::RealVectorStateSpace::StateType[numberStates];
+    for (std::size_t i = 0; i < numberStates; ++i)
+    {
+      //std::cout << "before (&states[i])->values: " <<  (&states[i])->values << std::endl;
+      (&states[i])->values = &allValues[i*dim];
+      //std::cout << "after  (&states[i])->values: " <<  (&states[i])->values << std::endl;
+    }
+    //base::State* statesOMPL = states;
+
+    delete[] allValues;
+    delete[] states;
+
+    // Free
+    //for (std::size_t i = 0; i < numberStates; ++i)
+    {
+      // std::cout << "before (&states[i])->values: " <<  (&states[i])->values << std::endl;
+      // delete[] (&states[i])->values;
+      // std::cout << "after  (&states[i])->values: " <<  (&states[i])->values << std::endl;
+      //delete[] (&states[i])->values;
+      //delete[] (&statesOMPL[i])->as<base::RealVectorStateSpace::StateType>()->values;
+      //delete (&statesOMPL[i])->as<base::RealVectorStateSpace::StateType>();
+    }
+  }
+  OMPL_INFORM("vector took %f seconds", time::seconds(time::now() - startTime1)); // Benchmark
+
+  //usleep(4*1000000);
+  visual_->waitForUserFeedback("test2");
 
   std::cout << "-------------------------------------------------------" << std::endl;
   std::cout << std::endl;
