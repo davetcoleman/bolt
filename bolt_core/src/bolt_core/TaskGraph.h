@@ -412,6 +412,8 @@ protected:
   /** \brief Flag if we are in task planning mode or not. If false, just plan in free space mode */
   bool taskPlanningEnabled_ = false;
 
+  bool superDebug_ = false;
+
 public:  // user settings from other applications
   /** \brief How many neighbors to a Cartesian start or goal point to attempt to connect to in the free space graph */
   std::size_t numNeighborsConnectToCart_ = 10;

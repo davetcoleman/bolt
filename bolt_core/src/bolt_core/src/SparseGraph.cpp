@@ -80,17 +80,18 @@ namespace bolt
 SparseGraph::SparseGraph(base::SpaceInformationPtr si, VisualizerPtr visual)
   : si_(si)
   , visual_(visual)
-  // Property accessors of edges
-  , edgeWeightProperty_(boost::get(boost::edge_weight, g_))
-  , edgeCollisionStatePropertySparse_(boost::get(edge_collision_state_t(), g_))
-  // Property accessors of vertices
-  , vertexStateProperty_(boost::get(vertex_state_t(), g_))
+    // Property accessors of edges
+    //, edgeWeightProperty_(boost::get(boost::edge_weight, g_))
+    //, edgeCollisionStatePropertySparse_(boost::get(edge_collision_state_t(), g_))
+    // Property accessors of vertices
+    ///, state_(boost::get(vertex_state_t(), g_))
 #ifdef ENABLE_QUALITY
-  , vertexInterfaceProperty_(boost::get(vertex_interface_data_t(), g_))
+    //, vertexInterfaceProperty_(boost::get(vertex_interface_data_t(), g_))
 #endif
-  //, vertexPopularity_(boost::get(vertex_popularity_t(), g_))
-  // Disjoint set accessors
-  , disjointSets_(boost::get(boost::vertex_rank, g_), boost::get(boost::vertex_predecessor, g_))
+    //, vertexPopularity_(boost::get(vertex_popularity_t(), g_))
+    // Disjoint set accessors
+  , disjointSets_(boost::get(&SparseVertexStruct::vertex_rank_, g_),
+                                   boost::get(&SparseVertexStruct::vertex_predecessor_, g_))
 {
   // Save number of threads available
   numThreads_ = boost::thread::hardware_concurrency();
@@ -149,8 +150,8 @@ void SparseGraph::freeMemory()
 #endif
 
     // Free states memory
-    if (vertexStateProperty_[v] != nullptr)
-      si_->freeState(vertexStateProperty_[v]);
+    if (g_[v].state_ != nullptr)
+      si_->freeState(g_[v].state_);
   }
 
   // Clear vertices and edges
@@ -198,11 +199,11 @@ void SparseGraph::initializeQueryState()
   {
     // Add a fake vertex to the graph
     queryVertices_[threadID] = boost::add_vertex(g_);
-    vertexStateProperty_[queryVertices_[threadID]] = NULL;  // set state to NULL
+    g_[queryVertices_[threadID]].state_ = NULL;  // set state to NULL
   }
 }
 
-bool SparseGraph::load()
+bool SparseGraph::load(std::size_t indent)
 {
   // Benchmark
   time::point start = time::now();
@@ -212,7 +213,7 @@ bool SparseGraph::load()
 
   // Benchmark
   double duration = time::seconds(time::now() - start);
-  OMPL_INFORM("Graph total loading time: %f", duration);
+  BOLT_INFO(indent, true, "Graph total loading time: " << duration);
 
   // Error check
   if (!getNumVertices() || !getNumEdges())
@@ -286,7 +287,7 @@ bool SparseGraph::save(std::size_t indent)
   // Benchmark
   double loadTime = time::seconds(time::now() - start);
   BOLT_INFO(indent, true, "Saved database to file in " << loadTime
-                                                       << " seconds. Time: " << time::as_string(time::now()));
+            << " seconds. Time: " << time::as_string(time::now()));
   return true;
 }
 
@@ -327,17 +328,18 @@ bool SparseGraph::astarSearch(const SparseVertex start, const SparseVertex goal,
 
   try
   {
-    // double popularityBias = 0;
-    // bool popularityBiasEnabled = false;
-    boost::astar_search(g_,                                                              // graph
-                        start,                                                           // start state
-                        boost::bind(&otb::SparseGraph::astarHeuristic, this, _1, goal),  // the heuristic
+    boost::astar_search(g_, start, // graph, start state
+                        [this, goal](SparseVertex v)
+                        {
+                          return astarHeuristic(v, goal); // the heuristic
+                        },
                         // ability to disable edges (set cost to inifinity):
-                        boost::weight_map(SparseEdgeWeightMap(g_, edgeCollisionStatePropertySparse_))
-                            // popularityBias, popularityBiasEnabled))
-                            .predecessor_map(vertexPredecessors)
-                            .distance_map(&vertexDistances[0])
-                            .visitor(SparsestarVisitor(goal, this)));
+                        // boost::weight_map(SparseEdgeWeightMap(g_, edgeCollisionStatePropertySparse_))
+                        // popularityBias, popularityBiasEnabled))
+                        boost::weight_map(boost::get(&SparseEdgeStruct::weight_, g_))
+                        .predecessor_map(vertexPredecessors)
+                        .distance_map(&vertexDistances[0])
+                        .visitor(SparsestarVisitor(goal, this)));
   }
   catch (FoundGoalException &)
   {
@@ -364,7 +366,7 @@ bool SparseGraph::astarSearch(const SparseVertex start, const SparseVertex goal,
   BOLT_DEBUG(indent, vSearch_, "AStar found solution. Distance to goal: " << vertexDistances[goal]);
 
   BOLT_DEBUG(indent, vSearch_, "Number nodes opened: " << numNodesOpened_
-                                                       << ", Number nodes closed: " << numNodesClosed_);
+             << ", Number nodes closed: " << numNodesClosed_);
 #endif
 
   // Only clear the vertexPath after we know we have a new solution, otherwise it might have a good
@@ -386,9 +388,9 @@ bool SparseGraph::astarSearch(const SparseVertex start, const SparseVertex goal,
   BOLT_ASSERT(vertexPath.size(), "Vertex path is empty! " << vertexPath.size());
   // Ensure start and goal states are included in path
   BOLT_ASSERT(si_->getStateSpace()->equalStates(getState(vertexPath.back()), getState(start)), "Start states are "
-                                                                                               "not the same");
+              "not the same");
   BOLT_ASSERT(si_->getStateSpace()->equalStates(getState(vertexPath.front()), getState(goal)), "Goal states are "
-                                                                                               "not the same");
+              "not the same");
   BOLT_ASSERT(vertexPath.size() >= 2, "Vertex path size is too small");
 
   // Show all predecessors
@@ -442,14 +444,18 @@ bool SparseGraph::astarSearchLength(SparseVertex start, SparseVertex goal, doubl
 
   try
   {
-    boost::astar_search(g_,                                                              // graph
-                        start,                                                           // start state
-                        boost::bind(&otb::SparseGraph::astarHeuristic, this, _1, goal),  // the heuristic
+    boost::astar_search(g_, start, // graph, start state
+                        [this, goal](SparseVertex v)
+                        {
+                          return astarHeuristic(v, goal); // the heuristic
+                        },
                         // ability to disable edges (set cost to inifinity):
-                        boost::weight_map(SparseEdgeWeightMap(g_, edgeCollisionStatePropertySparse_))
-                            .predecessor_map(vertexPredecessors)
-                            .distance_map(&vertexDistances[0])
-                            .visitor(SparsestarVisitor(goal, this)));
+                        // boost::weight_map(SparseEdgeWeightMap(g_, edgeCollisionStatePropertySparse_))
+                        // popularityBias, popularityBiasEnabled))
+                        boost::weight_map(boost::get(&SparseEdgeStruct::weight_, g_))
+                        .predecessor_map(vertexPredecessors)
+                        .distance_map(&vertexDistances[0])
+                        .visitor(SparsestarVisitor(goal, this)));
   }
   catch (FoundGoalException &)
   {
@@ -576,11 +582,11 @@ bool SparseGraph::isEmpty() const
   return (getNumVertices() == getNumQueryVertices() && getNumEdges() == 0);
 }
 
-void SparseGraph::clearEdgeCollisionStates()
-{
-  foreach (const SparseEdge e, boost::edges(g_))
-    edgeCollisionStatePropertySparse_[e] = NOT_CHECKED;  // each edge has an unknown state
-}
+// void SparseGraph::clearEdgeCollisionStates()
+// {
+//   foreach (const SparseEdge e, boost::edges(g_))
+//     edgeCollisionStatePropertySparse_[e] = NOT_CHECKED;  // each edge has an unknown state
+// }
 
 void SparseGraph::errorCheckDuplicateStates(std::size_t indent)
 {
@@ -607,6 +613,7 @@ void SparseGraph::errorCheckDuplicateStates(std::size_t indent)
 std::size_t SparseGraph::getDisjointSetsCount(bool verbose) const
 {
   std::size_t numSets = 0;
+  /*
   foreach (SparseVertex v, boost::vertices(g_))
   {
     // Do not count the search vertex within the sets
@@ -620,12 +627,13 @@ std::size_t SparseGraph::getDisjointSetsCount(bool verbose) const
       ++numSets;
     }
   }
-
+*/
   return numSets;
 }
 
 void SparseGraph::getDisjointSets(SparseDisjointSetsMap &disjointSets)
 {
+  /*
   if (!sparseCriteria_->useConnectivityCriteria_)
   {
     BOLT_WARN(0, true, "Disjoint Sets disabled");
@@ -647,10 +655,12 @@ void SparseGraph::getDisjointSets(SparseDisjointSetsMap &disjointSets)
 
     disjointSets[boost::get(boost::get(boost::vertex_predecessor, g_), *v)].push_back(*v);
   }
+  */
 }
 
 void SparseGraph::printDisjointSets(SparseDisjointSetsMap &disjointSets)
 {
+  /*
   OMPL_INFORM("Print disjoint sets");
 
   if (!sparseCriteria_->useConnectivityCriteria_)
@@ -666,10 +676,12 @@ void SparseGraph::printDisjointSets(SparseDisjointSetsMap &disjointSets)
     const std::size_t freq = iterator->second.size();
     std::cout << "  Parent: " << v << " frequency " << freq << std::endl;
   }
+  */
 }
 
 void SparseGraph::visualizeDisjointSets(SparseDisjointSetsMap &disjointSets)
 {
+  /*
   OMPL_INFORM("Visualizing disjoint sets");
 
   if (!sparseCriteria_->useConnectivityCriteria_)
@@ -742,7 +754,7 @@ void SparseGraph::visualizeDisjointSets(SparseDisjointSetsMap &disjointSets)
             SparseVertex e_v2 = boost::target(edge, g_);
             visual_->viz4()->edge(getState(e_v1), getState(e_v2), edgeWeightProperty_[edge]);
           }
-          visual_->viz4()->trigger(/*every*/50);
+          visual_->viz4()->trigger(/*every* /50);
 
           // Show this robot state
           visual_->viz4()->state(getState(*v2), tools::ROBOT, tools::DEFAULT, 0);
@@ -755,6 +767,8 @@ void SparseGraph::visualizeDisjointSets(SparseDisjointSetsMap &disjointSets)
       visual_->waitForUserFeedback("showing large disjoint set");
     }  // if
   }
+
+*/
 }
 
 std::size_t SparseGraph::checkConnectedComponents()
@@ -777,7 +791,8 @@ bool SparseGraph::sameComponent(SparseVertex v1, SparseVertex v2)
 
 void SparseGraph::resetDisjointSets()
 {
-  disjointSets_ = SparseDisjointSetType(boost::get(boost::vertex_rank, g_), boost::get(boost::vertex_predecessor, g_));
+  BOLT_ERROR(0, true, "not implemented reset disjoint sets");
+  //disjointSets_ = SparseDisjointSetType(boost::get(boost::vertex_rank, g_), boost::get(boost::vertex_predecessor, g_));
 }
 
 SparseVertex SparseGraph::addVertex(base::State *state, const VertexType &type, std::size_t indent)
@@ -786,7 +801,7 @@ SparseVertex SparseGraph::addVertex(base::State *state, const VertexType &type, 
   SparseVertex v = boost::add_vertex(g_);
 
   // Add properties
-  vertexStateProperty_[v] = state;
+  g_[v].state_ = state;
 
   // Quit early if just mirroring graph
   if (fastMirrorMode_)
@@ -868,7 +883,7 @@ SparseVertex SparseGraph::addVertexFromFile(base::State *state, std::size_t inde
   SparseVertex v = boost::add_vertex(g_);
 
   // Add properties
-  vertexStateProperty_[v] = state;
+  g_[v].state_ = state;
   // vertexPopularity_[v] = MAX_POPULARITY_WEIGHT;  // 100 means the vertex is very unpopular
 
   // Connected component tracking
@@ -889,8 +904,8 @@ void SparseGraph::removeVertex(SparseVertex v, std::size_t indent)
   }
 
   // Delete state
-  si_->freeState(vertexStateProperty_[v]);
-  vertexStateProperty_[v] = nullptr;
+  si_->freeState(g_[v].state_);
+  g_[v].state_ = nullptr;
 
 #ifdef ENABLE_QUALITY
   // Clear interface data
@@ -985,7 +1000,7 @@ SparseEdge SparseGraph::addEdge(SparseVertex v1, SparseVertex v2, EdgeType type,
   return addEdge(v1, v2, distanceFunction(v1, v2), type, indent);
 }
 
-SparseEdge SparseGraph::addEdge(SparseVertex v1, SparseVertex v2, double distance, EdgeType type, std::size_t indent)
+SparseEdge SparseGraph::addEdge(SparseVertex v1, SparseVertex v2, double weight, EdgeType type, std::size_t indent)
 {
   if (superDebug_)  // Extra checks
   {
@@ -994,27 +1009,24 @@ SparseEdge SparseGraph::addEdge(SparseVertex v1, SparseVertex v2, double distanc
     BOLT_ASSERT(v1 != v2, "Verticex IDs are the same");
     BOLT_ASSERT(!hasEdge(v1, v2), "There already exists an edge between two vertices requested");
     BOLT_ASSERT(hasEdge(v1, v2) == hasEdge(v2, v1), "There already exists an edge between two vertices requested, "
-                                                    "other direction");
+                "other direction");
     BOLT_ASSERT(getState(v1) != getState(v2), "States on both sides of an edge are the same");
     BOLT_ASSERT(!si_->getStateSpace()->equalStates(getState(v1), getState(v2)), "Vertex IDs are different but "
-                                                                                "states are the equal");
-    // BOLT_ASSERT(si_->checkMotion(vertexStateProperty_[v1], vertexStateProperty_[v2]), "Edge is in collision");
+                "states are the equal");
+    // BOLT_ASSERT(si_->checkMotion(state_[v1], state_[v2]), "Edge is in collision");
   }
 
   // Create the new edge
   SparseEdge e = (boost::add_edge(v1, v2, g_)).first;
 
   // Weight properties
-  edgeWeightProperty_[e] = distance;
+  g_[e].weight_ = weight;
 
   // Quit early if just mirroring graph
   if (fastMirrorMode_)
     return e;
 
   BOLT_FUNC(indent, vAdd_, "addEdge(): from vertex " << v1 << " to " << v2 << " type " << type);
-
-  // Collision properties
-  edgeCollisionStatePropertySparse_[e] = NOT_CHECKED;
 
   // Add the edge to the incrementeal connected components datastructure
   if (sparseCriteria_ && sparseCriteria_->useConnectivityCriteria_)
@@ -1036,11 +1048,11 @@ SparseEdge SparseGraph::addEdge(SparseVertex v1, SparseVertex v2, double distanc
       // usleep(visualizeSparseGraphSpeed_ * 1000000);
     }
 
-    // if (edgeWeightProperty_[e] <= sparseCriteria_->getDiscretization() * 2.1)
+    // if (g_[e].weight_ <= sparseCriteria_->getDiscretization() * 2.1)
     // {} // for copy-paste ease
     // else
     // {
-    //   std::cout << "edgeWeightProperty_[e]: " << edgeWeightProperty_[e] << std::endl;
+    //   std::cout << "g_[e].weight_: " << g_[e].weight_ << std::endl;
     //   visual_->waitForUserFeedback("add edge");
     // }
   }
@@ -1049,6 +1061,20 @@ SparseEdge SparseGraph::addEdge(SparseVertex v1, SparseVertex v2, double distanc
   hasUnsavedChanges_ = true;
 
   return e;
+}
+
+SparseEdge SparseGraph::addEdgeDummy(std::size_t numVertices)
+{
+  SparseVertex dummy1 = 0;
+  SparseVertex dummy2 = numVertices - 1;
+
+  std::cout << "edge from  " << dummy1 << " to " << dummy2 << std::endl;
+  return (boost::add_edge(dummy1, dummy2, g_)).first;
+}
+
+void SparseGraph::removeEdge(SparseEdge e, std::size_t indent)
+{
+  boost::remove_edge(e, g_);
 }
 
 VizColors SparseGraph::edgeTypeToColor(EdgeType edgeType)
@@ -1095,19 +1121,19 @@ SparseVertex SparseGraph::getQueryVertices(std::size_t threadID)
 base::State*& SparseGraph::getStateNonConst(SparseVertex v)
 {
   BOLT_ASSERT(v >= queryVertices_.size(), "Attempted to request state of query vertex using wrong function");
-  return vertexStateProperty_[v];
+  return g_[v].state_;
 }
 
 const base::State* SparseGraph::getState(SparseVertex v) const
 {
   BOLT_ASSERT(v >= queryVertices_.size(), "Attempted to request state of query vertex using wrong function");
-  return vertexStateProperty_[v];
+  return g_[v].state_;
 }
 
 /** \brief Determine if a vertex has been deleted (but not fully removed yet) */
 bool SparseGraph::stateDeleted(SparseVertex v) const
 {
-  return vertexStateProperty_[v] == nullptr;
+  return g_[v].state_ == nullptr;
 }
 
 SparseVertex SparseGraph::getSparseRepresentative(base::State *state)
@@ -1207,7 +1233,7 @@ void SparseGraph::displayDatabase(bool showVertices, bool showEdges, std::size_t
         continue;
 
       // Skip deleted vertices
-      if (vertexStateProperty_[v] == 0)
+      if (g_[v].state_ == 0)
         continue;
 
       // Check for null states
@@ -1221,7 +1247,7 @@ void SparseGraph::displayDatabase(bool showVertices, bool showEdges, std::size_t
       // TODO: add secondary array for this size spheres?
       if (visualizeDatabaseCoverage_ && sparseCriteria_)
         visual_->viz(windowID)
-            ->state(getState(v), tools::VARIABLE_SIZE, tools::TRANSLUCENT_LIGHT, sparseCriteria_->getSparseDelta());
+          ->state(getState(v), tools::VARIABLE_SIZE, tools::TRANSLUCENT_LIGHT, sparseCriteria_->getSparseDelta());
 
       // Populate properties
       colors.push_back(tools::BLACK); //vertexTypeToColor(vertexTypeProperty_[v]));
@@ -1390,7 +1416,7 @@ void SparseGraph::printGraphStats()
   double minEdgeLength = std::numeric_limits<double>::infinity();
   foreach (const SparseEdge e, boost::edges(g_))
   {
-    const double length = edgeWeightProperty_[e];
+    const double length = g_[e].weight_;
     totalEdgeLength += length;
     if (maxEdgeLength < length)
       maxEdgeLength = length;
@@ -1429,7 +1455,7 @@ bool SparseGraph::verifyGraph(std::size_t indent)
       continue;
 
     // Skip deleted vertices
-    if (vertexStateProperty_[v] == 0)
+    if (g_[v].state_ == 0)
       continue;
 
     // Check for null states
@@ -1440,7 +1466,7 @@ bool SparseGraph::verifyGraph(std::size_t indent)
     }
 
     // Collision check
-    if (!si_->isValid(vertexStateProperty_[v]))
+    if (!si_->isValid(g_[v].state_))
     {
       BOLT_ERROR(indent, true, "Found invalid vertex " << v);
       return false;
@@ -1453,7 +1479,7 @@ bool SparseGraph::verifyGraph(std::size_t indent)
     SparseVertex v2 = boost::target(e, g_);
 
     // Collision check
-    if (!si_->checkMotion(vertexStateProperty_[v1], vertexStateProperty_[v2]))
+    if (!si_->checkMotion(g_[v1].state_, g_[v2].state_))
     {
       BOLT_ERROR(indent, true, "Invalid edge found: " << v1 << " to " << v2);
       return false;
@@ -1473,7 +1499,7 @@ base::ValidStateSamplerPtr SparseGraph::getSampler(base::SpaceInformationPtr si,
     sampler.reset(new base::MinimumClearanceValidStateSampler(si.get()));
     // Set the clearance
     base::MinimumClearanceValidStateSampler *mcvss =
-        dynamic_cast<base::MinimumClearanceValidStateSampler *>(sampler.get());
+      dynamic_cast<base::MinimumClearanceValidStateSampler *>(sampler.get());
     mcvss->setMinimumObstacleClearance(clearance);
     si->getStateValidityChecker()->setClearanceSearchDistance(clearance);
   }
@@ -1491,16 +1517,16 @@ base::ValidStateSamplerPtr SparseGraph::getSampler(base::SpaceInformationPtr si,
 
 // SparseEdgeWeightMap methods ////////////////////////////////////////////////////////////////////////////
 
-namespace boost
-{
-double get(const ompl::tools::bolt::SparseEdgeWeightMap &m, const ompl::tools::bolt::SparseEdge &e)
-{
-  return m.get(e);
-}
-}
+// namespace boost
+// {
+// double get(const ompl::tools::bolt::SparseEdgeWeightMap &m, const ompl::tools::bolt::SparseEdge &e)
+// {
+//   return m.get(e);
+// }
+// }
 
-BOOST_CONCEPT_ASSERT(
-    (boost::ReadablePropertyMapConcept<ompl::tools::bolt::SparseEdgeWeightMap, ompl::tools::bolt::SparseEdge>));
+// BOOST_CONCEPT_ASSERT(
+//                      (boost::ReadablePropertyMapConcept<ompl::tools::bolt::SparseEdgeWeightMap, ompl::tools::bolt::SparseEdge>));
 
 // SparsestarVisitor methods ////////////////////////////////////////////////////////////////////////////
 

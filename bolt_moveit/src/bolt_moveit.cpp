@@ -46,6 +46,7 @@
 
 // this package
 #include <bolt_moveit/bolt_moveit.h>
+#include <bolt_moveit/process_mem_usage.h>
 
 // Interface for loading rosparam settings into OMPL
 #include <moveit_ompl/ompl_rosparam.h>
@@ -311,12 +312,9 @@ std::string BoltMoveIt::getFilePath(const std::string &planning_group_name)
 
 bool BoltMoveIt::loadData()
 {
-  // double vm1, rss1;
-  // if (track_memory_consumption_)  // Track memory usage
-  // {
-  //   processMemUsage(vm1, rss1);
-  //   // ROS_INFO_STREAM_NAMED(name_, "Current memory consumption - VM: " << vm1 << " MB | RSS: " << rss1 << " MB");
-  // }
+  double vm1, rss1;
+  if (track_memory_consumption_)  // Track memory usage
+    processMemUsage(vm1, rss1);
 
   // Load database or generate new roadmap
   ROS_INFO_STREAM_NAMED(name_, "Loading or generating roadmap");
@@ -329,13 +327,12 @@ bool BoltMoveIt::loadData()
     }
   }
 
-  // if (track_memory_consumption_)  // Track memory usage
-  // {
-  //   double vm2, rss2;
-  //   processMemUsage(vm2, rss2);
-  //   // ROS_INFO_STREAM_NAMED(name_, "Current memory consumption - VM: " << vm2 << " MB | RSS: " << rss2 << " MB");
-  //   ROS_INFO_STREAM_NAMED(name_, "RAM usage diff - VM: " << vm2 - vm1 << " MB | RSS: " << rss2 - rss1 << " MB");
-  // }
+  if (track_memory_consumption_)  // Track memory usage
+  {
+    double vm2, rss2;
+    processMemUsage(vm2, rss2);
+    ROS_INFO_STREAM_NAMED(name_, "RAM usage diff - VM: " << vm2 - vm1 << " MB | RSS: " << rss2 - rss1 << " MB");
+  }
 
   return true;
 }
@@ -459,6 +456,10 @@ bool BoltMoveIt::runProblems()
       visualizeStartGoal();
 
     // Optionally create cartesian path, if this is a task plan
+    double vm1, rss1;
+    if (track_memory_consumption_)  // Track memory usage
+      processMemUsage(vm1, rss1);
+
     if (use_task_planning_)
     {
       if (!generateCartGraph())
@@ -471,6 +472,15 @@ bool BoltMoveIt::runProblems()
     {
       bolt_->getTaskGraph()->generateMonoLevelTaskSpace(indent);
     }
+
+    if (track_memory_consumption_)  // Track memory usage
+    {
+      double vm2, rss2;
+      processMemUsage(vm2, rss2);
+      ROS_INFO_STREAM_NAMED(name_, "RAM usage diff (VM, RSS) MB:\n" << vm2 - vm1 << ", " << rss2 - rss1);
+    }
+    std::cout << "exiting after memory " << std::endl;
+    exit(0);
 
     // Do one plan
     plan();
@@ -1100,7 +1110,7 @@ ob::State *BoltMoveIt::combineStates(const ob::State *state1, const ob::State *s
 void BoltMoveIt::benchmarkMemoryAllocation(std::size_t indent)
 {
   std::cout << "-------------------------------------------------------" << std::endl;
-  OMPL_INFORM("Running memory allocation benchmark");
+  OMPL_INFORM("BoltMoveIt: Running memory allocation benchmark");
 
   // std::size_t numStates = 10000000;
   std::size_t numStates = 2;
@@ -1108,25 +1118,29 @@ void BoltMoveIt::benchmarkMemoryAllocation(std::size_t indent)
   std::size_t tests = 2;
 
   moveit_ompl::ModelBasedStateSpaceSpecification mbss_spec(robot_model_, planning_jmg_);
-  // moveit_ompl::ModelBasedStateSpace space_old(mbss_spec);
-  moveit_ompl::ModelBasedStateSpacePtr space = moveit_ompl::chooseModelBasedStateSpace(mbss_spec);
+  moveit_ompl::ModelBasedStateSpace space_old(mbss_spec);
+  //moveit_ompl::ModelBasedStateSpacePtr space = moveit_ompl::chooseModelBasedStateSpace(mbss_spec);
+
+
+
+
 
   // METHOD 1
-  // ros::Time start_time = ros::Time::now(); // Benchmark runtime
-  // for (std::size_t test = 0; test < tests; ++test)
-  // {
-  //   // Allocate
-  //   std::vector<ob::State*> states;
-  //   for (std::size_t i = 0; i < numStates; ++i)
-  //     states.push_back(space_old.allocState());
+  ros::Time start_time = ros::Time::now(); // Benchmark runtime
+  for (std::size_t test = 0; test < tests; ++test)
+  {
+    // Allocate
+    std::vector<ob::State*> states;
+    for (std::size_t i = 0; i < numStates; ++i)
+      states.push_back(space_old.allocState());
 
-  //   // Free
-  //   for (std::size_t i = 0; i < numStates; ++i)
-  //     space_old.freeState(states[i]);
-  // }
-  // ROS_INFO_STREAM_NAMED(name_, "Old state - Total time: " << (ros::Time::now() - start_time).toSec() << " seconds");
+    // Free
+    for (std::size_t i = 0; i < numStates; ++i)
+      space_old.freeState(states[i]);
+  }
+  ROS_INFO_STREAM_NAMED(name_, "Old state - Total time: " << (ros::Time::now() - start_time).toSec() << " seconds");
 
-  // // METHOD 2
+  // METHOD 2
   // ros::Time start_time2 = ros::Time::now(); // Benchmark runtime
   // for (std::size_t test = 0; test < tests; ++test)
   // {
@@ -1142,6 +1156,7 @@ void BoltMoveIt::benchmarkMemoryAllocation(std::size_t indent)
   // ROS_INFO_STREAM_NAMED(name_, "New state - Total time: " << (ros::Time::now() - start_time2).toSec() << " seconds");
 
   // METHOD 3
+  /*
   ros::Time start_time0 = ros::Time::now();  // Benchmark runtime
   for (std::size_t test = 0; test < tests; ++test)
   {
@@ -1191,7 +1206,7 @@ void BoltMoveIt::benchmarkMemoryAllocation(std::size_t indent)
     }
   }
   ROS_INFO_STREAM_NAMED(name_, "Array Total time: " << (ros::Time::now() - start_time0).toSec() << " seconds");
-
+  */
   waitForNextStep("finished running");
 
   std::cout << "-------------------------------------------------------" << std::endl;

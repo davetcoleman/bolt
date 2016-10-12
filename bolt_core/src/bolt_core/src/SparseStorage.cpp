@@ -225,7 +225,7 @@ bool SparseStorage::load(const std::string &filePath, std::size_t indent)
 
   // Open file stream
   std::ifstream in(filePath.c_str(), std::ios::binary);
-  bool result = load(in);
+  bool result = load(in, indent);
   in.close();
 
   // Re-enable visualizations
@@ -238,7 +238,7 @@ bool SparseStorage::load(const std::string &filePath, std::size_t indent)
   return result;
 }
 
-bool SparseStorage::load(std::istream &in)
+bool SparseStorage::load(std::istream &in, std::size_t indent)
 {
   BOLT_ASSERT(!sparseGraph_->visualizeSparseGraph_, "Visualizations should be off when loading sparse graph");
 
@@ -277,8 +277,8 @@ bool SparseStorage::load(std::istream &in)
     sparseGraph_->getGraphNonConst().m_edges.resize(h.edge_count);
 
     // Read from file
-    loadVertices(h.vertex_count, ia);
-    loadEdges(h.edge_count, ia);
+    loadVertices(h.vertex_count, ia, indent);
+    loadEdges(h.edge_count, ia, indent);
   }
   catch (boost::archive::archive_exception &ae)
   {
@@ -288,10 +288,12 @@ bool SparseStorage::load(std::istream &in)
   return true;
 }
 
-void SparseStorage::loadVertices(unsigned int numVertices, boost::archive::binary_iarchive &ia, std::size_t indent)
+void SparseStorage::loadVertices(std::size_t numVertices, boost::archive::binary_iarchive &ia, std::size_t indent)
 {
-  BOLT_INFO(indent, true, "Loading vertices from file: " << numVertices);
-  indent += 2;
+  BOLT_FUNC(indent, true, "Loading vertices from file: " << numVertices);
+
+  // Reserve memory
+  sparseGraph_->getGraphNonConst().m_vertices.reserve(numVertices);
 
   // Create thread to populate nearest neighbor structure, because that is the slowest component
   loadVerticesFinished_ = false;
@@ -303,7 +305,7 @@ void SparseStorage::loadVertices(unsigned int numVertices, boost::archive::binar
   BoltVertexData vertexData;
 
   std::cout << "         Vertices loaded: ";
-  for (unsigned int i = 0; i < numVertices; ++i)
+  for (std::size_t i = 0; i < numVertices; ++i)
   {
     // Copy in data from file
     ia >> vertexData;
@@ -322,9 +324,14 @@ void SparseStorage::loadVertices(unsigned int numVertices, boost::archive::binar
   // Join thread
   loadVerticesFinished_ = true;
 
-  // time::point startTime = time::now(); // Benchmark
+  time::point startTime;
+  if (vThreadTiming_)
+    startTime = time::now(); // Benchmark
+
   nnThread.join();
-  // OMPL_INFORM("NN thread took %f seconds to catch up", time::seconds(time::now() - startTime)); // Benchmark
+
+  if (vThreadTiming_)
+    OMPL_INFORM("NN thread took %f seconds to catch up", time::seconds(time::now() - startTime)); // Benchmark
 }
 
 void SparseStorage::populateNNThread(std::size_t startingVertex)
@@ -346,7 +353,7 @@ void SparseStorage::populateNNThread(std::size_t startingVertex)
     {
       // std::cout << "sleeping in NN, current vertexID: " << vertexID << " total: " << sparseGraph_->getNumVertices()
       // << std::endl;
-      usleep(0.0001 * 1000000);
+      usleep(0.00001 * 1000000);
     }
 
     // When we wake up, check if there are more vertices ready again, before checking if we are done
@@ -365,16 +372,15 @@ void SparseStorage::populateNNThread(std::size_t startingVertex)
   sparseGraph_->getNN()->add(vertexID);
 }
 
-void SparseStorage::loadEdges(unsigned int numEdges, boost::archive::binary_iarchive &ia, std::size_t indent)
+void SparseStorage::loadEdges(std::size_t numEdges, boost::archive::binary_iarchive &ia, std::size_t indent)
 {
-  BOLT_INFO(indent, true, "Loading edges from file: " << numEdges);
-  indent += 2;
+  BOLT_FUNC(indent, true, "Loading edges from file: " << numEdges);
 
   std::size_t feedbackFrequency = std::max(10.0, numEdges / 10.0);
   BoltEdgeData edgeData;
 
   std::cout << "         Edges loaded: ";
-  for (unsigned int i = 0; i < numEdges; ++i)
+  for (std::size_t i = 0; i < numEdges; ++i)
   {
     ia >> edgeData;
 
@@ -383,7 +389,7 @@ void SparseStorage::loadEdges(unsigned int numEdges, boost::archive::binary_iarc
     const SparseVertex v2 = edgeData.endpoints_.second += numQueryVertices_;
 
     // Add
-    sparseGraph_->addEdge(v1, v2, eUNKNOWN, indent);
+    sparseGraph_->addEdge(v1, v2, edgeData.weight_, eUNKNOWN, indent);
 
     // Feedback
     if ((i + 1) % feedbackFrequency == 0)

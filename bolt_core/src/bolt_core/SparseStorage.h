@@ -146,16 +146,16 @@ public:
 
   bool load(const std::string &filePath, std::size_t indent = 0);
 
-  bool load(std::istream &in);
+  bool load(std::istream &in, std::size_t indent);
 
   /* \brief Read \e numVertices from the binary input \e ia and store them as SparseStorage */
-  void loadVertices(unsigned int numVertices, boost::archive::binary_iarchive &ia, std::size_t indent = 0);
+  void loadVertices(std::size_t numVertices, boost::archive::binary_iarchive &ia, std::size_t indent = 0);
 
   /** \brief Thread to populate nearest neighbor structure, because that is the slowest component */
   void populateNNThread(std::size_t startingVertex);
 
   /* \brief Read \e numEdges from the binary input \e ia and store them as SparseStorage  */
-  void loadEdges(unsigned int numEdges, boost::archive::binary_iarchive &ia, std::size_t indent = 0);
+  void loadEdges(std::size_t numEdges, boost::archive::binary_iarchive &ia, std::size_t indent = 0);
 
   /** \brief Getter for where to save auditing data about size of graph, etc */
   const std::string &getLoggingPath() const
@@ -187,7 +187,7 @@ public:
   std::string loggingPath_;
 
   bool verbose_ = true;
-
+  bool vThreadTiming_ = false;
 };  // end of class SparseStorage
 
 }  // namespace bolt

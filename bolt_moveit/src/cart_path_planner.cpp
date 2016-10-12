@@ -403,6 +403,9 @@ bool CartPathPlanner::populateBoltGraph(ompl::tools::bolt::TaskGraphPtr task_gra
   // For assertion testing
   ompl::tools::bolt::TaskVertex startingVertex = task_graph_->getNumVertices() - 1;
 
+  std::cout << "skipping cartesian planning " << std::endl;
+  return true;
+
   // -------------------------------------------------------------------------
   // Solve each dimension redunant joint poses independently, the combine into full state space
   std::vector<RedunJointTrajectory> redun_traj_per_eef(arm_datas_.size());
@@ -667,7 +670,7 @@ bool CartPathPlanner::addCartPointToBoltGraph(const CombinedPoints& combined_poi
     if (visualize_show_combined_solutions_)
     {
       visual_tools_->publishRobotState(moveit_robot_state);
-      parent_->waitForNextStep("adding vertex");
+      //parent_->waitForNextStep("adding vertex");
     }
 
     new_vertex_count++;
@@ -700,7 +703,7 @@ bool CartPathPlanner::addEdgesToBoltGraph(const TaskVertexMatrix& point_vertices
   std::cout << "      Trajectory Point: ";
   for (std::size_t traj_id = 1; traj_id < point_vertices.size(); ++traj_id)
   {
-    //std::cout << "traj_id: " << traj_id << " out of " << point_vertices.size() << std::endl;
+    std::cout << "traj_id: " << traj_id << " out of " << point_vertices.size() << std::endl;
 
     // Get all vertices at previous cartesian point
     const TaskVertexPoint& point_vertices0 = point_vertices[traj_id - 1];
@@ -845,8 +848,8 @@ bool CartPathPlanner::getRedunJointPosesForCartPoint(const Eigen::Affine3d& pose
 
   // Discretization setting
   kinematics::KinematicsQueryOptions options;
-  //options.discretization_method = kinematics::DiscretizationMethods::DiscretizationMethod::ALL_DISCRETIZED;
-  options.discretization_method = kinematics::DiscretizationMethods::DiscretizationMethod::NO_DISCRETIZATION;
+  options.discretization_method = kinematics::DiscretizationMethods::DiscretizationMethod::ALL_DISCRETIZED;
+  //options.discretization_method = kinematics::DiscretizationMethods::DiscretizationMethod::NO_DISCRETIZATION;
 
   // Enumerate solvable joint poses for each candidate_pose
   for (const Eigen::Affine3d& candidate_pose : candidate_poses)

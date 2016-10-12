@@ -1029,7 +1029,7 @@ void SparseGenerator::benchmarkSparseGraphGeneration(std::size_t indent)
 void SparseGenerator::benchmarkMemoryAllocation(std::size_t indent)
 {
   std::cout << "-------------------------------------------------------" << std::endl;
-  OMPL_INFORM("Running memory allocation benchmark");
+  OMPL_INFORM("SparseGenerator: Running memory allocation benchmark");
 
   std::size_t numberStates = 10000000;
   //std::size_t numberStates = 5;

@@ -540,14 +540,8 @@ void TaskGraph::generateTaskSpace(std::size_t indent)
   BOLT_DEBUG(indent + 2, true || vGenerateTask_, "Adding " << 2*sg_->getNumEdges() << " task space edges");
   foreach (const SparseEdge sparseE, boost::edges(sg_->getGraph()))
   {
-    const SparseVertex sparseE_v0 = boost::source(sparseE, sg_->getGraph());
-    const SparseVertex sparseE_v2 = boost::target(sparseE, sg_->getGraph());
-
-    // Error check
-#ifndef NDEBUG
-    BOLT_ASSERT(sparseE_v0 >= sg_->getNumQueryVertices(), "Found query vertex in sparse graph that has an edge!");
-    BOLT_ASSERT(sparseE_v2 >= sg_->getNumQueryVertices(), "Found query vertex in sparse graph that has an edge!");
-#endif
+    const SparseVertex& sparseE_v0 = boost::source(sparseE, sg_->getGraph());
+    const SparseVertex& sparseE_v2 = boost::target(sparseE, sg_->getGraph());
 
     // Create level 0 edge
     addEdge(sparseToTaskVertex0[sparseE_v0], sparseToTaskVertex0[sparseE_v2], indent);
@@ -1030,17 +1024,22 @@ void TaskGraph::removeDeletedVertices(std::size_t indent)
 
 TaskEdge TaskGraph::addEdge(TaskVertex v1, TaskVertex v2, std::size_t indent)
 {
-  BOLT_FUNC(indent, vAdd_, "TaskGraph.addEdge(): from vertex " << v1 << " to " << v2);
+  //BOLT_FUNC(indent, vAdd_, "TaskGraph.addEdge(): from vertex " << v1 << " to " << v2);
 
-  BOLT_ASSERT(v1 <= getNumVertices(), "Vertex1 is larger than max vertex id");
-  BOLT_ASSERT(v2 <= getNumVertices(), "Vertex2 is larger than max vertex id");
-  BOLT_ASSERT(v1 != v2, "Verticex IDs are the same");
-  BOLT_ASSERT(!hasEdge(v1, v2), "There already exists an edge between two vertices requested");
-  BOLT_ASSERT(hasEdge(v1, v2) == hasEdge(v2, v1), "There already exists an edge between two vertices requested, "
-                                                  "other direction");
-  BOLT_ASSERT(getState(v1) != getState(v2), "States on both sides of an edge are the same");
-  BOLT_ASSERT(!si_->getStateSpace()->equalStates(getState(v1), getState(v2)), "Vertex IDs are different but "
-                                                                              "states are the equal");
+  if (superDebug_)  // Extra checks
+  {
+    BOLT_ASSERT(v1 <= getNumVertices(), "Vertex1 is larger than max vertex id");
+    BOLT_ASSERT(v2 <= getNumVertices(), "Vertex2 is larger than max vertex id");
+    BOLT_ASSERT(v1 >= sg_->getNumQueryVertices(), "Found query vertex in sparse graph that has an edge!");
+    BOLT_ASSERT(v2 >= sg_->getNumQueryVertices(), "Found query vertex in sparse graph that has an edge!");
+    BOLT_ASSERT(v1 != v2, "Verticex IDs are the same");
+    BOLT_ASSERT(!hasEdge(v1, v2), "There already exists an edge between two vertices requested");
+    BOLT_ASSERT(hasEdge(v1, v2) == hasEdge(v2, v1), "There already exists an edge between two vertices requested, "
+                "other direction");
+    BOLT_ASSERT(getState(v1) != getState(v2), "States on both sides of an edge are the same");
+    BOLT_ASSERT(!si_->getStateSpace()->equalStates(getState(v1), getState(v2)), "Vertex IDs are different but "
+                "states are the equal");
+  }
 
   // Create the new edge
   TaskEdge e = (boost::add_edge(v1, v2, g_)).first;

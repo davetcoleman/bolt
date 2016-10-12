@@ -3,7 +3,7 @@
 bolt_moveit:
   # run mode
   auto_run: true # do not wait to move interactive markers. note: 'autonomous' setting must be 'false'
-  benchmark_performance: true
+  benchmark_performance: false
   display_disjoint_sets: false
   eliminate_dense_disjoint_sets: false
   check_valid_vertices: false
@@ -208,9 +208,9 @@ cart_path_planner:
   timing: 0.5 # time between each Cartesian point, e.g. discretization
   verbose: false
   visualize:
-    show_all_solutions: true
+    show_all_solutions: false
     show_all_solutions_sleep: 0.005 # time between each solution for viewing
-    show_all_cart_poses: true
+    show_all_cart_poses: false
     show_combined_solutions: false
 
 # ====================================================

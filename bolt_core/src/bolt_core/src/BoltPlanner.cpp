@@ -102,6 +102,9 @@ base::PlannerStatus BoltPlanner::solve(Termination &ptc)
     return base::PlannerStatus::ABORT;
   }
 
+  // TODO: call clearEdgeCollisionStates() before planning
+
+
   // Restart the Planner Input States so that the first start and goal state can be fetched
   pis_.restart();  // PlannerInputStates
 

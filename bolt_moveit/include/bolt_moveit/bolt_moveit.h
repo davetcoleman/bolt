@@ -206,7 +206,7 @@ public:
   bool use_task_planning_;
   bool headless_;
   bool auto_run_;
-  bool track_memory_consumption_ = false;
+  bool track_memory_consumption_ = true;
   bool use_logging_ = false;
   bool collision_checking_enabled_ = true;
 

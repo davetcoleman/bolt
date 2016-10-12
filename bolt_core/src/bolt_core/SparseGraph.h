@@ -178,7 +178,7 @@ public:
    * \brief Load database from file
    * \return true if file loaded successfully
    */
-  bool load();
+  bool load(std::size_t indent = 0);
 
   /**
    * \brief Save loaded database to file, except skips saving if no paths have been added
@@ -264,7 +264,7 @@ public:
 
   double getEdgeWeightProperty(SparseEdge e) const
   {
-    return edgeWeightProperty_[e];
+    return g_[e].weight_; //edgeWeightProperty_[e];
   }
 
   /** \brief Determine if no nodes or edges have been added to the graph except query vertices */
@@ -320,7 +320,12 @@ public:
 
   /** \brief Add edge to graph */
   SparseEdge addEdge(SparseVertex v1, SparseVertex v2, EdgeType type, std::size_t indent);
-  SparseEdge addEdge(SparseVertex v1, SparseVertex v2, double distance, EdgeType type, std::size_t indent);
+  SparseEdge addEdge(SparseVertex v1, SparseVertex v2, double weight, EdgeType type, std::size_t indent);
+
+  SparseEdge addEdgeDummy(std::size_t numVertices);
+
+  /** \brief Remove edge from graph */
+  void removeEdge(SparseEdge e, std::size_t indent);
 
   /** \brief Check graph for edge existence */
   inline bool hasEdge(SparseVertex v1, SparseVertex v2)
@@ -466,17 +471,17 @@ protected:
   std::vector<base::State*> queryStates_;
 
   /** \brief Access to the weights of each Edge */
-  boost::property_map<SparseAdjList, boost::edge_weight_t>::type edgeWeightProperty_;
+  //boost::property_map<SparseAdjList, boost::edge_weight_t>::type edgeWeightProperty_;
 
   /** \brief Access to the collision checking state of each Edge */
-  SparseEdgeCollisionStateMap edgeCollisionStatePropertySparse_;
+  //SparseEdgeCollisionStateMap edgeCollisionStatePropertySparse_;
 
   /** \brief Access to the internal base::state at each Vertex */
-  boost::property_map<SparseAdjList, vertex_state_t>::type vertexStateProperty_;
+  //boost::property_map<SparseAdjList, vertex_state_t>::type vertexStateProperty_;
 
 #ifdef ENABLE_QUALITY
   /** \brief Access to the interface pair information for the vertices */
-  boost::property_map<SparseAdjList, vertex_interface_data_t>::type vertexInterfaceProperty_;
+  //boost::property_map<SparseAdjList, vertex_interface_data_t>::type vertexInterfaceProperty_;
 #endif
 
   /** \brief Access to the popularity of each node */

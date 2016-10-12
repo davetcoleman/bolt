@@ -52,11 +52,11 @@ public:
   public:
     StateType() : ompl::base::State(), level(0)
     {
-      std::cout << "Created state of size: " << N << std::endl;
-      for (std::size_t i = 0; i < N; ++i)
-      {
-        values[i] = i;
-      }
+      // std::cout << "Created state of size: " << N << std::endl;
+      // for (std::size_t i = 0; i < N; ++i)
+      // {
+      //   values[i] = i;
+      // }
     }
 
     double values[N];

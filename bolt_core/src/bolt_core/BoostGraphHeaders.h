@@ -198,27 +198,42 @@ enum EdgeCollisionState
    already for collision. 0 = not checked/unknown, 1 = in collision, 2 = free
 */
 
+struct SparseVertexStruct
+{
+  base::State* state_;
+  std::size_t vertex_predecessor_;
+  std::size_t vertex_rank_;
+#ifdef ENABLE_QUALITY
+  boost::property<vertex_interface_data_t, InterfaceHash> // Sparse meta data
+#endif
+};
+
+struct SparseEdgeStruct
+{
+  double weight_;
+  char collision_state_;
+};
+
 /** Wrapper for the vertex's multiple as its property. */
 // clang-format off
-typedef boost::property<vertex_state_t, base::State*, // State
-        boost::property<boost::vertex_predecessor_t, VertexIndexType, // Disjoint Sets
-        boost::property<boost::vertex_rank_t, VertexIndexType // Disjoint Sets
-#ifdef ENABLE_QUALITY
-        , boost::property<vertex_interface_data_t, InterfaceHash> // Sparse meta data
-#endif
-         > > > SparseVertexProperties;
+// typedef boost::property<vertex_state_t, base::State*, // State
+//         boost::property<boost::vertex_predecessor_t, VertexIndexType, // Disjoint Sets
+//         boost::property<boost::vertex_rank_t, VertexIndexType // Disjoint Sets
+
+//          > > > SparseVertexProperties;
 // clang-format on
 
 /** Wrapper for the double assigned to an edge as its weight property. */
 // clang-format off
-typedef boost::property<boost::edge_weight_t, double,
-        boost::property<edge_collision_state_t, int > > SparseEdgeProperties;
+// typedef boost::property<boost::edge_weight_t, double,
+//         boost::property<edge_collision_state_t, int > > SparseEdgeProperties;
 // clang-format on
 
 /** The underlying boost graph type (undirected weighted-edge adjacency list with above properties). */
-typedef boost::adjacency_list<boost::vecS,  // store in std::vector
-                              boost::vecS,  // store in std::vector
-                              boost::undirectedS, SparseVertexProperties, SparseEdgeProperties> SparseAdjList;
+typedef boost::adjacency_list<boost::vecS,  // store OutEdgeList in std::vector
+                              boost::vecS,  // store VertexList in std::vector
+                              boost::undirectedS, // Undirected
+                              SparseVertexStruct, SparseEdgeStruct> SparseAdjList;
 
 /** \brief Vertex in Graph */
 typedef boost::graph_traits<SparseAdjList>::vertex_descriptor SparseVertex;
@@ -230,7 +245,7 @@ typedef boost::graph_traits<SparseAdjList>::edge_descriptor SparseEdge;
 // Typedefs for property maps
 
 /** \brief Access map that stores the lazy collision checking status of each edge */
-typedef boost::property_map<SparseAdjList, edge_collision_state_t>::type SparseEdgeCollisionStateMap;
+//typedef boost::property_map<SparseAdjList, edge_collision_state_t>::type SparseEdgeCollisionStateMap;
 
 ////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -276,9 +291,10 @@ typedef boost::property<boost::edge_weight_t, double,
 // clang-format on
 
 /** The underlying boost graph type (undirected weighted-edge adjacency list with above properties). */
-typedef boost::adjacency_list<boost::vecS,  // store in std::vector
-                              boost::vecS,  // store in std::vector
-                              boost::undirectedS, TaskVertexProperties, TaskEdgeProperties> TaskAdjList;
+typedef boost::adjacency_list<boost::vecS,  // store OutEdgeList in std::vector
+                              boost::vecS,  // store VertexList in std::vector
+                              boost::undirectedS, // Undirected
+                              TaskVertexProperties, TaskEdgeProperties> TaskAdjList;
 
 /** \brief Vertex in Graph */
 typedef boost::graph_traits<TaskAdjList>::vertex_descriptor TaskVertex;
@@ -369,81 +385,84 @@ public:
  * Used to artifically supress edges during A* search.
  * \implements ReadablePropertyMapConcept
  */
-class SparseEdgeWeightMap
-{
-private:
-  const SparseAdjList& g_;  // Graph used
-  const SparseEdgeCollisionStateMap& collisionStates_;
-  // const double popularityBias_;
-  // const bool popularityBiasEnabled_;
+// class SparseEdgeWeightMap
+// {
+// private:
+//   const SparseAdjList& g_;  // Graph used
+//   const SparseEdgeCollisionStateMap& collisionStates_;
+//   // const double popularityBias_;
+//   // const bool popularityBiasEnabled_;
 
-public:
-  /** Map key type. */
-  typedef SparseEdge key_type;
-  /** Map value type. */
-  typedef double value_type;
-  /** Map auxiliary value type. */
-  typedef double& reference;
-  /** Map type. */
-  typedef boost::readable_property_map_tag category;
+// public:
+//   /** Map key type. */
+//   typedef SparseEdge key_type;
+//   /** Map value type. */
+//   typedef double value_type;
+//   /** Map auxiliary value type. */
+//   typedef double& reference;
+//   /** Map type. */
+//   typedef boost::readable_property_map_tag category;
 
-  /**
-   * Construct map for certain constraints.
-   * \param graph         Graph to use
-   */
-  SparseEdgeWeightMap(const SparseAdjList& graph, const SparseEdgeCollisionStateMap& collisionStates)
-      // const double& popularityBias, const bool popularityBiasEnabled)
-      : g_(graph),
-        collisionStates_(collisionStates)
-  //, popularityBias_(popularityBias)
-  //, popularityBiasEnabled_(popularityBiasEnabled)
-  {
-  }
+//   /**
+//    * Construct map for certain constraints.
+//    * \param graph         Graph to use
+//    */
+//   SparseEdgeWeightMap(const SparseAdjList& graph, const SparseEdgeCollisionStateMap& collisionStates)
+//       // const double& popularityBias, const bool popularityBiasEnabled)
+//       : g_(graph),
+//         collisionStates_(collisionStates)
+//   //, popularityBias_(popularityBias)
+//   //, popularityBiasEnabled_(popularityBiasEnabled)
+//   {
+//   }
 
-  /**
-   * Get the weight of an edge.
-   * \param e the edge
-   * \return infinity if \a e lies in a forbidden neighborhood; actual weight of \a e otherwise
-   */
-  double get(SparseEdge e) const
-  {
-    // Get the status of collision checking for this edge
-    if (collisionStates_[e] == IN_COLLISION)
-      return std::numeric_limits<double>::infinity();
+//   /**
+//    * Get the weight of an edge.
+//    * \param e the edge
+//    * \return infinity if \a e lies in a forbidden neighborhood; actual weight of \a e otherwise
+//    */
+//   double get(SparseEdge e) const
+//   {
+//     // Get the status of collision checking for this edge
+//     if (collisionStates_[e] == IN_COLLISION)
+//       return std::numeric_limits<double>::infinity();
 
-    // double weight;
-    // if (popularityBiasEnabled_)
-    // {
-    //   // Maximum cost an edge can have based on popularity
-    //   const double MAX_POPULARITY_WEIGHT = 100.0;
+//     // double weight;
+//     // if (popularityBiasEnabled_)
+//     // {
+//     //   // Maximum cost an edge can have based on popularity
+//     //   const double MAX_POPULARITY_WEIGHT = 100.0;
 
-    //   // static const double popularityBias = 10;
-    //   weight = boost::get(boost::edge_weight, g_, e) / MAX_POPULARITY_WEIGHT * popularityBias_;
-    //   std::cout << "getting popularity weight of edge " << e << " with value " << weight << std::endl;
-    // }
-    // else
-    // {
-    // weight = boost::get(boost::edge_weight, g_, e);
-    //}
+//     //   // static const double popularityBias = 10;
+//     //   weight = boost::get(boost::edge_weight, g_, e) / MAX_POPULARITY_WEIGHT * popularityBias_;
+//     //   std::cout << "getting popularity weight of edge " << e << " with value " << weight << std::endl;
+//     // }
+//     // else
+//     // {
+//     // weight = boost::get(boost::edge_weight, g_, e);
+//     //}
 
-    // Method 3 - less optimal but faster planning time
-    // const double weighted_astar = 0.8;
-    // const double weight = boost::get(boost::edge_weight, g_, e) * weighted_astar;
+//     // Method 3 - less optimal but faster planning time
+//     // const double weighted_astar = 0.8;
+//     // const double weight = boost::get(boost::edge_weight, g_, e) * weighted_astar;
 
-    // std::cout << "getting weight of edge " << e << " with value " << weight << std::endl;
+//     // std::cout << "getting weight of edge " << e << " with value " << weight << std::endl;
 
-    // return weight;
-    return boost::get(boost::edge_weight, g_, e);
-  }
-};
+//     // return weight;
+//     return boost::get(boost::edge_weight, g_, e);
+//   }
+// };
 
 ////////////////////////////////////////////////////////////////////////////////////////
 /**
  * \brief Sparse disjoint sets structure
  */
-typedef boost::disjoint_sets<boost::property_map<SparseAdjList, boost::vertex_rank_t>::type,
-                             boost::property_map<SparseAdjList, boost::vertex_predecessor_t>::type>
-    SparseDisjointSetType;
+// typedef boost::disjoint_sets<boost::property_map<SparseAdjList, boost::vertex_rank_t>::type,
+//                              boost::property_map<SparseAdjList, boost::vertex_predecessor_t>::type>
+//typedef boost::disjoint_sets<boost::vertex_bundle_type<SparseAdjList>::type, boost::vertex_bundle_type<SparseAdjList>::type>
+//     SparseDisjointSetType;
+typedef boost::disjoint_sets<boost::property_map<SparseAdjList, std::size_t SparseVertexStruct::*>::type,
+                             boost::property_map<SparseAdjList, std::size_t SparseVertexStruct::*>::type> SparseDisjointSetType;
 
 // Ability to copy the disjoint sets data into a hashtable
 typedef std::map<SparseVertex, std::vector<SparseVertex> > SparseDisjointSetsMap;
