@@ -663,7 +663,9 @@ bool CartPathPlanner::addCartPointToBoltGraph(const CombinedPoints& combined_poi
     space->copyToOMPLState(ompl_state, *moveit_robot_state);
 
     // Add vertex to task graph
-    point_vertices[i] = task_graph_->addVertex(ompl_state, level, indent);
+    point_vertices[i] = task_graph_->addVertexWithLevel(ompl_state, level, indent);
+
+    BOLT_ERROR(indent, true, "need better memory management of state");
 
     //std::cout << "point_vertices[i]: " << point_vertices[i] << std::endl;
 

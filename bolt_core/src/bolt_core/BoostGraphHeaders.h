@@ -67,9 +67,9 @@ namespace bolt
 typedef base::MinimumClearanceValidStateSamplerPtr ClearanceSamplerPtr;
 
 // TODO(davetcoleman): maybe make all popularity use ints instead of doubles for memory efficiency?
-static const double MAX_POPULARITY_WEIGHT = 100.0;  // 100 means the edge is very unpopular
+//static const double MAX_POPULARITY_WEIGHT = 100.0;  // 100 means the edge is very unpopular
 // Everytime an edge is used, it is reduced by this amount (becomes more popular)
-static const double POPULARITY_WEIGHT_REDUCTION = 5;
+//static const double POPULARITY_WEIGHT_REDUCTION = 5;
 
 ////////////////////////////////////////////////////////////////////////////////////////
 // VERTEX PROPERTIES
@@ -109,55 +109,6 @@ typedef std::unordered_map<VertexPair, InterfaceData> InterfaceHash;
 /** \brief Task level dimension data type */
 typedef std::size_t VertexLevel;  // TODO(davetcoleman): rename to TaskLevel
 
-/** \brief Boost vertex properties */
-struct vertex_state_t
-{
-  typedef boost::vertex_property_tag kind;
-};
-
-struct vertex_level_t
-{
-  typedef boost::vertex_property_tag kind;
-};
-
-struct vertex_task_mirror_t
-{
-  typedef boost::vertex_property_tag kind;
-};
-
-struct vertex_interface_data_t
-{
-  typedef boost::vertex_property_tag kind;
-};
-
-struct vertex_sparse_rep_t
-{
-  typedef boost::vertex_property_tag kind;
-};
-
-struct vertex_type_t
-{
-  typedef boost::vertex_property_tag kind;
-};
-
-// struct vertex_popularity_t
-// {
-//   typedef boost::vertex_property_tag kind;
-// };
-
-////////////////////////////////////////////////////////////////////////////////////////
-// Edge properties
-
-struct edge_collision_state_t
-{
-  typedef boost::edge_property_tag kind;
-};
-
-struct edge_type_t
-{
-  typedef boost::edge_property_tag kind;
-};
-
 /** \brief Possible collision states of an edge */
 enum EdgeCollisionState
 {
@@ -181,6 +132,10 @@ enum EdgeCollisionState
    \par Any BGL graph representation could be used here. Because we
    expect the roadmap to be sparse (m<n^2), an adjacency_list is more
    appropriate than an adjacency_matrix. Edges are undirected.
+
+   Documentation: http://www.boost.org/doc/libs/1_62_0/libs/graph/doc/adjacency_list.html
+   Graph theory:  http://www.boost.org/doc/libs/1_61_0/libs/graph/doc/using_adjacency_list.html
+   Using structs: http://www.boost.org/doc/libs/1_62_0/libs/graph/doc/bundles.html
 */
 
 // Vertex Properties
@@ -189,15 +144,15 @@ struct SparseVertexStruct
   base::State* state_;
   std::size_t vertex_predecessor_; // Required by incremental connected components algorithm (disjoint sets)
   std::size_t vertex_rank_; // Required by incremental connected components algorithm (disjoint sets)
-#ifdef ENABLE_QUALITY
-  boost::property<vertex_interface_data_t, InterfaceHash> // Sparse meta data
-#endif
+  //#ifdef ENABLE_QUALITY
+  //boost::property<vertex_interface_data_t, InterfaceHash> // Sparse meta data
+  //#endif
 };
 
 // Edge Properties
 struct SparseEdgeStruct
 {
-  double weight_; // cost/distance between two vertices
+  float weight_; // cost/distance between two vertices
   char collision_state_; // used for lazy collision checking, determines if an edge has been checked
   // already for collision. 0 = not checked/unknown, 1 = in collision, 2 = free
 };
@@ -247,7 +202,7 @@ struct TaskVertexStruct
 // Edge Properties
 struct TaskEdgeStruct
 {
-  double weight_; // cost/distance between two vertices
+  float weight_; // cost/distance between two vertices
   char collision_state_; // used for lazy collision checking, determines if an edge has been checked
   // already for collision. 0 = not checked/unknown, 1 = in collision, 2 = free
 };

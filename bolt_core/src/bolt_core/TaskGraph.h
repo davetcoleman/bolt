@@ -44,6 +44,7 @@
 #include <ompl/geometric/PathSimplifier.h>
 #include <ompl/base/SpaceInformation.h>
 #include <ompl/datastructures/NearestNeighbors.h>
+#include <ompl/base/spaces/DiscreteStateSpace.h>
 
 // Bolt
 #include <bolt_core/SparseGraph.h>
@@ -75,6 +76,11 @@ namespace bolt
 /// @cond IGNORE
 OMPL_CLASS_FORWARD(TaskGraph);
 /// @endcond
+
+enum CompoundTypes {
+  MODEL_BASED = 0,
+  DISCRETE = 1
+};
 
 /** \class ompl::tools::bolt::::TaskGraphPtr
     \brief A boost shared pointer wrapper for ompl::tools::TaskGraph */
@@ -204,22 +210,23 @@ public:
    * --------------------------------------------------------------------------------- */
   inline int getTaskLevel(const TaskVertex v) const
   {
-    return si_->getStateSpace()->getLevel(g_[v].state_);
+    return g_[v].state_->as<base::CompoundState>()->as<base::DiscreteStateSpace::StateType>(DISCRETE)->value;
   }
 
   inline int getTaskLevel(const base::State* state) const
   {
-    return si_->getStateSpace()->getLevel(state);
+    //return state->as<base::DiscreteStateSpace::StateType>(DISCRETE)->value;
+    return state->as<base::CompoundState>()->as<base::DiscreteStateSpace::StateType>(DISCRETE)->value;
   }
 
   inline void setVertexTaskLevel(TaskVertex v, int level)
   {
-    si_->getStateSpace()->setLevel(g_[v].state_, level);
+    g_[v].state_->as<base::CompoundState>()->as<base::DiscreteStateSpace::StateType>(DISCRETE)->value = level;
   }
 
   inline void setStateTaskLevel(base::State* state, int level)
   {
-    si_->getStateSpace()->setLevel(state, level);
+    state->as<base::CompoundState>()->as<base::DiscreteStateSpace::StateType>(DISCRETE)->value = level;
   }
 
   bool taskPlanningEnabled() const
@@ -299,8 +306,16 @@ public:
    * Add/remove vertices, edges, states
    * --------------------------------------------------------------------------------- */
 
+  /** \brief Create a compound state that includes a discrete step
+   *  \param state - the base state of joint values
+   *  \param level - the discrete step of a level
+   *  \return new state that is compound
+   */
+  base::State* createCompoundState(base::State *jointState, const VertexLevel level, std::size_t indent);
+
   /** \brief Add vertices to graph. The state passed in will be owned by the AdjList graph */
-  TaskVertex addVertex(base::State* state, VertexLevel level, std::size_t indent);
+  TaskVertex addVertexWithLevel(base::State* state, VertexLevel level, std::size_t indent);
+  TaskVertex addVertex(base::State* state, std::size_t indent);
 
   /** \brief Remove vertex from graph */
   void removeVertex(TaskVertex v);
@@ -340,7 +355,7 @@ public:
    * --------------------------------------------------------------------------------- */
 
   /** \brief Print info to console */
-  void debugState(const ompl::base::State* state);
+  void debugState(const base::State* state);
 
   /** \brief Print info to console */
   void debugVertex(const TaskVertex v);
@@ -360,6 +375,8 @@ protected:
 
   /** \brief The created space information */
   base::SpaceInformationPtr si_;
+  base::StateSpacePtr stateSpace_;
+  base::CompoundStateSpace* compoundSpace_;
 
   /** \brief Class for managing various visualization features */
   VisualizerPtr visual_;

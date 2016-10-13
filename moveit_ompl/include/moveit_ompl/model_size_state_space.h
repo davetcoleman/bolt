@@ -60,7 +60,7 @@ public:
     }
 
     double values[N];
-    int level;
+    int level; // TODO: remove the level!
   };
 
   ModelSizeStateSpace(const ModelBasedStateSpaceSpecification &spec) : ModelBasedStateSpace(spec)

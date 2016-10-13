@@ -36,7 +36,6 @@
 
 #include <moveit_ompl/model_based_state_space.h>
 #include <moveit_ompl/detail/default_state_sampler.h>
-#include <boost/bind.hpp>
 
 namespace mo = moveit_ompl;
 namespace ob = ompl::base;
@@ -93,13 +92,6 @@ mo::ModelBasedStateSpace::ModelBasedStateSpace(const ModelBasedStateSpaceSpecifi
     //<< var_bounds.front().min_position_ << ", " << var_bounds.front().max_position_ << "]" << std::endl;
   }
 
-  // default settings
-  // setTagSnapToSegment(0.95);
-
-  /// expose parameters
-  // params_.declareParam<double>("tag_snap_to_segment", boost::bind(&ModelBasedStateSpace::setTagSnapToSegment, this,
-  // _1),
-  // boost::bind(&ModelBasedStateSpace::getTagSnapToSegment, this));
 }
 
 mo::ModelBasedStateSpace::~ModelBasedStateSpace()

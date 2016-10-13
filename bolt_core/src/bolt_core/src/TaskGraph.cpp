@@ -41,6 +41,7 @@
 #include <ompl/util/Console.h>
 #include <ompl/datastructures/NearestNeighborsGNAT.h>
 #include <ompl/base/DiscreteMotionValidator.h>
+#include <ompl/base/spaces/DiscreteStateSpace.h>
 
 // Boost
 #include <boost/graph/incremental_components.hpp>
@@ -54,7 +55,6 @@
 // C++
 #include <limits>
 #include <queue>
-//#include <algorithm>  // std::random_shuffle
 
 // Profiling
 //#include <valgrind/callgrind.h>
@@ -74,19 +74,29 @@ namespace bolt
 {
 TaskGraph::TaskGraph(SparseGraphPtr sg)
   : sg_(sg)
-  // Property accessors of edges
-  //, edgeWeightProperty_(boost::get(boost::edge_weight, g_))
-  //, edgeCollisionStatePropertyTask_(boost::get(edge_collision_state_t(), g_))
-  // Property accessors of vertices
-  //, vertexStateProperty_(boost::get(vertex_state_t(), g_))
-  //, vertexTaskMirrorProperty_(boost::get(vertex_task_mirror_t(), g_))
 {
   // Save number of threads available
   numThreads_ = boost::thread::hardware_concurrency();
 
   // Copy the pointers of various components
-  si_ = sg_->getSpaceInformation();
   visual_ = sg_->getVisual();
+
+  // Create compound state
+  stateSpace_.reset(new base::CompoundStateSpace);
+  compoundSpace_ = dynamic_cast<base::CompoundStateSpace*>(stateSpace_.get());
+  compoundSpace_->addSubspace(sg_->getSpaceInformation()->getStateSpace(), 1.0); // 100% weight
+
+  // Create discrete state space
+  const int lowerBound = 0; // TODO do not hardcode?
+  const int upperBound = 2;
+  base::StateSpacePtr discreteSpace;
+  discreteSpace.reset(new base::DiscreteStateSpace(lowerBound, upperBound));
+
+  //base::DiscreteStateSpace discreteSpace(lowerBound, upperBound);
+  compoundSpace_->addSubspace(discreteSpace, 0.0); // 0% weight
+
+  // Create space information
+  si_.reset(new base::SpaceInformation(stateSpace_));
 
   // Add search state
   initializeQueryState();
@@ -441,8 +451,12 @@ bool TaskGraph::isEmpty() const
   return (getNumVertices() == getNumQueryVertices() && getNumEdges() == 0);
 }
 
+
+
 void TaskGraph::generateMonoLevelTaskSpace(std::size_t indent)
 {
+  BOLT_ERROR(indent, true, "TODO: implement");
+  /*
   BOLT_FUNC(indent, verbose_, "TaskGraph.generateMonoLevelTaskTaskSpace()");
   time::point startTime = time::now();  // Benchmark
 
@@ -496,6 +510,7 @@ void TaskGraph::generateMonoLevelTaskSpace(std::size_t indent)
 
   // Tell the planner to require task planning
   taskPlanningEnabled_ = false;
+  */
 }
 
 void TaskGraph::generateTaskSpace(std::size_t indent)
@@ -522,16 +537,16 @@ void TaskGraph::generateTaskSpace(std::size_t indent)
     if (sparseV < sg_->getNumQueryVertices())
       continue;
 
-    const base::State *state = sg_->getState(sparseV);
+    base::State *jointState = sg_->getStateNonConst(sparseV); // TODO - should this be const?
 
     // Create level 0 vertex
-    VertexLevel level = 0;
-    TaskVertex taskV0 = addVertex(si_->cloneState(state), level, indent);
+    const VertexLevel level0 = 0;
+    TaskVertex taskV0 = addVertexWithLevel(jointState, level0, indent);
     sparseToTaskVertex0[sparseV] = taskV0;  // record mapping
 
     // Create level 2 vertex
-    level = 2;
-    TaskVertex taskV2 = addVertex(si_->cloneState(state), level, indent);
+    const VertexLevel level2 = 2;
+    const TaskVertex taskV2 = addVertexWithLevel(jointState, level2, indent);
     sparseToTaskVertex2[sparseV] = taskV2;  // record mapping
 
     // Link the two vertices to each other for future bookkeeping
@@ -564,6 +579,8 @@ void TaskGraph::generateTaskSpace(std::size_t indent)
 
 bool TaskGraph::addCartPath(std::vector<base::State *> path, std::size_t indent)
 {
+  BOLT_ERROR(indent, true, "TODO implement");
+  /*
   BOLT_FUNC(indent, verbose_, "TaskGraph.addCartPath()");
 
   // Error check
@@ -629,6 +646,7 @@ bool TaskGraph::addCartPath(std::vector<base::State *> path, std::size_t indent)
 
   // Tell the planner to require task planning
   taskPlanningEnabled_ = true;
+  */
 
   return true;
 }
@@ -925,20 +943,44 @@ bool TaskGraph::smoothQualityPath(geometric::PathGeometric *path, double clearan
   return true;
 }
 
-TaskVertex TaskGraph::addVertex(base::State *state, VertexLevel level, std::size_t indent)
+/** \brief Create a compound state that includes a discrete step
+ *  \param state - the base state of joint values
+ *  \param level - the discrete step of a level
+ *  \return new state that is compound
+*/
+base::State* TaskGraph::createCompoundState(base::State *jointState, const VertexLevel level, std::size_t indent)
+{
+    base::CompoundState *state = new base::CompoundState();
+    state->components = new base::State *[compoundSpace_->getSubspaceCount()];
+    BOLT_ASSERT(compoundSpace_->getSubspaceCount() == 2, "Invalid number of subspaces");
+
+    // Create components
+    state->components[MODEL_BASED] = jointState;
+    state->components[DISCRETE] = compoundSpace_->getSubspaces()[DISCRETE]->allocState();
+
+    // Set level
+    state->as<ob::DiscreteStateSpace::StateType>(DISCRETE)->value = level;
+
+    return static_cast<base::State *>(state);
+}
+
+TaskVertex TaskGraph::addVertexWithLevel(base::State *state, VertexLevel level, std::size_t indent)
+{
+  // Create the state then add to the graph
+  return addVertex(createCompoundState(state, level, indent), indent);
+}
+
+TaskVertex TaskGraph::addVertex(base::State *state, std::size_t indent)
 {
   // Create vertex
   TaskVertex v = boost::add_vertex(g_);
-  BOLT_FUNC(indent, vAdd_, "TaskGraph.addVertex(): v: " << v << " level: " << level);
-
-  // Add level to state
-  setStateTaskLevel(state, level);
+  BOLT_FUNC(indent, vAdd_, "TaskGraph.addVertex(): v: " << v);
 
   // Add properties
   g_[v].state_ = state;
 
   // Add vertex to nearest neighbor structure - except only do this for level 0
-  if (level == 0)
+  if (getTaskLevel(state) == 0)
   {
     nn_->add(v);
   }

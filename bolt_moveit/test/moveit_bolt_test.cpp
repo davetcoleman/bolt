@@ -62,6 +62,7 @@
 #include <bolt_core/Bolt.h>
 #include <ompl/base/StateSpace.h>
 #include <ompl/base/spaces/RealVectorStateSpace.h>
+#include <ompl/base/spaces/DiscreteStateSpace.h>
 
 /* Class to hold general test data ------------------------------------------------------ */
 class TestingBase
@@ -97,6 +98,7 @@ public:
 
     // Robot model loader
     robot_model_loader::RobotModelLoader::Options options(urdf_string, srdf_string);
+    options.load_kinematics_solvers_ = false;
     robot_model_loader_.reset(new robot_model_loader::RobotModelLoader(options));
 
     // Load the robot model
@@ -144,11 +146,6 @@ TEST(TestingBase, get_7d_state_by_vector)
   // Construct the state space we are planning in
   ob::StateSpacePtr space_ = ob::StateSpacePtr(new moveit_ompl::ModelBasedStateSpace(mbss_spec));
   EXPECT_TRUE(space_ != NULL);
-
-  // SimpleSetup
-  // otb::BoltPtr bolt_ = otb::BoltPtr(new otb::Bolt(space_));
-  // EXPECT_TRUE(bolt_ != NULL);
-  // bolt_->setup();
 
   // SpaceInfo
   //ob::SpaceInformationPtr si_ = bolt_->getSpaceInformation();
@@ -205,50 +202,106 @@ TEST(TestingBase, get_7d_state_by_vector)
   EXPECT_TRUE(output_values[6] == 0.7);
 }
 
-TEST(TestingBase, alloc_memory_efficient)
+TEST(TestingBase, compound_state)
 {
   namespace ob = ompl::base;
   namespace ot = ompl::tools;
   namespace otb = ompl::tools::bolt;
 
-  // Setup space
+  // ------------------------------------------------------------------------
+  // Create model based state space
   moveit_ompl::ModelBasedStateSpaceSpecification mbss_spec(base.robot_model_, base.jmg_);
 
   // Construct the state space we are planning in
-  ob::StateSpacePtr space_ = ob::StateSpacePtr(new moveit_ompl::ModelBasedStateSpace(mbss_spec));
-  EXPECT_TRUE(space_ != NULL);
-
-  // SimpleSetup
-  // otb::BoltPtr bolt_ = otb::BoltPtr(new otb::Bolt(space_));
-  // EXPECT_TRUE(bolt_ != NULL);
-  // bolt_->setup();
-
-  // SpaceInfo
-  //ob::SpaceInformationPtr si_ = bolt_->getSpaceInformation();
-  ob::SpaceInformationPtr si_ = std::make_shared<ob::SpaceInformation>(space_);
-  EXPECT_TRUE(si_ != NULL);
-  si_->setup();
-  EXPECT_TRUE(si_->isSetup());
+  ob::StateSpacePtr model_based_space = std::make_shared<moveit_ompl::ModelBasedStateSpace>(mbss_spec);
+  EXPECT_TRUE(model_based_space != NULL);
+  model_based_space->setup();
+  EXPECT_TRUE(model_based_space->getDimension() == 7);
 
   // Example data
-  EXPECT_TRUE(space_->getDimension() == 7);
-  std::vector<double> values(space_->getDimension(), /*default value*/0);
-  values[0] = 0.1;
-  values[1] = 0.2;
-  values[2] = 0.3;
-  values[3] = 0.4;
-  values[4] = 0.5;
-  values[5] = 0.6;
-  values[6] = 0.7;
+  std::vector<double> values(model_based_space->getDimension(), /*default value*/0);
+  values[0] = 0.1; values[1] = 0.2; values[2] = 0.3; values[3] = 0.4; values[4] = 0.5; values[5] = 0.6; values[6] = 0.7;
   EXPECT_TRUE(values.size() == 7);
 
   // Create state
-  ob::State *candidateState = space_->allocState();
-  EXPECT_TRUE(candidateState != NULL);
+  ob::State *model_state = model_based_space->allocState();
+  EXPECT_TRUE(model_state != NULL);
 
   // Populate state
-  space_->copyFromReals(candidateState, values);
-  EXPECT_TRUE(candidateState != NULL);
+  model_based_space->copyFromReals(model_state, values);
+  EXPECT_TRUE(model_state != NULL);
+
+  // ------------------------------------------------------------------------
+  // Create discrete state space
+  const int lowerBound = 0;
+  const int upperBound = 2;
+  ob::StateSpacePtr discrete_space = std::make_shared<ob::DiscreteStateSpace>(lowerBound, upperBound);
+  EXPECT_TRUE(discrete_space != NULL);
+  EXPECT_TRUE(discrete_space->getDimension() == 1);
+
+  // Create state
+  ob::State *discrete_state = discrete_space->allocState();
+  EXPECT_TRUE(discrete_state != NULL);
+
+  // Populate state
+  const_cast<ob::State *>(discrete_state)->as<ob::DiscreteStateSpace::StateType>()->value = 1;
+  EXPECT_TRUE(const_cast<ob::State *>(discrete_state)->as<ob::DiscreteStateSpace::StateType>()->value == 1);
+
+  // ------------------------------------------------------------------------
+  // Create compound state space
+  ob::CompoundStateSpacePtr compound_space = std::make_shared<ob::CompoundStateSpace>();
+  compound_space->addSubspace(model_based_space, 1.0); // 100% weight
+  compound_space->addSubspace(discrete_space, 0.0); // 0% weight
+
+  // Create default state
+  ob::State* default_state = compound_space->allocState();
+  EXPECT_TRUE(default_state != NULL);
+
+  // Create manual state
+  ob::State *compound_state = new ob::CompoundState();
+  EXPECT_TRUE(compound_space->getSubspaceCount() == 2);
+  compound_state->as<ob::CompoundState>()->components = new ob::State *[compound_space->getSubspaceCount()];
+  for (unsigned int i = 0; i < compound_space->getSubspaceCount(); ++i)
+  {
+    // Hardcoded - ordering of subspaces TODO
+    if (i == 0)
+    {
+      compound_state->as<ob::CompoundState>()->components[i] = model_state;
+    }
+    else
+    {
+      compound_state->as<ob::CompoundState>()->components[i] = discrete_state;
+    }
+  }
+
+  // Check that the components are the types expected
+  EXPECT_TRUE(compound_space->isCompound());
+  EXPECT_TRUE(compound_space->getSubspace(0)->getType() == ob::STATE_SPACE_UNKNOWN); // model_based_state_space
+  EXPECT_TRUE(compound_space->getSubspace(0)->getDimension() == 7);
+  EXPECT_TRUE(compound_space->getSubspace(1)->getType() == ob::STATE_SPACE_DISCRETE); // discrete
+  EXPECT_TRUE(compound_space->getSubspace(1)->getDimension() == 1);
+  EXPECT_TRUE(compound_space->as<ob::DiscreteStateSpace>(1)->getLowerBound() == 0);
+  EXPECT_TRUE(compound_space->as<ob::DiscreteStateSpace>(1)->getUpperBound() == 2);
+
+  // Check that the components have the values expected
+  EXPECT_TRUE(compound_state->as<ob::CompoundState>()->as<ob::DiscreteStateSpace::StateType>(1)->value == 1); // discrete
+
+  std::vector<double> output_values; // Get values into a vector again
+  model_based_space->copyToReals(output_values, compound_state->as<ob::CompoundState>()->as<moveit_ompl::ModelBasedStateSpace::StateType>(0));
+  EXPECT_TRUE(output_values.size() == 7);
+  EXPECT_TRUE(output_values[0] == 0.1);
+  EXPECT_TRUE(output_values[1] == 0.2);
+  EXPECT_TRUE(output_values[2] == 0.3);
+  EXPECT_TRUE(output_values[3] == 0.4);
+  EXPECT_TRUE(output_values[4] == 0.5);
+  EXPECT_TRUE(output_values[5] == 0.6);
+  EXPECT_TRUE(output_values[6] == 0.7);
+
+  // --------------------------------------------------------------------------
+  // Free all memory
+  model_based_space->freeState(model_state);
+  discrete_space->freeState(discrete_state);
+  compound_space->freeState(default_state);
 }
 
 /* Main  ------------------------------------------------------------------------------------- */
