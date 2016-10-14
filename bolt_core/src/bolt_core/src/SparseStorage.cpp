@@ -366,7 +366,7 @@ void SparseStorage::populateNNThread(std::size_t startingVertex)
   }
 
   // There should be one vertex left
-  BOLT_ASSERT(vertexID == sparseGraph_->getNumVertices() - 1, "There should only be one vertex left");
+  BOLT_ASSERT(vertexID == sparseGraph_->getNumVertices() - 1, "There should only be one vertex left. sparseGraph_->getNumVertices(): " << sparseGraph_->getNumVertices() << " vertexID: " << vertexID);
 
   // Add the last vertex
   sparseGraph_->getNN()->add(vertexID);

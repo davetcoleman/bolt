@@ -297,7 +297,7 @@ public:
 
   /** \brief Disjoint sets analysis tools */
   std::size_t getDisjointSetsCount(bool verbose = false) const;
-  void getDisjointSets(SparseDisjointSetsMap& disjointSets);
+  void getDisjointSets(SparseDisjointSetsMap& disjointSets, std::size_t indent = 0);
   void printDisjointSets(SparseDisjointSetsMap& disjointSets);
   void visualizeDisjointSets(SparseDisjointSetsMap& disjointSets);
   std::size_t checkConnectedComponents();

@@ -108,7 +108,7 @@ base::PlannerStatus BoltPlanner::solve(Termination &ptc)
     return base::PlannerStatus::ABORT;
   }
 
-  // TODO: call clearEdgeCollisionStates() before planning
+  taskGraph_->clearEdgeCollisionStates();
 
   // Restart the Planner Input States so that the first start and goal state can be fetched
   pis_.restart();  // PlannerInputStates
@@ -435,18 +435,18 @@ bool BoltPlanner::lazyCollisionSearch(const TaskVertex &startVertex, const TaskV
   {
     BOLT_DEBUG(indent, verbose_, "viz start -----------------------------");
     // visual_->viz5()->state(taskGraph_->getModelBasedState(startVertex), tools::VARIABLE_SIZE, tools::PURPLE, 1);
-    visual_->viz5()->state(taskGraph_->getModelBasedState(startVertex), tools::ROBOT, tools::ORANGE);
+    visual_->viz4()->state(taskGraph_->getModelBasedState(startVertex), tools::ROBOT, tools::ORANGE);
     // visual_->viz5()->edge(actualStart, taskGraph_->getModelBasedState(startVertex), tools::MEDIUM, tools::BLACK);
-    visual_->viz5()->trigger();
-    visual_->waitForUserFeedback("start viz");
+    //visual_->viz5()->trigger();
+    //visual_->waitForUserFeedback("start viz");
 
     // Visualize goal vertex
     BOLT_DEBUG(indent, verbose_, "viz goal ------------------------------");
     // visual_->viz5()->state(taskGraph_->getModelBasedState(goalVertex), tools::VARIABLE_SIZE, tools::PURPLE, 1);
     visual_->viz5()->state(taskGraph_->getModelBasedState(goalVertex), tools::ROBOT, tools::GREEN);
     // visual_->viz5()->edge(actualGoal, taskGraph_->getModelBasedState(goalVertex), tools::MEDIUM, tools::BLACK);
-    visual_->viz5()->trigger();
-    visual_->waitForUserFeedback("goal viz");
+    //visual_->viz5()->trigger();
+    //visual_->waitForUserFeedback("goal viz");
   }
 
   // Keep looking for paths between chosen start and goal until one is found that is valid,
@@ -494,7 +494,7 @@ bool BoltPlanner::lazyCollisionSearch(const TaskVertex &startVertex, const TaskV
 
 bool BoltPlanner::lazyCollisionCheck(std::vector<TaskVertex> &vertexPath, Termination &ptc, std::size_t indent)
 {
-  BOLT_FUNC(indent, verbose_, "BoltPlanner::lazyCollisionCheck()");
+  BOLT_FUNC(indent, verbose_, "BoltPlanner::lazyCollisionCheck() path of size " << vertexPath.size());
 
   bool hasInvalidEdges = false;
 
@@ -520,25 +520,16 @@ bool BoltPlanner::lazyCollisionCheck(std::vector<TaskVertex> &vertexPath, Termin
     // Has this edge already been checked before?
     if (taskGraph_->getGraphNonConst()[thisEdge].collision_state_ == NOT_CHECKED)
     {
+      // TODO - is checking edges sufficient, or do we also need to check vertices? I think its fine.
       // Check path between states
       if (!taskGraph_->checkMotion(taskGraph_->getState(fromVertex), taskGraph_->getState(toVertex)))
       {
         // Path between (from, to) states not valid, disable the edge
 
+        BOLT_MAGENTA(indent, verbose_, "LAZY CHECK: disabling edge from vertex " << fromVertex << " to " << toVertex);
+
         if (visualizeLazyCollisionCheck_)
-        {
-          BOLT_GREEN(indent, verbose_, "LAZY CHECK: disabling edge from vertex " << fromVertex << " to vertex "
-                                                                                 << toVertex);
-          visual_->viz6()->edge(taskGraph_->getModelBasedState(fromVertex), taskGraph_->getModelBasedState(toVertex),
-                                tools::MEDIUM, tools::BLUE);
-          visual_->viz6()->state(taskGraph_->getModelBasedState(fromVertex), tools::ROBOT, tools::DEFAULT, 0);
-          visual_->viz6()->trigger();
-          usleep(0.1 * 1000000);
-          visual_->viz6()->state(taskGraph_->getModelBasedState(toVertex), tools::ROBOT, tools::DEFAULT, 0);
-          visual_->viz6()->trigger();
-          // usleep(0.1*1000000);
-          visual_->waitForUserFeedback("collision");
-        }
+          visualizeBadEdge(fromVertex, toVertex);
 
         // Disable edge
         taskGraph_->getGraphNonConst()[thisEdge].collision_state_ = IN_COLLISION;
@@ -551,8 +542,10 @@ bool BoltPlanner::lazyCollisionCheck(std::vector<TaskVertex> &vertexPath, Termin
     }
     else if (taskGraph_->getGraphNonConst()[thisEdge].collision_state_ == IN_COLLISION)
     {
-      BOLT_ERROR(indent, "Somehow a path was found that is already in collision before lazy collision checking");
-      visual_->waitForUserFeedback("error");
+      if (visualizeLazyCollisionCheck_)
+        visualizeBadEdge(fromVertex, toVertex);
+
+      BOLT_ERROR(indent, "Somehow an edge " << thisEdge << " was found that is already in collision before lazy collision checking");
     }
 
     // Check final result
@@ -565,11 +558,10 @@ bool BoltPlanner::lazyCollisionCheck(std::vector<TaskVertex> &vertexPath, Termin
     // switch vertex focus
     fromVertex = toVertex;
 
-    if (!visual_->viz1()->shutdownRequested())
+    if (visual_->viz1()->shutdownRequested())
       break;
-  }  // for
 
-  BOLT_DEBUG(indent, verbose_, "Done lazy collision checking");
+  }  // for
 
   // Only return true if nothing was found invalid
   return !hasInvalidEdges;
@@ -640,19 +632,22 @@ bool BoltPlanner::convertVertexPathToStatePath(std::vector<TaskVertex> &vertexPa
   if (!vertexPath.size())
     return false;
 
-  // Add original start if it is different than the first state
-  if (actualStart != taskGraph_->getState(vertexPath.back()))
-  {
-    geometricSolution.append(actualStart);
-  }
+ // TODO: remove this check
+  BOLT_ASSERT(actualStart != taskGraph_->getState(vertexPath.back()), "Unexpected same states, should not append actualStart");
+
+  // Add original start
+  geometricSolution.append(actualStart);
 
   // Error check that no consequtive verticies are the same
-  /*std::cout << "BoltPlanner.Vertices: ";
-  for (std::size_t i = vertexPath.size(); i > 0; --i)
+  if (verbose_)
   {
+    std::cout << "BoltPlanner.Vertices: ";
+    for (std::size_t i = vertexPath.size(); i > 0; --i)
+    {
       std::cout << vertexPath[i - 1] << ", ";
+    }
+    std::cout << std::endl;
   }
-  std::cout << std::endl;*/
 
   // Reverse the vertexPath and convert to state path
   for (std::size_t i = vertexPath.size(); i > 0; --i)
@@ -679,8 +674,8 @@ bool BoltPlanner::convertVertexPathToStatePath(std::vector<TaskVertex> &vertexPa
       }
       else if (taskGraph_->getGraphNonConst()[edge].collision_state_ == NOT_CHECKED)
       {
-        BOLT_ERROR(indent, "A chosen path has an edge that has not been checked for collision. This should not "
-                           "happen");
+        BOLT_ERROR(indent, "A chosen path has an edge " << edge << " that has not been checked for collision. This "
+                                                                   "should not happen");
       }
     }
   }
@@ -701,6 +696,7 @@ bool BoltPlanner::simplifyPath(og::PathGeometric &path, Termination &ptc, std::s
   time::point simplifyStart = time::now();
   std::size_t numStates = path.getStateCount();
 
+  BOLT_ERROR(indent, "this path simplifier might be using the wrong statespace path");
   path_simplifier_->simplify(path, ptc);
   double simplifyTime = time::seconds(time::now() - simplifyStart);
 
@@ -713,7 +709,7 @@ bool BoltPlanner::simplifyPath(og::PathGeometric &path, Termination &ptc, std::s
 
 bool BoltPlanner::simplifyTaskPath(og::PathGeometric &path, Termination &ptc, std::size_t indent)
 {
-  BOLT_FUNC(indent, true || verbose_, "BoltPlanner: simplifyTaskPath()");
+  BOLT_FUNC(indent, true, "BoltPlanner: simplifyTaskPath()");
 
   time::point simplifyStart = time::now();
   std::size_t origNumStates = path.getStateCount();
@@ -734,7 +730,9 @@ bool BoltPlanner::simplifyTaskPath(og::PathGeometric &path, Termination &ptc, st
   for (std::size_t i = 0; i < path.getStateCount(); ++i)
   {
     base::State *state = path.getState(i);
-    VertexLevel level = si_->getStateSpace()->getLevel(state);
+    VertexLevel level = taskGraph_->getTaskLevel(state);
+
+    BOLT_DEBUG(indent, verbose_, "Path on level " << level);
 
     assert(level < NUM_LEVELS);
 
@@ -752,9 +750,6 @@ bool BoltPlanner::simplifyTaskPath(og::PathGeometric &path, Termination &ptc, st
     std::size_t seg0Size = pathSegment[0].getStateCount();
     std::size_t seg1Size = pathSegment[1].getStateCount();
     std::size_t seg2Size = pathSegment[2].getStateCount();
-    // (void)seg0Size;  // silence unused warning
-    // (void)seg1Size;  // silence unused warning
-    // (void)seg2Size;  // silence unused warning
 
     // Move first state
     pathSegment[0].append(pathSegment[1].getStates().front());
@@ -775,6 +770,7 @@ bool BoltPlanner::simplifyTaskPath(og::PathGeometric &path, Termination &ptc, st
   }
 
   // Smooth the freespace paths
+  BOLT_ERROR(indent, "change path_simplfier space information");
   path_simplifier_->simplifyMax(pathSegment[0]);
   path_simplifier_->simplifyMax(pathSegment[2]);
 
@@ -786,7 +782,7 @@ bool BoltPlanner::simplifyTaskPath(og::PathGeometric &path, Termination &ptc, st
       base::State *state = pathSegment[segmentLevel].getState(i);
 
       // Enforce the correct level on the state because the OMPL smoothing components don't understand the concept
-      si_->getStateSpace()->setLevel(state, segmentLevel);
+      taskGraph_->setStateTaskLevel(state, segmentLevel);
 
       // Add to solution path
       smoothedPath.append(state);
@@ -884,6 +880,22 @@ bool BoltPlanner::canConnect(const base::State *randomState, Termination &ptc, s
     }
   }
   return false;
+}
+
+void BoltPlanner::visualizeBadEdge(TaskVertex fromVertex, TaskVertex toVertex)
+{
+  const base::State* from = taskGraph_->getModelBasedState(fromVertex);
+  const base::State* to = taskGraph_->getModelBasedState(toVertex);
+
+  // Line
+  visual_->viz5()->edge(from, to, tools::MEDIUM, tools::RED);
+  visual_->viz5()->trigger();
+
+  // Robot states
+  visual_->viz4()->state(from, tools::ROBOT, tools::RED, 0);
+  visual_->viz5()->state(to, tools::ROBOT, tools::RED, 0);
+
+  visual_->waitForUserFeedback("collision");
 }
 
 }  // namespace bolt

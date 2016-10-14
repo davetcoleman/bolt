@@ -1141,7 +1141,8 @@ public:
     // Set task dimension if necessary
     if (use_task_planning_)
     {
-      space_->setLevel(goal, 2);  // set goal on 3rd (last) level
+      BOLT_ERROR(0, "TODO set level");
+      //space_->setLevel(goal, 2);  // set goal on 3rd (last) level
     }
   }
 

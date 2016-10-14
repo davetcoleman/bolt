@@ -111,9 +111,11 @@
 // BOLT_WARN()
 #define BOLT_WARN(indent, flag, stream) BOLT_COLOR_INFO(indent, flag, stream, ANSI_COLOR_YELLOW);
 
+// OTHER COLORS
 #define BOLT_GREEN(indent, flag, stream) BOLT_COLOR_DEBUG(indent, flag, stream, ANSI_COLOR_GREEN);
 #define BOLT_BLUE(indent, flag, stream) BOLT_COLOR_DEBUG(indent, flag, stream, ANSI_COLOR_BLUE);
 #define BOLT_MAGENTA(indent, flag, stream) BOLT_COLOR_DEBUG(indent, flag, stream, ANSI_COLOR_MAGENTA);
+// Note: Cyan is also used for function headers
 #define BOLT_CYAN(indent, flag, stream) BOLT_COLOR_DEBUG(indent, flag, stream, ANSI_COLOR_CYAN);
 // clang-format on
 

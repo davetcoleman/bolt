@@ -184,14 +184,11 @@ bool TaskGraph::astarSearch(const TaskVertex start, const TaskVertex goal, std::
                           return astarTaskHeuristic(v, goal);  // the heuristic
                         },
                         // ability to disable edges (set cost to inifinity):
-                        // boost::weight_map(TaskEdgeWeightMap(g_, edgeCollisionStatePropertyTask_))
-                        // popularityBias, popularityBiasEnabled))
-                        boost::weight_map(boost::get(&TaskEdgeStruct::weight_, g_))
+                        boost::weight_map(TaskEdgeWeightMap(g_))
+                        //boost::weight_map(boost::get(&TaskEdgeStruct::weight_, g_))
                             .predecessor_map(vertexPredecessors)
                             .distance_map(&vertexDistances[0])
                             .visitor(TaskAstarVisitor(goal, this)));
-    // ability to disable edges (set cost to inifinity):
-    // boost::weight_map(TaskEdgeWeightMap(g_, edgeCollisionStatePropertyTask_, popularityBias, popularityBiasEnabled))
   }
   catch (FoundGoalException &)
   {
@@ -695,7 +692,7 @@ bool TaskGraph::checkTaskPathSolution(og::PathGeometric &path, ob::State *start,
 
   for (std::size_t i = 0; i < path.getStateCount(); ++i)
   {
-    VertexLevel level = si_->getStateSpace()->getLevel(path.getState(i));
+    VertexLevel level = getTaskLevel(path.getState(i));
 
     // Check if start state is correct
     if (i == 0)
@@ -745,7 +742,7 @@ bool TaskGraph::checkTaskPathSolution(og::PathGeometric &path, ob::State *start,
     OMPL_ERROR("Showing data on path:");
     for (std::size_t i = 0; i < path.getStateCount(); ++i)
     {
-      VertexLevel level = si_->getStateSpace()->getLevel(path.getState(i));
+      VertexLevel level = getTaskLevel(path.getState(i));
       OMPL_INFORM(" - Path state %i has level %i", i, level);
     }
   }
@@ -1272,6 +1269,18 @@ bool TaskGraph::checkMotion(const base::State *a, const base::State *b)
 }  // namespace bolt
 }  // namespace tools
 }  // namespace ompl
+
+// TaskEdgeWeightMap methods ////////////////////////////////////////////////////////////////////////////
+
+namespace boost
+{
+double get(const ompl::tools::bolt::TaskEdgeWeightMap &m, const ompl::tools::bolt::TaskEdge &e)
+{
+  return m.get(e);
+}
+}
+
+BOOST_CONCEPT_ASSERT((boost::ReadablePropertyMapConcept<ompl::tools::bolt::TaskEdgeWeightMap, ompl::tools::bolt::TaskEdge>));
 
 // TaskAstarVisitor methods ////////////////////////////////////////////////////////////////////////////
 

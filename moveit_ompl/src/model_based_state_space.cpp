@@ -99,6 +99,7 @@ mo::ModelBasedStateSpace::~ModelBasedStateSpace()
 
 ob::State *mo::ModelBasedStateSpace::allocState() const
 {
+  std::cout << "alloc MODELBASEDSTATESPACE " << std::endl;
   StateType *state = new StateType();
   state->values = new double[variable_count_];
   return state;

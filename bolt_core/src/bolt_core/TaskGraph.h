@@ -212,23 +212,23 @@ public:
   /* ---------------------------------------------------------------------------------
    * Get/Set Task Level
    * --------------------------------------------------------------------------------- */
-  inline int getTaskLevel(const TaskVertex v) const
+  inline VertexLevel getTaskLevel(const TaskVertex v) const
   {
     return g_[v].state_->as<base::CompoundState>()->as<base::DiscreteStateSpace::StateType>(DISCRETE)->value;
   }
 
-  inline int getTaskLevel(const base::State* state) const
+  inline VertexLevel getTaskLevel(const base::State* state) const
   {
     // return state->as<base::DiscreteStateSpace::StateType>(DISCRETE)->value;
     return state->as<base::CompoundState>()->as<base::DiscreteStateSpace::StateType>(DISCRETE)->value;
   }
 
-  inline void setVertexTaskLevel(TaskVertex v, int level)
+  inline void setVertexTaskLevel(TaskVertex v, VertexLevel level)
   {
     g_[v].state_->as<base::CompoundState>()->as<base::DiscreteStateSpace::StateType>(DISCRETE)->value = level;
   }
 
-  inline void setStateTaskLevel(base::State* state, int level)
+  inline void setStateTaskLevel(base::State* state, VertexLevel level)
   {
     state->as<base::CompoundState>()->as<base::DiscreteStateSpace::StateType>(DISCRETE)->value = level;
   }

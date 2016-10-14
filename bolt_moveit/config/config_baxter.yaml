@@ -11,7 +11,7 @@ bolt_moveit:
   # create sparse graph
   load_spars: true
   create_spars: true
-  continue_spars: true # even if a file has been saved, randomly sample for more coverage
+  continue_spars: false # even if a file has been saved, randomly sample for more coverage
   run_problems: true # do plans?
   sweep_spars_maps: true
   sweep_map_start: 1 # Base 1, not 0
@@ -184,8 +184,8 @@ bolt_planner:
     verbose: true
   visualize:
     smoothed_trajectory: true
-    start_goal: true
-    lazy_collision_check: true
+    start_goal: false
+    lazy_collision_check: false
 
 # ====================================================
 bolt:

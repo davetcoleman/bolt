@@ -153,7 +153,7 @@ struct SparseVertexStruct
 struct SparseEdgeStruct
 {
   float weight_;          // cost/distance between two vertices
-  char collision_state_;  // used for lazy collision checking, determines if an edge has been checked
+  int collision_state_;  // used for lazy collision checking, determines if an edge has been checked
   // already for collision. 0 = not checked/unknown, 1 = in collision, 2 = free
 };
 
@@ -233,69 +233,44 @@ typedef boost::graph_traits<TaskAdjList>::edge_descriptor TaskEdge;
  * Used to artifically supress edges during A* search.
  * \implements ReadablePropertyMapConcept
  */
-// class TaskEdgeWeightMap
-// {
-// private:
-//   const TaskAdjList& g_;  // Graph used
-//   const TaskEdgeCollisionStateMap& collisionStates_;
-//   const double popularityBias_;
-//   const bool popularityBiasEnabled_;
+class TaskEdgeWeightMap
+{
+private:
+  const TaskAdjList& g_;  // Graph used
 
-// public:
-//   /** Map key type. */
-//   typedef TaskEdge key_type;
-//   /** Map value type. */
-//   typedef double value_type;
-//   /** Map auxiliary value type. */
-//   typedef double& reference;
-//   /** Map type. */
-//   typedef boost::readable_property_map_tag category;
+public:
+  /** Map key type. */
+  typedef TaskEdge key_type;
+  /** Map value type. */
+  typedef double value_type;
+  /** Map auxiliary value type. */
+  typedef double& reference;
+  /** Map type. */
+  typedef boost::readable_property_map_tag category;
 
-//   /**
-//    * Construct map for certain constraints.
-//    * \param graph         Graph to use
-//    */
-//   TaskEdgeWeightMap(const TaskAdjList& graph, const TaskEdgeCollisionStateMap& collisionStates,
-//                     const double& popularityBias, const bool popularityBiasEnabled)
-//     : g_(graph)
-//     , collisionStates_(collisionStates)
-//     , popularityBias_(popularityBias)
-//     , popularityBiasEnabled_(popularityBiasEnabled)
-//   {
-//   }
+  /**
+   * Construct map for certain constraints.
+   * \param g - Graph to use
+   */
+  TaskEdgeWeightMap(const TaskAdjList& g)
+    : g_(g)
+  {
+  }
 
-//   /**
-//    * Get the weight of an edge.
-//    * \param e the edge
-//    * \return infinity if \a e lies in a forbidden neighborhood; actual weight of \a e otherwise
-//    */
-//   double get(TaskEdge e) const
-//   {
-//     // Get the status of collision checking for this edge
-//     if (collisionStates_[e] == IN_COLLISION)
-//       return std::numeric_limits<double>::infinity();
+  /**
+   * Get the weight of an edge.
+   * \param e the edge
+   * \return infinity if \a e lies in a forbidden neighborhood; actual weight of \a e otherwise
+   */
+  double get(TaskEdge e) const
+  {
+    // Get the status of collision checking for this edge
+    if (g_[e].collision_state_ == IN_COLLISION)
+      return std::numeric_limits<double>::infinity();
 
-//     double weight;
-//     if (popularityBiasEnabled_)
-//     {
-//       // static const double popularityBias = 10;
-//       weight = boost::get(boost::edge_weight, g_, e) / MAX_POPULARITY_WEIGHT * popularityBias_;
-//       // std::cout << "getting popularity weight of edge " << e << " with value " << weight << std::endl;
-//     }
-//     else
-//     {
-//       weight = boost::get(boost::edge_weight, g_, e);
-//     }
-
-//     // Method 3 - less optimal but faster planning time
-//     // const double weighted_astar = 0.8;
-//     // const double weight = boost::get(boost::edge_weight, g_, e) * weighted_astar;
-
-//     // std::cout << "getting weight of edge " << e << " with value " << weight << std::endl;
-
-//     return weight;
-//   }
-// };
+    return boost::get(boost::get(&TaskEdgeStruct::weight_, g_), e);
+  }
+};
 
 ////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -374,11 +349,6 @@ typedef boost::graph_traits<TaskAdjList>::edge_descriptor TaskEdge;
 /**
  * \brief Sparse disjoint sets structure
  */
-// typedef boost::disjoint_sets<boost::property_map<SparseAdjList, boost::vertex_rank_t>::type,
-//                              boost::property_map<SparseAdjList, boost::vertex_predecessor_t>::type>
-// typedef boost::disjoint_sets<boost::vertex_bundle_type<SparseAdjList>::type,
-// boost::vertex_bundle_type<SparseAdjList>::type>
-//     SparseDisjointSetType;
 typedef boost::disjoint_sets<boost::property_map<SparseAdjList, std::size_t SparseVertexStruct::*>::type,
                              boost::property_map<SparseAdjList, std::size_t SparseVertexStruct::*>::type>
     SparseDisjointSetType;
@@ -388,7 +358,7 @@ typedef std::map<SparseVertex, std::vector<SparseVertex> > SparseDisjointSetsMap
 
 ////////////////////////////////////////////////////////////////////////////////////////
 /**
- * Thrown to stop the A* search when finished.
+ * Thrown to stop the A* search when finished. Used by both Sparse and Task Graphs
  */
 class FoundGoalException
 {

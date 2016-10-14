@@ -178,6 +178,9 @@ public:
   /** \brief Test if the passed in random state can connect to a nearby vertex in the graph */
   bool canConnect(const base::State *randomState, Termination &ptc, std::size_t indent);
 
+  /** \brief User feedback */
+  void visualizeBadEdge(TaskVertex fromVertex, TaskVertex toVertex);
+
   TaskGraphPtr getTaskGraph()
   {
     return taskGraph_;
