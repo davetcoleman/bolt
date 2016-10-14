@@ -139,7 +139,8 @@ public:
    * \return true on success
    */
   bool convertVertexPathToStatePath(std::vector<bolt::TaskVertex> &vertexPath, const base::State *actualStart,
-                                    const base::State *actualGoal, geometric::PathGeometric &geometricSolution, std::size_t indent);
+                                    const base::State *actualGoal, geometric::PathGeometric &geometricSolution,
+                                    std::size_t indent);
 
   /**
    * \brief Finds nodes in the graph near state NOTE: note tested for visibility

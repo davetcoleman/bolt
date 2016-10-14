@@ -53,15 +53,13 @@ public:
 
   virtual void sampleUniform(ompl::base::State *state)
   {
-    joint_model_group_->getVariableRandomPositions(moveit_rng_, state->as<T>()->values,
-                                                   *joint_bounds_);
+    joint_model_group_->getVariableRandomPositions(moveit_rng_, state->as<T>()->values, *joint_bounds_);
   }
 
   virtual void sampleUniformNear(ompl::base::State *state, const ompl::base::State *near, const double distance)
   {
-    joint_model_group_->getVariableRandomPositionsNearBy(
-        moveit_rng_, state->as<T>()->values, *joint_bounds_,
-        near->as<T>()->values, distance);
+    joint_model_group_->getVariableRandomPositionsNearBy(moveit_rng_, state->as<T>()->values, *joint_bounds_,
+                                                         near->as<T>()->values, distance);
   }
 
   virtual void sampleGaussian(ompl::base::State *state, const ompl::base::State *mean, const double stdDev)

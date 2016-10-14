@@ -110,7 +110,7 @@ TEST(TestingBase, get_2d_state_by_vector)
   EXPECT_TRUE(si_->isSetup());
 
   // Example data
-  std::vector<double> values(space_->getDimension(), /*default value*/0);
+  std::vector<double> values(space_->getDimension(), /*default value*/ 0);
   values[0] = 98;
   values[1] = 99;
   EXPECT_TRUE(values.size() == 2);
@@ -124,8 +124,7 @@ TEST(TestingBase, get_2d_state_by_vector)
   EXPECT_TRUE(candidateState != NULL);
 
   // Convert to real vector
-  ob::RealVectorStateSpace::StateType *real_state =
-    static_cast<ob::RealVectorStateSpace::StateType *>(candidateState);
+  ob::RealVectorStateSpace::StateType *real_state = static_cast<ob::RealVectorStateSpace::StateType *>(candidateState);
   EXPECT_TRUE(real_state != NULL);
   EXPECT_TRUE(real_state->values[0]);
   EXPECT_TRUE(real_state->values[1]);
@@ -145,7 +144,7 @@ TEST(TestingBase, get_2d_state_by_vector)
 }
 
 /* Main  ------------------------------------------------------------------------------------- */
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
   testing::InitGoogleTest(&argc, argv);
   ros::init(argc, argv, "ros_test");

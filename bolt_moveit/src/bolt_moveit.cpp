@@ -560,7 +560,7 @@ bool BoltMoveIt::plan()
   // Solve -----------------------------------------------------------
 
   // Create the termination condition
-  double seconds = 5*60;
+  double seconds = 5 * 60;
   ob::PlannerTerminationCondition ptc = ob::timedPlannerTerminationCondition(seconds, 0.1);
 
   // Benchmark runtime
@@ -1121,18 +1121,14 @@ void BoltMoveIt::benchmarkMemoryAllocation(std::size_t indent)
 
   moveit_ompl::ModelBasedStateSpaceSpecification mbss_spec(robot_model_, planning_jmg_);
   moveit_ompl::ModelBasedStateSpace space_old(mbss_spec);
-  //moveit_ompl::ModelBasedStateSpacePtr space = moveit_ompl::chooseModelSizeStateSpace(mbss_spec);
-
-
-
-
+  // moveit_ompl::ModelBasedStateSpacePtr space = moveit_ompl::chooseModelSizeStateSpace(mbss_spec);
 
   // METHOD 1
-  ros::Time start_time = ros::Time::now(); // Benchmark runtime
+  ros::Time start_time = ros::Time::now();  // Benchmark runtime
   for (std::size_t test = 0; test < tests; ++test)
   {
     // Allocate
-    std::vector<ob::State*> states;
+    std::vector<ob::State *> states;
     for (std::size_t i = 0; i < numStates; ++i)
       states.push_back(space_old.allocState());
 
@@ -1175,7 +1171,8 @@ void BoltMoveIt::benchmarkMemoryAllocation(std::size_t indent)
       std::cout << " - states[i]: " << &states[i] << std::endl;
       for (std::size_t j = 0; j < 14; ++j)
       {
-        std::cout << "     - value " << j << ": " << states[i].as<ModelSize14StateSpace::StateType>()->values[j] << std::endl;
+        std::cout << "     - value " << j << ": " << states[i].as<ModelSize14StateSpace::StateType>()->values[j] <<
+  std::endl;
       }
     }
 
@@ -1188,8 +1185,10 @@ void BoltMoveIt::benchmarkMemoryAllocation(std::size_t indent)
       std::cout << "i: " << i << std::endl;
       // std::cout << "states[i]: " << states[i] << std::endl;
       std::cout << &states[i] << " &states[i]" << std::endl;
-      std::cout << (&states[i])->as<ModelSize14StateSpace::StateType>() << " (&states[i])->as<ModelSize14StateSpace::StateType>()" << std::endl;
-      std::cout << (&states[i])->as<ModelSize14StateSpace::StateType>()->values << " (&states[i])->as<ModelSize14StateSpace::StateType>()->values" << std::endl;
+      std::cout << (&states[i])->as<ModelSize14StateSpace::StateType>() << "
+  (&states[i])->as<ModelSize14StateSpace::StateType>()" << std::endl;
+      std::cout << (&states[i])->as<ModelSize14StateSpace::StateType>()->values << "
+  (&states[i])->as<ModelSize14StateSpace::StateType>()->values" << std::endl;
 
       for (std::size_t j = 0; j < 14; ++j)
       {
@@ -1225,7 +1224,8 @@ void BoltMoveIt::benchmarkMemoryAllocation(std::size_t indent)
 //   moveit_ompl::ModelBasedStateSpaceSpecification full_arm_mbss_spec(robot_model_, full_arm_jmg_);
 
 //   // Construct the state space we are planning in
-//   moveit_ompl::ModelBasedStateSpacePtr full_arm_state_space_ = moveit_ompl::chooseModelSizeStateSpace(full_arm_mbss_spec);
+//   moveit_ompl::ModelBasedStateSpacePtr full_arm_state_space_ =
+//   moveit_ompl::chooseModelSizeStateSpace(full_arm_mbss_spec);
 //   full_arm_state_space_->setup();
 //   full_arm_state_space_->setName(full_arm_name_);
 
@@ -1263,8 +1263,6 @@ void BoltMoveIt::benchmarkMemoryAllocation(std::size_t indent)
 //                                            << ", Dual graph edges: " << dualSG->getNumEdges());
 
 //     const base::State *state1 = monoSG_->getState(sparseV1);
-
-
 
 //   BOLT_INFO(indent, true, "Done filling in missing dimension!");
 // }

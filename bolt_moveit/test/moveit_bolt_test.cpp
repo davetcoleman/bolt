@@ -148,7 +148,7 @@ TEST(TestingBase, get_7d_state_by_vector)
   EXPECT_TRUE(space_ != NULL);
 
   // SpaceInfo
-  //ob::SpaceInformationPtr si_ = bolt_->getSpaceInformation();
+  // ob::SpaceInformationPtr si_ = bolt_->getSpaceInformation();
   ob::SpaceInformationPtr si_ = std::make_shared<ob::SpaceInformation>(space_);
   EXPECT_TRUE(si_ != NULL);
   si_->setup();
@@ -156,7 +156,7 @@ TEST(TestingBase, get_7d_state_by_vector)
 
   // Example data
   EXPECT_TRUE(space_->getDimension() == 7);
-  std::vector<double> values(space_->getDimension(), /*default value*/0);
+  std::vector<double> values(space_->getDimension(), /*default value*/ 0);
   values[0] = 0.1;
   values[1] = 0.2;
   values[2] = 0.3;
@@ -175,8 +175,7 @@ TEST(TestingBase, get_7d_state_by_vector)
   EXPECT_TRUE(candidateState != NULL);
 
   // Convert to real vector
-  ob::RealVectorStateSpace::StateType *real_state =
-    static_cast<ob::RealVectorStateSpace::StateType *>(candidateState);
+  ob::RealVectorStateSpace::StateType *real_state = static_cast<ob::RealVectorStateSpace::StateType *>(candidateState);
   EXPECT_TRUE(real_state != NULL);
   EXPECT_TRUE(real_state->values[0]);
   EXPECT_TRUE(real_state->values[1]);
@@ -219,8 +218,14 @@ TEST(TestingBase, compound_state)
   EXPECT_TRUE(model_based_space->getDimension() == 7);
 
   // Example data
-  std::vector<double> values(model_based_space->getDimension(), /*default value*/0);
-  values[0] = 0.1; values[1] = 0.2; values[2] = 0.3; values[3] = 0.4; values[4] = 0.5; values[5] = 0.6; values[6] = 0.7;
+  std::vector<double> values(model_based_space->getDimension(), /*default value*/ 0);
+  values[0] = 0.1;
+  values[1] = 0.2;
+  values[2] = 0.3;
+  values[3] = 0.4;
+  values[4] = 0.5;
+  values[5] = 0.6;
+  values[6] = 0.7;
   EXPECT_TRUE(values.size() == 7);
 
   // Create state
@@ -250,11 +255,11 @@ TEST(TestingBase, compound_state)
   // ------------------------------------------------------------------------
   // Create compound state space
   ob::CompoundStateSpacePtr compound_space = std::make_shared<ob::CompoundStateSpace>();
-  compound_space->addSubspace(model_based_space, 1.0); // 100% weight
-  compound_space->addSubspace(discrete_space, 0.0); // 0% weight
+  compound_space->addSubspace(model_based_space, 1.0);  // 100% weight
+  compound_space->addSubspace(discrete_space, 0.0);     // 0% weight
 
   // Create default state
-  ob::State* default_state = compound_space->allocState();
+  ob::State *default_state = compound_space->allocState();
   EXPECT_TRUE(default_state != NULL);
 
   // Create manual state
@@ -276,18 +281,20 @@ TEST(TestingBase, compound_state)
 
   // Check that the components are the types expected
   EXPECT_TRUE(compound_space->isCompound());
-  EXPECT_TRUE(compound_space->getSubspace(0)->getType() == ob::STATE_SPACE_UNKNOWN); // model_based_state_space
+  EXPECT_TRUE(compound_space->getSubspace(0)->getType() == ob::STATE_SPACE_UNKNOWN);  // model_based_state_space
   EXPECT_TRUE(compound_space->getSubspace(0)->getDimension() == 7);
-  EXPECT_TRUE(compound_space->getSubspace(1)->getType() == ob::STATE_SPACE_DISCRETE); // discrete
+  EXPECT_TRUE(compound_space->getSubspace(1)->getType() == ob::STATE_SPACE_DISCRETE);  // discrete
   EXPECT_TRUE(compound_space->getSubspace(1)->getDimension() == 1);
   EXPECT_TRUE(compound_space->as<ob::DiscreteStateSpace>(1)->getLowerBound() == 0);
   EXPECT_TRUE(compound_space->as<ob::DiscreteStateSpace>(1)->getUpperBound() == 2);
 
   // Check that the components have the values expected
-  EXPECT_TRUE(compound_state->as<ob::CompoundState>()->as<ob::DiscreteStateSpace::StateType>(1)->value == 1); // discrete
+  EXPECT_TRUE(compound_state->as<ob::CompoundState>()->as<ob::DiscreteStateSpace::StateType>(1)->value ==
+              1);  // discrete
 
-  std::vector<double> output_values; // Get values into a vector again
-  model_based_space->copyToReals(output_values, compound_state->as<ob::CompoundState>()->as<moveit_ompl::ModelBasedStateSpace::StateType>(0));
+  std::vector<double> output_values;  // Get values into a vector again
+  model_based_space->copyToReals(
+      output_values, compound_state->as<ob::CompoundState>()->as<moveit_ompl::ModelBasedStateSpace::StateType>(0));
   EXPECT_TRUE(output_values.size() == 7);
   EXPECT_TRUE(output_values[0] == 0.1);
   EXPECT_TRUE(output_values[1] == 0.2);
@@ -305,7 +312,7 @@ TEST(TestingBase, compound_state)
 }
 
 /* Main  ------------------------------------------------------------------------------------- */
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
   testing::InitGoogleTest(&argc, argv);
   ros::init(argc, argv, "moveit_bolt_test");

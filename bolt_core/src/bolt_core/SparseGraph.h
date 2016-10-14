@@ -266,7 +266,7 @@ public:
 
   double getEdgeWeightProperty(SparseEdge e) const
   {
-    return g_[e].weight_; //edgeWeightProperty_[e];
+    return g_[e].weight_;  // edgeWeightProperty_[e];
   }
 
   /** \brief Determine if no nodes or edges have been added to the graph except query vertices */
@@ -472,18 +472,18 @@ protected:
   std::vector<SparseVertex> queryVertices_;
   std::vector<base::State*> queryStates_;
 
-  /** \brief Access to the weights of each Edge */
-  //boost::property_map<SparseAdjList, boost::edge_weight_t>::type edgeWeightProperty_;
+/** \brief Access to the weights of each Edge */
+// boost::property_map<SparseAdjList, boost::edge_weight_t>::type edgeWeightProperty_;
 
-  /** \brief Access to the collision checking state of each Edge */
-  //SparseEdgeCollisionStateMap edgeCollisionStatePropertySparse_;
+/** \brief Access to the collision checking state of each Edge */
+// SparseEdgeCollisionStateMap edgeCollisionStatePropertySparse_;
 
-  /** \brief Access to the internal base::state at each Vertex */
-  //boost::property_map<SparseAdjList, vertex_state_t>::type vertexStateProperty_;
+/** \brief Access to the internal base::state at each Vertex */
+// boost::property_map<SparseAdjList, vertex_state_t>::type vertexStateProperty_;
 
 #ifdef ENABLE_QUALITY
-  /** \brief Access to the interface pair information for the vertices */
-  //boost::property_map<SparseAdjList, vertex_interface_data_t>::type vertexInterfaceProperty_;
+/** \brief Access to the interface pair information for the vertices */
+// boost::property_map<SparseAdjList, vertex_interface_data_t>::type vertexInterfaceProperty_;
 #endif
 
   /** \brief Access to the popularity of each node */

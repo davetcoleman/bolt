@@ -67,9 +67,9 @@ namespace bolt
 typedef base::MinimumClearanceValidStateSamplerPtr ClearanceSamplerPtr;
 
 // TODO(davetcoleman): maybe make all popularity use ints instead of doubles for memory efficiency?
-//static const double MAX_POPULARITY_WEIGHT = 100.0;  // 100 means the edge is very unpopular
+// static const double MAX_POPULARITY_WEIGHT = 100.0;  // 100 means the edge is very unpopular
 // Everytime an edge is used, it is reduced by this amount (becomes more popular)
-//static const double POPULARITY_WEIGHT_REDUCTION = 5;
+// static const double POPULARITY_WEIGHT_REDUCTION = 5;
 
 ////////////////////////////////////////////////////////////////////////////////////////
 // VERTEX PROPERTIES
@@ -77,25 +77,25 @@ typedef base::MinimumClearanceValidStateSamplerPtr ClearanceSamplerPtr;
 
 /** \brief Enumeration which specifies the reason a guard is added to the spanner. */
 enum VertexType
-  {
-    START,
-    GOAL,
-    COVERAGE,
-    CONNECTIVITY,
-    INTERFACE,
-    QUALITY,
-    CARTESIAN,
-    DISCRETIZED
-  };
+{
+  START,
+  GOAL,
+  COVERAGE,
+  CONNECTIVITY,
+  INTERFACE,
+  QUALITY,
+  CARTESIAN,
+  DISCRETIZED
+};
 enum EdgeType
-  {
-    eCONNECTIVITY,
-    eINTERFACE,
-    eQUALITY,
-    eCARTESIAN,
-    eDISCRETIZED,
-    eUNKNOWN
-  };
+{
+  eCONNECTIVITY,
+  eINTERFACE,
+  eQUALITY,
+  eCARTESIAN,
+  eDISCRETIZED,
+  eUNKNOWN
+};
 
 /** \brief The type used internally for representing vertex IDs */
 typedef std::size_t VertexIndexType;
@@ -142,25 +142,25 @@ enum EdgeCollisionState
 struct SparseVertexStruct
 {
   base::State* state_;
-  std::size_t vertex_predecessor_; // Required by incremental connected components algorithm (disjoint sets)
-  std::size_t vertex_rank_; // Required by incremental connected components algorithm (disjoint sets)
-  //#ifdef ENABLE_QUALITY
-  //boost::property<vertex_interface_data_t, InterfaceHash> // Sparse meta data
+  std::size_t vertex_predecessor_;  // Required by incremental connected components algorithm (disjoint sets)
+  std::size_t vertex_rank_;         // Required by incremental connected components algorithm (disjoint sets)
+                                    //#ifdef ENABLE_QUALITY
+  // boost::property<vertex_interface_data_t, InterfaceHash> // Sparse meta data
   //#endif
 };
 
 // Edge Properties
 struct SparseEdgeStruct
 {
-  float weight_; // cost/distance between two vertices
-  char collision_state_; // used for lazy collision checking, determines if an edge has been checked
+  float weight_;          // cost/distance between two vertices
+  char collision_state_;  // used for lazy collision checking, determines if an edge has been checked
   // already for collision. 0 = not checked/unknown, 1 = in collision, 2 = free
 };
 
 /** The underlying boost graph type (undirected weighted-edge adjacency list with above properties). */
-typedef boost::adjacency_list<boost::vecS,  // store OutEdgeList in std::vector
-                              boost::vecS,  // store VertexList in std::vector
-                              boost::undirectedS, // Undirected
+typedef boost::adjacency_list<boost::vecS,         // store OutEdgeList in std::vector
+                              boost::vecS,         // store VertexList in std::vector
+                              boost::undirectedS,  // Undirected
                               SparseVertexStruct, SparseEdgeStruct> SparseAdjList;
 
 /** \brief Vertex in Graph */
@@ -173,7 +173,7 @@ typedef boost::graph_traits<SparseAdjList>::edge_descriptor SparseEdge;
 // Typedefs for property maps
 
 /** \brief Access map that stores the lazy collision checking status of each edge */
-//typedef boost::property_map<SparseAdjList, edge_collision_state_t>::type SparseEdgeCollisionStateMap;
+// typedef boost::property_map<SparseAdjList, edge_collision_state_t>::type SparseEdgeCollisionStateMap;
 
 ////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -196,21 +196,21 @@ typedef boost::graph_traits<SparseAdjList>::edge_descriptor SparseEdge;
 struct TaskVertexStruct
 {
   base::State* state_;
-  std::size_t task_mirror_; // Link to corresponding free space TaskVertex, if one exists TODO is this needed?
+  std::size_t task_mirror_;  // Link to corresponding free space TaskVertex, if one exists TODO is this needed?
 };
 
 // Edge Properties
 struct TaskEdgeStruct
 {
-  float weight_; // cost/distance between two vertices
-  char collision_state_; // used for lazy collision checking, determines if an edge has been checked
+  float weight_;          // cost/distance between two vertices
+  char collision_state_;  // used for lazy collision checking, determines if an edge has been checked
   // already for collision. 0 = not checked/unknown, 1 = in collision, 2 = free
 };
 
 /** The underlying boost graph type (undirected weighted-edge adjacency list with above properties). */
-typedef boost::adjacency_list<boost::vecS,  // store OutEdgeList in std::vector
-                              boost::vecS,  // store VertexList in std::vector
-                              boost::undirectedS, // Undirected
+typedef boost::adjacency_list<boost::vecS,         // store OutEdgeList in std::vector
+                              boost::vecS,         // store VertexList in std::vector
+                              boost::undirectedS,  // Undirected
                               TaskVertexStruct, TaskEdgeStruct> TaskAdjList;
 
 /** \brief Vertex in Graph */
@@ -226,7 +226,7 @@ typedef boost::graph_traits<TaskAdjList>::edge_descriptor TaskEdge;
 // Typedefs for property maps
 
 /** \brief Access map that stores the lazy collision checking status of each edge */
-//typedef boost::property_map<TaskAdjList, edge_collision_state_t>::type TaskEdgeCollisionStateMap;
+// typedef boost::property_map<TaskAdjList, edge_collision_state_t>::type TaskEdgeCollisionStateMap;
 
 ////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -376,10 +376,12 @@ typedef boost::graph_traits<TaskAdjList>::edge_descriptor TaskEdge;
  */
 // typedef boost::disjoint_sets<boost::property_map<SparseAdjList, boost::vertex_rank_t>::type,
 //                              boost::property_map<SparseAdjList, boost::vertex_predecessor_t>::type>
-//typedef boost::disjoint_sets<boost::vertex_bundle_type<SparseAdjList>::type, boost::vertex_bundle_type<SparseAdjList>::type>
+// typedef boost::disjoint_sets<boost::vertex_bundle_type<SparseAdjList>::type,
+// boost::vertex_bundle_type<SparseAdjList>::type>
 //     SparseDisjointSetType;
 typedef boost::disjoint_sets<boost::property_map<SparseAdjList, std::size_t SparseVertexStruct::*>::type,
-                             boost::property_map<SparseAdjList, std::size_t SparseVertexStruct::*>::type> SparseDisjointSetType;
+                             boost::property_map<SparseAdjList, std::size_t SparseVertexStruct::*>::type>
+    SparseDisjointSetType;
 
 // Ability to copy the disjoint sets data into a hashtable
 typedef std::map<SparseVertex, std::vector<SparseVertex> > SparseDisjointSetsMap;

@@ -421,7 +421,7 @@ bool SparseGenerator::addSample(CandidateData &candidateD, std::size_t threadID,
       double addHz = numRandSamplesAdded_ / duration;
 
       // Change save interval based on addition rate
-      const double saveEveryXSeconds = 5*60.0; //5*pow(2, si_->getStateDimension());
+      const double saveEveryXSeconds = 5 * 60.0;  // 5*pow(2, si_->getStateDimension());
       const std::size_t saveEveryXNodeAdditions = saveEveryXSeconds * addHz;
       saveInterval_ = saveEveryXNodeAdditions;
 
@@ -521,9 +521,9 @@ void SparseGenerator::showStatus(std::size_t indent)
     {
       if (!sparseCriteria_->getUseFourthCriteria())
       {
-        BOLT_WARN(indent, true, "Pre-quality progress: "
-                  << percentComplete << "% (maxConsecutiveFailures: " << maxConsecutiveFailures_
-                  << ", numRandSamplesAdded: " << numRandSamplesAdded_ << ")");
+        BOLT_WARN(indent, true, "Pre-quality progress: " << percentComplete
+                                                         << "% (maxConsecutiveFailures: " << maxConsecutiveFailures_
+                                                         << ", numRandSamplesAdded: " << numRandSamplesAdded_ << ")");
       }
       else
       {
@@ -548,8 +548,8 @@ void SparseGenerator::showNoQualityStatus(std::size_t indent)
     if (percentComplete % showEvery == 0)
     {
       BOLT_WARN(indent, true, "Progress: " << percentComplete
-                << "% (maxConsecutiveFailures: " << maxConsecutiveFailures_
-                << ", numRandSamplesAdded: " << numRandSamplesAdded_ << ")");
+                                           << "% (maxConsecutiveFailures: " << maxConsecutiveFailures_
+                                           << ", numRandSamplesAdded: " << numRandSamplesAdded_ << ")");
       // copyPasteState();
     }
   }
@@ -1032,17 +1032,17 @@ void SparseGenerator::benchmarkMemoryAllocation(std::size_t indent)
   OMPL_INFORM("SparseGenerator: Running memory allocation benchmark");
 
   std::size_t numberStates = 10000000;
-  //std::size_t numberStates = 5;
+  // std::size_t numberStates = 5;
   std::size_t dim = 14;
   std::size_t tests = 4;
   base::RealVectorStateSpace space(dim);
 
   // METHOD 1
-  time::point startTime0 = time::now(); // Benchmark
+  time::point startTime0 = time::now();  // Benchmark
   for (std::size_t test = 0; test < tests; ++test)
   {
     // Allocate
-    std::vector<base::State*> states;
+    std::vector<base::State *> states;
     for (std::size_t i = 0; i < numberStates; ++i)
       states.push_back(space.allocState());
 
@@ -1050,47 +1050,46 @@ void SparseGenerator::benchmarkMemoryAllocation(std::size_t indent)
     for (std::size_t i = 0; i < numberStates; ++i)
       space.freeState(states[i]);
   }
-  OMPL_INFORM("naive took  %f seconds", time::seconds(time::now() - startTime0)); // Benchmark
-  //visual_->waitForUserFeedback("test2");
+  OMPL_INFORM("naive took  %f seconds", time::seconds(time::now() - startTime0));  // Benchmark
+  // visual_->waitForUserFeedback("test2");
 
   // METHOD 2
-  time::point startTime1 = time::now(); // Benchmark
+  time::point startTime1 = time::now();  // Benchmark
   for (std::size_t test = 0; test < tests; ++test)
   {
     // Allocate
-    double* allValues = new double[dim*numberStates];
-    base::RealVectorStateSpace::StateType* states = new base::RealVectorStateSpace::StateType[numberStates];
+    double *allValues = new double[dim * numberStates];
+    base::RealVectorStateSpace::StateType *states = new base::RealVectorStateSpace::StateType[numberStates];
     for (std::size_t i = 0; i < numberStates; ++i)
     {
-      //std::cout << "before (&states[i])->values: " <<  (&states[i])->values << std::endl;
-      (&states[i])->values = &allValues[i*dim];
-      //std::cout << "after  (&states[i])->values: " <<  (&states[i])->values << std::endl;
+      // std::cout << "before (&states[i])->values: " <<  (&states[i])->values << std::endl;
+      (&states[i])->values = &allValues[i * dim];
+      // std::cout << "after  (&states[i])->values: " <<  (&states[i])->values << std::endl;
     }
-    //base::State* statesOMPL = states;
+    // base::State* statesOMPL = states;
 
     delete[] allValues;
     delete[] states;
 
     // Free
-    //for (std::size_t i = 0; i < numberStates; ++i)
+    // for (std::size_t i = 0; i < numberStates; ++i)
     {
       // std::cout << "before (&states[i])->values: " <<  (&states[i])->values << std::endl;
       // delete[] (&states[i])->values;
       // std::cout << "after  (&states[i])->values: " <<  (&states[i])->values << std::endl;
-      //delete[] (&states[i])->values;
-      //delete[] (&statesOMPL[i])->as<base::RealVectorStateSpace::StateType>()->values;
-      //delete (&statesOMPL[i])->as<base::RealVectorStateSpace::StateType>();
+      // delete[] (&states[i])->values;
+      // delete[] (&statesOMPL[i])->as<base::RealVectorStateSpace::StateType>()->values;
+      // delete (&statesOMPL[i])->as<base::RealVectorStateSpace::StateType>();
     }
   }
-  OMPL_INFORM("vector took %f seconds", time::seconds(time::now() - startTime1)); // Benchmark
+  OMPL_INFORM("vector took %f seconds", time::seconds(time::now() - startTime1));  // Benchmark
 
-  //usleep(4*1000000);
+  // usleep(4*1000000);
   visual_->waitForUserFeedback("test2");
 
   std::cout << "-------------------------------------------------------" << std::endl;
   std::cout << std::endl;
 }
-
 
 }  // namespace bolt
 }  // namespace tools

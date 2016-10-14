@@ -68,8 +68,8 @@ public:
   TwoDimVizWindow(rviz_visual_tools::RvizVisualToolsPtr visuals, ompl::base::SpaceInformationPtr si);
 
   /** \brief Visualize a state during runtime, externally */
-  void state(const ompl::base::State* state, ompl::tools::VizSizes size, ompl::tools::VizColors color,
-             double extraData, ompl::base::SpaceInformationPtr si);
+  void state(const ompl::base::State* state, ompl::tools::VizSizes size, ompl::tools::VizColors color, double extraData,
+             ompl::base::SpaceInformationPtr si);
 
   /** \brief Visualize multiple states during runtime, externally */
   void states(std::vector<const ompl::base::State*> states, std::vector<ompl::tools::VizColors> colors,
@@ -88,7 +88,8 @@ public:
   //            std::vector<ompl::tools::VizColors> colors, ompl::tools::VizSizes size){};
 
   /** \brief Visualize path during runtime, externally */
-  void path(ompl::geometric::PathGeometric* path, ompl::tools::VizSizes type, ompl::tools::VizColors vertexColor, ompl::tools::VizColors edgeColor);
+  void path(ompl::geometric::PathGeometric* path, ompl::tools::VizSizes type, ompl::tools::VizColors vertexColor,
+            ompl::tools::VizColors edgeColor);
 
   /** \brief Trigger visualizer to refresh/repaint/display all graphics */
   void trigger(std::size_t queueSize = 0);

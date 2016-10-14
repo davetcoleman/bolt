@@ -121,7 +121,7 @@ public:
 
   void mirrorGraph(std::size_t indent);
 
-  ob::State *combineStates(const ob::State *state1, const ob::State *state2);
+  ob::State* combineStates(const ob::State* state1, const ob::State* state2);
 
   void benchmarkMemoryAllocation(std::size_t indent);
 
@@ -148,8 +148,8 @@ public:
   ompl::base::SpaceInformationPtr si_;
 
   // Mirroring config
-  moveit::core::JointModelGroup *both_arms_jmg_;
-  moveit::core::JointModelGroup *left_arm_jmg_;
+  moveit::core::JointModelGroup* both_arms_jmg_;
+  moveit::core::JointModelGroup* left_arm_jmg_;
   moveit_ompl::ModelBasedStateSpacePtr both_arms_state_space_;
   moveit_ompl::ModelBasedStateSpacePtr left_arm_state_space_;
   moveit::core::RobotStatePtr mirror_state_;

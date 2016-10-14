@@ -75,8 +75,8 @@ public:
   MoveItVizWindow(moveit_visual_tools::MoveItVisualToolsPtr visuals, ompl::base::SpaceInformationPtr si);
 
   /** \brief Visualize a state during runtime, externally */
-  void state(const ompl::base::State* state, ompl::tools::VizSizes size, ompl::tools::VizColors color,
-             double extraData, ompl::base::SpaceInformationPtr si);
+  void state(const ompl::base::State* state, ompl::tools::VizSizes size, ompl::tools::VizColors color, double extraData,
+             ompl::base::SpaceInformationPtr si);
 
   /** \brief Visualize multiple states during runtime, externally */
   void states(std::vector<const ompl::base::State*> states, std::vector<ompl::tools::VizColors> colors,
@@ -100,7 +100,8 @@ public:
    * \param type - the style to display the line as
    * \return true on success
    */
-  void path(ompl::geometric::PathGeometric* path, ompl::tools::VizSizes type, ompl::tools::VizColors vertexColor, ompl::tools::VizColors edgeColor);
+  void path(ompl::geometric::PathGeometric* path, ompl::tools::VizSizes type, ompl::tools::VizColors vertexColor,
+            ompl::tools::VizColors edgeColor);
 
   /** \brief Trigger visualizer to refresh/repaint/display all graphics */
   void trigger(std::size_t queueSize = 0);
@@ -152,8 +153,9 @@ public:
    * \brief Display result path from a solver
    * \return true on success
    */
-  //RVIZ_VISUAL_TOOLS_DEPRECATED
-  // void publishPath(const og::PathGeometric& path, const rviz_visual_tools::colors& color, const double thickness = 0.4,
+  // RVIZ_VISUAL_TOOLS_DEPRECATED
+  // void publishPath(const og::PathGeometric& path, const rviz_visual_tools::colors& color, const double thickness =
+  // 0.4,
   //                  const std::string& ns = "result_path");
   void publish3DPath(const og::PathGeometric& path, const rvt::colors& color, const double thickness = 0.4,
                      const std::string& ns = "result_path");

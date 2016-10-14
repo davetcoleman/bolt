@@ -80,7 +80,7 @@ public:
     std::string line;
 
     std::size_t path_id = 0;
-    path.resize(path_id+1);
+    path.resize(path_id + 1);
     while (std::getline(input_file, line))
     {
       // Check if new path has been started
@@ -88,7 +88,7 @@ public:
       {
         ROS_DEBUG_STREAM_NAMED(name_, "New path found");
         path_id++;
-        path.resize(path_id+1);
+        path.resize(path_id + 1);
         continue;
       }
 
@@ -172,21 +172,21 @@ public:
   }
 
 private:
-
   // trim from start (in place)
-  static inline void ltrim(std::string &s) {
-    s.erase(s.begin(), std::find_if(s.begin(), s.end(),
-                                    std::not1(std::ptr_fun<int, int>(std::isspace))));
+  static inline void ltrim(std::string &s)
+  {
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
   }
 
   // trim from end (in place)
-  static inline void rtrim(std::string &s) {
-    s.erase(std::find_if(s.rbegin(), s.rend(),
-                         std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
+  static inline void rtrim(std::string &s)
+  {
+    s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
   }
 
   // trim from both ends (in place)
-  static inline void trim(std::string &s) {
+  static inline void trim(std::string &s)
+  {
     ltrim(s);
     rtrim(s);
   }

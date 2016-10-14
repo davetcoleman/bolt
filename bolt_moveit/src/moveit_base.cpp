@@ -185,7 +185,7 @@ bool MoveItBase::showJointLimits(JointModelGroup* jmg)
   return true;
 }
 
-void MoveItBase::printJointLimits(double min, double max, double value, const std::string &name)
+void MoveItBase::printJointLimits(double min, double max, double value, const std::string& name)
 {
   std::cout << "   " << std::fixed << std::setprecision(5) << min << "\t";
   double delta = max - min;
@@ -205,8 +205,8 @@ void MoveItBase::printJointLimits(double min, double max, double value, const st
       std::cout << "-";
   }
   // show max position
-  std::cout << " \t" << std::fixed << std::setprecision(5) << max << "  \t" << name
-            << " current: " << std::fixed << std::setprecision(5) << value << std::endl;
+  std::cout << " \t" << std::fixed << std::setprecision(5) << max << "  \t" << name << " current: " << std::fixed
+            << std::setprecision(5) << value << std::endl;
 }
 
 moveit::core::RobotStatePtr MoveItBase::getCurrentState()

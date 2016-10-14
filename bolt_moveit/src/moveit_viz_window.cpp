@@ -66,7 +66,7 @@ MoveItVizWindow::MoveItVizWindow(moveit_visual_tools::MoveItVisualToolsPtr visua
 
   visuals_->loadSharedRobotState();
 
-  //ROS_DEBUG_STREAM_NAMED(name_, "Initializing MoveItVizWindow()");
+  // ROS_DEBUG_STREAM_NAMED(name_, "Initializing MoveItVizWindow()");
 }
 
 void MoveItVizWindow::state(const ob::State* state, ot::VizSizes size, ot::VizColors color, double extra_data,
@@ -360,7 +360,7 @@ Eigen::Vector3d MoveItVizWindow::stateToPoint(const ob::State* state, const move
   }
 
   // Make sure a robot state is available
-  //visuals_->loadSharedRobotState();
+  // visuals_->loadSharedRobotState();
 
   // Get StateSpace
   moveit_ompl::ModelBasedStateSpacePtr mb_state_space =

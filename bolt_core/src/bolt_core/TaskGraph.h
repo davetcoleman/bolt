@@ -77,7 +77,8 @@ namespace bolt
 OMPL_CLASS_FORWARD(TaskGraph);
 /// @endcond
 
-enum CompoundTypes {
+enum CompoundTypes
+{
   MODEL_BASED = 0,
   DISCRETE = 1
 };
@@ -93,7 +94,7 @@ class TaskGraph
 public:
   /** \brief Constructor needs the state space used for planning.
    */
-  TaskGraph(const base::SpaceInformationPtr &si, SparseGraphPtr sg);
+  TaskGraph(const base::SpaceInformationPtr& si, SparseGraphPtr sg);
 
   /** \brief Deconstructor */
   virtual ~TaskGraph(void);
@@ -218,7 +219,7 @@ public:
 
   inline int getTaskLevel(const base::State* state) const
   {
-    //return state->as<base::DiscreteStateSpace::StateType>(DISCRETE)->value;
+    // return state->as<base::DiscreteStateSpace::StateType>(DISCRETE)->value;
     return state->as<base::CompoundState>()->as<base::DiscreteStateSpace::StateType>(DISCRETE)->value;
   }
 
@@ -314,7 +315,7 @@ public:
    *  \param level - the discrete step of a level
    *  \return new state that is compound
    */
-  base::State* createCompoundState(base::State *jointState, const VertexLevel level, std::size_t indent);
+  base::State* createCompoundState(base::State* jointState, const VertexLevel level, std::size_t indent);
 
   /** \brief Add vertices to graph. The state passed in will be owned by the AdjList graph */
   TaskVertex addVertexWithLevel(base::State* state, VertexLevel level, std::size_t indent);
@@ -333,7 +334,7 @@ public:
   bool hasEdge(TaskVertex v1, TaskVertex v2);
 
   /** \brief Get the state of a vertex used for querying - i.e. vertices 0-11 for 12 thread system */
-  inline base::State *&getQueryStateNonConst(TaskVertex v)
+  inline base::State*& getQueryStateNonConst(TaskVertex v)
   {
 #ifndef NDEBUG
     BOLT_ASSERT(v < queryVertices_.size(), "Attempted to request state of regular vertex using query function");
@@ -342,7 +343,7 @@ public:
   }
 
   /** \brief Shortcut function for getting the state of a vertex */
-  inline base::State *&getStateNonConst(TaskVertex v)
+  inline base::State*& getStateNonConst(TaskVertex v)
   {
 #ifndef NDEBUG
     BOLT_ASSERT(v >= queryVertices_.size(), "Attempted to request state of query vertex using wrong function");
@@ -351,7 +352,7 @@ public:
   }
 
   /** \brief Shortcut function for getting the state of a vertex */
-  inline const base::State *getState(TaskVertex v) const
+  inline const base::State* getState(TaskVertex v) const
   {
 #ifndef NDEBUG
     BOLT_ASSERT(v >= queryVertices_.size(), "Attempted to request state of query vertex using wrong function");
@@ -359,19 +360,21 @@ public:
     return g_[v].state_;
   }
 
-  /** \brief Convert a compound state to just the ModelBasedStateSpace component (joints) ignoring the discrete component */
+  /** \brief Convert a compound state to just the ModelBasedStateSpace component (joints) ignoring the discrete
+   * component */
   inline const base::State* getModelBasedState(const base::State* state) const
   {
     // Disregard task level
-    const base::CompoundState *compoundState = static_cast<const base::CompoundState *>(state);
+    const base::CompoundState* compoundState = static_cast<const base::CompoundState*>(state);
     return compoundState->components[MODEL_BASED];
   }
 
-  /** \brief Convert a compound state to just the ModelBasedStateSpace component (joints) ignoring the discrete component */
+  /** \brief Convert a compound state to just the ModelBasedStateSpace component (joints) ignoring the discrete
+   * component */
   inline const base::State* getModelBasedState(TaskVertex v) const
   {
     // Disregard task level
-    const base::CompoundState *compoundState = static_cast<const base::CompoundState *>(g_[v].state_);
+    const base::CompoundState* compoundState = static_cast<const base::CompoundState*>(g_[v].state_);
     return compoundState->components[MODEL_BASED];
   }
 
@@ -509,11 +512,11 @@ public:
    */
   TaskAstarVisitor(TaskVertex goal, TaskGraph* parent);
 
-  /**
-   * \brief Invoked when a vertex is first discovered and is added to the OPEN list.
-   * \param v current Vertex
-   * \param g graph we are searching on
-   */
+/**
+ * \brief Invoked when a vertex is first discovered and is added to the OPEN list.
+ * \param v current Vertex
+ * \param g graph we are searching on
+ */
 #ifndef NDEBUG
   void discover_vertex(TaskVertex v, const TaskAdjList& g) const;
 #endif

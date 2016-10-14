@@ -326,12 +326,12 @@ void SparseStorage::loadVertices(std::size_t numVertices, boost::archive::binary
 
   time::point startTime;
   if (vThreadTiming_)
-    startTime = time::now(); // Benchmark
+    startTime = time::now();  // Benchmark
 
   nnThread.join();
 
   if (vThreadTiming_)
-    OMPL_INFORM("NN thread took %f seconds to catch up", time::seconds(time::now() - startTime)); // Benchmark
+    OMPL_INFORM("NN thread took %f seconds to catch up", time::seconds(time::now() - startTime));  // Benchmark
 }
 
 void SparseStorage::populateNNThread(std::size_t startingVertex)

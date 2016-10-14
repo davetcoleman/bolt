@@ -61,9 +61,7 @@ namespace bnu = boost::numeric::ublas;
 namespace bolt_2d
 {
 TwoDimVizWindow::TwoDimVizWindow(rviz_visual_tools::RvizVisualToolsPtr visuals, ompl::base::SpaceInformationPtr si)
-  : ot::VizWindow(si)
-  , name_("two_dim_viz_window")
-  , visuals_(visuals)
+  : ot::VizWindow(si), name_("two_dim_viz_window"), visuals_(visuals)
 {
   // with this OMPL interface to Rviz all pubs must be manually triggered
   // visuals_->enableBatchPublishing(true);
@@ -71,7 +69,8 @@ TwoDimVizWindow::TwoDimVizWindow(rviz_visual_tools::RvizVisualToolsPtr visuals, 
   ROS_DEBUG_STREAM_NAMED(name_, "Initializing TwoDimVizWindow()");
 }
 
-void TwoDimVizWindow::state(const ompl::base::State* state, ot::VizSizes size, ot::VizColors color, double extra_data, ob::SpaceInformationPtr si)
+void TwoDimVizWindow::state(const ompl::base::State* state, ot::VizSizes size, ot::VizColors color, double extra_data,
+                            ob::SpaceInformationPtr si)
 {
   Eigen::Vector3d point = stateToPoint(state);
 
@@ -225,7 +224,8 @@ void TwoDimVizWindow::edge(const ompl::base::State* stateA, const ompl::base::St
   publishEdge(stateA, stateB, visuals_->getColorScale(percent), radius);
 }
 
-void TwoDimVizWindow::path(ompl::geometric::PathGeometric* path, ompl::tools::VizSizes type, ompl::tools::VizColors vertexColor, ompl::tools::VizColors edgeColor)
+void TwoDimVizWindow::path(ompl::geometric::PathGeometric* path, ompl::tools::VizSizes type,
+                           ompl::tools::VizColors vertexColor, ompl::tools::VizColors edgeColor)
 {
   // Convert
   const og::PathGeometric& geometric_path = *path;  // static_cast<og::PathGeometric&>(*path);

@@ -72,9 +72,7 @@ namespace tools
 {
 namespace bolt
 {
-TaskGraph::TaskGraph(const base::SpaceInformationPtr &si, SparseGraphPtr sg)
-  : si_(si)
-  , sg_(sg)
+TaskGraph::TaskGraph(const base::SpaceInformationPtr &si, SparseGraphPtr sg) : si_(si), sg_(sg)
 {
   // Save number of threads available
   numThreads_ = boost::thread::hardware_concurrency();
@@ -127,7 +125,7 @@ void TaskGraph::freeMemory()
     // TODO: there are references to SparseGraph in memory that should not be cleared
     if (g_[v].state_ != nullptr)
       si_->freeState(g_[v].state_);
-    //g_[v].state_ = nullptr;  // TODO(davetcoleman): is this needed??
+    // g_[v].state_ = nullptr;  // TODO(davetcoleman): is this needed??
   }
 
   g_.clear();
@@ -180,21 +178,20 @@ bool TaskGraph::astarSearch(const TaskVertex start, const TaskVertex goal, std::
 
   try
   {
-    boost::astar_search(g_, start, // graph, start state
+    boost::astar_search(g_, start,  // graph, start state
                         [this, goal](TaskVertex v)
                         {
-                          return astarTaskHeuristic(v, goal); // the heuristic
+                          return astarTaskHeuristic(v, goal);  // the heuristic
                         },
                         // ability to disable edges (set cost to inifinity):
                         // boost::weight_map(TaskEdgeWeightMap(g_, edgeCollisionStatePropertyTask_))
                         // popularityBias, popularityBiasEnabled))
                         boost::weight_map(boost::get(&TaskEdgeStruct::weight_, g_))
-                        .predecessor_map(vertexPredecessors)
-                        .distance_map(&vertexDistances[0])
-                        .visitor(TaskAstarVisitor(goal, this)));
+                            .predecessor_map(vertexPredecessors)
+                            .distance_map(&vertexDistances[0])
+                            .visitor(TaskAstarVisitor(goal, this)));
     // ability to disable edges (set cost to inifinity):
-    //boost::weight_map(TaskEdgeWeightMap(g_, edgeCollisionStatePropertyTask_, popularityBias, popularityBiasEnabled))
-
+    // boost::weight_map(TaskEdgeWeightMap(g_, edgeCollisionStatePropertyTask_, popularityBias, popularityBiasEnabled))
   }
   catch (FoundGoalException &)
   {
@@ -274,12 +271,13 @@ double TaskGraph::distanceVertex(const TaskVertex a, const TaskVertex b) const
   return distanceState(getState(a), getState(b));
 }
 
-double TaskGraph::distanceState(const base::State* a, const base::State* b) const
+double TaskGraph::distanceState(const base::State *a, const base::State *b) const
 {
   // Disregard task level
   // const base::CompoundState *cA = static_cast<const base::CompoundState *>(a);
   // const base::CompoundState *cB = static_cast<const base::CompoundState *>(b);
-  // return compoundSpace_->getSubspace(MODEL_BASED)->distance(cA->components[MODEL_BASED], cB->components[MODEL_BASED]);
+  // return compoundSpace_->getSubspace(MODEL_BASED)->distance(cA->components[MODEL_BASED],
+  // cB->components[MODEL_BASED]);
 
   return compoundSpace_->getSubspace(MODEL_BASED)->distance(getModelBasedState(a), getModelBasedState(b));
 }
@@ -377,11 +375,11 @@ double TaskGraph::astarTaskHeuristic(const TaskVertex a, const TaskVertex b) con
   }
   else
   {
-      throw Exception(name_, "Unknown task level mode");
+    throw Exception(name_, "Unknown task level mode");
   }
 
   BOLT_DEBUG(0, vHeuristic_, "Vertex " << a << " @level " << taskLevelA << " to Vertex " << b << " @level "
-                                            << taskLevelB << " has distance " << dist);
+                                       << taskLevelB << " has distance " << dist);
   return dist;
 }
 
@@ -468,14 +466,14 @@ void TaskGraph::generateTaskSpace(std::size_t indent)
   std::vector<TaskVertex> sparseToTaskVertex2(sg_->getNumVertices());
 
   // Loop through every vertex in sparse graph and copy twice to task graph
-  BOLT_DEBUG(indent + 2, true || vGenerateTask_, "Adding " << 2*sg_->getNumVertices() << " task space vertices");
+  BOLT_DEBUG(indent + 2, true || vGenerateTask_, "Adding " << 2 * sg_->getNumVertices() << " task space vertices");
   foreach (SparseVertex sparseV, boost::vertices(sg_->getGraph()))
   {
     // The first thread number of verticies are used for queries and should be skipped
     if (sparseV < sg_->getNumQueryVertices())
       continue;
 
-    base::State *jointState = sg_->getStateNonConst(sparseV); // TODO - should this be const?
+    base::State *jointState = sg_->getStateNonConst(sparseV);  // TODO - should this be const?
 
     // Create level 0 vertex
     const VertexLevel level0 = 0;
@@ -493,11 +491,11 @@ void TaskGraph::generateTaskSpace(std::size_t indent)
   }
 
   // Loop through every edge in sparse graph and copy twice to task graph
-  BOLT_DEBUG(indent + 2, true || vGenerateTask_, "Adding " << 2*sg_->getNumEdges() << " task space edges");
+  BOLT_DEBUG(indent + 2, true || vGenerateTask_, "Adding " << 2 * sg_->getNumEdges() << " task space edges");
   foreach (const SparseEdge sparseE, boost::edges(sg_->getGraph()))
   {
-    const SparseVertex& sparseE_v0 = boost::source(sparseE, sg_->getGraph());
-    const SparseVertex& sparseE_v2 = boost::target(sparseE, sg_->getGraph());
+    const SparseVertex &sparseE_v0 = boost::source(sparseE, sg_->getGraph());
+    const SparseVertex &sparseE_v2 = boost::target(sparseE, sg_->getGraph());
 
     // Create level 0 edge
     addEdge(sparseToTaskVertex0[sparseE_v0], sparseToTaskVertex0[sparseE_v2], indent);
@@ -886,20 +884,20 @@ bool TaskGraph::smoothQualityPath(geometric::PathGeometric *path, double clearan
  *  \param level - the discrete step of a level
  *  \return new state that is compound
 */
-base::State* TaskGraph::createCompoundState(base::State *jointState, const VertexLevel level, std::size_t indent)
+base::State *TaskGraph::createCompoundState(base::State *jointState, const VertexLevel level, std::size_t indent)
 {
-    base::CompoundState *state = new base::CompoundState();
-    state->components = new base::State *[compoundSpace_->getSubspaceCount()];
-    BOLT_ASSERT(compoundSpace_->getSubspaceCount() == 2, "Invalid number of subspaces");
+  base::CompoundState *state = new base::CompoundState();
+  state->components = new base::State *[compoundSpace_->getSubspaceCount()];
+  BOLT_ASSERT(compoundSpace_->getSubspaceCount() == 2, "Invalid number of subspaces");
 
-    // Create components
-    state->components[MODEL_BASED] = jointState;
-    state->components[DISCRETE] = compoundSpace_->getSubspaces()[DISCRETE]->allocState();
+  // Create components
+  state->components[MODEL_BASED] = jointState;
+  state->components[DISCRETE] = compoundSpace_->getSubspaces()[DISCRETE]->allocState();
 
-    // Set level
-    state->as<ob::DiscreteStateSpace::StateType>(DISCRETE)->value = level;
+  // Set level
+  state->as<ob::DiscreteStateSpace::StateType>(DISCRETE)->value = level;
 
-    return static_cast<base::State *>(state);
+  return static_cast<base::State *>(state);
 }
 
 TaskVertex TaskGraph::addVertexWithLevel(base::State *state, VertexLevel level, std::size_t indent)
@@ -1007,7 +1005,7 @@ void TaskGraph::removeDeletedVertices(std::size_t indent)
 
 TaskEdge TaskGraph::addEdge(TaskVertex v1, TaskVertex v2, std::size_t indent)
 {
-  //BOLT_FUNC(indent, vAdd_, "TaskGraph.addEdge(): from vertex " << v1 << " to " << v2);
+  // BOLT_FUNC(indent, vAdd_, "TaskGraph.addEdge(): from vertex " << v1 << " to " << v2);
 
   if (superDebug_)  // Extra checks
   {
@@ -1018,10 +1016,10 @@ TaskEdge TaskGraph::addEdge(TaskVertex v1, TaskVertex v2, std::size_t indent)
     BOLT_ASSERT(v1 != v2, "Verticex IDs are the same");
     BOLT_ASSERT(!hasEdge(v1, v2), "There already exists an edge between two vertices requested");
     BOLT_ASSERT(hasEdge(v1, v2) == hasEdge(v2, v1), "There already exists an edge between two vertices requested, "
-                "other direction");
+                                                    "other direction");
     BOLT_ASSERT(getState(v1) != getState(v2), "States on both sides of an edge are the same");
     BOLT_ASSERT(!si_->getStateSpace()->equalStates(getState(v1), getState(v2)), "Vertex IDs are different but "
-                "states are the equal");
+                                                                                "states are the equal");
   }
 
   // Create the new edge
@@ -1260,7 +1258,7 @@ void TaskGraph::printGraphStats(double generationDuration, std::size_t indent)
   BOLT_DEBUG(indent, 1, "---------------------------------------------");
 }
 
-bool TaskGraph::checkMotion(const base::State* a, const base::State* b)
+bool TaskGraph::checkMotion(const base::State *a, const base::State *b)
 {
   // Disregard task level
   // const base::CompoundState *cA = static_cast<const base::CompoundState *>(a);
@@ -1271,11 +1269,9 @@ bool TaskGraph::checkMotion(const base::State* a, const base::State* b)
   return modelSI_->checkMotion(getModelBasedState(a), getModelBasedState(b));
 }
 
-
 }  // namespace bolt
 }  // namespace tools
 }  // namespace ompl
-
 
 // TaskAstarVisitor methods ////////////////////////////////////////////////////////////////////////////
 

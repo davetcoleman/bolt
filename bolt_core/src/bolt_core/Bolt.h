@@ -239,7 +239,6 @@ protected:
   std::string benchmarkFilePath_;
 
 public:
-
   /** \brief Verbose settings */
   bool verbose_ = true;
 

@@ -284,12 +284,12 @@ void SparseMirror::addEdgesForDim(std::vector<SparseVertex> &sparseV2ToDualVerte
     dualSG->addEdge(sparseE_v0, sparseE_v1, newEdgeDist, eUNKNOWN, indent);
   }
 
-  BOLT_DEBUG(indent, vMirrorStatus_, "Total edges skipped: " << (double(skippedUnconnectedEdges + skippedCollisionEdges) /
-                                                                 monoSG_->getNumEdges() * 100)
-                                                             << "%. Skipped edges: " << skippedUnconnectedEdges
-                                                             << " no endpoints, " << skippedCollisionEdges
-                                                             << " collision, " << skippedTooLongEdges << " length, "
-                                                             << "out of total: " << monoSG_->getNumEdges());
+  BOLT_DEBUG(indent, vMirrorStatus_,
+             "Total edges skipped: " << (double(skippedUnconnectedEdges + skippedCollisionEdges) /
+                                         monoSG_->getNumEdges() * 100)
+                                     << "%. Skipped edges: " << skippedUnconnectedEdges << " no endpoints, "
+                                     << skippedCollisionEdges << " collision, " << skippedTooLongEdges << " length, "
+                                     << "out of total: " << monoSG_->getNumEdges());
 }
 
 void SparseMirror::addEdgesForAll(std::vector<std::vector<SparseVertex>> &vertexMapMatrix, SparseGraphPtr dualSG,
@@ -358,11 +358,11 @@ void SparseMirror::addEdgesForAll(std::vector<std::vector<SparseVertex>> &vertex
         // time::point startTime1 = time::now(); // Benchmark
         double newEdgeDist = monoSI_->distance(dualSG->getState(dualVertex0), dualSG->getState(dualVertex1));
         bool useHalfOfSparseDelta = true;
-        if ( (useHalfOfSparseDelta && newEdgeDist > sparseDelta_)
-             || (!useHalfOfSparseDelta && newEdgeDist > 2 * sparseDelta_))
+        if ((useHalfOfSparseDelta && newEdgeDist > sparseDelta_) ||
+            (!useHalfOfSparseDelta && newEdgeDist > 2 * sparseDelta_))
         {
-          BOLT_WARN(indent, false, "Edge is longer than 2*sparseDelta=" << 2 * sparseDelta_ << ", value=" <<
-                    newEdgeDist);
+          BOLT_WARN(indent, false, "Edge is longer than 2*sparseDelta=" << 2 * sparseDelta_
+                                                                        << ", value=" << newEdgeDist);
           skippedTooLongEdges++;
           continue;
         }

@@ -242,11 +242,11 @@ bool CartPathPlanner::computeRedunPosesForCartPoint(const Eigen::Affine3d& pose,
   {
     for (const Eigen::Affine3d& candidate_pose : candidate_poses)
     {
-      //visual_tools_->publishZArrow(candidate_pose, rvt::BLUE, rvt::SMALL);
+      // visual_tools_->publishZArrow(candidate_pose, rvt::BLUE, rvt::SMALL);
       visual_tools_->publishAxis(candidate_pose);
     }
     visual_tools_->trigger();
-    usleep(0.001*1000000);
+    usleep(0.001 * 1000000);
   }
 
   BOOST_ASSERT_MSG(candidate_poses.size() == total_num_steps, "Estimated poses should be same as actual poses");
@@ -404,8 +404,6 @@ bool CartPathPlanner::populateBoltGraph(ompl::tools::bolt::TaskGraphPtr task_gra
 
   // For assertion testing
   ompl::tools::bolt::TaskVertex startingVertex = task_graph_->getNumVertices() - 1;
-
-
 
   // -------------------------------------------------------------------------
   // Solve each dimension redunant joint poses independently, the combine into full state space
@@ -629,8 +627,7 @@ bool CartPathPlanner::combineEETrajectories(const std::vector<RedunJointTrajecto
   BOLT_DEBUG(indent, verbose_, "Total size of combined traj points vector: " << combined_traj_points.size());
 }
 
-bool CartPathPlanner::addCartPointToBoltGraph(const CombinedPoints& combined_points,
-                                              TaskVertexPoint& point_vertices,
+bool CartPathPlanner::addCartPointToBoltGraph(const CombinedPoints& combined_points, TaskVertexPoint& point_vertices,
                                               moveit::core::RobotStatePtr moveit_robot_state, std::size_t indent)
 {
   BOLT_FUNC(indent, verbose_, "addCartPointToBoltGraph() - total points: " << combined_points.size());
@@ -670,12 +667,12 @@ bool CartPathPlanner::addCartPointToBoltGraph(const CombinedPoints& combined_poi
     // Add vertex to task graph
     point_vertices[i] = task_graph_->addVertexWithLevel(ompl_state, level1, indent);
 
-    //std::cout << "point_vertices[i]: " << point_vertices[i] << std::endl;
+    // std::cout << "point_vertices[i]: " << point_vertices[i] << std::endl;
 
     if (visualize_show_combined_solutions_)
     {
       visual_tools_->publishRobotState(moveit_robot_state);
-      //parent_->waitForNextStep("adding vertex");
+      // parent_->waitForNextStep("adding vertex");
     }
 
     new_vertex_count++;
@@ -704,11 +701,11 @@ bool CartPathPlanner::addEdgesToBoltGraph(const TaskVertexMatrix& point_vertices
     visualizeAllPointVertices(point_vertices, indent);
 
   // Step through each cartesian point, starting at second point
-  std::size_t feedbackFrequency = 1; //std::max(10.0, point_vertices.size() / 10.0);
+  std::size_t feedbackFrequency = 1;  // std::max(10.0, point_vertices.size() / 10.0);
   std::cout << "      Trajectory Point: ";
   for (std::size_t traj_id = 1; traj_id < point_vertices.size(); ++traj_id)
   {
-    //std::cout << "traj_id: " << traj_id << " out of " << point_vertices.size() << std::endl;
+    // std::cout << "traj_id: " << traj_id << " out of " << point_vertices.size() << std::endl;
 
     // Get all vertices at previous cartesian point
     const TaskVertexPoint& point_vertices0 = point_vertices[traj_id - 1];
@@ -724,7 +721,7 @@ bool CartPathPlanner::addEdgesToBoltGraph(const TaskVertexMatrix& point_vertices
       BOLT_ASSERT(v1 > startingVertex && v1 <= endingVertex, "Attempting to create edge with out of range vertex");
 
       // Visualize
-      //visual_tools2_->publishRobotState(ik_state1_, rvt::ORANGE);
+      // visual_tools2_->publishRobotState(ik_state1_, rvt::ORANGE);
 
       // Connect to every vertex in *previous* cartesian point
       for (std::size_t vertex0_id = 0; vertex0_id < point_vertices0.size(); ++vertex0_id)
@@ -737,15 +734,15 @@ bool CartPathPlanner::addEdgesToBoltGraph(const TaskVertexMatrix& point_vertices
 
         if (!ik_state0_->isValidVelocityMove(*ik_state1_, parent_->planning_jmg_, timing_))
         {
-          //BOLT_DEBUG(indent, true, "Skipping edge, total skipped: " << edges_skipped_count);
+          // BOLT_DEBUG(indent, true, "Skipping edge, total skipped: " << edges_skipped_count);
           edges_skipped_count++;
 
           continue;
         }
 
-        //visual_tools_->publishRobotState(ik_state0_, rvt::GREEN);
+        // visual_tools_->publishRobotState(ik_state0_, rvt::GREEN);
 
-        //BOLT_DEBUG(indent, true, "Adding edge " << v0 << " to " << v1);
+        // BOLT_DEBUG(indent, true, "Adding edge " << v0 << " to " << v1);
         task_graph_->addEdge(v0, v1, indent);
 
         new_edge_count++;
@@ -753,16 +750,17 @@ bool CartPathPlanner::addEdgesToBoltGraph(const TaskVertexMatrix& point_vertices
 
       if (!ros::ok())
         exit(0);
-    }    // for
+    }  // for
 
-    //BOLT_DEBUG(indent, true, "Point " << traj_id << " current edge count: " << new_edge_count);
+    // BOLT_DEBUG(indent, true, "Point " << traj_id << " current edge count: " << new_edge_count);
 
     if (!ros::ok())
       exit(0);
 
     // Feedback
     if ((traj_id + 1) % feedbackFrequency == 0)
-      std::cout << static_cast<int>(ceil(traj_id / static_cast<double>(point_vertices.size()) * 100.0)) << "% " << std::flush;
+      std::cout << static_cast<int>(ceil(traj_id / static_cast<double>(point_vertices.size()) * 100.0)) << "% "
+                << std::flush;
 
   }  // for
   std::cout << std::endl;
@@ -859,7 +857,7 @@ bool CartPathPlanner::getRedunJointPosesForCartPoint(const Eigen::Affine3d& pose
   // Discretization setting
   kinematics::KinematicsQueryOptions options;
   options.discretization_method = kinematics::DiscretizationMethods::DiscretizationMethod::ALL_DISCRETIZED;
-  //options.discretization_method = kinematics::DiscretizationMethods::DiscretizationMethod::NO_DISCRETIZATION;
+  // options.discretization_method = kinematics::DiscretizationMethods::DiscretizationMethod::NO_DISCRETIZATION;
 
   // Enumerate solvable joint poses for each candidate_pose
   for (const Eigen::Affine3d& candidate_pose : candidate_poses)
@@ -943,7 +941,8 @@ bool CartPathPlanner::getRedunJointPosesForCartPoint(const Eigen::Affine3d& pose
 void CartPathPlanner::visualizeAllJointPoses(const RedunJointPoses& joint_poses,
                                              const moveit::core::JointModelGroup* jmg, std::size_t indent)
 {
-  BOLT_FUNC(indent, true, "visualizeAllJointPoses() found " << joint_poses.size() << " joint_poses for this cartesian point");
+  BOLT_FUNC(indent, true, "visualizeAllJointPoses() found " << joint_poses.size() << " joint_poses for this cartesian "
+                                                                                     "point");
 
   for (const JointSpacePoint& joint_pose : joint_poses)
   {
@@ -974,7 +973,7 @@ void CartPathPlanner::visualizeAllPointVertices(const TaskVertexMatrix& point_ve
 
       space->copyToRobotState(*ik_state0_, task_graph_->getState(v0));
       visual_tools2_->publishRobotState(ik_state0_, rvt::RAND);
-      //usleep(0.0001*1000000);
+      // usleep(0.0001*1000000);
     }
   }
 }

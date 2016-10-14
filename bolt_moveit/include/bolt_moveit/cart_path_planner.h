@@ -111,8 +111,7 @@ public:
   bool combineEETrajectories(const std::vector<RedunJointTrajectory>& redun_traj_per_eef,
                              CombinedTrajectory& combined_traj_points, std::size_t indent);
 
-  bool addCartPointToBoltGraph(const CombinedPoints& combined_points,
-                               TaskVertexPoint& point_vertices,
+  bool addCartPointToBoltGraph(const CombinedPoints& combined_points, TaskVertexPoint& point_vertices,
                                moveit::core::RobotStatePtr moveit_robot_state, std::size_t indent);
 
   bool addEdgesToBoltGraph(const TaskVertexMatrix& graphVertices, ompl::tools::bolt::TaskVertex startingVertex,

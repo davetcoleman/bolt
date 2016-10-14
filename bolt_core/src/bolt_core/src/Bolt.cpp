@@ -101,15 +101,15 @@ void Bolt::initialize()
   // CompoundState settings for task planning
 
   // Create discrete state space
-  const int NUM_LEVELS = 2; // TODO do not hardcode?
+  const int NUM_LEVELS = 2;  // TODO do not hardcode?
   const int lowerBound = 0;
   const int upperBound = NUM_LEVELS;
   base::StateSpacePtr discreteSpace = std::make_shared<base::DiscreteStateSpace>(lowerBound, upperBound);
 
   // Create compound state
   base::CompoundStateSpacePtr compoundSpace = std::make_shared<base::CompoundStateSpace>();
-  compoundSpace->addSubspace(si_->getStateSpace(), 1.0); // 100% weight
-  compoundSpace->addSubspace(discreteSpace, 0.0); // 0% weight
+  compoundSpace->addSubspace(si_->getStateSpace(), 1.0);  // 100% weight
+  compoundSpace->addSubspace(discreteSpace, 0.0);         // 0% weight
 
   // Create space information
   base::SpaceInformationPtr compoundSI = std::make_shared<base::SpaceInformation>(compoundSpace);

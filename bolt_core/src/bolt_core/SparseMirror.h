@@ -56,7 +56,7 @@ OMPL_CLASS_FORWARD(SparseMirror);
 /** \class ompl::tools::bolt::::SparseMirrorPtr
     \brief A boost shared pointer wrapper for ompl::tools::SparseMirror */
 
-typedef std::function<base::State*(const base::State *state1, const base::State *state2)> CombineStatesCallback;
+typedef std::function<base::State *(const base::State *state1, const base::State *state2)> CombineStatesCallback;
 
 class SparseMirror
 {

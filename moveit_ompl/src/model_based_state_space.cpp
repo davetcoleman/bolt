@@ -91,7 +91,6 @@ mo::ModelBasedStateSpace::ModelBasedStateSpace(const ModelBasedStateSpaceSpecifi
     // std::cout << "JointModel: " << spec_.joint_model_group_->getActiveJointModels()[i]->getName() << " has bounds ["
     //<< var_bounds.front().min_position_ << ", " << var_bounds.front().max_position_ << "]" << std::endl;
   }
-
 }
 
 mo::ModelBasedStateSpace::~ModelBasedStateSpace()
@@ -140,9 +139,8 @@ void mo::ModelBasedStateSpace::serialize(void *serialization, const ob::State *s
 
 void mo::ModelBasedStateSpace::deserialize(ob::State *state, const void *serialization) const
 {
-  //state->as<StateType>()->values[0] = 1;
-  memcpy(state->as<StateType>()->values, reinterpret_cast<const char *>(serialization),
-         state_values_size_);
+  // state->as<StateType>()->values[0] = 1;
+  memcpy(state->as<StateType>()->values, reinterpret_cast<const char *>(serialization), state_values_size_);
 }
 
 unsigned int mo::ModelBasedStateSpace::getDimension() const
@@ -244,7 +242,7 @@ void mo::ModelBasedStateSpace::setPlanningVolume(double minX, double maxX, doubl
 ob::StateSamplerPtr mo::ModelBasedStateSpace::allocDefaultStateSampler() const
 {
   return ob::StateSamplerPtr(static_cast<ob::StateSampler *>(
-                                                             new DefaultStateSampler<ModelBasedStateSpace::StateType>(this, spec_.joint_model_group_, &spec_.joint_bounds_)));
+      new DefaultStateSampler<ModelBasedStateSpace::StateType>(this, spec_.joint_model_group_, &spec_.joint_bounds_)));
 }
 
 void mo::ModelBasedStateSpace::printSettings(std::ostream &out) const
@@ -277,8 +275,7 @@ void mo::ModelBasedStateSpace::copyToOMPLState(ob::State *state, const robot_sta
   rstate.copyJointGroupPositions(spec_.joint_model_group_, state->as<StateType>()->values);
 }
 
-void mo::ModelBasedStateSpace::copyJointToOMPLState(ob::State *state,
-                                                    const robot_state::RobotState &robot_state,
+void mo::ModelBasedStateSpace::copyJointToOMPLState(ob::State *state, const robot_state::RobotState &robot_state,
                                                     const moveit::core::JointModel *joint_model,
                                                     int ompl_state_joint_index) const
 {

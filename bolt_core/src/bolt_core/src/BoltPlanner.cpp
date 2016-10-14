@@ -383,7 +383,7 @@ bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
   if (foundValidStart && foundValidGoal)
   {
     BOLT_ERROR(indent, "Unexpected condition - both a valid start and goal were found but still no path found. "
-                             "TODO ");
+                       "TODO ");
     exit(-1);
   }
 
@@ -666,7 +666,7 @@ bool BoltPlanner::convertVertexPathToStatePath(std::vector<TaskVertex> &vertexPa
       if (vertexPath[i - 1] == vertexPath[i - 2])
       {
         BOLT_ERROR(indent, "Found repeated vertices " << vertexPath[i - 1] << " to " << vertexPath[i - 2]
-                                                            << " from index " << i);
+                                                      << " from index " << i);
         exit(-1);
       }
 
@@ -680,7 +680,7 @@ bool BoltPlanner::convertVertexPathToStatePath(std::vector<TaskVertex> &vertexPa
       else if (taskGraph_->getGraphNonConst()[edge].collision_state_ == NOT_CHECKED)
       {
         BOLT_ERROR(indent, "A chosen path has an edge that has not been checked for collision. This should not "
-                                 "happen");
+                           "happen");
       }
     }
   }

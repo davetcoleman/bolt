@@ -51,7 +51,6 @@
 #include <ompl/base/spaces/SE3StateSpace.h>
 #include <ompl/base/ScopedState.h>
 
-
 // MoveIt
 #include <moveit_ompl/model_based_state_space.h>
 
@@ -64,9 +63,7 @@ namespace bolt_moveit
 {
 ProjectionVizWindow::ProjectionVizWindow(rviz_visual_tools::RvizVisualToolsPtr visuals,
                                          ompl::base::SpaceInformationPtr si)
-  : ot::VizWindow(si)
-  , name_("projection_viz_window")
-  , visuals_(visuals)
+  : ot::VizWindow(si), name_("projection_viz_window"), visuals_(visuals)
 {
   // Calculate ranges
   moveit_ompl::ModelBasedStateSpacePtr mb_state_space =
@@ -221,7 +218,8 @@ void ProjectionVizWindow::edges(const std::vector<const ompl::base::State*> stat
   visuals_->publishLines(aPoints, bPoints, rviz_colors, visuals_->intToRvizScale(size));
 }
 
-void ProjectionVizWindow::path(ompl::geometric::PathGeometric* path, ompl::tools::VizSizes type, ot::VizColors vertexColor, ot::VizColors edgeColor)
+void ProjectionVizWindow::path(ompl::geometric::PathGeometric* path, ompl::tools::VizSizes type,
+                               ot::VizColors vertexColor, ot::VizColors edgeColor)
 {
   if (!enabled_)
     return;
