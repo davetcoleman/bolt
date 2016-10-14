@@ -392,12 +392,12 @@ void BoltMoveIt::run(std::size_t indent)
   //   experience_setup_->getSparseGraph()->getDiscretizer()->eliminateDisjointSets();
   // }
 
-  // Remove verticies that are somehow in collision
-  // if (check_valid_vertices_)
-  // {
-  //   experience_setup_->getSparseGraph()->removeInvalidVertices();
-  //   experience_setup_->getSparseGraph()->saveIfChanged();
-  // }
+  // Check for verticies that are somehow in collision
+  if (check_valid_vertices_)
+  {
+    bolt_->getSparseGraph()->verifyGraph(indent);
+    exit(0);
+  }
 
   if (mirror_graph_)
   {

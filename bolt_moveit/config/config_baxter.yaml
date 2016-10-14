@@ -6,12 +6,12 @@ bolt_moveit:
   benchmark_performance: false
   display_disjoint_sets: false
   eliminate_dense_disjoint_sets: false
-  check_valid_vertices: false
+  check_valid_vertices: false # Collision check every vertex in sparse graph and return error if invalid found
 
   # create sparse graph
   load_spars: true
   create_spars: true
-  continue_spars: false # even if a file has been saved, randomly sample for more coverage
+  continue_spars: true # even if a file has been saved, randomly sample for more coverage
   run_problems: true # do plans?
   sweep_spars_maps: true
   sweep_map_start: 1 # Base 1, not 0

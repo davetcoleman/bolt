@@ -69,8 +69,7 @@ public:
 
   ob::State *allocState() const
   {
-    // ob::State *state = new StateType();
-    // return state;
+    std::cout << "alloc model_size_state_space " << N << std::endl;
     return new StateType();
   }
 
