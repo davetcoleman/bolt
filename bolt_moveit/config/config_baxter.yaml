@@ -32,8 +32,8 @@ bolt_moveit:
   #experience_planner: spars2
 
   # robot setup
-  planning_group_name: right_arm_minus_one
-  #planning_group_name: both_arms
+  #planning_group_name: right_arm_minus_one
+  planning_group_name: both_arms
   arm_jmgs: [right_arm, left_arm]
   ee_tip_links: [right_gripper_tip, left_gripper_tip]
 

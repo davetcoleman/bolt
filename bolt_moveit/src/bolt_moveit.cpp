@@ -153,7 +153,7 @@ BoltMoveIt::BoltMoveIt(const std::string &hostname, const std::string &package_p
 
   if (arm_jmgs.size() != ee_tip_links.size())
   {
-    BOLT_ERROR(indent, true, "Joint model groups array must match size of EEF tip links array");
+    BOLT_ERROR(indent, "Joint model groups array must match size of EEF tip links array");
     exit(-1);
   }
 
@@ -163,12 +163,12 @@ BoltMoveIt::BoltMoveIt(const std::string &hostname, const std::string &package_p
         mvt::ArmData(robot_model_->getJointModelGroup(arm_jmgs[i]), robot_model_->getLinkModel(ee_tip_links[i])));
     if (!arm_datas_.back().jmg_)
     {
-      BOLT_ERROR(indent, true, "No joint model group found for jmg name " << arm_jmgs[i]);
+      BOLT_ERROR(indent, "No joint model group found for jmg name " << arm_jmgs[i]);
       exit(-1);
     }
     if (!arm_datas_.back().ee_link_)
     {
-      BOLT_ERROR(indent, true, "No link model found for link name " << ee_tip_links[i]);
+      BOLT_ERROR(indent, "No link model found for link name " << ee_tip_links[i]);
       exit(-1);
     }
   }

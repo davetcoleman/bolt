@@ -106,7 +106,7 @@
     } while (0)
 
 // BOLT_ERROR()
-#define BOLT_ERROR(indent, flag, stream) BOLT_COLOR_INFO(indent, flag, stream, ANSI_COLOR_RED);
+#define BOLT_ERROR(indent, stream) BOLT_COLOR_INFO(indent, true, stream, ANSI_COLOR_RED);
 
 // BOLT_WARN()
 #define BOLT_WARN(indent, flag, stream) BOLT_COLOR_INFO(indent, flag, stream, ANSI_COLOR_YELLOW);

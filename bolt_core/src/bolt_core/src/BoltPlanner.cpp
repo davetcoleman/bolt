@@ -120,13 +120,13 @@ base::PlannerStatus BoltPlanner::solve(Termination &ptc)
 
   if (startState == nullptr)
   {
-    BOLT_ERROR(indent, true, "No start state found");
+    BOLT_ERROR(indent, "No start state found");
     return base::PlannerStatus::ABORT;
   }
 
   if (goalState == nullptr)
   {
-    BOLT_ERROR(indent, true, "No goal state found");
+    BOLT_ERROR(indent, "No goal state found");
     return base::PlannerStatus::ABORT;
   }
 
@@ -382,7 +382,7 @@ bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
 
   if (foundValidStart && foundValidGoal)
   {
-    BOLT_ERROR(indent, true, "Unexpected condition - both a valid start and goal were found but still no path found. "
+    BOLT_ERROR(indent, "Unexpected condition - both a valid start and goal were found but still no path found. "
                              "TODO ");
     exit(-1);
   }
@@ -551,7 +551,7 @@ bool BoltPlanner::lazyCollisionCheck(std::vector<TaskVertex> &vertexPath, Termin
     }
     else if (taskGraph_->getGraphNonConst()[thisEdge].collision_state_ == IN_COLLISION)
     {
-      BOLT_ERROR(indent, true, "Somehow a path was found that is already in collision before lazy collision checking");
+      BOLT_ERROR(indent, "Somehow a path was found that is already in collision before lazy collision checking");
       visual_->waitForUserFeedback("error");
     }
 
@@ -665,7 +665,7 @@ bool BoltPlanner::convertVertexPathToStatePath(std::vector<TaskVertex> &vertexPa
       // Error check that no consequtive verticies are the same
       if (vertexPath[i - 1] == vertexPath[i - 2])
       {
-        BOLT_ERROR(indent, true, "Found repeated vertices " << vertexPath[i - 1] << " to " << vertexPath[i - 2]
+        BOLT_ERROR(indent, "Found repeated vertices " << vertexPath[i - 1] << " to " << vertexPath[i - 2]
                                                             << " from index " << i);
         exit(-1);
       }
@@ -675,11 +675,11 @@ bool BoltPlanner::convertVertexPathToStatePath(std::vector<TaskVertex> &vertexPa
       // Check if any edges in path are not free (then it an approximate path)
       if (taskGraph_->getGraphNonConst()[edge].collision_state_ == IN_COLLISION)
       {
-        BOLT_ERROR(indent, true, "Found invalid edge / approximate solution - how did this happen?");
+        BOLT_ERROR(indent, "Found invalid edge / approximate solution - how did this happen?");
       }
       else if (taskGraph_->getGraphNonConst()[edge].collision_state_ == NOT_CHECKED)
       {
-        BOLT_ERROR(indent, true, "A chosen path has an edge that has not been checked for collision. This should not "
+        BOLT_ERROR(indent, "A chosen path has an edge that has not been checked for collision. This should not "
                                  "happen");
       }
     }

@@ -385,7 +385,7 @@ void VertexDiscretizer::createState(std::size_t threadID, std::vector<double> &v
 
   if (!valid)
   {
-    BOLT_ERROR(indent, vThread_, "Rejected because of validity");
+    BOLT_ERROR(indent, "Rejected because of validity");
 
     // Visualize
     if (visualizeGridGeneration_ && false)

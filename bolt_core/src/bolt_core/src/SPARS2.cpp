@@ -1200,7 +1200,7 @@ bool ompl::geometric::SPARS2::checkGraphOptimality()
 
     if (sparseLength >= theoryLength)
     {
-      BOLT_ERROR(indent + 2, true, "Asymptotic optimality guarantee VIOLATED");
+      BOLT_ERROR(indent + 2, "Asymptotic optimality guarantee VIOLATED");
 
       // Show the two paths
       visual_->viz2()->deleteAllMarkers();

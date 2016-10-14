@@ -490,7 +490,7 @@ bool SparseGraph::checkPathLength(SparseVertex v1, SparseVertex v2, double dista
 
   if (pathLength < distance + SMALL_EPSILON)
   {
-    BOLT_ERROR(indent, false, "New interface edge does not help enough, edge length: " << distance
+    BOLT_ERROR(indent, "New interface edge does not help enough, edge length: " << distance
                << ", astar: " << pathLength << ", difference between distances: "
                << fabs(distance - pathLength));
     return false;
@@ -590,7 +590,7 @@ bool SparseGraph::isEmpty() const
 
 void SparseGraph::errorCheckDuplicateStates(std::size_t indent)
 {
-  BOLT_ERROR(indent, true, "errorCheckDuplicateStates() - part of super debug - NOT IMPLEMENTED");
+  BOLT_ERROR(indent, "errorCheckDuplicateStates() - part of super debug - NOT IMPLEMENTED");
 
   // bool found = false;
   // // Error checking: check for any duplicate states
@@ -791,7 +791,7 @@ bool SparseGraph::sameComponent(SparseVertex v1, SparseVertex v2)
 
 void SparseGraph::resetDisjointSets()
 {
-  BOLT_ERROR(0, true, "not implemented reset disjoint sets");
+  BOLT_ERROR(0, "not implemented reset disjoint sets");
   //disjointSets_ = SparseDisjointSetType(boost::get(boost::vertex_rank, g_), boost::get(boost::vertex_predecessor, g_));
 }
 
@@ -1238,7 +1238,7 @@ void SparseGraph::displayDatabase(bool showVertices, bool showEdges, std::size_t
       // Check for null states
       if (!getState(v))
       {
-        BOLT_ERROR(indent, true, "Null vertex found: " << v);
+        BOLT_ERROR(indent, "Null vertex found: " << v);
         continue;
       }
 
@@ -1455,19 +1455,22 @@ bool SparseGraph::verifyGraph(std::size_t indent)
 
     // Skip deleted vertices
     if (g_[v].state_ == 0)
+    {
+      BOLT_WARN(indent, true, "Skipped deleted vertex");
       continue;
+    }
 
     // Check for null states
     if (!getState(v))
     {
-      BOLT_ERROR(indent, true, "Null vertex found: " << v);
+      BOLT_ERROR(indent, "Null vertex found: " << v);
       return false;
     }
 
     // Collision check
     if (!si_->isValid(g_[v].state_))
     {
-      BOLT_ERROR(indent, true, "Found invalid vertex " << v);
+      BOLT_ERROR(indent, "Found invalid vertex " << v);
       return false;
     }
   }
@@ -1480,7 +1483,7 @@ bool SparseGraph::verifyGraph(std::size_t indent)
     // Collision check
     if (!si_->checkMotion(g_[v1].state_, g_[v2].state_))
     {
-      BOLT_ERROR(indent, true, "Invalid edge found: " << v1 << " to " << v2);
+      BOLT_ERROR(indent, "Invalid edge found: " << v1 << " to " << v2);
       return false;
     }
   }

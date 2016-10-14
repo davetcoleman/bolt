@@ -261,7 +261,7 @@ bool Bolt::checkBoltPlannerOptimality(std::size_t indent)
 
   if (sparseLength >= theoryLength)
   {
-    BOLT_ERROR(indent + 2, 1, "Asymptotic optimality guarantee VIOLATED");
+    BOLT_ERROR(indent + 2, "Asymptotic optimality guarantee VIOLATED");
     return false;
   }
   else

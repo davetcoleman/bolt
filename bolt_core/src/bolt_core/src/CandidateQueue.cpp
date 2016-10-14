@@ -95,7 +95,7 @@ void CandidateQueue::startGenerating(std::size_t indent)
   BOLT_FUNC(indent, true, "startGenerating() Starting candidate queue thread");
   if (threadsRunning_)
   {
-    BOLT_ERROR(indent, true, "CandidateQueue already running");
+    BOLT_ERROR(indent, "CandidateQueue already running");
     return;
   }
   threadsRunning_ = true;
@@ -139,7 +139,7 @@ void CandidateQueue::startGenerating(std::size_t indent)
     BOLT_WARN(indent, true, "Only running CandidateQueue with 1 thread");
   if (numThreads_ >= sg_->getNumQueryVertices())
   {
-    BOLT_ERROR(indent, true, "Too many threads requested for candidate queue");
+    BOLT_ERROR(indent, "Too many threads requested for candidate queue");
     exit(-1);
   }
 
@@ -305,7 +305,7 @@ CandidateData &CandidateQueue::getNextCandidate(std::size_t indent)
         queue_.pop();
         numCleared++;
       }
-      BOLT_ERROR(indent, vClear_ && numCleared > 0, "Cleared " << numCleared << " states from CandidateQueue");
+      BOLT_DEBUG(indent, vClear_ && numCleared > 0, "Cleared " << numCleared << " states from CandidateQueue");
 
       // Stop seaching for expired states after we find the first one that is not expired
       if (!queue_.empty() && queue_.front().graphVersion_ == sparseGenerator_->getNumRandSamplesAdded())

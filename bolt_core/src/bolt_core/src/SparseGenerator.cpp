@@ -653,7 +653,7 @@ bool SparseGenerator::checkGraphOptimality(std::size_t indent)
     double distance;
     if (!sg_->astarSearch(start, goal, vertexPath, distance, indent))
     {
-      BOLT_ERROR(indent, true, "No path found through graph");
+      BOLT_ERROR(indent, "No path found through graph");
 
       // Clear out previous path for clarity
       visual_->viz2()->deleteAllMarkers();
@@ -737,7 +737,7 @@ bool SparseGenerator::checkGraphOptimality(std::size_t indent)
 
     if (sparseLength >= theoryLength)
     {
-      BOLT_ERROR(indent + 2, true, "Asymptotic optimality guarantee VIOLATED");
+      BOLT_ERROR(indent + 2, "Asymptotic optimality guarantee VIOLATED");
 
       // Show the two paths
       visual_->viz2()->deleteAllMarkers();
@@ -812,7 +812,7 @@ void SparseGenerator::debugNoNeighbors(CandidateData &point, std::size_t indent)
   findGraphNeighbors(point, dist, 0 /*threadID*/, indent);
   if (point.visibleNeighborhood_.empty())
   {
-    BOLT_ERROR(indent, true, "still empty");
+    BOLT_ERROR(indent, "still empty");
   }
   else
   {
@@ -827,7 +827,7 @@ void SparseGenerator::debugNoNeighbors(CandidateData &point, std::size_t indent)
     usleep(0.001 * 1000000);
   }
 
-  BOLT_ERROR(indent, false, "Found sampled vertex with no neighbors");
+  BOLT_ERROR(indent, "Found sampled vertex with no neighbors");
   visual_->viz1()->spin();
 }
 
@@ -1090,6 +1090,7 @@ void SparseGenerator::benchmarkMemoryAllocation(std::size_t indent)
   std::cout << "-------------------------------------------------------" << std::endl;
   std::cout << std::endl;
 }
+
 
 }  // namespace bolt
 }  // namespace tools

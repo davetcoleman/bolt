@@ -169,7 +169,7 @@ bool SparseSmoother::smoothQualityPath(geometric::PathGeometric *path, double cl
       visual_->viz6()->trigger();
     }
 
-    BOLT_ERROR(indent, true, "Check and repair failed (v2)");
+    BOLT_ERROR(indent, "Check and repair failed (v2)");
     usleep(1 * 1000000);
     return false;
   }

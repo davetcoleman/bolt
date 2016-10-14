@@ -128,7 +128,7 @@ public:
     }
 
     std::pair<unsigned int, unsigned int> endpoints_;
-    float weight_;
+    double weight_;
   };
 
   /** \brief Constructor */

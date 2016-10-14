@@ -79,7 +79,7 @@ void SamplingQueue::startSampling(std::size_t indent)
   BOLT_FUNC(indent, true, "startSampling() Starting sampling thread");
   if (threadRunning_)
   {
-    BOLT_ERROR(indent, true, "SamplingQueue already running");
+    BOLT_ERROR(indent, "SamplingQueue already running");
     return;
   }
   threadRunning_ = true;

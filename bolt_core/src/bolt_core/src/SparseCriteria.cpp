@@ -313,7 +313,7 @@ bool SparseCriteria::checkAddConnectivity(CandidateData &candidateD, std::size_t
     // Do not add edge from self to self
     if (si_->getStateSpace()->equalStates(sg_->getState(*vertexIt), sg_->getState(candidateD.newVertex_)))
     {
-      BOLT_ERROR(indent + 4, 1, "Prevented same vertex from being added twice ");
+      BOLT_ERROR(indent + 4, "Prevented same vertex from being added twice ");
       continue;  // skip this pairing
     }
 
@@ -414,7 +414,7 @@ bool SparseCriteria::checkAddInterface(CandidateData &candidateD, std::size_t in
 
   if (sg_->stateDeleted(v1))
   {
-    BOLT_ERROR(indent + 3, 1, "Skipping edge 0 because vertex was removed");
+    BOLT_ERROR(indent + 3, "Skipping edge 0 because vertex was removed");
   }
   else
   {
@@ -423,7 +423,7 @@ bool SparseCriteria::checkAddInterface(CandidateData &candidateD, std::size_t in
 
   if (sg_->stateDeleted(v2))
   {
-    BOLT_ERROR(indent + 3, 1, "Skipping edge 1 because vertex was removed");
+    BOLT_ERROR(indent + 3, "Skipping edge 1 because vertex was removed");
   }
   else
   {

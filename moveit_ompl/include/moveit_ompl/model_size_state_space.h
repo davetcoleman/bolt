@@ -151,9 +151,6 @@ public:
 
   void interpolate(const ob::State *from, const ob::State *to, const double t, ob::State *state) const
   {
-    // clear any cached info (such as validity known or not)
-    // state->as<StateType>()->clearKnownInformation();
-
     if (!interpolation_function_ || !interpolation_function_(from, to, t, state))
     {
       // perform the actual interpolation
@@ -171,9 +168,9 @@ public:
 
   ob::StateSamplerPtr allocDefaultStateSampler() const
   {
-    return ob::StateSamplerPtr(static_cast<ob::StateSampler *>(new DefaultStateSampler<ModelBasedStateSpace::StateType>(this, spec_.joint_model_group_, &spec_.joint_bounds_)));
-    //return ob::StateSamplerPtr(static_cast<ob::StateSampler *>(new moveit_mopl::DefaultStateSampler<ModelBasedStateSpace::StateType>(this, spec_.joint_model_group_, &spec_.joint_bounds_)));
-
+    return ob::StateSamplerPtr(
+        static_cast<ob::StateSampler *>(new DefaultStateSampler<ModelSizeStateSpace<N>::StateType>(
+            this, spec_.joint_model_group_, &spec_.joint_bounds_)));
   }
 
   void printState(const ob::State *state, std::ostream &out) const

@@ -393,7 +393,7 @@ bool TaskGraph::isEmpty() const
 
 void TaskGraph::generateMonoLevelTaskSpace(std::size_t indent)
 {
-  BOLT_ERROR(indent, true, "TODO: implement");
+  BOLT_ERROR(indent, "TODO: implement");
   /*
   BOLT_FUNC(indent, verbose_, "TaskGraph.generateMonoLevelTaskTaskSpace()");
   time::point startTime = time::now();  // Benchmark
@@ -487,14 +487,6 @@ void TaskGraph::generateTaskSpace(std::size_t indent)
     const TaskVertex taskV2 = addVertexWithLevel(jointState, level2, indent);
     sparseToTaskVertex2[sparseV] = taskV2;  // record mapping
 
-    if (taskV0 == 2690 || taskV2 == 2690)
-    {
-      std::cout << "SparseVertex = " << sparseV << std::endl;
-      visual_->viz4()->state(getModelBasedState(taskV0), tools::ROBOT, tools::RED, 1);
-      visual_->viz5()->state(jointState, tools::ROBOT, tools::GREEN, 1);
-      visual_->waitForUserFeedback("2690");
-    }
-
     // Link the two vertices to each other for future bookkeeping
     g_[taskV0].task_mirror_ = taskV2;
     g_[taskV2].task_mirror_ = taskV0;
@@ -525,7 +517,7 @@ void TaskGraph::generateTaskSpace(std::size_t indent)
 
 bool TaskGraph::addCartPath(std::vector<base::State *> path, std::size_t indent)
 {
-  BOLT_ERROR(indent, true, "TODO implement");
+  BOLT_ERROR(indent, "TODO implement");
   /*
   BOLT_FUNC(indent, verbose_, "TaskGraph.addCartPath()");
 
@@ -609,7 +601,7 @@ bool TaskGraph::connectVertexToNeighborsAtLevel(TaskVertex fromVertex, const Ver
   // Error check
   if (neighbors.empty())
   {
-    BOLT_ERROR(indent, vGenerateTask_, "No neighbors found when connecting cartesian path");
+    BOLT_ERROR(indent, "No neighbors found when connecting cartesian path");
     return false;
   }
   else if (neighbors.size() < 3)
@@ -771,7 +763,7 @@ void TaskGraph::clearEdgeCollisionStates()
 
 void TaskGraph::errorCheckDuplicateStates(std::size_t indent)
 {
-  BOLT_ERROR(indent, verbose_, "TaskGraph.errorCheckDuplicateStates() - NOT IMPLEMENTEDpart of super debug");
+  BOLT_ERROR(indent, "TaskGraph.errorCheckDuplicateStates() - NOT IMPLEMENTEDpart of super debug");
 
   // bool found = false;
   // // Error checking: check for any duplicate states
@@ -793,7 +785,7 @@ void TaskGraph::errorCheckDuplicateStates(std::size_t indent)
 
 bool TaskGraph::smoothQualityPathOriginal(geometric::PathGeometric *path, std::size_t indent)
 {
-  BOLT_ERROR(indent, visualizeQualityPathSmoothing_, "smoothQualityPathOriginal()");
+  BOLT_FUNC(indent, visualizeQualityPathSmoothing_, "smoothQualityPathOriginal()");
 
   // Visualize path
   if (visualizeQualityPathSmoothing_)
@@ -1129,7 +1121,7 @@ void TaskGraph::displayDatabase(bool showVertices, std::size_t indent)
       // Check for null states
       if (!getState(v))
       {
-        BOLT_ERROR(indent, verbose_, "Null vertex found: " << v);
+        BOLT_ERROR(indent, "Null vertex found: " << v);
         continue;
       }
 

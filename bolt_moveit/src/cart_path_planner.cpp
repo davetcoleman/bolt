@@ -146,7 +146,7 @@ void CartPathPlanner::generateExactPoses(const Eigen::Affine3d& start_pose, std:
 
   if (!transform2DPaths(start_pose, exact_poses_, indent))
   {
-    BOLT_ERROR(indent, true, "Trajectory generation failed");
+    BOLT_ERROR(indent, "Trajectory generation failed");
     exit(-1);
   }
 
@@ -189,14 +189,14 @@ bool CartPathPlanner::debugShowAllIKSolutions(std::size_t indent)
       RedunJointPoses local_joint_poses;
       if (!getRedunJointPosesForCartPoint(pose, local_joint_poses, ee_link, jmg, indent))
       {
-        BOLT_ERROR(indent, true, "Error when getting joint poses for cartesian point");
+        BOLT_ERROR(indent, "Error when getting joint poses for cartesian point");
         continue;
       }
 
       // Handle error: no IK solutions found
       if (local_joint_poses.empty())
       {
-        BOLT_ERROR(indent, true, "No joint solutions found for cartesian pose " << i);
+        BOLT_ERROR(indent, "No joint solutions found for cartesian pose " << i);
 
         visual_tools_->publishAxis(pose, rvt::XXSMALL);
         visual_tools_->trigger();
@@ -276,7 +276,7 @@ bool CartPathPlanner::rotateOnAxis(const Eigen::Affine3d& pose, const Orientatio
       case X_AXIS: new_pose = pose * Eigen::AngleAxisd(rotation_amount, Eigen::Vector3d::UnitX()); break;
       case Y_AXIS: new_pose = pose * Eigen::AngleAxisd(rotation_amount, Eigen::Vector3d::UnitY()); break;
       case Z_AXIS: new_pose = pose * Eigen::AngleAxisd(rotation_amount, Eigen::Vector3d::UnitZ()); break;
-      default: BOLT_ERROR(indent, true, "Unknown axis");
+      default: BOLT_ERROR(indent, "Unknown axis");
     }
     // clang-format on
 
@@ -302,7 +302,7 @@ bool CartPathPlanner::transform2DPaths(const Eigen::Affine3d& starting_pose,
 
   if (path_from_file_.empty())
   {
-    BOLT_ERROR(indent, true, "Unable to create drawing: no paths loaded from file");
+    BOLT_ERROR(indent, "Unable to create drawing: no paths loaded from file");
     return false;
   }
 
@@ -322,13 +322,13 @@ bool CartPathPlanner::transform2DPath(const Eigen::Affine3d& starting_pose, Eige
 {
   if (path_from_file.empty())
   {
-    BOLT_ERROR(indent, true, "Unable to create drawing: no path loaded from file");
+    BOLT_ERROR(indent, "Unable to create drawing: no path loaded from file");
     return false;
   }
 
   if (path_from_file.size() == 1)
   {
-    BOLT_ERROR(indent, true, "Unable to create drawing: path only has 1 point");
+    BOLT_ERROR(indent, "Unable to create drawing: path only has 1 point");
     return false;
   }
 
@@ -392,7 +392,7 @@ bool CartPathPlanner::populateBoltGraph(ompl::tools::bolt::TaskGraphPtr task_gra
 
   if (arm_datas_.size() < 2)
   {
-    BOLT_ERROR(indent, true, "Must have at least 2 poses in trajectory");
+    BOLT_ERROR(indent, "Must have at least 2 poses in trajectory");
     return false;
   }
 
@@ -419,7 +419,7 @@ bool CartPathPlanner::populateBoltGraph(ompl::tools::bolt::TaskGraphPtr task_gra
     BOLT_DEBUG(indent, true, "Creating redundant poses for end effector " << ee_link->getName());
     if (!createSingleDimTrajectory(exact_poses_[i], redun_traj_per_eef[i], ee_link, arm_jmg, indent))
     {
-      BOLT_ERROR(indent, true, "Error creating single dim trajectory");
+      BOLT_ERROR(indent, "Error creating single dim trajectory");
       return false;
     }
   }
@@ -445,7 +445,7 @@ bool CartPathPlanner::populateBoltGraph(ompl::tools::bolt::TaskGraphPtr task_gra
     // Convert all possible configurations into the Bolt graph
     if (!addCartPointToBoltGraph(combined_points, point_vertices[traj_id], moveit_robot_state, indent))
     {
-      BOLT_ERROR(indent, true, "Failed to add all joint configurations to Bolt graph");
+      BOLT_ERROR(indent, "Failed to add all joint configurations to Bolt graph");
       return false;
     }
 
@@ -461,7 +461,7 @@ bool CartPathPlanner::populateBoltGraph(ompl::tools::bolt::TaskGraphPtr task_gra
   // Add edges
   if (!addEdgesToBoltGraph(point_vertices, startingVertex, endingVertex, indent))
   {
-    BOLT_ERROR(indent, true, "Error creating edges");
+    BOLT_ERROR(indent, "Error creating edges");
     return false;
   }
 
@@ -471,7 +471,7 @@ bool CartPathPlanner::populateBoltGraph(ompl::tools::bolt::TaskGraphPtr task_gra
   double shortest_path_across_cart = std::numeric_limits<double>::infinity();
   if (!connectTrajectoryEndPoints(point_vertices, shortest_path_across_cart, indent))
   {
-    BOLT_ERROR(indent, true, "Unable to connect trajectory end points!");
+    BOLT_ERROR(indent, "Unable to connect trajectory end points!");
     return false;
   }
 
@@ -507,7 +507,7 @@ bool CartPathPlanner::createSingleDimTrajectory(const EigenSTL::vector_Affine3d&
     // Handle error: no IK solutions found
     if (joint_poses.empty())
     {
-      BOLT_ERROR(indent, true, "No joint solutions found for pose " << traj_id);
+      BOLT_ERROR(indent, "No joint solutions found for pose " << traj_id);
 
       visual_tools_->publishAxis(exact_pose, rvt::XXSMALL);
       visual_tools_->trigger();
@@ -523,7 +523,7 @@ bool CartPathPlanner::createSingleDimTrajectory(const EigenSTL::vector_Affine3d&
         visual_tools_->publishRobotState(joint_poses.front(), jmg, rvt::RED);
       }
       else
-        BOLT_ERROR(indent, true, "First pose is in valid, unable to visualize last pose");
+        BOLT_ERROR(indent, "First pose is in valid, unable to visualize last pose");
 
       return false;
     }
@@ -607,8 +607,10 @@ bool CartPathPlanner::combineEETrajectories(const std::vector<RedunJointTrajecto
       // std::cout << "pose0_id: " << pose0_id << " size: " << poses0->size() << std::endl;
       for (std::size_t pose1_id = 0; pose1_id < poses1->size(); ++pose1_id)
       {
-        BOLT_ERROR(indent, (poses0->size() < pose0_id), "Pose 0 is null at id " << pose0_id);
-        BOLT_ERROR(indent, (poses1->size() < pose1_id), "Pose 1 is null at id " << pose1_id);
+        if (poses0->size() < pose0_id)
+          BOLT_ERROR(indent, "Pose 0 is null at id " << pose0_id);
+        if (poses1->size() < pose1_id)
+          BOLT_ERROR(indent, "Pose 1 is null at id " << pose1_id);
 
         // Create new trajectory point
         BothArmsJointPose point;
