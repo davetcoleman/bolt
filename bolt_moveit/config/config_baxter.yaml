@@ -32,8 +32,8 @@ bolt_moveit:
   #experience_planner: spars2
 
   # robot setup
-  #planning_group_name: right_arm_minus_one
-  planning_group_name: both_arms
+  planning_group_name: right_arm_minus_one
+  #planning_group_name: both_arms
   arm_jmgs: [right_arm, left_arm]
   ee_tip_links: [right_gripper_tip, left_gripper_tip]
 
@@ -184,7 +184,7 @@ bolt_planner:
     verbose: true
   visualize:
     smoothed_trajectory: true
-    start_goal: false
+    start_goal: true
     lazy_collision_check: true
 
 # ====================================================
@@ -200,18 +200,18 @@ cart_path_planner:
   trajectory_discretization: 0.01 # how much space, in meters, between trajectory points
   #tolerance_increment: 0.313 # in radians, discretization of space [-Pi, Pi]
   tolerance_increment: 0.5 # in radians, discretization of space [-Pi, Pi]
-  tolerance_roll: 0.314 # pi/10
-  tolerance_pitch: 0.314 # pi/10
+  tolerance_roll: 0 #0.314 # pi/10
+  tolerance_pitch: 0 #0.314 # pi/10
   # tolerance_roll: 0.3925 # pi/8
   # tolerance_pitch: 0.3925 # pi/8
   tolerance_yaw: 1.57 # pi
-  timing: 0.5 # time between each Cartesian point, e.g. discretization
+  timing: 0.2 # time between each Cartesian point, e.g. discretization
   verbose: false
   visualize:
-    show_all_solutions: false
-    show_all_solutions_sleep: 0.005 # time between each solution for viewing
-    show_all_cart_poses: false
-    show_combined_solutions: false
+    show_all_solutions: false # show each solution along trajectory when moving the interactive markers
+    show_all_solutions_sleep: 0.1 # time between each solution for viewing
+    show_all_cart_poses: true # show the markers for each pose location
+    show_combined_solutions: true # show the robot state for each combined pose
 
 # ====================================================
 # Interface for publishing joint/cartesian commands to the low level controllers

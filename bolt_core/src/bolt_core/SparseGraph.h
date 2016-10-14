@@ -127,6 +127,8 @@ public:
     return sparseCriteria_;
   }
 
+  double getSparseDelta();
+
   base::SpaceInformationPtr getSpaceInformation()
   {
     return si_;

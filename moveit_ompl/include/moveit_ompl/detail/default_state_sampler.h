@@ -41,6 +41,7 @@
 
 namespace moveit_ompl
 {
+template <typename T>
 class DefaultStateSampler : public ompl::base::StateSampler
 {
 public:
@@ -52,24 +53,19 @@ public:
 
   virtual void sampleUniform(ompl::base::State *state)
   {
-    // std::cout << "DefaultStateSampler::sampleUniform() " << std::endl;
-    joint_model_group_->getVariableRandomPositions(moveit_rng_, state->as<ModelBasedStateSpace::StateType>()->values,
+    joint_model_group_->getVariableRandomPositions(moveit_rng_, state->as<T>()->values,
                                                    *joint_bounds_);
-    // state->as<ModelBasedStateSpace::StateType>()->clearKnownInformation();
   }
 
   virtual void sampleUniformNear(ompl::base::State *state, const ompl::base::State *near, const double distance)
   {
-    // std::cout << "DefaultStateSampler::sampleUniformNear() " << std::endl;
     joint_model_group_->getVariableRandomPositionsNearBy(
-        moveit_rng_, state->as<ModelBasedStateSpace::StateType>()->values, *joint_bounds_,
-        near->as<ModelBasedStateSpace::StateType>()->values, distance);
-    // state->as<ModelBasedStateSpace::StateType>()->clearKnownInformation();
+        moveit_rng_, state->as<T>()->values, *joint_bounds_,
+        near->as<T>()->values, distance);
   }
 
   virtual void sampleGaussian(ompl::base::State *state, const ompl::base::State *mean, const double stdDev)
   {
-    // std::cout << "DefaultStateSampler::sampleGaussian() " << std::endl;
     sampleUniformNear(state, mean, rng_.gaussian(0.0, stdDev));
   }
 

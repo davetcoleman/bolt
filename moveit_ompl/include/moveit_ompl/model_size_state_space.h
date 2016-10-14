@@ -40,6 +40,7 @@
 #define MOVEIT_OMPL_MODEL_SIZE_STATE_SPACE_
 
 #include <moveit_ompl/model_based_state_space.h>
+#include <moveit_ompl/detail/default_state_sampler.h>
 
 namespace moveit_ompl
 {
@@ -50,17 +51,11 @@ public:
   class StateType : public ompl::base::State
   {
   public:
-    StateType() : ompl::base::State(), level(0)
+    StateType() : ompl::base::State()
     {
-      // std::cout << "Created state of size: " << N << std::endl;
-      // for (std::size_t i = 0; i < N; ++i)
-      // {
-      //   values[i] = i;
-      // }
     }
 
     double values[N];
-    int level; // TODO: remove the level!
   };
 
   ModelSizeStateSpace(const ModelBasedStateSpaceSpecification &spec) : ModelBasedStateSpace(spec)
@@ -74,8 +69,8 @@ public:
 
   ob::State *allocState() const
   {
-    //ob::State *state = new StateType();
-    //return state;
+    // ob::State *state = new StateType();
+    // return state;
     return new StateType();
   }
 
@@ -88,7 +83,6 @@ public:
   void allocStates(std::size_t numStates, ob::State *states) const
   {
     StateType *states2 = new StateType[numStates];
-
 
     std::cout << "allocStates: " << std::endl;
     for (std::size_t i = 0; i < numStates; ++i)
@@ -117,22 +111,16 @@ public:
   void copyState(ob::State *destination, const ob::State *source) const
   {
     memcpy(destination->as<StateType>()->values, source->as<StateType>()->values, state_values_size_);
-    destination->as<StateType>()->level = source->as<StateType>()->level;
   }
 
   void serialize(void *serialization, const ob::State *state) const
   {
-    *reinterpret_cast<int *>(serialization) = state->as<StateType>()->level;
-    memcpy(reinterpret_cast<char *>(serialization) + sizeof(int), state->as<StateType>()->values, state_values_size_);
+    memcpy(reinterpret_cast<char *>(serialization), state->as<StateType>()->values, state_values_size_);
   }
 
   void deserialize(ob::State *state, const void *serialization) const
   {
-    state->as<StateType>()->level = *reinterpret_cast<const int *>(serialization);
-
-    state->as<StateType>()->values[0] = 1;
-    memcpy(state->as<StateType>()->values, reinterpret_cast<const char *>(serialization) + sizeof(int),
-           state_values_size_);
+    memcpy(state->as<StateType>()->values, reinterpret_cast<const char *>(serialization), state_values_size_);
   }
 
   double distance(const ob::State *state1, const ob::State *state2) const
@@ -146,10 +134,6 @@ public:
       if (fabs(state1->as<StateType>()->values[i] - state2->as<StateType>()->values[i]) >
           std::numeric_limits<double>::epsilon())
         return false;
-
-    // Check level
-    if (state1->as<StateType>()->level != state2->as<StateType>()->level)
-      return false;
 
     return true;
   }
@@ -185,6 +169,13 @@ public:
     return state->as<StateType>()->values + index;
   }
 
+  ob::StateSamplerPtr allocDefaultStateSampler() const
+  {
+    return ob::StateSamplerPtr(static_cast<ob::StateSampler *>(new DefaultStateSampler<ModelBasedStateSpace::StateType>(this, spec_.joint_model_group_, &spec_.joint_bounds_)));
+    //return ob::StateSamplerPtr(static_cast<ob::StateSampler *>(new moveit_mopl::DefaultStateSampler<ModelBasedStateSpace::StateType>(this, spec_.joint_model_group_, &spec_.joint_bounds_)));
+
+  }
+
   void printState(const ob::State *state, std::ostream &out) const
   {
     for (std::size_t j = 0; j < joint_model_vector_.size(); ++j)
@@ -196,8 +187,6 @@ public:
         out << state->as<StateType>()->values[idx + i] << " ";
       out << std::endl;
     }
-
-    out << "Level: " << state->as<StateType>()->level << std::endl;
   }
 
   void copyToRobotState(robot_state::RobotState &rstate, const ob::State *state) const
@@ -220,27 +209,22 @@ public:
            robot_state.getVariablePositions() + joint_model->getFirstVariableIndex() * sizeof(double),
            joint_model->getVariableCount() * sizeof(double));
   }
-
-  /** \brief Get the mode (for hybrid task planning) of this state */
-  int getLevel(const ob::State *state) const
-  {
-    return state->as<StateType>()->level;
-  }
-
-  /** \brief Set the mode (for hybrid task planning) of this state */
-  void setLevel(ob::State *state, int level)
-  {
-    state->as<StateType>()->level = level;
-  }
-
 };  // class
 
-ModelBasedStateSpacePtr chooseModelBasedStateSpace(const ModelBasedStateSpaceSpecification &spec)
+ModelBasedStateSpacePtr chooseModelSizeStateSpace(const ModelBasedStateSpaceSpecification &spec)
 {
   std::size_t dim = spec.joint_model_group_->getVariableCount();
 
   switch (dim)
   {
+    case 2:
+      return ModelBasedStateSpacePtr(new ModelSizeStateSpace<2>(spec));
+    case 3:
+      return ModelBasedStateSpacePtr(new ModelSizeStateSpace<3>(spec));
+    case 4:
+      return ModelBasedStateSpacePtr(new ModelSizeStateSpace<4>(spec));
+    case 5:
+      return ModelBasedStateSpacePtr(new ModelSizeStateSpace<5>(spec));
     case 6:
       return ModelBasedStateSpacePtr(new ModelSizeStateSpace<6>(spec));
     case 7:
@@ -256,10 +240,10 @@ ModelBasedStateSpacePtr chooseModelBasedStateSpace(const ModelBasedStateSpaceSpe
   return NULL;
 }
 
-typedef ModelSizeStateSpace<6> ModelSize6StateSpace;
-typedef ModelSizeStateSpace<7> ModelSize7StateSpace;
-typedef ModelSizeStateSpace<12> ModelSize12StateSpace;
-typedef ModelSizeStateSpace<14> ModelSize14StateSpace;
+// typedef ModelSizeStateSpace<6> ModelSize6StateSpace;
+// typedef ModelSizeStateSpace<7> ModelSize7StateSpace;
+// typedef ModelSizeStateSpace<12> ModelSize12StateSpace;
+// typedef ModelSizeStateSpace<14> ModelSize14StateSpace;
 
 }  // namespace moveit_ompl
 

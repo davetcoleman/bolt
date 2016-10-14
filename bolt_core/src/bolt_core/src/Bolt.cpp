@@ -97,13 +97,31 @@ void Bolt::initialize()
   BOLT_INFO(indent, verbose_, "Loading SparseMirror");
   sparseMirror_.reset(new SparseMirror(sparseGraph_));
 
+  // ----------------------------------------------------------------------------
+  // CompoundState settings for task planning
+
+  // Create discrete state space
+  const int NUM_LEVELS = 2; // TODO do not hardcode?
+  const int lowerBound = 0;
+  const int upperBound = NUM_LEVELS;
+  base::StateSpacePtr discreteSpace = std::make_shared<base::DiscreteStateSpace>(lowerBound, upperBound);
+
+  // Create compound state
+  base::CompoundStateSpacePtr compoundSpace = std::make_shared<base::CompoundStateSpace>();
+  compoundSpace->addSubspace(si_->getStateSpace(), 1.0); // 100% weight
+  compoundSpace->addSubspace(discreteSpace, 0.0); // 0% weight
+
+  // Create space information
+  base::SpaceInformationPtr compoundSI = std::make_shared<base::SpaceInformation>(compoundSpace);
+  compoundSI->setup();
+
   // Load the task graph used for combining multiple layers of sparse graph
   BOLT_INFO(indent, verbose_, "Loading TaskGraph");
-  taskGraph_.reset(new TaskGraph(sparseGraph_));
+  taskGraph_.reset(new TaskGraph(compoundSI, sparseGraph_));
 
   // Load the Retrieve repair database. We do it here so that setRepairPlanner() works
   BOLT_INFO(indent, verbose_, "Loading BoltPlanner");
-  boltPlanner_ = BoltPlannerPtr(new BoltPlanner(si_, taskGraph_, visual_));
+  boltPlanner_ = BoltPlannerPtr(new BoltPlanner(compoundSI, si_, taskGraph_, visual_));
 
   std::size_t numThreads = boost::thread::hardware_concurrency();
   OMPL_INFORM("Bolt Framework initialized using %u threads", numThreads);

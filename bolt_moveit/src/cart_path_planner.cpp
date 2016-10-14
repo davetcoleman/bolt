@@ -242,9 +242,11 @@ bool CartPathPlanner::computeRedunPosesForCartPoint(const Eigen::Affine3d& pose,
   {
     for (const Eigen::Affine3d& candidate_pose : candidate_poses)
     {
-      visual_tools_->publishZArrow(candidate_pose, rvt::BLUE, rvt::SMALL);
+      //visual_tools_->publishZArrow(candidate_pose, rvt::BLUE, rvt::SMALL);
+      visual_tools_->publishAxis(candidate_pose);
     }
     visual_tools_->trigger();
+    usleep(0.001*1000000);
   }
 
   BOOST_ASSERT_MSG(candidate_poses.size() == total_num_steps, "Estimated poses should be same as actual poses");
@@ -403,8 +405,7 @@ bool CartPathPlanner::populateBoltGraph(ompl::tools::bolt::TaskGraphPtr task_gra
   // For assertion testing
   ompl::tools::bolt::TaskVertex startingVertex = task_graph_->getNumVertices() - 1;
 
-  std::cout << "skipping cartesian planning " << std::endl;
-  return true;
+
 
   // -------------------------------------------------------------------------
   // Solve each dimension redunant joint poses independently, the combine into full state space
@@ -482,7 +483,9 @@ bool CartPathPlanner::populateBoltGraph(ompl::tools::bolt::TaskGraphPtr task_gra
 
   // Benchmark runtime
   double duration = (ros::Time::now() - start_time).toSec();
-  task_graph_->printGraphStats(duration);
+  task_graph_->printGraphStats(duration, indent);
+
+  return true;
 }
 
 bool CartPathPlanner::createSingleDimTrajectory(const EigenSTL::vector_Affine3d& exact_poses,
@@ -634,7 +637,7 @@ bool CartPathPlanner::addCartPointToBoltGraph(const CombinedPoints& combined_poi
 
   std::size_t new_vertex_count = 0;
   const ompl::tools::bolt::VertexType vertex_type = ompl::tools::bolt::CARTESIAN;
-  const ompl::tools::bolt::VertexLevel level = 1;  // middle layer
+  const ompl::tools::bolt::VertexLevel level1 = 1;  // middle layer
 
   point_vertices.resize(combined_points.size());
   for (std::size_t i = 0; i < combined_points.size(); ++i)
@@ -663,9 +666,7 @@ bool CartPathPlanner::addCartPointToBoltGraph(const CombinedPoints& combined_poi
     space->copyToOMPLState(ompl_state, *moveit_robot_state);
 
     // Add vertex to task graph
-    point_vertices[i] = task_graph_->addVertexWithLevel(ompl_state, level, indent);
-
-    BOLT_ERROR(indent, true, "need better memory management of state");
+    point_vertices[i] = task_graph_->addVertexWithLevel(ompl_state, level1, indent);
 
     //std::cout << "point_vertices[i]: " << point_vertices[i] << std::endl;
 
@@ -701,11 +702,11 @@ bool CartPathPlanner::addEdgesToBoltGraph(const TaskVertexMatrix& point_vertices
     visualizeAllPointVertices(point_vertices, indent);
 
   // Step through each cartesian point, starting at second point
-  std::size_t feedbackFrequency = std::max(10.0, point_vertices.size() / 10.0);
+  std::size_t feedbackFrequency = 1; //std::max(10.0, point_vertices.size() / 10.0);
   std::cout << "      Trajectory Point: ";
   for (std::size_t traj_id = 1; traj_id < point_vertices.size(); ++traj_id)
   {
-    std::cout << "traj_id: " << traj_id << " out of " << point_vertices.size() << std::endl;
+    //std::cout << "traj_id: " << traj_id << " out of " << point_vertices.size() << std::endl;
 
     // Get all vertices at previous cartesian point
     const TaskVertexPoint& point_vertices0 = point_vertices[traj_id - 1];
@@ -747,6 +748,9 @@ bool CartPathPlanner::addEdgesToBoltGraph(const TaskVertexMatrix& point_vertices
 
         new_edge_count++;
       }  // for
+
+      if (!ros::ok())
+        exit(0);
     }    // for
 
     //BOLT_DEBUG(indent, true, "Point " << traj_id << " current edge count: " << new_edge_count);
@@ -759,6 +763,8 @@ bool CartPathPlanner::addEdgesToBoltGraph(const TaskVertexMatrix& point_vertices
       std::cout << static_cast<int>(ceil(traj_id / static_cast<double>(point_vertices.size()) * 100.0)) << "% " << std::flush;
 
   }  // for
+  std::cout << std::endl;
+
   BOLT_DEBUG(indent, true, "Added " << new_edge_count << " new edges, rejected " << edges_skipped_count << " (rejected "
                                     << edges_skipped_count / (new_edge_count + double(edges_skipped_count)) * 100.0
                                     << "%)");
@@ -802,7 +808,7 @@ bool CartPathPlanner::connectTrajectoryEndPoints(const TaskVertexMatrix& point_v
     // Check if this start vertex has has the shortest path across the Cartesian graph
     for (const ompl::tools::bolt::TaskVertex& goal_vertex : goal_vertices)
     {
-      double distance_across_graph = task_graph_->distanceFunction(start_vertex, goal_vertex);
+      double distance_across_graph = task_graph_->distanceVertex(start_vertex, goal_vertex);
 
       if (distance_across_graph < shortest_path_across_cart)
       {
@@ -935,7 +941,7 @@ bool CartPathPlanner::getRedunJointPosesForCartPoint(const Eigen::Affine3d& pose
 void CartPathPlanner::visualizeAllJointPoses(const RedunJointPoses& joint_poses,
                                              const moveit::core::JointModelGroup* jmg, std::size_t indent)
 {
-  BOLT_FUNC(indent, true, "visualizeAllJointPoses() joint_poses: " << joint_poses.size());
+  BOLT_FUNC(indent, true, "visualizeAllJointPoses() found " << joint_poses.size() << " joint_poses for this cartesian point");
 
   for (const JointSpacePoint& joint_pose : joint_poses)
   {

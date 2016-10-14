@@ -94,6 +94,10 @@ BoltMoveIt::BoltMoveIt(const std::string &hostname, const std::string &package_p
   error += !rosparam_shortcuts::get(name_, rpnh, "opposite_arm_name", opposite_arm_name_);
   error += !rosparam_shortcuts::get(name_, rpnh, "both_arms_group_name", both_arms_group_name_);
 
+  // fill in last dimension
+  // error += !rosparam_shortcuts::get(name_, rpnh, "fill_in_dim", fill_in_dim_);
+  // error += !rosparam_shortcuts::get(name_, rpnh, "full_arm_name", full_arm_name_);
+
   // run type
   error += !rosparam_shortcuts::get(name_, rpnh, "auto_run", auto_run_);
   error += !rosparam_shortcuts::get(name_, rpnh, "experience_planner", experience_planner_);
@@ -249,7 +253,7 @@ bool BoltMoveIt::loadOMPL()
   moveit_ompl::ModelBasedStateSpaceSpecification mbss_spec(robot_model_, planning_jmg_);
 
   // Construct the state space we are planning in
-  space_ = moveit_ompl::chooseModelBasedStateSpace(mbss_spec);
+  space_ = moveit_ompl::chooseModelSizeStateSpace(mbss_spec);
 
   // Create SimpleSetup
   if (experience_planner_ == "bolt")
@@ -479,8 +483,6 @@ bool BoltMoveIt::runProblems()
       processMemUsage(vm2, rss2);
       ROS_INFO_STREAM_NAMED(name_, "RAM usage diff (VM, RSS) MB:\n" << vm2 - vm1 << ", " << rss2 - rss1);
     }
-    std::cout << "exiting after memory " << std::endl;
-    exit(0);
 
     // Do one plan
     plan();
@@ -546,11 +548,11 @@ bool BoltMoveIt::plan()
   space_->copyToOMPLState(ompl_goal_, *moveit_goal_);
 
   // Convert the goal state to level 2
-  if (use_task_planning_)
-  {
-    const int level = 2;
-    space_->setLevel(ompl_goal_, level);
-  }
+  // if (use_task_planning_)
+  // {
+  //   const int level = 2;
+  //   space_->setLevel(ompl_goal_, level);
+  // }
 
   // Set the start and goal states
   experience_setup_->setStartAndGoalStates(ompl_start_, ompl_goal_);
@@ -558,7 +560,7 @@ bool BoltMoveIt::plan()
   // Solve -----------------------------------------------------------
 
   // Create the termination condition
-  double seconds = 60;
+  double seconds = 5*60;
   ob::PlannerTerminationCondition ptc = ob::timedPlannerTerminationCondition(seconds, 0.1);
 
   // Benchmark runtime
@@ -633,7 +635,7 @@ void BoltMoveIt::loadCollisionChecker()
   validity_checker_->setCheckingEnabled(collision_checking_enabled_);
 
   // Set checker
-  experience_setup_->setStateValidityChecker(ob::StateValidityCheckerPtr(validity_checker_));
+  si_->setStateValidityChecker(ob::StateValidityCheckerPtr(validity_checker_));
 
   // The interval in which obstacles are checked for between states
   // seems that it default to 0.01 but doesn't do a good job at that level
@@ -1012,8 +1014,8 @@ void BoltMoveIt::mirrorGraph(std::size_t indent)
   moveit_ompl::ModelBasedStateSpaceSpecification left_arm_mbss_spec(robot_model_, left_arm_jmg_);
 
   // Construct the state space we are planning in
-  both_arms_state_space_ = moveit_ompl::chooseModelBasedStateSpace(both_arms_mbss_spec);
-  left_arm_state_space_ = moveit_ompl::chooseModelBasedStateSpace(left_arm_mbss_spec);
+  both_arms_state_space_ = moveit_ompl::chooseModelSizeStateSpace(both_arms_mbss_spec);
+  left_arm_state_space_ = moveit_ompl::chooseModelSizeStateSpace(left_arm_mbss_spec);
 
   both_arms_state_space_->setup();
   both_arms_state_space_->setName(both_arms_group_name_);
@@ -1119,7 +1121,7 @@ void BoltMoveIt::benchmarkMemoryAllocation(std::size_t indent)
 
   moveit_ompl::ModelBasedStateSpaceSpecification mbss_spec(robot_model_, planning_jmg_);
   moveit_ompl::ModelBasedStateSpace space_old(mbss_spec);
-  //moveit_ompl::ModelBasedStateSpacePtr space = moveit_ompl::chooseModelBasedStateSpace(mbss_spec);
+  //moveit_ompl::ModelBasedStateSpacePtr space = moveit_ompl::chooseModelSizeStateSpace(mbss_spec);
 
 
 
@@ -1212,5 +1214,59 @@ void BoltMoveIt::benchmarkMemoryAllocation(std::size_t indent)
   std::cout << "-------------------------------------------------------" << std::endl;
   std::cout << std::endl;
 }
+
+// Allow e.g. a 7dof arm be generated in 6dof then have the last dim populated automatically
+// void BoltMoveIt::fillInDimension(std::size_t indent)
+// {
+//   // Choose planning group
+//   moveit::core::JointModelGroup* full_arm_jmg_ = robot_model_->getJointModelGroup(full_arm_name_);
+
+//   // Setup space
+//   moveit_ompl::ModelBasedStateSpaceSpecification full_arm_mbss_spec(robot_model_, full_arm_jmg_);
+
+//   // Construct the state space we are planning in
+//   moveit_ompl::ModelBasedStateSpacePtr full_arm_state_space_ = moveit_ompl::chooseModelSizeStateSpace(full_arm_mbss_spec);
+//   full_arm_state_space_->setup();
+//   full_arm_state_space_->setName(full_arm_name_);
+
+//   // SpaceInfo
+//   ob::SpaceInformationPtr full_arm_space_info = std::make_shared<ob::SpaceInformation>(full_arm_state_space_);
+//   full_arm_space_info->setup();
+
+//   // Create state validity checking for left arm
+//   // moveit_ompl::StateValidityChecker *full_arm_validity_checker;
+//   // full_arm_validity_checker = new moveit_ompl::StateValidityChecker(
+//   //     opposite_arm_name_, full_arm_space_info, *current_state_, planning_scene_, full_arm_state_space_);
+//   // full_arm_space_info->setStateValidityChecker(ob::StateValidityCheckerPtr(full_arm_validity_checker));
+
+//   // Set the database file location
+//   const std::string file_path = getFilePath(full_arm_name_);
+
+//   // Create SparseGraph for full arm
+//   SparseGraphPtr fullSG = ompl::tools::SparseGraphPtr(new ompl::tools::SparseGraph(full_arm_space_info, visual_));
+//   fullSG->setFilePath(file_path + ".ompl");
+//   fullSG->savingEnabled_ = true;
+//   // Improve sparsegraph speed
+//   dualSG->setFastMirrorMode(true);
+//   dualSG->setHasUnsavedChanges(true);  // because this is not automatically enabled when in fast mirror mode
+
+//   std::size_t showEvery = std::max((unsigned int)(1), monoSG_->getNumVertices() / 100);
+//   foreach (SparseVertex sparseV1, boost::vertices(monoSG_->getGraph()))
+//   {
+//     // The first thread number of verticies are used for queries and should be skipped
+//     if (sparseV1 < monoSG_->getNumQueryVertices())
+//       continue;
+
+//     BOLT_INFO(indent + 2, (sparseV1 % showEvery == 0) || true,
+//               "Mirroring graph progress: " << (double(sparseV1) / monoSG_->getNumVertices() * 100.0)
+//                                            << "%. Dual graph verticies: " << dualSG->getNumVertices()
+//                                            << ", Dual graph edges: " << dualSG->getNumEdges());
+
+//     const base::State *state1 = monoSG_->getState(sparseV1);
+
+
+
+//   BOLT_INFO(indent, true, "Done filling in missing dimension!");
+// }
 
 }  // namespace bolt_moveit

@@ -379,7 +379,7 @@ void SparseStorage::loadEdges(std::size_t numEdges, boost::archive::binary_iarch
   std::size_t feedbackFrequency = std::max(10.0, numEdges / 10.0);
   BoltEdgeData edgeData;
 
-  std::cout << "         Edges loaded: ";
+  std::cout << "         Edges loaded:    ";
   for (std::size_t i = 0; i < numEdges; ++i)
   {
     ia >> edgeData;

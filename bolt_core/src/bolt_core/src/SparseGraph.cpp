@@ -884,7 +884,6 @@ SparseVertex SparseGraph::addVertexFromFile(base::State *state, std::size_t inde
 
   // Add properties
   g_[v].state_ = state;
-  // vertexPopularity_[v] = MAX_POPULARITY_WEIGHT;  // 100 means the vertex is very unpopular
 
   // Connected component tracking
   if (sparseCriteria_ && sparseCriteria_->useConnectivityCriteria_)
@@ -1509,6 +1508,11 @@ base::ValidStateSamplerPtr SparseGraph::getSampler(base::SpaceInformationPtr si,
     sampler.reset(new base::UniformValidStateSampler(si.get()));
   }
   return sampler;
+}
+
+double SparseGraph::getSparseDelta()
+{
+  return sparseCriteria_->getSparseDelta();
 }
 
 }  // namespace bolt

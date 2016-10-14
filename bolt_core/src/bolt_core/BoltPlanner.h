@@ -83,7 +83,8 @@ class BoltPlanner : public base::Planner
 {
 public:
   /** \brief Constructor */
-  BoltPlanner(const base::SpaceInformationPtr &si, const TaskGraphPtr &taskGraph, VisualizerPtr visual);
+  BoltPlanner(const base::SpaceInformationPtr &si, const base::SpaceInformationPtr modelSI,
+              const TaskGraphPtr &taskGraph, VisualizerPtr visual);
 
   virtual ~BoltPlanner(void);
 
@@ -95,6 +96,9 @@ public:
 
   /** \brief Main entry function for finding a path plan */
   virtual base::PlannerStatus solve(Termination &ptc);
+
+  /** \brief Solving after converting states to compound state space */
+  base::PlannerStatus solve(base::State *startState, base::State *goalState, Termination &ptc, std::size_t indent);
 
   /** \brief Clear memory */
   virtual void clear(void);
@@ -135,7 +139,7 @@ public:
    * \return true on success
    */
   bool convertVertexPathToStatePath(std::vector<bolt::TaskVertex> &vertexPath, const base::State *actualStart,
-                                    const base::State *actualGoal, geometric::PathGeometric &geometricSolution);
+                                    const base::State *actualGoal, geometric::PathGeometric &geometricSolution, std::size_t indent);
 
   /**
    * \brief Finds nodes in the graph near state NOTE: note tested for visibility
@@ -187,6 +191,12 @@ protected:
   /** \brief The database of motions to search through */
   TaskGraphPtr taskGraph_;
 
+  /** \brief The space information for input states - NOT output states */
+  base::SpaceInformationPtr modelSI_;
+
+  /** \brief Type of configuration space */
+  base::CompoundStateSpacePtr compoundSpace_;
+
   /** \brief Class for managing various visualization features */
   VisualizerPtr visual_;
 
@@ -205,7 +215,7 @@ protected:
 
 public:
   /** \brief Output user feedback to console */
-  bool verbose_ = true;
+  bool verbose_ = false;
 
   bool visualizeSmoothedTrajectory_ = false;
   bool visualizeStartGoal_ = false;

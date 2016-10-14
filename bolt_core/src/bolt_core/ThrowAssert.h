@@ -136,6 +136,10 @@ public:
 
 /// Assert that EXPRESSION evaluates to true, otherwise raise AssertionFailureException with associated MESSAGE (which
 /// may use C++ stream-style message formatting)
+// #ifdef NDEBUG
+// #define BOLT_ASSERT(EXPRESSION, MESSAGE)                                                                               \
+//   do {} while (0)
+// #else
 #define BOLT_ASSERT(EXPRESSION, MESSAGE)                                                                               \
   if (!(EXPRESSION))                                                                                                   \
   {                                                                                                                    \
@@ -144,3 +148,4 @@ public:
   }
 
 #endif  // !defined(OMPL_TOOLS_BOLT_THROWASSERT_H)
+//#endif

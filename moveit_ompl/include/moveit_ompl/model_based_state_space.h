@@ -84,12 +84,11 @@ public:
   class StateType : public ompl::base::State
   {
   public:
-    StateType() : ompl::base::State(), values(NULL), level(0)
+    StateType() : ompl::base::State(), values(NULL)
     {
     }
 
     double *values;
-    int level;
   };
 
   ModelBasedStateSpace(const ModelBasedStateSpaceSpecification &spec);
@@ -195,10 +194,10 @@ public:
                                     const moveit::core::JointModel *joint_model, int ompl_state_joint_index) const;
 
   /** \brief Get the mode (for hybrid task planning) of this state */
-  virtual int getLevel(const ompl::base::State *state) const;
+  //virtual int getLevel(const ompl::base::State *state) const;
 
   /** \brief Set the mode (for hybrid task planning) of this state */
-  virtual void setLevel(ompl::base::State *state, int level);
+  //virtual void setLevel(ompl::base::State *state, int level);
 
 protected:
   ModelBasedStateSpaceSpecification spec_;

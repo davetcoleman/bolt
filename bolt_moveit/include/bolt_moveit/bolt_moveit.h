@@ -200,6 +200,10 @@ public:
   std::string opposite_arm_name_;
   std::string both_arms_group_name_;
 
+  // Fill in dimension
+  // bool fill_in_dim_;
+  // std::string full_arm_name_;
+
   // Operation settings
   std::size_t num_problems_;
   int problem_type_;

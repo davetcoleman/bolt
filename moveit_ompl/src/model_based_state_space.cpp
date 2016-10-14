@@ -126,7 +126,6 @@ void mo::ModelBasedStateSpace::copyFromReals(ob::State *destination, const std::
 void mo::ModelBasedStateSpace::copyState(ob::State *destination, const ob::State *source) const
 {
   memcpy(destination->as<StateType>()->values, source->as<StateType>()->values, state_values_size_);
-  destination->as<StateType>()->level = source->as<StateType>()->level;
 }
 
 unsigned int mo::ModelBasedStateSpace::getSerializationLength() const
@@ -136,16 +135,13 @@ unsigned int mo::ModelBasedStateSpace::getSerializationLength() const
 
 void mo::ModelBasedStateSpace::serialize(void *serialization, const ob::State *state) const
 {
-  *reinterpret_cast<int *>(serialization) = state->as<StateType>()->level;
-  memcpy(reinterpret_cast<char *>(serialization) + sizeof(int), state->as<StateType>()->values, state_values_size_);
+  memcpy(reinterpret_cast<char *>(serialization), state->as<StateType>()->values, state_values_size_);
 }
 
 void mo::ModelBasedStateSpace::deserialize(ob::State *state, const void *serialization) const
 {
-  state->as<StateType>()->level = *reinterpret_cast<const int *>(serialization);
-
-  state->as<StateType>()->values[0] = 1;
-  memcpy(state->as<StateType>()->values, reinterpret_cast<const char *>(serialization) + sizeof(int),
+  //state->as<StateType>()->values[0] = 1;
+  memcpy(state->as<StateType>()->values, reinterpret_cast<const char *>(serialization),
          state_values_size_);
 }
 
@@ -187,10 +183,6 @@ bool mo::ModelBasedStateSpace::equalStates(const ob::State *state1, const ob::St
     if (fabs(state1->as<StateType>()->values[i] - state2->as<StateType>()->values[i]) >
         std::numeric_limits<double>::epsilon())
       return false;
-
-  // Check level
-  if (state1->as<StateType>()->level != state2->as<StateType>()->level)
-    return false;
 
   return true;
 }
@@ -252,7 +244,7 @@ void mo::ModelBasedStateSpace::setPlanningVolume(double minX, double maxX, doubl
 ob::StateSamplerPtr mo::ModelBasedStateSpace::allocDefaultStateSampler() const
 {
   return ob::StateSamplerPtr(static_cast<ob::StateSampler *>(
-      new DefaultStateSampler(this, spec_.joint_model_group_, &spec_.joint_bounds_)));
+                                                             new DefaultStateSampler<ModelBasedStateSpace::StateType>(this, spec_.joint_model_group_, &spec_.joint_bounds_)));
 }
 
 void mo::ModelBasedStateSpace::printSettings(std::ostream &out) const
@@ -271,8 +263,6 @@ void mo::ModelBasedStateSpace::printState(const ob::State *state, std::ostream &
       out << state->as<StateType>()->values[idx + i] << " ";
     out << std::endl;
   }
-
-  out << "Level: " << state->as<StateType>()->level << std::endl;
 }
 
 void mo::ModelBasedStateSpace::copyToRobotState(robot_state::RobotState &rstate, const ob::State *state) const
@@ -298,14 +288,15 @@ void mo::ModelBasedStateSpace::copyJointToOMPLState(ob::State *state,
          joint_model->getVariableCount() * sizeof(double));
 }
 
-/** \brief Get the mode (for hybrid task planning) of this state */
-int mo::ModelBasedStateSpace::getLevel(const ob::State *state) const
-{
-  return state->as<StateType>()->level;
-}
+// /** \brief Get the mode (for hybrid task planning) of this state */
+// int mo::ModelBasedStateSpace::getLevel(const ob::State *state) const
+// {
+//   ROS_ERROR_STREAM_NAMED(name_, "getLevel Not implemented");
+//   return 0;
+// }
 
-/** \brief Set the mode (for hybrid task planning) of this state */
-void mo::ModelBasedStateSpace::setLevel(ob::State *state, int level)
-{
-  state->as<StateType>()->level = level;
-}
+// /** \brief Set the mode (for hybrid task planning) of this state */
+// void mo::ModelBasedStateSpace::setLevel(ob::State *state, int level)
+// {
+//   ROS_ERROR_STREAM_NAMED(name_, "getLevel Not implemented");
+// }

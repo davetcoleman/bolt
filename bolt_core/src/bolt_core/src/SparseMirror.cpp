@@ -102,22 +102,7 @@ void SparseMirror::mirrorGraphDualArm(base::SpaceInformationPtr dualSpaceInfo,
   SparseCriteriaPtr monoSC = monoSG_->getSparseCriteria();
   sparseDelta_ = monoSC->getSparseDelta();
 
-  // dualFormulas.calc(dualSpaceInfo, monoSC->getStretchFactor(), monoSC->getSparseDeltaFraction(),
-  //                   monoSC->getPenetrationOverlapFraction(), monoSC->getNearSamplePointsMultiple(),
-  //                   monoSC->getUseL2Norm());
-  // Copy values back
-  // maxExtent_ = dualFormulas.maxExtent_;
-  // sparseDelta_ = dualFormulas.sparseDelta_;
-  // denseDelta_ = dualFormulas.denseDelta_;
-  // discretizePenetrationDist_ = dualFormulas.discretizePenetrationDist_;
-  // nearSamplePoints_ = dualFormulas.nearSamplePoints_;
-  // discretization_ = dualFormulas.discretization_;
-  // stretchFactor_ = dualFormulas.stretchFactor_;
-
   // Check
-  // assert(maxExtent_ > 0);
-  // assert(denseDelta_ > 0);
-  // assert(nearSamplePoints_ > 0);
   assert(sparseDelta_ > 0);
   assert(sparseDelta_ > 0.000000001);  // Sanity check
 

@@ -93,7 +93,7 @@ class TaskGraph
 public:
   /** \brief Constructor needs the state space used for planning.
    */
-  TaskGraph(SparseGraphPtr sg);
+  TaskGraph(const base::SpaceInformationPtr &si, SparseGraphPtr sg);
 
   /** \brief Deconstructor */
   virtual ~TaskGraph(void);
@@ -116,6 +116,11 @@ public:
   base::SpaceInformationPtr getSpaceInformation()
   {
     return si_;
+  }
+
+  SparseGraphPtr getSparseGraph()
+  {
+    return sg_;
   }
 
   /** \brief Get class for managing various visualization features */
@@ -150,11 +155,9 @@ public:
   bool astarSearch(const TaskVertex start, const TaskVertex goal, std::vector<TaskVertex>& vertexPath, double& distance,
                    std::size_t indent);
 
-  /** \brief Distance between two states with special bias using popularity */
-  double astarHeuristic(const TaskVertex a, const TaskVertex b) const;
-
-  /** \brief Compute distance between two milestones (this is simply distance between the states of the milestones) */
-  double distanceFunction(const TaskVertex a, const TaskVertex b) const;
+  /** \brief Compute distance between two states ignoreing task level */
+  double distanceVertex(const TaskVertex a, const TaskVertex b) const;
+  double distanceState(const base::State* a, const base::State* b) const;
 
   /** \brief Distance between two vertices in a task space */
   double astarTaskHeuristic(const TaskVertex a, const TaskVertex b) const;
@@ -330,11 +333,47 @@ public:
   bool hasEdge(TaskVertex v1, TaskVertex v2);
 
   /** \brief Get the state of a vertex used for querying - i.e. vertices 0-11 for 12 thread system */
-  base::State*& getQueryStateNonConst(TaskVertex v);
+  inline base::State *&getQueryStateNonConst(TaskVertex v)
+  {
+#ifndef NDEBUG
+    BOLT_ASSERT(v < queryVertices_.size(), "Attempted to request state of regular vertex using query function");
+#endif
+    return queryStates_[v];
+  }
 
   /** \brief Shortcut function for getting the state of a vertex */
-  base::State*& getStateNonConst(TaskVertex v);
-  const base::State* getState(TaskVertex v) const;
+  inline base::State *&getStateNonConst(TaskVertex v)
+  {
+#ifndef NDEBUG
+    BOLT_ASSERT(v >= queryVertices_.size(), "Attempted to request state of query vertex using wrong function");
+#endif
+    return g_[v].state_;
+  }
+
+  /** \brief Shortcut function for getting the state of a vertex */
+  inline const base::State *getState(TaskVertex v) const
+  {
+#ifndef NDEBUG
+    BOLT_ASSERT(v >= queryVertices_.size(), "Attempted to request state of query vertex using wrong function");
+#endif
+    return g_[v].state_;
+  }
+
+  /** \brief Convert a compound state to just the ModelBasedStateSpace component (joints) ignoring the discrete component */
+  inline const base::State* getModelBasedState(const base::State* state) const
+  {
+    // Disregard task level
+    const base::CompoundState *compoundState = static_cast<const base::CompoundState *>(state);
+    return compoundState->components[MODEL_BASED];
+  }
+
+  /** \brief Convert a compound state to just the ModelBasedStateSpace component (joints) ignoring the discrete component */
+  inline const base::State* getModelBasedState(TaskVertex v) const
+  {
+    // Disregard task level
+    const base::CompoundState *compoundState = static_cast<const base::CompoundState *>(g_[v].state_);
+    return compoundState->components[MODEL_BASED];
+  }
 
   /* ---------------------------------------------------------------------------------
    * Visualizations
@@ -364,7 +403,10 @@ public:
   void debugNN();
 
   /** \brief Information about the loaded graph */
-  void printGraphStats(double generationDuration);
+  void printGraphStats(double generationDuration, std::size_t indent);
+
+  /** \brief Convert two CompoundStates to ModelBased states and check motion */
+  bool checkMotion(const base::State* a, const base::State* b);
 
 protected:
   /** \brief Short name of this class */
@@ -375,8 +417,10 @@ protected:
 
   /** \brief The created space information */
   base::SpaceInformationPtr si_;
-  base::StateSpacePtr stateSpace_;
-  base::CompoundStateSpace* compoundSpace_;
+  base::CompoundStateSpacePtr compoundSpace_;
+
+  /** \brief Space info for just the robot model state space, excluding the Discrete Compound State Space */
+  base::SpaceInformationPtr modelSI_;
 
   /** \brief Class for managing various visualization features */
   VisualizerPtr visual_;
@@ -391,18 +435,6 @@ protected:
   std::vector<TaskVertex> queryVertices_;
   std::vector<base::State*> queryStates_;
 
-  /** \brief Access to the weights of each Edge */
-  //boost::property_map<TaskAdjList, boost::edge_weight_t>::type edgeWeightProperty_;
-
-  /** \brief Access to the collision checking state of each Edge */
-  //TaskEdgeCollisionStateMap edgeCollisionStatePropertyTask_;
-
-  /** \brief Access to the internal base::state at each Vertex */
-  //boost::property_map<TaskAdjList, vertex_state_t>::type vertexStateProperty_;
-
-  /** \brief Access to corresponding free space SparseVertex, if one exists TODO is this needed? */
-  //boost::property_map<TaskAdjList, vertex_task_mirror_t>::type vertexTaskMirrorProperty_;
-
   /** \brief A path simplifier used to simplify dense paths added to S */
   geometric::PathSimplifierPtr pathSimplifier_;
 
@@ -416,7 +448,7 @@ protected:
   /** \brief Track if the graph has been modified */
   bool graphUnsaved_ = false;
 
-  /** \brief Remember which cartesian start/goal states should be used for distanceFunction */
+  /** \brief Remember which cartesian start/goal states should be used for distanceVertex */
   TaskVertex startConnectorVertex_ = 0;
   TaskVertex goalConnectorVertex_ = 0;
   // Find the lowest cost edge between TaskGraph and CartesianGraph

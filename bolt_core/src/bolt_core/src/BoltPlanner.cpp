@@ -59,13 +59,21 @@ namespace tools
 {
 namespace bolt
 {
-BoltPlanner::BoltPlanner(const base::SpaceInformationPtr &si, const TaskGraphPtr &taskGraph, VisualizerPtr visual)
-  : base::Planner(si, "Bolt_Planner"), taskGraph_(taskGraph), visual_(visual)
+BoltPlanner::BoltPlanner(const base::SpaceInformationPtr &si, const base::SpaceInformationPtr modelSI,
+                         const TaskGraphPtr &taskGraph, VisualizerPtr visual)
+  : base::Planner(si, "Bolt_Planner"), modelSI_(modelSI), taskGraph_(taskGraph), visual_(visual)
 {
   specs_.approximateSolutions = false;
   specs_.directed = false;
 
   path_simplifier_.reset(new geometric::PathSimplifier(si_));
+
+  compoundSpace_ = std::dynamic_pointer_cast<base::CompoundStateSpace>(si_->getStateSpace());
+  BOLT_ASSERT(compoundSpace_->isCompound(), "State space should be compound");
+  BOLT_ASSERT(compoundSpace_->getSubspace(1)->getType() == ob::STATE_SPACE_DISCRETE, "Missing discrete subspace");
+  BOLT_ASSERT(compoundSpace_->getSubspace(1)->getDimension() == 1, "Dimension is not 1");
+  BOLT_ASSERT(compoundSpace_->getSubspace(0)->getType() == ob::STATE_SPACE_UNKNOWN,
+              "State is wrong type");  // model_based_state_space
 }
 
 BoltPlanner::~BoltPlanner(void)
@@ -92,8 +100,6 @@ base::PlannerStatus BoltPlanner::solve(Termination &ptc)
   std::size_t indent = 0;
   BOLT_FUNC(indent, verbose_, "BoltPlanner::solve()");
 
-  bool solved = false;
-
   // Check if the database is empty
   if (taskGraph_->isEmpty())
   {
@@ -104,41 +110,47 @@ base::PlannerStatus BoltPlanner::solve(Termination &ptc)
 
   // TODO: call clearEdgeCollisionStates() before planning
 
-
   // Restart the Planner Input States so that the first start and goal state can be fetched
   pis_.restart();  // PlannerInputStates
 
   // Get a single start and goal state
   BOLT_DEBUG(indent, verbose_, "Getting OMPL start and goal state");
-  const base::State *startState = pis_.nextStart();  // PlannerInputStates
-  const base::State *goalState = pis_.nextGoal(ptc);
+  base::State *startState = modelSI_->getStateSpace()->cloneState(pis_.nextStart());  // PlannerInputStates
+  base::State *goalState = modelSI_->getStateSpace()->cloneState(pis_.nextGoal(ptc));
 
   if (startState == nullptr)
   {
-    OMPL_ERROR("No start state found");
+    BOLT_ERROR(indent, true, "No start state found");
     return base::PlannerStatus::ABORT;
   }
 
   if (goalState == nullptr)
   {
-    OMPL_ERROR("No goal state found");
+    BOLT_ERROR(indent, true, "No goal state found");
     return base::PlannerStatus::ABORT;
   }
 
-  // Error check task planning
-  if (taskGraph_->taskPlanningEnabled())
-  {
-    if (taskGraph_->getTaskLevel(startState) != 0)
-    {
-      OMPL_ERROR("solve: start level is %u", taskGraph_->getTaskLevel(startState));
-      exit(-1);
-    }
-    if (taskGraph_->getTaskLevel(goalState) != 2)
-    {
-      OMPL_ERROR("solve: goal level is %u", taskGraph_->getTaskLevel(goalState));
-      exit(-1);
-    }
-  }
+  // Convert start and goal to compound states
+  const int level0 = 0;
+  const int level2 = 2;
+  base::State *startStateCompound = taskGraph_->createCompoundState(startState, level0, indent);
+  base::State *goalStateCompound = taskGraph_->createCompoundState(goalState, level2, indent);
+
+  base::PlannerStatus result = solve(startStateCompound, goalStateCompound, ptc, indent);
+
+  // Free states
+  modelSI_->getStateSpace()->freeState(startState);
+  modelSI_->getStateSpace()->freeState(goalState);
+  si_->getStateSpace()->freeState(startStateCompound);
+  si_->getStateSpace()->freeState(goalStateCompound);
+
+  return result;
+}
+
+base::PlannerStatus BoltPlanner::solve(base::State *startState, base::State *goalState, Termination &ptc,
+                                       std::size_t indent)
+{
+  BOLT_FUNC(indent, verbose_, "solve() 2");
 
   // Create solution path as pointer so memory is not unloaded
   ob::PathPtr pathSolutionBase(new og::PathGeometric(si_));
@@ -147,7 +159,7 @@ base::PlannerStatus BoltPlanner::solve(Termination &ptc)
   // Search
   if (!getPathOffGraph(startState, goalState, geometricSolution, ptc, indent))
   {
-    OMPL_WARN("BoltPlanner::solve() No near start or goal found");
+    BOLT_WARN(indent, true, "BoltPlanner::solve() No near start or goal found");
     return base::PlannerStatus::TIMEOUT;  // The planner failed to find a solution
   }
 
@@ -182,7 +194,7 @@ base::PlannerStatus BoltPlanner::solve(Termination &ptc)
   double approximateDifference = -1;
   bool approximate = false;
   pdef_->addSolutionPath(pathSolutionBase, approximate, approximateDifference, getName());
-  solved = true;
+  bool solved = true;
 
   BOLT_DEBUG(indent, verbose_, "Finished BoltPlanner.solve()");
   return base::PlannerStatus(solved, approximate);
@@ -198,7 +210,7 @@ bool BoltPlanner::getPathOffGraph(const base::State *start, const base::State *g
   std::size_t attempt = 0;
   for (; attempt < maxAttempts; ++attempt)
   {
-    BOLT_DEBUG(indent, verbose_, "Starting getPathOffGraph attempt " << attempt);
+    BOLT_DEBUG(indent, verbose_, "Starting getPathOffGraph() attempt " << attempt);
 
     // Get neighbors near start and goal. Note: potentially they are not *visible* - will test for this later
 
@@ -224,13 +236,15 @@ bool BoltPlanner::getPathOffGraph(const base::State *start, const base::State *g
 
     // Get paths between start and goal
     bool feedbackStartFailed;
+    const bool debug = false;
     bool result = getPathOnGraph(startVertexCandidateNeighbors_, goalVertexCandidateNeighbors_, start, goal,
-                                 geometricSolution, ptc, /*debug*/ false, feedbackStartFailed, indent);
+                                 geometricSolution, ptc, debug, feedbackStartFailed, indent);
 
     // Error check
     if (!result)
     {
-      OMPL_WARN("getPathOffGraph(): BoltPlanner returned FALSE for getPathOnGraph. Trying again in debug mode");
+      BOLT_WARN(indent, true, "getPathOffGraph(): BoltPlanner returned FALSE for getPathOnGraph. Trying again in debug "
+                              "mode");
 
       // Run getPathOnGraph again in debug mode
       getPathOnGraph(startVertexCandidateNeighbors_, goalVertexCandidateNeighbors_, start, goal, geometricSolution, ptc,
@@ -295,28 +309,24 @@ bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
   bool foundValidGoal = false;
 
   // Try every combination of nearby start and goal pairs
-  for (TaskVertex start : candidateStarts)
+  for (TaskVertex startVertex : candidateStarts)
   {
-    if (actualStart == taskGraph_->getState(start))
-    {
-      OMPL_ERROR("Comparing same start state");
-      exit(-1);  // just curious if this ever happens, no need to actually exit
-      continue;
-    }
-
     // Check if this start is visible from the actual start
-    if (!si_->checkMotion(actualStart, taskGraph_->getState(start)))
+    if (!taskGraph_->checkMotion(actualStart, taskGraph_->getState(startVertex)))
     {
-      if (verbose_)
-      {
-        OMPL_WARN("FOUND START CANDIDATE THAT IS NOT VISIBLE ");
-      }
+      BOLT_WARN(indent, verbose_, "Found start candidate that is not visible on vertex " << startVertex);
+
       if (debug)
       {
-        visual_->viz4()->state(taskGraph_->getState(start), tools::LARGE, tools::RED, 1);
-        visual_->viz4()->edge(actualStart, taskGraph_->getState(start), 100);
+        // visual_->viz4()->state(taskGraph_->getModelBasedState(startVertex), tools::LARGE, tools::RED, 1);
+        visual_->viz4()->state(taskGraph_->getModelBasedState(startVertex), tools::ROBOT, tools::RED, 1);
+        visual_->viz5()->state(taskGraph_->getModelBasedState(actualStart), tools::ROBOT, tools::GREEN, 1);
+
+        visual_->viz4()->edge(taskGraph_->getModelBasedState(actualStart), taskGraph_->getModelBasedState(startVertex),
+                              tools::MEDIUM, tools::BLACK);
         visual_->viz4()->trigger();
-        usleep(0.1 * 1000000);
+        // usleep(0.1 * 1000000);
+        visual_->waitForUserFeedback("not visible");
       }
       continue;  // this is actually not visible
     }
@@ -324,33 +334,25 @@ bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
 
     for (TaskVertex goal : candidateGoals)
     {
-      if (actualGoal == taskGraph_->getState(goal))
-      {
-        OMPL_ERROR("Comparing same goal state");
-        continue;
-      }
-
       BOLT_DEBUG(indent, verbose_, "foreach_goal: Checking motion from " << actualGoal << " to "
                                                                          << taskGraph_->getState(goal));
 
       if (ptc)  // Check if our planner is out of time
       {
-        OMPL_DEBUG("getPathOnGraph function interrupted because termination condition is true.");
+        BOLT_DEBUG(indent, verbose_, "getPathOnGraph function interrupted because termination condition is true.");
         return false;
       }
 
       // Check if this goal is visible from the actual goal
-      if (!si_->checkMotion(actualGoal, taskGraph_->getState(goal)))
+      if (!taskGraph_->checkMotion(actualGoal, taskGraph_->getState(goal)))
       {
-        if (verbose_)
-        {
-          OMPL_WARN("FOUND GOAL CANDIDATE THAT IS NOT VISIBLE! ");
-        }
+        BOLT_WARN(indent, verbose_, "FOUND GOAL CANDIDATE THAT IS NOT VISIBLE! ");
 
         if (debug)
         {
-          visual_->viz4()->state(taskGraph_->getState(goal), tools::SMALL, tools::RED, 1);
-          visual_->viz4()->edge(actualGoal, taskGraph_->getState(goal), 100);
+          visual_->viz4()->state(taskGraph_->getModelBasedState(goal), tools::SMALL, tools::RED, 1);
+          visual_->viz4()->edge(taskGraph_->getModelBasedState(actualGoal), taskGraph_->getModelBasedState(goal),
+                                tools::MEDIUM, tools::BLACK);
           visual_->viz4()->trigger();
           usleep(0.1 * 1000000);
         }
@@ -360,7 +362,7 @@ bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
       foundValidGoal = true;
 
       // Repeatidly search through graph for connection then check for collisions then repeat
-      if (lazyCollisionSearch(start, goal, actualStart, actualGoal, geometricSolution, ptc, indent))
+      if (lazyCollisionSearch(startVertex, goal, actualStart, actualGoal, geometricSolution, ptc, indent))
       {
         // All save trajectories should be at least 1 state long, then we append the start and goal states, for
         // min of 3
@@ -380,27 +382,28 @@ bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
 
   if (foundValidStart && foundValidGoal)
   {
-    OMPL_ERROR("Unexpected condition - both a valid start and goal were found but still no path found. TODO ");
+    BOLT_ERROR(indent, true, "Unexpected condition - both a valid start and goal were found but still no path found. "
+                             "TODO ");
     exit(-1);
   }
 
   if (foundValidStart && !foundValidGoal)
   {
-    OMPL_WARN("Unable to connect GOAL state to graph");
+    BOLT_WARN(indent, true, "Unable to connect GOAL state to graph");
     feedbackStartFailed = false;  // it was the goal state that failed us
   }
   else
   {
-    OMPL_WARN("Unable to connect START state to graph");
+    BOLT_WARN(indent, true, "Unable to connect START state to graph");
     feedbackStartFailed = true;  // the start state failed us
   }
 
   return false;
 }
 
-bool BoltPlanner::lazyCollisionSearch(const TaskVertex &start, const TaskVertex &goal, const base::State *actualStart,
-                                      const base::State *actualGoal, og::PathGeometric &geometricSolution,
-                                      Termination &ptc, std::size_t indent)
+bool BoltPlanner::lazyCollisionSearch(const TaskVertex &startVertex, const TaskVertex &goalVertex,
+                                      const base::State *actualStart, const base::State *actualGoal,
+                                      og::PathGeometric &geometricSolution, Termination &ptc, std::size_t indent)
 {
   BOLT_FUNC(indent, verbose_, "BoltPlanner::lazyCollisionSearch()");
 
@@ -409,73 +412,77 @@ bool BoltPlanner::lazyCollisionSearch(const TaskVertex &start, const TaskVertex 
   double distance;  // resulting path distance
 
   // Make sure that the start and goal aren't so close together that they find the same vertex
-  if (start == goal)
+  if (startVertex == goalVertex)
   {
     BOLT_DEBUG(indent, verbose_, "    Start equals goal, creating simple solution ");
+    visual_->waitForUserFeedback("    Start equals goal, creating simple solution ");
 
     // There are only three verticies in this path - start, middle, goal
-    vertexPath.push_back(start);
+    vertexPath.push_back(startVertex);
 
-    convertVertexPathToStatePath(vertexPath, actualStart, actualGoal, geometricSolution);
+    convertVertexPathToStatePath(vertexPath, actualStart, actualGoal, geometricSolution, indent);
     return true;
   }
 
   // Error check all states are non-nullptr
   assert(actualStart);
   assert(actualGoal);
-  assert(taskGraph_->getState(start));
-  assert(taskGraph_->getState(goal));
+  assert(taskGraph_->getState(startVertex));
+  assert(taskGraph_->getState(goalVertex));
 
   // Visualize start vertex
   if (visualizeStartGoal_)
   {
     BOLT_DEBUG(indent, verbose_, "viz start -----------------------------");
-    visual_->viz5()->state(taskGraph_->getState(start), tools::VARIABLE_SIZE, tools::PURPLE, 1);
-    visual_->viz5()->edge(actualStart, taskGraph_->getState(start), 30);
+    // visual_->viz5()->state(taskGraph_->getModelBasedState(startVertex), tools::VARIABLE_SIZE, tools::PURPLE, 1);
+    visual_->viz5()->state(taskGraph_->getModelBasedState(startVertex), tools::ROBOT, tools::ORANGE);
+    // visual_->viz5()->edge(actualStart, taskGraph_->getModelBasedState(startVertex), tools::MEDIUM, tools::BLACK);
     visual_->viz5()->trigger();
-    usleep(5 * 1000000);
+    visual_->waitForUserFeedback("start viz");
 
     // Visualize goal vertex
     BOLT_DEBUG(indent, verbose_, "viz goal ------------------------------");
-    visual_->viz5()->state(taskGraph_->getState(goal), tools::VARIABLE_SIZE, tools::PURPLE, 1);
-    visual_->viz5()->edge(actualGoal, taskGraph_->getState(goal), 0);
+    // visual_->viz5()->state(taskGraph_->getModelBasedState(goalVertex), tools::VARIABLE_SIZE, tools::PURPLE, 1);
+    visual_->viz5()->state(taskGraph_->getModelBasedState(goalVertex), tools::ROBOT, tools::GREEN);
+    // visual_->viz5()->edge(actualGoal, taskGraph_->getModelBasedState(goalVertex), tools::MEDIUM, tools::BLACK);
     visual_->viz5()->trigger();
-    usleep(5 * 1000000);
+    visual_->waitForUserFeedback("goal viz");
   }
 
   // Keep looking for paths between chosen start and goal until one is found that is valid,
   // or no further paths can be found between them because of disabled edges
   // this is necessary for lazy collision checking i.e. rerun after marking invalid edges we found
-  while (visual_->viz1()->shutdownRequested())
+  while (!visual_->viz1()->shutdownRequested())
   {
-    BOLT_DEBUG(indent, verbose_, "  AStar: looking for path through graph between start and goal");
+    BOLT_DEBUG(indent + 2, verbose_, "AStar: looking for path through graph between start and goal");
 
     // Check if our planner is out of time
     if (ptc)
     {
-      OMPL_DEBUG("lazyCollisionSearch: function interrupted because termination condition is true.");
+      BOLT_DEBUG(indent + 2, verbose_, "lazyCollisionSearch: function interrupted because termination condition is "
+                                       "true.");
       return false;
     }
 
     // Attempt to find a solution from start to goal
-    if (!taskGraph_->astarSearch(start, goal, vertexPath, distance, indent))
+    if (!taskGraph_->astarSearch(startVertex, goalVertex, vertexPath, distance, indent + 2))
     {
-      BOLT_DEBUG(indent, verbose_, "unable to construct solution between start and goal using astar");
+      BOLT_DEBUG(indent + 2, verbose_, "unable to construct solution between start and goal using astar");
 
       // no path found what so ever
       return false;
     }
 
-    BOLT_DEBUG(indent, verbose_, "Has at least a partial solution, maybe exact solution");
-    BOLT_DEBUG(indent, verbose_, "Solution has " << vertexPath.size() << " vertices");
+    BOLT_DEBUG(indent + 2, verbose_, "Has at least a partial solution, maybe exact solution");
+    BOLT_DEBUG(indent + 2, verbose_, "Solution has " << vertexPath.size() << " vertices");
 
     // Check if all the points in the potential solution are valid
-    if (lazyCollisionCheck(vertexPath, ptc, indent))
+    if (lazyCollisionCheck(vertexPath, ptc, indent + 2))
     {
-      BOLT_DEBUG(indent, verbose_, "Lazy collision check returned valid ");
+      BOLT_DEBUG(indent + 2, verbose_, "Lazy collision check returned valid ");
 
       // the path is valid, we are done!
-      convertVertexPathToStatePath(vertexPath, actualStart, actualGoal, geometricSolution);
+      convertVertexPathToStatePath(vertexPath, actualStart, actualGoal, geometricSolution, indent + 2);
       return true;
     }
     // else, loop with updated graph that has the invalid edges/states disabled
@@ -504,7 +511,7 @@ bool BoltPlanner::lazyCollisionCheck(std::vector<TaskVertex> &vertexPath, Termin
     // Check if our planner is out of time
     if (ptc)
     {
-      OMPL_DEBUG("Lazy collision check function interrupted because termination condition is true.");
+      BOLT_DEBUG(indent, verbose_, "Lazy collision check function interrupted because termination condition is true.");
       return false;
     }
 
@@ -514,21 +521,22 @@ bool BoltPlanner::lazyCollisionCheck(std::vector<TaskVertex> &vertexPath, Termin
     if (taskGraph_->getGraphNonConst()[thisEdge].collision_state_ == NOT_CHECKED)
     {
       // Check path between states
-      if (!si_->checkMotion(taskGraph_->getState(fromVertex), taskGraph_->getState(toVertex)))
+      if (!taskGraph_->checkMotion(taskGraph_->getState(fromVertex), taskGraph_->getState(toVertex)))
       {
         // Path between (from, to) states not valid, disable the edge
 
         if (visualizeLazyCollisionCheck_)
         {
           BOLT_GREEN(indent, verbose_, "LAZY CHECK: disabling edge from vertex " << fromVertex << " to vertex "
-                     << toVertex);
-          visual_->viz6()->edge(taskGraph_->getState(fromVertex), taskGraph_->getState(toVertex), tools::MEDIUM, tools::BLUE);
-          visual_->viz6()->state(taskGraph_->getState(fromVertex), tools::ROBOT, tools::DEFAULT, 0);
+                                                                                 << toVertex);
+          visual_->viz6()->edge(taskGraph_->getModelBasedState(fromVertex), taskGraph_->getModelBasedState(toVertex),
+                                tools::MEDIUM, tools::BLUE);
+          visual_->viz6()->state(taskGraph_->getModelBasedState(fromVertex), tools::ROBOT, tools::DEFAULT, 0);
           visual_->viz6()->trigger();
-          usleep(0.1*1000000);
-          visual_->viz6()->state(taskGraph_->getState(toVertex), tools::ROBOT, tools::DEFAULT, 0);
+          usleep(0.1 * 1000000);
+          visual_->viz6()->state(taskGraph_->getModelBasedState(toVertex), tools::ROBOT, tools::DEFAULT, 0);
           visual_->viz6()->trigger();
-          //usleep(0.1*1000000);
+          // usleep(0.1*1000000);
           visual_->waitForUserFeedback("collision");
         }
 
@@ -559,7 +567,7 @@ bool BoltPlanner::lazyCollisionCheck(std::vector<TaskVertex> &vertexPath, Termin
 
     if (!visual_->viz1()->shutdownRequested())
       break;
-  } // for
+  }  // for
 
   BOLT_DEBUG(indent, verbose_, "Done lazy collision checking");
 
@@ -572,41 +580,47 @@ bool BoltPlanner::findGraphNeighbors(const base::State *state, std::vector<TaskV
 {
   BOLT_FUNC(indent, verbose_, "BoltPlanner::findGraphNeighbors()");
 
-  assert(requiredLevel == 0 || requiredLevel == 2);
+  BOLT_ASSERT(requiredLevel == 0 || requiredLevel == 2, "Wrong required level");
 
   // Reset
   neighbors.clear();
 
+  // Search within double the radius of the sparse delta
+  // Technically you should only need to search within 1x, but collisions etc could possibly require looking in
+  // a larger region
+  // double radius = taskGraph_->getSparseGraph()->getSparseDelta() * 2.0;
+
   // Choose how many neighbors
-  double findNearestKNeighbors;
-  if (si_->getStateSpace()->getDimension() == 3)
-    findNearestKNeighbors = 10;
-  else
-    findNearestKNeighbors = 30;
+  double kNearestNeighbors;
+  // if (si_->getStateSpace()->getDimension() == 3)
+  //   kNearestNeighbors = 10;
+  // else
+  kNearestNeighbors = 30;
 
   // Setup search by getting a non-const version of the focused state
   const std::size_t threadID = 0;
-  base::State *stateCopy = si_->cloneState(state);
+  base::State *stateCopy = si_->cloneState(state);  // TODO avoid this memory allocation but keeping as member variable
 
   // Search
   taskGraph_->getQueryStateNonConst(taskGraph_->queryVertices_[threadID]) = stateCopy;
-  taskGraph_->nn_->nearestK(taskGraph_->queryVertices_[threadID], findNearestKNeighbors, neighbors);
+  // taskGraph_->nn_->nearestR(taskGraph_->queryVertices_[threadID], radius, neighbors);
+  taskGraph_->nn_->nearestK(taskGraph_->queryVertices_[threadID], kNearestNeighbors, neighbors);
   taskGraph_->getQueryStateNonConst(taskGraph_->queryVertices_[threadID]) = nullptr;
 
   // Convert our list of neighbors to the proper level
   if (requiredLevel == 2)
   {
-    BOLT_DEBUG(indent, true, "Converting vector of level 0 neighbors to level 2 neighbors");
+    BOLT_DEBUG(indent, verbose_, "Converting vector of level 0 neighbors to level 2 neighbors");
 
     for (std::size_t i = 0; i < neighbors.size(); ++i)
     {
-      TaskVertex nearVertex = neighbors[i];
+      const TaskVertex &nearVertex = neighbors[i];
 
       // Get the vertex on the opposite level and replace it in the vector
       TaskVertex newVertex = taskGraph_->getGraphNonConst()[nearVertex].task_mirror_;
 
       // Replace
-      neighbors[i] = newVertex;
+      neighbors[i] = newVertex;  // TODO: can this allocation be done in-place?
     }
   }
 
@@ -617,8 +631,11 @@ bool BoltPlanner::findGraphNeighbors(const base::State *state, std::vector<TaskV
 }
 
 bool BoltPlanner::convertVertexPathToStatePath(std::vector<TaskVertex> &vertexPath, const base::State *actualStart,
-                                               const base::State *actualGoal, og::PathGeometric &geometricSolution)
+                                               const base::State *actualGoal, og::PathGeometric &geometricSolution,
+                                               std::size_t indent)
 {
+  BOLT_FUNC(indent, verbose_, "convertVertexPathToStatePath()");
+
   // Ensure the input path is not empty
   if (!vertexPath.size())
     return false;
@@ -648,7 +665,8 @@ bool BoltPlanner::convertVertexPathToStatePath(std::vector<TaskVertex> &vertexPa
       // Error check that no consequtive verticies are the same
       if (vertexPath[i - 1] == vertexPath[i - 2])
       {
-        OMPL_ERROR("Found repeated vertices %u to %u on index %u", vertexPath[i - 1], vertexPath[i - 2], i);
+        BOLT_ERROR(indent, true, "Found repeated vertices " << vertexPath[i - 1] << " to " << vertexPath[i - 2]
+                                                            << " from index " << i);
         exit(-1);
       }
 
@@ -657,11 +675,12 @@ bool BoltPlanner::convertVertexPathToStatePath(std::vector<TaskVertex> &vertexPa
       // Check if any edges in path are not free (then it an approximate path)
       if (taskGraph_->getGraphNonConst()[edge].collision_state_ == IN_COLLISION)
       {
-        OMPL_ERROR("Found invalid edge / approximate solution - how did this happen?");
+        BOLT_ERROR(indent, true, "Found invalid edge / approximate solution - how did this happen?");
       }
       else if (taskGraph_->getGraphNonConst()[edge].collision_state_ == NOT_CHECKED)
       {
-        OMPL_ERROR("A chosen path has an edge that has not been checked for collision. This should not happen");
+        BOLT_ERROR(indent, true, "A chosen path has an edge that has not been checked for collision. This should not "
+                                 "happen");
       }
     }
   }
@@ -686,8 +705,8 @@ bool BoltPlanner::simplifyPath(og::PathGeometric &path, Termination &ptc, std::s
   double simplifyTime = time::seconds(time::now() - simplifyStart);
 
   int diff = numStates - path.getStateCount();
-  BOLT_DEBUG(indent, verbose_ || true, "BoltPlanner: Path simplification took " << simplifyTime << " seconds and removed "
-             << diff << " states");
+  BOLT_DEBUG(indent, verbose_ || true, "BoltPlanner: Path simplification took "
+                                           << simplifyTime << " seconds and removed " << diff << " states");
 
   return true;
 }
@@ -752,7 +771,7 @@ bool BoltPlanner::simplifyTaskPath(og::PathGeometric &path, Termination &ptc, st
   }
   else
   {
-    OMPL_WARN("The Cartesian path segement 1 has only %u states", pathSegment[1].getStateCount());
+    BOLT_WARN(indent, true, "The Cartesian path segement 1 has only " << pathSegment[1].getStateCount() << " states");
   }
 
   // Smooth the freespace paths
@@ -810,14 +829,15 @@ bool BoltPlanner::canConnect(const base::State *randomState, Termination &ptc, s
     const base::State *s2 = taskGraph_->getState(nearState);
 
     // Check if this nearState is visible from the random state
-    if (!si_->checkMotion(s1, s2))
+    if (!taskGraph_->checkMotion(s1, s2))
     {
-      OMPL_WARN("NEIGHBOR %u NOT VISIBLE ", count++);
+      BOLT_WARN(indent, true, "NEIGHBOR " << count++ << " NOT VISIBLE ");
 
       if (false)
       {
-        visual_->viz5()->state(s2, tools::MEDIUM, tools::BLUE, 1);
-        visual_->viz5()->edge(s1, s2, 100);
+        visual_->viz5()->state(taskGraph_->getModelBasedState(s2), tools::MEDIUM, tools::BLUE, 1);
+        visual_->viz5()->edge(taskGraph_->getModelBasedState(s1), taskGraph_->getModelBasedState(s2), tools::MEDIUM,
+                              tools::BLACK);
         visual_->viz5()->trigger();
         usleep(1 * 1000000);
       }
@@ -846,13 +866,13 @@ bool BoltPlanner::canConnect(const base::State *randomState, Termination &ptc, s
 
           if (!si_->isValid(interState))
           {
-            visual_->viz5()->state(interState, tools::LARGE, tools::RED, 1);
+            visual_->viz5()->state(taskGraph_->getModelBasedState(interState), tools::LARGE, tools::RED, 1);
             visual_->viz5()->trigger();
             usleep(1 * 1000000);
           }
           else
           {
-            // visual_->viz5()->state(interState, /*mode=*/1, 1); // GREEN
+            // visual_->viz5()->state(taskGraph_->getModelBasedState(interState), /*mode=*/1, 1); // GREEN
           }
         }
       }
