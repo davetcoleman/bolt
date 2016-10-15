@@ -119,13 +119,33 @@ void TaskGraph::clear()
 
 void TaskGraph::freeMemory()
 {
-  BOLT_WARN(0, true, "freeMemory includes sparse graph");
   foreach (TaskVertex v, boost::vertices(g_))
   {
-    // TODO: there are references to SparseGraph in memory that should not be cleared
-    if (g_[v].state_ != nullptr)
-      si_->freeState(g_[v].state_);
-    // g_[v].state_ = nullptr;  // TODO(davetcoleman): is this needed??
+    if (g_[v].state_ == nullptr)
+      continue;
+
+    base::CompoundState* compoundState =  g_[v].state_->as<base::CompoundState>();
+    base::DiscreteStateSpace::StateType* discreteState = compoundState->as<base::DiscreteStateSpace::StateType>(DISCRETE);
+    base::State* modelBasedState = compoundState->as<base::DiscreteStateSpace::StateType>(MODEL_BASED);
+
+    // std::cout << "compoundState: " << compoundState << std::endl;
+    // std::cout << "discreteState: " << discreteState << std::endl;
+    // std::cout << "modelBasedState: " << modelBasedState << std::endl;
+
+    // Do not free the joint state data (ModelBasedStateSpace) if its part of the SPARS graph also
+    if (discreteState->value == 1) // the memory was allocated by cartesian planner and should be freed
+    {
+      //std::cout << "discreteState->value == 1 " << std::endl;
+      compoundSpace_->getSubspace(MODEL_BASED)->freeState(modelBasedState);
+    }
+
+    // Either way the Discrete state should be unloaded
+    //std::cout << "free discrete " << std::endl;
+    compoundSpace_->getSubspace(DISCRETE)->freeState(discreteState);
+
+    // Delete the outer compound state
+    delete[] compoundState->components;
+    delete compoundState;
   }
 
   g_.clear();
@@ -687,6 +707,9 @@ void TaskGraph::getNeighborsAtLevel(const TaskVertex origVertex, const VertexLev
 
 bool TaskGraph::checkTaskPathSolution(og::PathGeometric &path, ob::State *start, ob::State *goal)
 {
+  // TODO: this assumes the path has task data, which it no longer does
+  BOLT_ERROR(0, "checkTaskPathSolution() - broken");
+
   bool error = false;
   VertexLevel current_level = 0;
 
@@ -1257,13 +1280,24 @@ void TaskGraph::printGraphStats(double generationDuration, std::size_t indent)
 
 bool TaskGraph::checkMotion(const base::State *a, const base::State *b)
 {
-  // Disregard task level
-  // const base::CompoundState *cA = static_cast<const base::CompoundState *>(a);
-  // const base::CompoundState *cB = static_cast<const base::CompoundState *>(b);
-
-  // return modelSI_->checkMotion(cA->components[MODEL_BASED], cB->components[MODEL_BASED]);
-
   return modelSI_->checkMotion(getModelBasedState(a), getModelBasedState(b));
+}
+
+ob::PathPtr TaskGraph::convertPathToNonCompound(const ob::PathPtr compoundPath)
+{
+  // Convert input path
+  og::PathGeometric &compoundPathGeometric = static_cast<og::PathGeometric &>(*compoundPath);
+
+  // Create new path
+  ob::PathPtr modelPathBase(new og::PathGeometric(modelSI_));
+  og::PathGeometric &modelPath = static_cast<og::PathGeometric &>(*modelPathBase);
+
+  for (std::size_t i = 0; i < compoundPathGeometric.getStateCount(); ++i)
+  {
+    modelPath.append(getModelBasedState(compoundPathGeometric.getState(i)));
+  }
+
+  return modelPathBase;
 }
 
 }  // namespace bolt

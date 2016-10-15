@@ -66,7 +66,8 @@ BoltPlanner::BoltPlanner(const base::SpaceInformationPtr &si, const base::SpaceI
   specs_.approximateSolutions = false;
   specs_.directed = false;
 
-  path_simplifier_.reset(new geometric::PathSimplifier(si_));
+  // Note that the path simplifier operates in the model_based_state_space, not the compound space
+  path_simplifier_.reset(new geometric::PathSimplifier(modelSI));
 
   compoundSpace_ = std::dynamic_pointer_cast<base::CompoundStateSpace>(si_->getStateSpace());
   BOLT_ASSERT(compoundSpace_->isCompound(), "State space should be compound");
@@ -133,14 +134,14 @@ base::PlannerStatus BoltPlanner::solve(Termination &ptc)
   // Convert start and goal to compound states
   const int level0 = 0;
   const int level2 = 2;
+
+  // These compound states now own the startState/goalState
   base::State *startStateCompound = taskGraph_->createCompoundState(startState, level0, indent);
   base::State *goalStateCompound = taskGraph_->createCompoundState(goalState, level2, indent);
 
   base::PlannerStatus result = solve(startStateCompound, goalStateCompound, ptc, indent);
 
   // Free states
-  modelSI_->getStateSpace()->freeState(startState);
-  modelSI_->getStateSpace()->freeState(goalState);
   si_->getStateSpace()->freeState(startStateCompound);
   si_->getStateSpace()->freeState(goalStateCompound);
 
@@ -182,18 +183,22 @@ base::PlannerStatus BoltPlanner::solve(base::State *startState, base::State *goa
   else
     BOLT_WARN(indent, true, "Smoothing not enabled");
 
+  // Convert solution back to joint trajectory only (no discrete component)
+  ob::PathPtr modelSolutionBase = taskGraph_->convertPathToNonCompound(pathSolutionBase);
+  og::PathGeometric &modelSolution = static_cast<og::PathGeometric &>(*modelSolutionBase);
+
   // Show the smoothed path
   if (visualizeSmoothedTrajectory_)
   {
     visual_->viz4()->deleteAllMarkers();
-    visual_->viz4()->path(&geometricSolution, tools::MEDIUM, tools::BLACK, tools::BLACK);
+    visual_->viz4()->path(&modelSolution, tools::MEDIUM, tools::BLACK, tools::BLACK);
     visual_->viz4()->trigger();
   }
 
   // Save solution
   double approximateDifference = -1;
   bool approximate = false;
-  pdef_->addSolutionPath(pathSolutionBase, approximate, approximateDifference, getName());
+  pdef_->addSolutionPath(modelSolutionBase, approximate, approximateDifference, getName());
   bool solved = true;
 
   BOLT_DEBUG(indent, verbose_, "Finished BoltPlanner.solve()");
@@ -454,8 +459,6 @@ bool BoltPlanner::lazyCollisionSearch(const TaskVertex &startVertex, const TaskV
   // this is necessary for lazy collision checking i.e. rerun after marking invalid edges we found
   while (!visual_->viz1()->shutdownRequested())
   {
-    BOLT_DEBUG(indent + 2, verbose_, "AStar: looking for path through graph between start and goal");
-
     // Check if our planner is out of time
     if (ptc)
     {
@@ -472,9 +475,6 @@ bool BoltPlanner::lazyCollisionSearch(const TaskVertex &startVertex, const TaskV
       // no path found what so ever
       return false;
     }
-
-    BOLT_DEBUG(indent + 2, verbose_, "Has at least a partial solution, maybe exact solution");
-    BOLT_DEBUG(indent + 2, verbose_, "Solution has " << vertexPath.size() << " vertices");
 
     // Check if all the points in the potential solution are valid
     if (lazyCollisionCheck(vertexPath, ptc, indent + 2))
@@ -526,7 +526,7 @@ bool BoltPlanner::lazyCollisionCheck(std::vector<TaskVertex> &vertexPath, Termin
       {
         // Path between (from, to) states not valid, disable the edge
 
-        BOLT_MAGENTA(indent, verbose_, "LAZY CHECK: disabling edge from vertex " << fromVertex << " to " << toVertex);
+        BOLT_MAGENTA(indent, vCollisionCheck_, "LAZY CHECK: disabling edge from vertex " << fromVertex << " to " << toVertex);
 
         if (visualizeLazyCollisionCheck_)
           visualizeBadEdge(fromVertex, toVertex);
@@ -634,7 +634,7 @@ bool BoltPlanner::convertVertexPathToStatePath(std::vector<TaskVertex> &vertexPa
 
  // TODO: remove this check
   BOLT_ASSERT(actualStart != taskGraph_->getState(vertexPath.back()), "Unexpected same states, should not append actualStart");
-
+  BOLT_WARN(indent, true, "not sure if this is needed");
   // Add original start
   geometricSolution.append(actualStart);
 
@@ -707,12 +707,12 @@ bool BoltPlanner::simplifyPath(og::PathGeometric &path, Termination &ptc, std::s
   return true;
 }
 
-bool BoltPlanner::simplifyTaskPath(og::PathGeometric &path, Termination &ptc, std::size_t indent)
+bool BoltPlanner::simplifyTaskPath(og::PathGeometric &geometricSolution, Termination &ptc, std::size_t indent)
 {
   BOLT_FUNC(indent, true, "BoltPlanner: simplifyTaskPath()");
 
   time::point simplifyStart = time::now();
-  std::size_t origNumStates = path.getStateCount();
+  std::size_t origNumStates = geometricSolution.getStateCount();
 
   // Number of levels
   const std::size_t NUM_LEVELS = 3;
@@ -720,23 +720,23 @@ bool BoltPlanner::simplifyTaskPath(og::PathGeometric &path, Termination &ptc, st
   // Create three path segments
   std::vector<og::PathGeometric> pathSegment;
   for (int segmentLevel = 0; segmentLevel < int(NUM_LEVELS); ++segmentLevel)
-    pathSegment.push_back(og::PathGeometric(si_));
+    pathSegment.push_back(og::PathGeometric(modelSI_));
 
   // Create the solution path
   og::PathGeometric smoothedPath(si_);
 
   // Divide the path into different levels
   VertexLevel previousLevel = 0;  // Error check ordering of input path
-  for (std::size_t i = 0; i < path.getStateCount(); ++i)
+  for (std::size_t i = 0; i < geometricSolution.getStateCount(); ++i)
   {
-    base::State *state = path.getState(i);
+    base::State *state = geometricSolution.getState(i);
     VertexLevel level = taskGraph_->getTaskLevel(state);
 
     BOLT_DEBUG(indent, verbose_, "Path on level " << level);
 
     assert(level < NUM_LEVELS);
 
-    pathSegment[level].append(state);
+    pathSegment[level].append(taskGraph_->getModelBasedState(state));
 
     if (previousLevel > level)  // Error check ordering of input path
       throw Exception(name_, "Level increasing in wrong order");
@@ -770,7 +770,6 @@ bool BoltPlanner::simplifyTaskPath(og::PathGeometric &path, Termination &ptc, st
   }
 
   // Smooth the freespace paths
-  BOLT_ERROR(indent, "change path_simplfier space information");
   path_simplifier_->simplifyMax(pathSegment[0]);
   path_simplifier_->simplifyMax(pathSegment[2]);
 
@@ -779,22 +778,38 @@ bool BoltPlanner::simplifyTaskPath(og::PathGeometric &path, Termination &ptc, st
   {
     for (std::size_t i = 0; i < pathSegment[segmentLevel].getStateCount(); ++i)
     {
-      base::State *state = pathSegment[segmentLevel].getState(i);
+      // This state is not compound
+      base::State *modelBasedState = pathSegment[segmentLevel].getState(i);
 
-      // Enforce the correct level on the state because the OMPL smoothing components don't understand the concept
-      taskGraph_->setStateTaskLevel(state, segmentLevel);
+      base::State *compoundState = taskGraph_->createCompoundState(modelBasedState, segmentLevel, indent);
+
+      if (false)
+      {
+        visual_->viz4()->state(taskGraph_->getModelBasedState(compoundState), tools::ROBOT, tools::DEFAULT, 0);
+        visual_->waitForUserFeedback("next step");
+      }
+
+      // Check for repeated states
+      if (i > 0)
+      {
+        if (modelSI_->equalStates(pathSegment[segmentLevel].getState(i - 1), pathSegment[segmentLevel].getState(i)))
+        {
+          BOLT_ERROR(indent, "Repeated states at " << i << " on level " << segmentLevel);
+        }
+      }
 
       // Add to solution path
-      smoothedPath.append(state);
+      smoothedPath.append(compoundState);
     }
   }
 
+
   // Replace the input path with the new smoothed path
-  path = smoothedPath;
+  geometricSolution = smoothedPath;
 
   double simplifyTime = time::seconds(time::now() - simplifyStart);
 
-  int diff = origNumStates - path.getStateCount();
+  int diff = origNumStates - geometricSolution.getStateCount();
   BOLT_DEBUG(indent, verbose_, "BoltPlanner: Path simplification took " << simplifyTime << " seconds and removed "
                                                                         << diff << " states");
 

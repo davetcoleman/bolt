@@ -184,7 +184,7 @@ BoltMoveIt::BoltMoveIt(const std::string &hostname, const std::string &package_p
   loadVisualTools();
 
   // Add a collision objects
-  const double baxter_toros_height = -0.9;
+  const double baxter_toros_height = -0.95;
   visual_moveit_start_->publishCollisionFloor(baxter_toros_height + 0.001, "floor", rvt::TRANSLUCENT_DARK);
   visual_moveit_start_->publishCollisionWall(/*x*/ -1.0, /*y*/ 0.0, /*z*/ baxter_toros_height, /*angle*/ 0,
                                              /*width*/ 2, /*height*/ 2.0, "wall", rvt::BLACK);
@@ -314,7 +314,7 @@ std::string BoltMoveIt::getFilePath(const std::string &planning_group_name)
   return file_path;
 }
 
-bool BoltMoveIt::loadData()
+bool BoltMoveIt::loadData(std::size_t indent)
 {
   double vm1, rss1;
   if (track_memory_consumption_)  // Track memory usage
@@ -324,7 +324,7 @@ bool BoltMoveIt::loadData()
   ROS_INFO_STREAM_NAMED(name_, "Loading or generating roadmap");
   if (is_bolt_)
   {
-    if (!bolt_->load())
+    if (!bolt_->load(indent))
     {
       ROS_INFO_STREAM_NAMED(name_, "Unable to load sparse graph from file");
       return false;
@@ -361,7 +361,7 @@ void BoltMoveIt::run(std::size_t indent)
   bool loaded = false;
   if (load_spars_)
   {
-    loaded = loadData();
+    loaded = loadData(indent);
   }
 
   // Create SPARS
@@ -477,6 +477,9 @@ bool BoltMoveIt::runProblems()
       bolt_->getTaskGraph()->generateMonoLevelTaskSpace(indent);
     }
 
+    // std::cout << "bolt_moveit ending early " << std::endl;
+    // return true;
+
     if (track_memory_consumption_)  // Track memory usage
     {
       double vm2, rss2;
@@ -587,10 +590,10 @@ bool BoltMoveIt::plan()
   // path.prepend(ompl_start_);  // necessary?
 
   // Check/test the solution for errors
-  if (use_task_planning_)
-  {
-    bolt_->getTaskGraph()->checkTaskPathSolution(path, ompl_start_, ompl_goal_);
-  }
+  // if (use_task_planning_)
+  // {
+  //   bolt_->getTaskGraph()->checkTaskPathSolution(path, ompl_start_, ompl_goal_);
+  // }
 
   // Add more states between waypoints
   // state_count = path.getStateCount();

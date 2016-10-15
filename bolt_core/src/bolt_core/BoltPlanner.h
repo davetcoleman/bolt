@@ -195,6 +195,9 @@ protected:
   /** \brief The database of motions to search through */
   TaskGraphPtr taskGraph_;
 
+  // This is included in parent class, but mentioned here in contrast to modelSI_
+  //base::SpaceInformationPtr si_;
+
   /** \brief The space information for input states - NOT output states */
   base::SpaceInformationPtr modelSI_;
 
@@ -220,6 +223,7 @@ protected:
 public:
   /** \brief Output user feedback to console */
   bool verbose_ = false;
+  bool vCollisionCheck_ = false;
 
   bool visualizeSmoothedTrajectory_ = false;
   bool visualizeStartGoal_ = false;

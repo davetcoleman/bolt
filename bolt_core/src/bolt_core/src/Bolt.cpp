@@ -64,9 +64,8 @@ Bolt::Bolt(const base::StateSpacePtr &space) : ExperienceSetup(space)
   initialize();
 }
 
-void Bolt::initialize()
+void Bolt::initialize(std::size_t indent)
 {
-  std::size_t indent = 0;
   BOLT_INFO(indent, true, "Initializing Bolt Framework");
 
   // Initalize visualizer class
@@ -112,16 +111,16 @@ void Bolt::initialize()
   compoundSpace->addSubspace(discreteSpace, 0.0);         // 0% weight
 
   // Create space information
-  base::SpaceInformationPtr compoundSI = std::make_shared<base::SpaceInformation>(compoundSpace);
-  compoundSI->setup();
+  compoundSI_ = std::make_shared<base::SpaceInformation>(compoundSpace);
+  compoundSI_->setup();
 
   // Load the task graph used for combining multiple layers of sparse graph
   BOLT_INFO(indent, verbose_, "Loading TaskGraph");
-  taskGraph_.reset(new TaskGraph(compoundSI, sparseGraph_));
+  taskGraph_.reset(new TaskGraph(compoundSI_, sparseGraph_));
 
   // Load the Retrieve repair database. We do it here so that setRepairPlanner() works
   BOLT_INFO(indent, verbose_, "Loading BoltPlanner");
-  boltPlanner_ = BoltPlannerPtr(new BoltPlanner(compoundSI, si_, taskGraph_, visual_));
+  boltPlanner_ = BoltPlannerPtr(new BoltPlanner(compoundSI_, si_, taskGraph_, visual_));
 
   std::size_t numThreads = boost::thread::hardware_concurrency();
   OMPL_INFORM("Bolt Framework initialized using %u threads", numThreads);
@@ -130,7 +129,6 @@ void Bolt::initialize()
 void Bolt::setup()
 {
   std::size_t indent = 0;
-
   if (!configured_ || !si_->isSetup() || !boltPlanner_->isSetup())
   {
     // Setup Space Information if we haven't already done so
@@ -178,6 +176,8 @@ void Bolt::setPlannerAllocator(const base::PlannerAllocator &pa)
 
 base::PlannerStatus Bolt::solve(const base::PlannerTerminationCondition &ptc)
 {
+  std::size_t indent = 0;
+
   // Setup again in case it has not been done yet
   setup();
 
@@ -195,12 +195,12 @@ base::PlannerStatus Bolt::solve(const base::PlannerTerminationCondition &ptc)
   planTime_ = time::seconds(time::now() - start);
 
   // Do logging
-  logResults();
+  logResults(indent);
 
   return lastStatus_;
 }
 
-void Bolt::visualize()
+void Bolt::visualize(std::size_t indent)
 {
   // Optionally visualize raw trajectory
   if (visualizeRawTrajectory_)
@@ -232,7 +232,7 @@ void Bolt::visualize()
     visual_->viz6()->trigger();
   }
 
-  // Show robot animated robot
+  // Show robot animated
   if (visualizeRobotTrajectory_)
   {
     std::size_t indent = 0;
@@ -274,7 +274,7 @@ bool Bolt::checkBoltPlannerOptimality(std::size_t indent)
   return true;
 }
 
-void Bolt::logResults()
+void Bolt::logResults(std::size_t indent)
 {
   // Create log
   ExperienceLog log;
@@ -316,10 +316,10 @@ void Bolt::logResults()
       std::cout << ANSI_COLOR_RESET;
 
       // Show in Rviz
-      visualize();
+      visualize(indent);
 
       // Error check for repeated states
-      if (!checkRepeatedStates(solutionPath))
+      if (!checkRepeatedStates(solutionPath, indent))
         exit(-1);
 
       // Check optimality
@@ -365,15 +365,17 @@ void Bolt::logResults()
   convertLogToString(log);
 }
 
-bool Bolt::checkRepeatedStates(const og::PathGeometric &path)
+bool Bolt::checkRepeatedStates(const og::PathGeometric &path, std::size_t indent)
 {
   for (std::size_t i = 1; i < path.getStateCount(); ++i)
   {
     if (si_->getStateSpace()->equalStates(path.getState(i - 1), path.getState(i)))
     {
-      OMPL_ERROR("Duplicate state found on trajectory at %u out of %u", i, path.getStateCount());
+      BOLT_ERROR(indent, "Duplicate state found between " << i - 1 << " and " << i << " on trajectory, out of " <<  path.getStateCount());
 
       visual_->viz6()->state(path.getState(i), tools::ROBOT, tools::RED, 0);
+      visual_->waitForUserFeedback("duplicate");
+
       return false;
     }
   }
@@ -416,10 +418,8 @@ void Bolt::printResultsInfo(std::ostream &out) const
   }
 }
 
-bool Bolt::load()
+bool Bolt::load(std::size_t indent)
 {
-  std::size_t indent = 0;
-
   // Load from file
   if (!sparseGraph_->isEmpty())
   {

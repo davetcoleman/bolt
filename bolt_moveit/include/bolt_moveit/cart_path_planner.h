@@ -190,4 +190,13 @@ typedef boost::shared_ptr<CartPathPlanner> CartPathPlannerPtr;
 typedef boost::shared_ptr<const CartPathPlanner> CartPathPlannerConstPtr;
 
 }  // namespace bolt_moveit
+
+namespace
+{
+/** \brief Collision checking handle for IK solvers */
+bool isStateValid(const planning_scene::PlanningScene *planning_scene, bool verbose, bool only_check_self_collision,
+                  moveit_visual_tools::MoveItVisualToolsPtr visual_tools_, robot_state::RobotState *state,
+                  const robot_state::JointModelGroup *group, const double *ik_solution);
+}
+
 #endif  // BOLT_MOVEIT_CART_PATH_PLANNER_H

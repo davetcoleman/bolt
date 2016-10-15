@@ -4,7 +4,7 @@ bolt_moveit:
   # run mode
   auto_run: true # do not wait to move interactive markers. note: 'autonomous' setting must be 'false'
   benchmark_performance: false
-  display_disjoint_sets: false
+  display_disjoint_sets: false # connected components
   eliminate_dense_disjoint_sets: false
   check_valid_vertices: false # Collision check every vertex in sparse graph and return error if invalid found
 
@@ -206,7 +206,7 @@ cart_path_planner:
   # tolerance_pitch: 0.3925 # pi/8
   tolerance_yaw: 1.57 # pi
   timing: 0.2 # time between each Cartesian point, e.g. discretization
-  verbose: false
+  verbose: true
   visualize:
     show_all_solutions: false # show each solution along trajectory when moving the interactive markers
     show_all_solutions_sleep: 0.1 # time between each solution for viewing

@@ -158,7 +158,7 @@ void SparseStorage::saveVertices(boost::archive::binary_oarchive &oa)
       std::cout << static_cast<int>(count / double(sparseGraph_->getNumVertices()) * 100.0) << "% " << std::flush;
   }
   BOLT_ASSERT(errorCheckNumQueryVertices == numQueryVertices_, "There should be the same number of query vertex "
-                                                               "as threads that were skipped while saving");
+              "as threads that were skipped while saving");
 
   std::cout << std::endl;
 }
@@ -297,8 +297,8 @@ void SparseStorage::loadVertices(std::size_t numVertices, boost::archive::binary
 
   // Create thread to populate nearest neighbor structure, because that is the slowest component
   loadVerticesFinished_ = false;
-  SparseVertex startingVertex = sparseGraph_->getNumVertices();
-  boost::thread nnThread(boost::bind(&SparseStorage::populateNNThread, this, startingVertex));
+  SparseVertex startingVertex = sparseGraph_->getNumVertices(); // should be number of threads
+  boost::thread nnThread(boost::bind(&SparseStorage::populateNNThread, this, startingVertex, numVertices));
 
   const base::StateSpacePtr &space = si_->getStateSpace();
   std::size_t feedbackFrequency = numVertices / 10;
@@ -334,11 +334,12 @@ void SparseStorage::loadVertices(std::size_t numVertices, boost::archive::binary
     OMPL_INFORM("NN thread took %f seconds to catch up", time::seconds(time::now() - startTime));  // Benchmark
 }
 
-void SparseStorage::populateNNThread(std::size_t startingVertex)
+void SparseStorage::populateNNThread(std::size_t startingVertex, std::size_t numVertices)
 {
   SparseVertex vertexID = startingVertex;  // skip the query vertices
+  SparseVertex endID = startingVertex + numVertices - 1;
 
-  while (!loadVerticesFinished_)
+  while (vertexID < endID)
   {
     // Check if there are any vertices ready to be inserted into the NN
     // We subtract 1 because we do not want to process the newest vertex for threading reasons
@@ -351,22 +352,14 @@ void SparseStorage::populateNNThread(std::size_t startingVertex)
 
     if (!loadVerticesFinished_)  // only wait if the parent thread isn't already done
     {
-      // std::cout << "sleeping in NN, current vertexID: " << vertexID << " total: " << sparseGraph_->getNumVertices()
-      // << std::endl;
       usleep(0.00001 * 1000000);
-    }
-
-    // When we wake up, check if there are more vertices ready again, before checking if we are done
-    while (vertexID < sparseGraph_->getNumVertices() - 1)
-    {
-      // There are vertices ready to be inserted
-      sparseGraph_->getNN()->add(vertexID);
-      vertexID++;
     }
   }
 
   // There should be one vertex left
-  BOLT_ASSERT(vertexID == sparseGraph_->getNumVertices() - 1, "There should only be one vertex left. sparseGraph_->getNumVertices(): " << sparseGraph_->getNumVertices() << " vertexID: " << vertexID);
+  BOLT_ASSERT(vertexID == sparseGraph_->getNumVertices() - 1,
+              "There should only be one vertex left. sparseGraph_->getNumVertices(): " << sparseGraph_->getNumVertices()
+              << " vertexID: " << vertexID);
 
   // Add the last vertex
   sparseGraph_->getNN()->add(vertexID);

@@ -152,7 +152,7 @@ public:
   void loadVertices(std::size_t numVertices, boost::archive::binary_iarchive &ia, std::size_t indent = 0);
 
   /** \brief Thread to populate nearest neighbor structure, because that is the slowest component */
-  void populateNNThread(std::size_t startingVertex);
+  void populateNNThread(std::size_t startingVertex, std::size_t numVertices);
 
   /* \brief Read \e numEdges from the binary input \e ia and store them as SparseStorage  */
   void loadEdges(std::size_t numEdges, boost::archive::binary_iarchive &ia, std::size_t indent = 0);

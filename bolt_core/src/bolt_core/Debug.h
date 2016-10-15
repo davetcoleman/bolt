@@ -78,6 +78,7 @@
       do                                                                \
       {                                                                 \
         std::stringstream o; o << stream;                               \
+        indent = indent + 2;                                            \
         if (flag)                                                       \
           std::cout << ANSI_COLOR_CYAN << std::string(indent, ' ') << o.str() << ANSI_COLOR_RESET << std::endl; \
         indent = indent + 2;                                            \

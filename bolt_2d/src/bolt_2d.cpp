@@ -331,13 +331,13 @@ public:
     shutdownIfError(name_, error);
   }
 
-  bool loadData()
+  bool loadData(std::size_t indent)
   {
     // Load database or generate new grid
     ROS_INFO_STREAM_NAMED(name_, "Loading or generating graph");
     if (planner_name_ == BOLT)
     {
-      if (!bolt_->load())
+      if (!bolt_->load(indent))
       {
         ROS_INFO_STREAM_NAMED(name_, "Unable to load sparse graph from file");
         return false;
@@ -362,7 +362,7 @@ public:
     bool loaded = false;
     if (load_spars_)
     {
-      loaded = loadData();
+      loaded = loadData(indent);
     }
 
     // Sweet maps

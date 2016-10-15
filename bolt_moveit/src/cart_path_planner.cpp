@@ -402,6 +402,9 @@ bool CartPathPlanner::populateBoltGraph(ompl::tools::bolt::TaskGraphPtr task_gra
   // Remove any previous Cartesian vertices/edges by simply re-creating the whole task graph
   task_graph_->generateTaskSpace(indent);
 
+  // std::cout << "cart_path_planner ending early " << std::endl;
+  // return true;
+
   // For assertion testing
   ompl::tools::bolt::TaskVertex startingVertex = task_graph_->getNumVertices() - 1;
 
@@ -657,6 +660,17 @@ bool CartPathPlanner::addCartPointToBoltGraph(const CombinedPoints& combined_poi
     // TODO: this is hard coded for 2 arms currently
     moveit_robot_state->setJointGroupPositions(arm_datas_[0].jmg_, joints_pose[0]);
     moveit_robot_state->setJointGroupPositions(arm_datas_[1].jmg_, joints_pose[1]);
+
+    // Check for validity
+    moveit_robot_state->update();
+    bool collision_check_verbose = true;
+    if (!parent_->getPlanningSceneMonitor()->getPlanningScene()->isStateValid(
+            *moveit_robot_state, parent_->planning_jmg_, collision_check_verbose))
+    {
+      BOLT_ERROR(indent, "Invalid robot state");
+      visual_tools_->publishRobotState(moveit_robot_state, rvt::RED);
+      parent_->waitForNextStep("invalid");
+    }
 
     // Create new OMPL state
     ompl::base::State* ompl_state = space->allocState();

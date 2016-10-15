@@ -411,6 +411,9 @@ public:
   /** \brief Convert two CompoundStates to ModelBased states and check motion */
   bool checkMotion(const base::State* a, const base::State* b);
 
+  /** \brief Convert a path of compound states into only the joint states component (ModelBasedStateSpace) */
+  base::PathPtr convertPathToNonCompound(const base::PathPtr compoundPath);
+
 protected:
   /** \brief Short name of this class */
   const std::string name_ = "TaskGraph";

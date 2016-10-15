@@ -95,7 +95,7 @@ public:
 
 private:
   /** \brief Shared constructor functions */
-  void initialize();
+  void initialize(std::size_t indent = 0);
 
 public:
   /** \brief Display debug data about potential available solutions */
@@ -105,7 +105,7 @@ public:
   void printLogs(std::ostream &out = std::cout) const;
 
   /** \brief Load database from file  */
-  bool load();
+  bool load(std::size_t indent);
 
   /** \brief Get the current planner */
   base::PlannerPtr &getPlanner()
@@ -136,18 +136,18 @@ public:
   /** \brief Run the planner for up to a specified amount of time (default is 1 second) */
   virtual base::PlannerStatus solve(double time = 1.0);
 
-  void visualize();
+  void visualize(std::size_t indent);
 
-  bool checkBoltPlannerOptimality(std::size_t indent = 0);
+  bool checkBoltPlannerOptimality(std::size_t indent);
 
   /** \brief Helper function for logging data to file */
-  void logResults();
+  void logResults(std::size_t indent);
 
   /** \brief Run the planner until \e ptc becomes true (at most) */
   virtual base::PlannerStatus solve(const base::PlannerTerminationCondition &ptc);
 
   /** \brief Sanity check for solution paths */
-  bool checkRepeatedStates(const geometric::PathGeometric &path);
+  bool checkRepeatedStates(const geometric::PathGeometric &path, std::size_t indent);
 
   /** \brief Set the database file to load. Actual loading occurs when setup() is called
    *  \param filePath - full absolute path to a experience database to load
@@ -214,6 +214,13 @@ public:
   // bool doPostProcessing();
 
 protected:
+
+  // This is included in parent class, but mentioned here in contrast to modelSI_
+  //base::SpaceInformationPtr si_;
+
+  /** \brief The space information for combined states */
+  base::SpaceInformationPtr compoundSI_;
+
   /**  The maintained experience planner instance */
   BoltPlannerPtr boltPlanner_;
 

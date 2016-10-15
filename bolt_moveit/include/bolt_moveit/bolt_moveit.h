@@ -84,7 +84,7 @@ public:
 
   void loadCollisionChecker();
 
-  bool loadData();
+  bool loadData(std::size_t indent);
 
   void run(std::size_t indent);
 
