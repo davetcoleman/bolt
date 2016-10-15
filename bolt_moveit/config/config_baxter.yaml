@@ -24,7 +24,7 @@ bolt_moveit:
 
   # run type
   headless: false
-  num_problems: 1
+  num_problems: 10
   problem_type: 1 # 0 - random, 1 - imarkers
 
   # solver type
@@ -185,7 +185,7 @@ bolt_planner:
   visualize:
     smoothed_trajectory: true
     start_goal: false
-    lazy_collision_check: false
+    lazy_collision_check: true
 
 # ====================================================
 bolt:
@@ -196,22 +196,25 @@ bolt:
 
 # ====================================================
 cart_path_planner:
-  ik_discretization: 6 # 0.785 # pi / 4
-  trajectory_discretization: 0.01 # how much space, in meters, between trajectory points
-  #tolerance_increment: 0.313 # in radians, discretization of space [-Pi, Pi]
-  tolerance_increment: 0.5 # in radians, discretization of space [-Pi, Pi]
-  tolerance_roll: 0 #0.314 # pi/10
-  tolerance_pitch: 0 #0.314 # pi/10
-  # tolerance_roll: 0.3925 # pi/8
-  # tolerance_pitch: 0.3925 # pi/8
-  tolerance_yaw: 1.57 # pi
-  timing: 0.2 # time between each Cartesian point, e.g. discretization
+  ik_solver:
+    discretization: 4 # 0.785 # pi / 4
+  trajectory:
+    discretization: 0.01 # how much space, in meters, between trajectory points
+    timing: 0.2 # time allowed between each Cartesian point, e.g. discretization for velocity
+  tolerance:
+    pi_fraction_increment: 0.3 # 2xPI / this number = number of steps to divide each dimension by
+    roll: 0.314 # pi/10
+    pitch: 0.314 # pi/10
+    yaw: 0 # pi
+    # roll: 0.3925 # pi/8
+    # pitch: 0.3925 # pi/8
   verbose: true
   visualize:
     show_all_solutions: false # show each solution along trajectory when moving the interactive markers
     show_all_solutions_sleep: 0.1 # time between each solution for viewing
-    show_all_cart_poses: true # show the markers for each pose location
-    show_combined_solutions: true # show the robot state for each combined pose
+    show_all_cart_poses: false # show the markers for each pose location
+    show_combined_solutions: false # show the robot state for each combined pose
+    show_rejected_states: false # show invalid collision checks
 
 # ====================================================
 # Interface for publishing joint/cartesian commands to the low level controllers

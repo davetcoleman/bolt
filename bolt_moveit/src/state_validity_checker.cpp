@@ -79,13 +79,13 @@ void moveit_ompl::StateValidityChecker::setVerbose(bool flag)
 bool moveit_ompl::StateValidityChecker::isValid(const ompl::base::State *state, bool verbose) const
 {
   // TODO: HACK
-  // verbose = true;
+  verbose = true;
 
   // check bounds
   if (!si_->satisfiesBounds(state))
   {
-    if (verbose)
-      ROS_INFO("State outside bounds");
+    //if (verbose)
+    ROS_INFO("State outside bounds 2");
     return false;
   }
 
@@ -125,12 +125,14 @@ bool moveit_ompl::StateValidityChecker::isValid(const ompl::base::State *state, 
 bool moveit_ompl::StateValidityChecker::isValid(const ompl::base::State *state, double &dist, bool verbose) const
 {
   // TODO: HACK
-  // verbose = true;
+  verbose = true;
+
+  si_->printState(state);
 
   if (!si_->satisfiesBounds(state))
   {
-    if (verbose)
-      ROS_INFO("State outside bounds");
+    //if (verbose)
+    ROS_INFO("State outside bounds");
     return false;
   }
 

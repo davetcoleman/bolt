@@ -149,7 +149,7 @@ private:
 
   // State used for solving IK
   moveit::core::RobotStatePtr ik_state0_;
-  moveit::core::RobotStatePtr ik_state1_;
+  moveit::core::RobotStatePtr shared_robot_state_;
 
   // Rviz
   moveit_visual_tools::MoveItVisualToolsPtr visual_tools_;
@@ -173,11 +173,16 @@ private:
   // Desired path to draw
   std::vector<EigenSTL::vector_Affine3d> path_from_file_;
 
+  // Verbose
   bool verbose_ = false;
+  bool verbose_collision_check_ = false;
+
+  // Visualize
   bool visualize_show_all_solutions_ = false;
   double visualize_show_all_solutions_sleep_ = 0.001;
   bool visualize_show_all_cart_poses_ = false;
   bool visualize_show_combined_solutions_ = false;
+  bool visualize_show_rejected_states_ = false;
 
   double tolerance_increment_ = 0.5;
   double tolerance_roll_;

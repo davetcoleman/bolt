@@ -146,8 +146,9 @@ public:
 
   bool satisfiesBounds(const ob::State *state) const
   {
-    return spec_.joint_model_group_->satisfiesPositionBounds(state->as<StateType>()->values, spec_.joint_bounds_,
-                                                             std::numeric_limits<double>::epsilon());
+    // TODO: this is too large an epsilon
+    return spec_.joint_model_group_->satisfiesPositionBounds(state->as<StateType>()->values, spec_.joint_bounds_, 0.00001);
+    // std::numeric_limits<double>::epsilon());
   }
 
   void interpolate(const ob::State *from, const ob::State *to, const double t, ob::State *state) const

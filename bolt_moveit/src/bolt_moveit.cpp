@@ -478,7 +478,7 @@ bool BoltMoveIt::runProblems()
     }
 
     // std::cout << "bolt_moveit ending early " << std::endl;
-    // return true;
+    // return true;XbT
 
     if (track_memory_consumption_)  // Track memory usage
     {

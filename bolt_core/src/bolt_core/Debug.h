@@ -51,7 +51,7 @@
   {                                                                     \
     std::stringstream o; o << stream;                                   \
     if (flag)                                                           \
-      std::cout << std::string(indent, ' ') << o.str() << std::endl;    \
+      std::cout << ANSI_COLOR_GREEN << std::string(indent, ' ') << o.str() << ANSI_COLOR_RESET << std::endl; \
   } while (0)
 #else
 #define BOLT_DEBUG(indent, flag, stream)        \

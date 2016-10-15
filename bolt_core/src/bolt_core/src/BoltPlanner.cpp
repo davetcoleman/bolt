@@ -115,7 +115,7 @@ base::PlannerStatus BoltPlanner::solve(Termination &ptc)
   pis_.restart();  // PlannerInputStates
 
   // Get a single start and goal state
-  BOLT_DEBUG(indent, verbose_, "Getting OMPL start and goal state");
+  BOLT_INFO(indent, verbose_, "Getting OMPL start and goal state");
   base::State *startState = modelSI_->getStateSpace()->cloneState(pis_.nextStart());  // PlannerInputStates
   base::State *goalState = modelSI_->getStateSpace()->cloneState(pis_.nextGoal(ptc));
 

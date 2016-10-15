@@ -1265,17 +1265,17 @@ void TaskGraph::printGraphStats(double generationDuration, std::size_t indent)
   }
   double averageEdgeLength = getNumEdges() ? totalEdgeLength / getNumEdges() : 0;
 
-  BOLT_DEBUG(indent, 1, "---------------------------------------------");
-  BOLT_DEBUG(indent, 1, "TaskGraph stats:");
-  BOLT_DEBUG(indent, 1, "   Generation time:        " << generationDuration << " s");
-  BOLT_DEBUG(indent, 1, "   Total vertices:         " << getNumRealVertices());
-  BOLT_DEBUG(indent, 1, "   Total edges:            " << getNumEdges());
-  BOLT_DEBUG(indent, 1, "   Average degree:         " << averageDegree);
-  BOLT_DEBUG(indent, 1, "   Edge Lengths:           ");
-  BOLT_DEBUG(indent, 1, "      Max:                 " << maxEdgeLength);
-  BOLT_DEBUG(indent, 1, "      Min:                 " << minEdgeLength);
-  BOLT_DEBUG(indent, 1, "      Average:             " << averageEdgeLength);
-  BOLT_DEBUG(indent, 1, "---------------------------------------------");
+  BOLT_INFO(indent, 1, "---------------------------------------------");
+  BOLT_INFO(indent, 1, "TaskGraph stats:");
+  BOLT_INFO(indent, 1, "   Generation time:        " << generationDuration << " s");
+  BOLT_INFO(indent, 1, "   Total vertices:         " << getNumRealVertices());
+  BOLT_INFO(indent, 1, "   Total edges:            " << getNumEdges());
+  BOLT_INFO(indent, 1, "   Average degree:         " << averageDegree);
+  BOLT_INFO(indent, 1, "   Edge Lengths:           ");
+  BOLT_INFO(indent, 1, "      Max:                 " << maxEdgeLength);
+  BOLT_INFO(indent, 1, "      Min:                 " << minEdgeLength);
+  BOLT_INFO(indent, 1, "      Average:             " << averageEdgeLength);
+  BOLT_INFO(indent, 1, "---------------------------------------------");
 }
 
 bool TaskGraph::checkMotion(const base::State *a, const base::State *b)

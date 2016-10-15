@@ -1398,23 +1398,23 @@ void SparseGraph::printGraphStats()
   double averageEdgeLength = getNumEdges() ? totalEdgeLength / getNumEdges() : 0;
 
   std::size_t indent = 0;
-  BOLT_DEBUG(indent, 1, "------------------------------------------------------");
-  BOLT_DEBUG(indent, 1, "SparseGraph stats:");
-  BOLT_DEBUG(indent, 1, "   Total vertices:         " << getNumRealVertices());
-  BOLT_DEBUG(indent, 1, "   Total edges:            " << getNumEdges());
-  BOLT_DEBUG(indent, 1, "   Average degree:         " << averageDegree);
-  BOLT_DEBUG(indent, 1, "   Connected Components:   " << numSets);
-  BOLT_DEBUG(indent, 1, "   Edge Lengths:           ");
-  BOLT_DEBUG(indent, 1, "      Max:                 " << maxEdgeLength);
-  BOLT_DEBUG(indent, 1, "      Min:                 " << minEdgeLength);
-  BOLT_DEBUG(indent, 1, "      Average:             " << averageEdgeLength);
+  BOLT_INFO(indent, 1, "------------------------------------------------------");
+  BOLT_INFO(indent, 1, "SparseGraph stats:");
+  BOLT_INFO(indent, 1, "   Total vertices:         " << getNumRealVertices());
+  BOLT_INFO(indent, 1, "   Total edges:            " << getNumEdges());
+  BOLT_INFO(indent, 1, "   Average degree:         " << averageDegree);
+  BOLT_INFO(indent, 1, "   Connected Components:   " << numSets);
+  BOLT_INFO(indent, 1, "   Edge Lengths:           ");
+  BOLT_INFO(indent, 1, "      Max:                 " << maxEdgeLength);
+  BOLT_INFO(indent, 1, "      Min:                 " << minEdgeLength);
+  BOLT_INFO(indent, 1, "      Average:             " << averageEdgeLength);
   if (sparseCriteria_)
   {
-    BOLT_DEBUG(indent, 1, "      SparseDelta:         " << sparseCriteria_->getSparseDelta());
-    BOLT_DEBUG(indent, 1, "      Difference:          " << averageEdgeLength - sparseCriteria_->getSparseDelta());
-    BOLT_DEBUG(indent, 1, "      Penetration:         " << sparseCriteria_->getDiscretizePenetrationDist());
+    BOLT_INFO(indent, 1, "      SparseDelta:         " << sparseCriteria_->getSparseDelta());
+    BOLT_INFO(indent, 1, "      Difference:          " << averageEdgeLength - sparseCriteria_->getSparseDelta());
+    BOLT_INFO(indent, 1, "      Penetration:         " << sparseCriteria_->getDiscretizePenetrationDist());
   }
-  BOLT_DEBUG(indent, 1, "------------------------------------------------------");
+  BOLT_INFO(indent, 1, "------------------------------------------------------");
 }
 
 bool SparseGraph::verifyGraph(std::size_t indent)
