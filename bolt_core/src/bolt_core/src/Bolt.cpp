@@ -116,11 +116,11 @@ void Bolt::initialize(std::size_t indent)
 
   // Load the task graph used for combining multiple layers of sparse graph
   BOLT_INFO(indent, verbose_, "Loading TaskGraph");
-  taskGraph_.reset(new TaskGraph(compoundSI_, sparseGraph_));
+  taskGraph_.reset(new TaskGraph(si_, compoundSI_, sparseGraph_));
 
   // Load the Retrieve repair database. We do it here so that setRepairPlanner() works
   BOLT_INFO(indent, verbose_, "Loading BoltPlanner");
-  boltPlanner_ = BoltPlannerPtr(new BoltPlanner(compoundSI_, si_, taskGraph_, visual_));
+  boltPlanner_ = BoltPlannerPtr(new BoltPlanner(si_, compoundSI_, taskGraph_, visual_));
 
   std::size_t numThreads = boost::thread::hardware_concurrency();
   OMPL_INFORM("Bolt Framework initialized using %u threads", numThreads);

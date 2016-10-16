@@ -158,10 +158,10 @@ candidate_queue:
 task_graph:
   num_neighbors_connect_to_cart: 10
   verbose:
+    verbose: false
     add: false # debug when addVertex() and addEdge() are called
-    search: true
-    visualize: true
-    verbose: true
+    search: false
+    visualize: false
     heuristic: false
     clear: false
     generate_task: false
@@ -206,9 +206,7 @@ cart_path_planner:
     roll: 0.314 # pi/10
     pitch: 0.314 # pi/10
     yaw: 0 # pi
-    # roll: 0.3925 # pi/8
-    # pitch: 0.3925 # pi/8
-  verbose: true
+  verbose: false
   visualize:
     show_all_solutions: false # show each solution along trajectory when moving the interactive markers
     show_all_solutions_sleep: 0.1 # time between each solution for viewing

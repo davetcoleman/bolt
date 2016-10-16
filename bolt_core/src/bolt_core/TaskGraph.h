@@ -94,7 +94,7 @@ class TaskGraph
 public:
   /** \brief Constructor needs the state space used for planning.
    */
-  TaskGraph(const base::SpaceInformationPtr& si, SparseGraphPtr sg);
+  TaskGraph(const base::SpaceInformationPtr &modelSI, const base::SpaceInformationPtr& compoundSI, SparseGraphPtr sg);
 
   /** \brief Deconstructor */
   virtual ~TaskGraph(void);
@@ -114,9 +114,9 @@ public:
     return g_;
   }
 
-  base::SpaceInformationPtr getSpaceInformation()
+  base::SpaceInformationPtr getCompoundSpaceInformation()
   {
-    return si_;
+    return compoundSI_;
   }
 
   SparseGraphPtr getSparseGraph()
@@ -303,7 +303,6 @@ public:
    * --------------------------------------------------------------------------------- */
 
   /** \brief Path smoothing helpers */
-  bool smoothQualityPathOriginal(geometric::PathGeometric* path, std::size_t indent);
   bool smoothQualityPath(geometric::PathGeometric* path, double clearance, std::size_t indent);
 
   /* ---------------------------------------------------------------------------------
@@ -422,7 +421,7 @@ protected:
   SparseGraphPtr sg_;
 
   /** \brief The created space information */
-  base::SpaceInformationPtr si_;
+  base::SpaceInformationPtr compoundSI_;
   base::CompoundStateSpacePtr compoundSpace_;
 
   /** \brief Space info for just the robot model state space, excluding the Discrete Compound State Space */

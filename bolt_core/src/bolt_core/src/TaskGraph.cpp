@@ -72,15 +72,16 @@ namespace tools
 {
 namespace bolt
 {
-TaskGraph::TaskGraph(const base::SpaceInformationPtr &si, SparseGraphPtr sg) : si_(si), sg_(sg)
+TaskGraph::TaskGraph(const base::SpaceInformationPtr &modelSI, const base::SpaceInformationPtr &compoundSI,
+                     SparseGraphPtr sg)
+  : modelSI_(modelSI), compoundSI_(compoundSI), sg_(sg)
 {
   // Save number of threads available
   numThreads_ = boost::thread::hardware_concurrency();
 
   // Copy the pointers of various components
   visual_ = sg_->getVisual();
-  compoundSpace_ = std::dynamic_pointer_cast<base::CompoundStateSpace>(si_->getStateSpace());
-  modelSI_ = sg_->getSpaceInformation();
+  compoundSpace_ = std::dynamic_pointer_cast<base::CompoundStateSpace>(compoundSI_->getStateSpace());
 
   // Add search state
   initializeQueryState();
@@ -101,7 +102,7 @@ bool TaskGraph::setup()
   // Initialize path simplifier
   if (!pathSimplifier_)
   {
-    pathSimplifier_.reset(new geometric::PathSimplifier(si_));
+    pathSimplifier_.reset(new geometric::PathSimplifier(compoundSI_));
     pathSimplifier_->freeStates(true);
   }
 
@@ -124,23 +125,24 @@ void TaskGraph::freeMemory()
     if (g_[v].state_ == nullptr)
       continue;
 
-    base::CompoundState* compoundState =  g_[v].state_->as<base::CompoundState>();
-    base::DiscreteStateSpace::StateType* discreteState = compoundState->as<base::DiscreteStateSpace::StateType>(DISCRETE);
-    base::State* modelBasedState = compoundState->as<base::DiscreteStateSpace::StateType>(MODEL_BASED);
+    base::CompoundState *compoundState = g_[v].state_->as<base::CompoundState>();
+    base::DiscreteStateSpace::StateType *discreteState =
+        compoundState->as<base::DiscreteStateSpace::StateType>(DISCRETE);
+    base::State *modelBasedState = compoundState->as<base::DiscreteStateSpace::StateType>(MODEL_BASED);
 
     // std::cout << "compoundState: " << compoundState << std::endl;
     // std::cout << "discreteState: " << discreteState << std::endl;
     // std::cout << "modelBasedState: " << modelBasedState << std::endl;
 
     // Do not free the joint state data (ModelBasedStateSpace) if its part of the SPARS graph also
-    if (discreteState->value == 1) // the memory was allocated by cartesian planner and should be freed
+    if (discreteState->value == 1)  // the memory was allocated by cartesian planner and should be freed
     {
-      //std::cout << "discreteState->value == 1 " << std::endl;
+      // std::cout << "discreteState->value == 1 " << std::endl;
       compoundSpace_->getSubspace(MODEL_BASED)->freeState(modelBasedState);
     }
 
     // Either way the Discrete state should be unloaded
-    //std::cout << "free discrete " << std::endl;
+    // std::cout << "free discrete " << std::endl;
     compoundSpace_->getSubspace(DISCRETE)->freeState(discreteState);
 
     // Delete the outer compound state
@@ -205,7 +207,7 @@ bool TaskGraph::astarSearch(const TaskVertex start, const TaskVertex goal, std::
                         },
                         // ability to disable edges (set cost to inifinity):
                         boost::weight_map(TaskEdgeWeightMap(g_))
-                        //boost::weight_map(boost::get(&TaskEdgeStruct::weight_, g_))
+                            // boost::weight_map(boost::get(&TaskEdgeStruct::weight_, g_))
                             .predecessor_map(vertexPredecessors)
                             .distance_map(&vertexDistances[0])
                             .visitor(TaskAstarVisitor(goal, this)));
@@ -435,7 +437,7 @@ void TaskGraph::generateMonoLevelTaskSpace(std::size_t indent)
 
     // Create level 0 vertex
     VertexLevel level = 0;
-    TaskVertex taskV0 = addVertex(si_->cloneState(state), level, indent);
+    TaskVertex taskV0 = addVertex(compoundSI_->cloneState(state), level, indent);
     sparseToTaskVertex0[sparseV] = taskV0;  // record mapping
   }
 
@@ -666,6 +668,7 @@ void TaskGraph::getNeighborsAtLevel(const TaskVertex origVertex, const VertexLev
   nn_->nearestK(queryVertices_[threadID], kNeighbors, neighbors);
   queryStates_[threadID] = nullptr;
 
+  /*
   // Run various checks
   for (std::size_t i = 0; i < neighbors.size(); ++i)
   {
@@ -676,7 +679,7 @@ void TaskGraph::getNeighborsAtLevel(const TaskVertex origVertex, const VertexLev
     if (useCollisionChecking)
     {
       // Collision check
-      if (!si_->checkMotion(origState, getState(nearVertex)))  // is not valid motion
+      if (!compoundSI_->checkMotion(origState, getState(nearVertex)))  // is not valid motion
       {
         BOLT_DEBUG(indent, vGenerateTask_, "Skipping neighbor " << nearVertex << ", i=" << i
                                                                 << ", at level=" << getTaskLevel(nearVertex)
@@ -689,6 +692,7 @@ void TaskGraph::getNeighborsAtLevel(const TaskVertex origVertex, const VertexLev
 
     BOLT_DEBUG(indent, vGenerateTask_, "Keeping neighbor " << nearVertex);
   }
+  */
 
   // Convert our list of neighbors to the proper level
   if (level == 2)
@@ -720,7 +724,7 @@ bool TaskGraph::checkTaskPathSolution(og::PathGeometric &path, ob::State *start,
     // Check if start state is correct
     if (i == 0)
     {
-      if (!si_->getStateSpace()->equalStates(path.getState(i), start))
+      if (!compoundSI_->getStateSpace()->equalStates(path.getState(i), start))
       {
         OMPL_ERROR("Start state of path is not same as original problem");
         error = true;
@@ -736,7 +740,7 @@ bool TaskGraph::checkTaskPathSolution(og::PathGeometric &path, ob::State *start,
     // Check if goal state is correct
     if (i == path.getStateCount() - 1)
     {
-      if (!si_->getStateSpace()->equalStates(path.getState(i), goal))
+      if (!compoundSI_->getStateSpace()->equalStates(path.getState(i), goal))
       {
         OMPL_ERROR("Goal state of path is not same as original problem");
         error = true;
@@ -789,7 +793,7 @@ void TaskGraph::errorCheckDuplicateStates(std::size_t indent)
   // {
   //   for (std::size_t j = i + 1; j < dense_Cache_->getStateCacheSize(); ++j)
   //   {
-  //     if (si_->getStateSpace()->equalStates(getState(i), getState(j)))
+  //     if (compoundSI_->getStateSpace()->equalStates(getState(i), getState(j)))
   //     {
   //       BOLT_ERROR(indent, 1, "Found equal state: " << i << ", " << j);
   //       debugState(getState(i));
@@ -801,39 +805,11 @@ void TaskGraph::errorCheckDuplicateStates(std::size_t indent)
   //   throw Exception(name_, "Duplicate state found");
 }
 
-bool TaskGraph::smoothQualityPathOriginal(geometric::PathGeometric *path, std::size_t indent)
-{
-  BOLT_FUNC(indent, visualizeQualityPathSmoothing_, "smoothQualityPathOriginal()");
-
-  // Visualize path
-  if (visualizeQualityPathSmoothing_)
-  {
-    visual_->viz2()->deleteAllMarkers();
-    visual_->viz2()->path(path, tools::SMALL, tools::BLACK, tools::BLUE);
-    visual_->viz2()->trigger();
-    usleep(0.001 * 1000000);
-  }
-
-  BOLT_DEBUG(indent, visualizeQualityPathSmoothing_, "Created 'quality path' candidate with " << path->getStateCount()
-                                                                                              << " states");
-  if (visualizeQualityPathSmoothing_)
-    visual_->waitForUserFeedback("path simplification");
-
-  pathSimplifier_->reduceVertices(*path, 10);
-  pathSimplifier_->shortcutPath(*path, 50);
-
-  std::pair<bool, bool> repairResult = path->checkAndRepair(100);
-
-  if (!repairResult.second)  // Repairing was not successful
-  {
-    throw Exception(name_, "check and repair failed?");
-  }
-  return true;
-}
-
 bool TaskGraph::smoothQualityPath(geometric::PathGeometric *path, double clearance, std::size_t indent)
 {
   BOLT_FUNC(indent, visualizeQualityPathSmoothing_, "TaskGraph.smoothQualityPath()");
+
+  BOLT_ERROR(indent, "smoothQualityPath is using compound state space which has unknown smoothing results...");
 
   // Visualize path
   if (visualizeQualityPathSmoothing_)
@@ -850,7 +826,8 @@ bool TaskGraph::smoothQualityPath(geometric::PathGeometric *path, double clearan
     visual_->waitForUserFeedback("path simplification");
 
   // Set the motion validator to use clearance, this way isValid() checks clearance before confirming valid
-  base::DiscreteMotionValidator *dmv = dynamic_cast<base::DiscreteMotionValidator *>(si_->getMotionValidator().get());
+  base::DiscreteMotionValidator *dmv =
+      dynamic_cast<base::DiscreteMotionValidator *>(modelSI_->getMotionValidator().get());
   dmv->setRequiredStateClearance(clearance);
 
   for (std::size_t i = 0; i < 3; ++i)
@@ -962,7 +939,7 @@ void TaskGraph::removeVertex(TaskVertex v)
   nn_->remove(v);
 
   // Delete state
-  si_->freeState(g_[v].state_);
+  compoundSI_->freeState(g_[v].state_);
   g_[v].state_ = NULL;
 
   // Remove all edges to and from vertex
@@ -1038,8 +1015,8 @@ TaskEdge TaskGraph::addEdge(TaskVertex v1, TaskVertex v2, std::size_t indent)
     BOLT_ASSERT(hasEdge(v1, v2) == hasEdge(v2, v1), "There already exists an edge between two vertices requested, "
                                                     "other direction");
     BOLT_ASSERT(getState(v1) != getState(v2), "States on both sides of an edge are the same");
-    BOLT_ASSERT(!si_->getStateSpace()->equalStates(getState(v1), getState(v2)), "Vertex IDs are different but "
-                                                                                "states are the equal");
+    BOLT_ASSERT(!compoundSI_->getStateSpace()->equalStates(getState(v1), getState(v2)), "Vertex IDs are different but "
+                                                                                        "states are the equal");
   }
 
   // Create the new edge
@@ -1227,7 +1204,7 @@ void TaskGraph::visualizeEdge(TaskVertex v1, TaskVertex v2, std::size_t windowID
 
 void TaskGraph::debugState(const ompl::base::State *state)
 {
-  si_->printState(state, std::cout);
+  compoundSI_->printState(state, std::cout);
 }
 
 void TaskGraph::debugVertex(const TaskVertex v)
@@ -1280,6 +1257,7 @@ void TaskGraph::printGraphStats(double generationDuration, std::size_t indent)
 
 bool TaskGraph::checkMotion(const base::State *a, const base::State *b)
 {
+  std::cout << "TaskGraph.checkMotion(): " << std::endl;
   return modelSI_->checkMotion(getModelBasedState(a), getModelBasedState(b));
 }
 
@@ -1314,7 +1292,8 @@ double get(const ompl::tools::bolt::TaskEdgeWeightMap &m, const ompl::tools::bol
 }
 }
 
-BOOST_CONCEPT_ASSERT((boost::ReadablePropertyMapConcept<ompl::tools::bolt::TaskEdgeWeightMap, ompl::tools::bolt::TaskEdge>));
+BOOST_CONCEPT_ASSERT(
+    (boost::ReadablePropertyMapConcept<ompl::tools::bolt::TaskEdgeWeightMap, ompl::tools::bolt::TaskEdge>));
 
 // TaskAstarVisitor methods ////////////////////////////////////////////////////////////////////////////
 

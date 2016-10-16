@@ -83,7 +83,7 @@ class BoltPlanner : public base::Planner
 {
 public:
   /** \brief Constructor */
-  BoltPlanner(const base::SpaceInformationPtr &si, const base::SpaceInformationPtr modelSI,
+  BoltPlanner(const base::SpaceInformationPtr &modelSI, const base::SpaceInformationPtr &compoundSI,
               const TaskGraphPtr &taskGraph, VisualizerPtr visual);
 
   virtual ~BoltPlanner(void);
@@ -92,7 +92,7 @@ public:
   bool simplifyPath(geometric::PathGeometric &path, Termination &ptc, std::size_t indent);
 
   /** \brief Simplify a multi-modal path for different task levels */
-  bool simplifyTaskPath(geometric::PathGeometric &path, Termination &ptc, std::size_t indent);
+  bool simplifyTaskPath(geometric::PathGeometric &compoundPath, Termination &ptc, std::size_t indent);
 
   /** \brief Main entry function for finding a path plan */
   virtual base::PlannerStatus solve(Termination &ptc);
@@ -121,10 +121,10 @@ public:
    * \brief Search the roadmap for the best path close to the given start and goal states that is valid
    * \param start
    * \param goal
-   * \param geometricSolution - the resulting path
+   * \param compoundSolution - the resulting path
    * \return
    */
-  bool getPathOffGraph(const base::State *start, const base::State *goal, geometric::PathGeometric &geometricSolution,
+  bool getPathOffGraph(const base::State *start, const base::State *goal, geometric::PathGeometric &compoundSolution,
                        Termination &ptc, std::size_t indent);
 
   /** \brief Clear verticies not on the specified level */
@@ -139,7 +139,7 @@ public:
    * \return true on success
    */
   bool convertVertexPathToStatePath(std::vector<bolt::TaskVertex> &vertexPath, const base::State *actualStart,
-                                    const base::State *actualGoal, geometric::PathGeometric &geometricSolution,
+                                    const base::State *actualGoal, geometric::PathGeometric &compoundSolution,
                                     std::size_t indent);
 
   /**
@@ -161,7 +161,7 @@ public:
    */
   bool getPathOnGraph(const std::vector<bolt::TaskVertex> &candidateStarts,
                       const std::vector<bolt::TaskVertex> &candidateGoals, const base::State *actualStart,
-                      const base::State *actualGoal, geometric::PathGeometric &geometricSolution, Termination &ptc,
+                      const base::State *actualGoal, geometric::PathGeometric &compoundSolution, Termination &ptc,
                       bool debug, bool &feedbackStartFailed, std::size_t indent);
 
   /**
@@ -169,7 +169,7 @@ public:
    * \return true if a valid path is found
    */
   bool lazyCollisionSearch(const bolt::TaskVertex &start, const bolt::TaskVertex &goal, const base::State *actualStart,
-                           const base::State *actualGoal, geometric::PathGeometric &geometricSolution, Termination &ptc,
+                           const base::State *actualGoal, geometric::PathGeometric &compoundSolution, Termination &ptc,
                            std::size_t indent);
 
   /** \brief Check recalled path for collision and disable as needed */
@@ -191,18 +191,20 @@ public:
     return originalSolutionPath_;
   }
 
+private:
+
+  /** \brief This is included in parent class, but mentioned here. Use modelSI_ instead to reduce confusion   */
+  using Planner::si_;
+
 protected:
   /** \brief The database of motions to search through */
   TaskGraphPtr taskGraph_;
 
-  // This is included in parent class, but mentioned here in contrast to modelSI_
-  //base::SpaceInformationPtr si_;
-
-  /** \brief The space information for input states - NOT output states */
+  /** \brief The space information for joint states e.g. model_based_state_space */
   base::SpaceInformationPtr modelSI_;
 
-  /** \brief Type of configuration space */
-  base::CompoundStateSpacePtr compoundSpace_;
+  /** \brief Space information for combined joint states and discrete state */
+  base::SpaceInformationPtr compoundSI_;
 
   /** \brief Class for managing various visualization features */
   VisualizerPtr visual_;

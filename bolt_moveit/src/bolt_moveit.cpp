@@ -643,6 +643,7 @@ void BoltMoveIt::loadCollisionChecker()
   // The interval in which obstacles are checked for between states
   // seems that it default to 0.01 but doesn't do a good job at that level
   // si_->setStateValidityCheckingResolution(0.005);
+
 }
 
 void BoltMoveIt::deleteAllMarkers(bool clearDatabase)
@@ -779,7 +780,7 @@ void BoltMoveIt::loadVisualTools()
   visual->setVizWindow(5, viz5_);
   visual->setVizWindow(6, viz6_);
 
-  // Project\ion viewer - mirrors MoveItVisualTools 6
+  // Projection viewer - mirrors MoveItVisualTools 6
   {
     viz6_->getVisualTools()->setGlobalScale(1.0);
 
@@ -792,6 +793,11 @@ void BoltMoveIt::loadVisualTools()
 
     visual->setVizWindow(7, viz);
   }
+
+  // Allow collision checker to visualize
+  std::cout << "visual: " << visual << std::endl;
+  validity_checker_->setVisual(visual);
+  waitForNextStep("set visual");
 
   // Set other hooks
   visual->setWaitForUserFeedback(boost::bind(&BoltMoveIt::waitForNextStep, this, _1));

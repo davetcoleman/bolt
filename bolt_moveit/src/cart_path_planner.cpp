@@ -646,11 +646,17 @@ bool CartPathPlanner::combineEETrajectories(const std::vector<RedunJointTrajecto
       else // randomly choose a pose from other trajectory
       {
         // Add multiple random poses
-        std::size_t num_rand_poses = 2;
+        std::size_t num_rand_poses = 1;
         for (std::size_t i = 0; i < num_rand_poses; ++i)
         {
-          // random
-          std::size_t pose1_id = visual_tools_->iRand(0, poses1->size() - 1);
+          std::size_t pose1_id;
+
+          if (i == 0) // not random
+            pose1_id = (pose0_id < poses1->size()) ? pose0_id : poses1->size() - 1;
+          else // random
+            pose1_id = visual_tools_->iRand(0, poses1->size() - 1);
+
+          std::cout << "pose0_id: " << pose0_id << " pose1_id: " << pose1_id << std::endl;
 
           // Create new trajectory point
           BothArmsJointPose point;

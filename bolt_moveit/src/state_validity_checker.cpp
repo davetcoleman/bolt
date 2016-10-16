@@ -119,6 +119,16 @@ bool moveit_ompl::StateValidityChecker::isValid(const ompl::base::State *state, 
     planning_scene_->checkCollision(collision_request_simple_, res, *robot_state);
   }
 
+  // Visualize
+  if (visual_.get() != nullptr)
+  {
+    if (res.collision)
+      visual_->viz2()->state(state, ompl::tools::ROBOT, ompl::tools::RED, 0);
+    else
+      visual_->viz2()->state(state, ompl::tools::ROBOT, ompl::tools::GREEN, 0);
+    visual_->viz2()->trigger();
+  }
+
   return res.collision == false;
 }
 
@@ -175,11 +185,14 @@ bool moveit_ompl::StateValidityChecker::isValid(const ompl::base::State *state, 
   dist = res.distance;
 
   // Visualize
-  // if (res.collision)
-  //   visual_->viz2()->state(state, ompl::tools::SMALL, ompl::tools::RED, 0);
-  // else
-  //   visual_->viz2()->state(state, ompl::tools::SMALL, ompl::tools::GREEN, 0);
-  // visual_->viz2()->trigger();
+  if (visual_.get() != nullptr)
+  {
+    if (res.collision)
+      visual_->viz2()->state(state, ompl::tools::SMALL, ompl::tools::RED, 0);
+    else
+      visual_->viz2()->state(state, ompl::tools::SMALL, ompl::tools::GREEN, 0);
+    visual_->viz2()->trigger();
+  }
 
   return res.collision == false;
 }
