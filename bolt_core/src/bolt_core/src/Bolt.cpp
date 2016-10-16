@@ -54,12 +54,12 @@ namespace tools
 {
 namespace bolt
 {
-Bolt::Bolt(const base::SpaceInformationPtr &si) : ExperienceSetup(si)
+Bolt::Bolt(const base::SpaceInformationPtr &si) : geometric::SimpleSetup(si)
 {
   initialize();
 }
 
-Bolt::Bolt(const base::StateSpacePtr &space) : ExperienceSetup(space)
+Bolt::Bolt(const base::StateSpacePtr &space) : geometric::SimpleSetup(space)
 {
   initialize();
 }
@@ -72,8 +72,6 @@ void Bolt::initialize(std::size_t indent)
   BOLT_INFO(indent, verbose_, "Loading visualizer");
   visual_.reset(new Visualizer());
 
-  recallEnabled_ = true;
-  scratchEnabled_ = true;
   filePath_ = std::move("unloaded");
 
   // Load the sparse graph datastructure
@@ -112,7 +110,6 @@ void Bolt::initialize(std::size_t indent)
 
   // Create space information
   compoundSI_ = std::make_shared<base::SpaceInformation>(compoundSpace);
-  compoundSI_->setup();
 
   // Load the task graph used for combining multiple layers of sparse graph
   BOLT_INFO(indent, verbose_, "Loading TaskGraph");
@@ -134,6 +131,9 @@ void Bolt::setup()
     // Setup Space Information if we haven't already done so
     if (!si_->isSetup())
       si_->setup();
+
+    if (!compoundSI_->isSetup())
+      compoundSI_->setup();
 
     // Setup planning from experience planner
     boltPlanner_->setProblemDefinition(pdef_);
@@ -276,10 +276,6 @@ bool Bolt::checkBoltPlannerOptimality(std::size_t indent)
 
 void Bolt::logResults(std::size_t indent)
 {
-  // Create log
-  ExperienceLog log;
-  log.planningTime = planTime_;
-
   // Record stats
   stats_.totalPlanningTime_ += planTime_;  // used for averaging
   stats_.numProblems_++;                   // used for averaging
@@ -289,18 +285,10 @@ void Bolt::logResults(std::size_t indent)
     case base::PlannerStatus::TIMEOUT:
       stats_.numSolutionsTimedout_++;
       OMPL_ERROR("Bolt::solve(): TIMEOUT - No solution found after %f seconds", planTime_);
-      // Logging
-      log.planner = "neither_planner";
-      log.result = "timedout";
-      log.isSaved = "not_saved";
       break;
     case base::PlannerStatus::ABORT:
       stats_.numSolutionsTimedout_++;
       OMPL_ERROR("Bolt::solve(): ABORT - No solution found after %f seconds", planTime_);
-      // Logging
-      log.planner = "neither_planner";
-      log.result = "abort";
-      log.isSaved = "not_saved";
       break;
     case base::PlannerStatus::APPROXIMATE_SOLUTION:
       OMPL_ERROR("Bolt::solve(): Approximate - should not happen!");
@@ -334,10 +322,6 @@ void Bolt::logResults(std::size_t indent)
       {
         OMPL_INFORM("NOT saving to database because solution is less than 2 states long");
         stats_.numSolutionsTooShort_++;
-
-        // Logging
-        log.isSaved = "less_2_states";
-        log.tooShort = true;
       }
       else
       {
@@ -349,20 +333,7 @@ void Bolt::logResults(std::size_t indent)
     default:
       OMPL_ERROR("Unknown status type: %u", lastStatus_);
       stats_.numSolutionsFailed_++;
-      // Logging
-      log.planner = "neither_planner";
-      log.result = "failed";
-      log.isSaved = "not_saved";
   }
-
-  // Final log data
-  // log.insertion_time = insertionTime; TODO fix this
-  log.numVertices = sparseGraph_->getNumVertices();
-  log.numEdges = sparseGraph_->getNumEdges();
-  log.numConnectedComponents = 0;
-
-  // Flush the log to buffer
-  convertLogToString(log);
 }
 
 bool Bolt::checkRepeatedStates(const og::PathGeometric &path, std::size_t indent)
@@ -458,10 +429,7 @@ void Bolt::printLogs(std::ostream &out) const
   double vertPercent = sparseGraph_->getNumVertices() / double(sparseGraph_->getNumVertices()) * 100.0;
   double edgePercent = sparseGraph_->getNumEdges() / double(sparseGraph_->getNumEdges()) * 100.0;
   double solvedPercent = stats_.numSolutionsFromRecall_ / static_cast<double>(stats_.numProblems_) * 100.0;
-  if (!recallEnabled_)
-    out << "Scratch Task Logging Results (inside Bolt Framework)" << std::endl;
-  else
-    out << "Bolt Framework Logging Results" << std::endl;
+  out << "Bolt Framework Logging Results" << std::endl;
   out << "  Solutions Attempted:           " << stats_.numProblems_ << std::endl;
   out << "    Solved:                      " << stats_.numSolutionsFromRecall_ << " (" << solvedPercent << "%)\n";
   out << "    Failed:                      " << stats_.numSolutionsFailed_ << std::endl;

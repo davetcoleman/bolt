@@ -34,6 +34,7 @@
 
 /* Author: Dave Coleman <dave@dav.ee>
    Desc:   Sparse experience database for storing and reusing past path plans
+           Assumes "name_" exists in every class for the namespace
 */
 
 #ifndef OMPL_TOOLS_BOLT_DEBUG_H
@@ -80,7 +81,7 @@
         std::stringstream o; o << stream;                               \
         indent = indent + 2;                                            \
         if (flag)                                                       \
-          std::cout << ANSI_COLOR_CYAN << std::string(indent, ' ') << o.str() << ANSI_COLOR_RESET << std::endl; \
+          std::cout << ANSI_COLOR_CYAN << std::string(indent, ' ') << name_ << ":" << o.str() << ANSI_COLOR_RESET << std::endl; \
         indent = indent + 2;                                            \
       } while (0)
 #else

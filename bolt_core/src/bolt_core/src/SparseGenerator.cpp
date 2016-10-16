@@ -216,7 +216,7 @@ void SparseGenerator::createSPARS()
 
 #ifndef NDEBUG
   // Ensure the graph is valid
-  if (!sg_->verifyGraph(indent))
+  if (false && !sg_->verifyGraph(indent))
   {
     OMPL_ERROR("Sparse graph did not pass test");
   }

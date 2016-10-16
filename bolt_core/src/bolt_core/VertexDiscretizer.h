@@ -134,6 +134,9 @@ private:
   void createState(std::size_t threadID, std::vector<double>& values, base::SpaceInformationPtr si,
                    base::State* candidateState, std::size_t indent);
 
+  /** \brief Short name of class */
+  const std::string name_ = "VertexDiscretizer";
+
   /** \brief Sparse graph main datastructure that this class operates on */
   SparseGraphPtr sg_;
 

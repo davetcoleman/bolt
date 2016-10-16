@@ -89,8 +89,6 @@ enum CompoundTypes
 /** \brief Near-asypmotically optimal roadmap datastructure */
 class TaskGraph
 {
-  friend class BoltPlanner;
-
 public:
   /** \brief Constructor needs the state space used for planning.
    */
@@ -128,6 +126,11 @@ public:
   VisualizerPtr getVisual()
   {
     return visual_;
+  }
+
+  std::shared_ptr<NearestNeighbors<TaskVertex> > getNN()
+  {
+    return nn_;
   }
 
   /** \brief Initialize database */
@@ -177,6 +180,11 @@ public:
   /* ---------------------------------------------------------------------------------
    * Get graph properties
    * --------------------------------------------------------------------------------- */
+
+  std::vector<TaskVertex> getQueryVertices()
+  {
+    return queryVertices_;
+  }
 
   std::size_t getNumQueryVertices() const
   {
@@ -333,7 +341,7 @@ public:
   bool hasEdge(TaskVertex v1, TaskVertex v2);
 
   /** \brief Get the state of a vertex used for querying - i.e. vertices 0-11 for 12 thread system */
-  inline base::State*& getQueryStateNonConst(TaskVertex v)
+  inline base::State*& getCompoundQueryStateNonConst(TaskVertex v)
   {
 #ifndef NDEBUG
     BOLT_ASSERT(v < queryVertices_.size(), "Attempted to request state of regular vertex using query function");
@@ -342,7 +350,7 @@ public:
   }
 
   /** \brief Shortcut function for getting the state of a vertex */
-  inline base::State*& getStateNonConst(TaskVertex v)
+  inline base::State*& getCompoundStateNonConst(TaskVertex v)
   {
 #ifndef NDEBUG
     BOLT_ASSERT(v >= queryVertices_.size(), "Attempted to request state of query vertex using wrong function");
@@ -351,7 +359,7 @@ public:
   }
 
   /** \brief Shortcut function for getting the state of a vertex */
-  inline const base::State* getState(TaskVertex v) const
+  inline const base::State* getCompoundState(TaskVertex v) const
   {
 #ifndef NDEBUG
     BOLT_ASSERT(v >= queryVertices_.size(), "Attempted to request state of query vertex using wrong function");

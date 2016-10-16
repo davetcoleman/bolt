@@ -277,17 +277,17 @@ double TaskGraph::distanceVertex(const TaskVertex a, const TaskVertex b) const
   // Special case: query vertices store their states elsewhere. Both cannot be query vertices
   if (a < numThreads_)
   {
-    return distanceState(queryStates_[a], getState(b));
+    return distanceState(queryStates_[a], getCompoundState(b));
   }
   if (b < numThreads_)
   {
-    return distanceState(getState(a), queryStates_[b]);
+    return distanceState(getCompoundState(a), queryStates_[b]);
   }
 
-  assert(getState(a) != NULL);
-  assert(getState(b) != NULL);
+  assert(getCompoundState(a) != NULL);
+  assert(getCompoundState(b) != NULL);
 
-  return distanceState(getState(a), getState(b));
+  return distanceState(getCompoundState(a), getCompoundState(b));
 }
 
 double TaskGraph::distanceState(const base::State *a, const base::State *b) const
@@ -661,7 +661,7 @@ void TaskGraph::getNeighborsAtLevel(const TaskVertex origVertex, const VertexLev
   BOLT_ASSERT(level != 1, "Unhandled level, does not support level 1");
 
   const std::size_t threadID = 0;
-  base::State *origState = getStateNonConst(origVertex);
+  base::State *origState = getCompoundStateNonConst(origVertex);
 
   // Get nearby state
   queryStates_[threadID] = origState;
@@ -714,12 +714,13 @@ bool TaskGraph::checkTaskPathSolution(og::PathGeometric &path, ob::State *start,
   // TODO: this assumes the path has task data, which it no longer does
   BOLT_ERROR(0, "checkTaskPathSolution() - broken");
 
-  bool error = false;
+  bool error = true; // false
+  /*
   VertexLevel current_level = 0;
 
   for (std::size_t i = 0; i < path.getStateCount(); ++i)
   {
-    VertexLevel level = getTaskLevel(path.getState(i));
+    VertexLevel level = getTaskLevel(path.getCompoundState(i));
 
     // Check if start state is correct
     if (i == 0)
@@ -773,6 +774,7 @@ bool TaskGraph::checkTaskPathSolution(og::PathGeometric &path, ob::State *start,
       OMPL_INFORM(" - Path state %i has level %i", i, level);
     }
   }
+  */
 
   return error;
 }
@@ -967,9 +969,9 @@ void TaskGraph::removeDeletedVertices(std::size_t indent)
       continue;
     }
 
-    if (getState(*v) == NULL)  // Found vertex to delete
+    if (getCompoundState(*v) == NULL)  // Found vertex to delete
     {
-      BOLT_DEBUG(indent, verbose, "Removing TaskVertex " << *v << " state: " << getState(*v));
+      BOLT_DEBUG(indent, verbose, "Removing TaskVertex " << *v << " state: " << getCompoundState(*v));
 
       boost::remove_vertex(*v, g_);
       numRemoved++;
@@ -1014,8 +1016,8 @@ TaskEdge TaskGraph::addEdge(TaskVertex v1, TaskVertex v2, std::size_t indent)
     BOLT_ASSERT(!hasEdge(v1, v2), "There already exists an edge between two vertices requested");
     BOLT_ASSERT(hasEdge(v1, v2) == hasEdge(v2, v1), "There already exists an edge between two vertices requested, "
                                                     "other direction");
-    BOLT_ASSERT(getState(v1) != getState(v2), "States on both sides of an edge are the same");
-    BOLT_ASSERT(!compoundSI_->getStateSpace()->equalStates(getState(v1), getState(v2)), "Vertex IDs are different but "
+    BOLT_ASSERT(getCompoundState(v1) != getCompoundState(v2), "States on both sides of an edge are the same");
+    BOLT_ASSERT(!compoundSI_->getStateSpace()->equalStates(getCompoundState(v1), getCompoundState(v2)), "Vertex IDs are different but "
                                                                                         "states are the equal");
   }
 
@@ -1114,7 +1116,7 @@ void TaskGraph::displayDatabase(bool showVertices, std::size_t indent)
       }
 
       // Check for null states
-      if (!getState(v))
+      if (!getCompoundState(v))
       {
         BOLT_ERROR(indent, "Null vertex found: " << v);
         continue;
@@ -1166,10 +1168,10 @@ void TaskGraph::visualizeVertex(TaskVertex v, std::size_t windowID)
   }
 
   // Show vertex
-  visual_->viz(windowID)->state(getState(v), size, color, 0);
+  visual_->viz(windowID)->state(getModelBasedState(v), size, color, 0);
 
   // Show robot state
-  // visual_->viz(windowID)->state(getState(v), tools::ROBOT, tools::DEFAULT, 0);
+  // visual_->viz(windowID)->state(getModelBasedState(v), tools::ROBOT, tools::DEFAULT, 0);
 }
 
 void TaskGraph::visualizeEdge(TaskEdge e, std::size_t windowID)
@@ -1199,7 +1201,7 @@ void TaskGraph::visualizeEdge(TaskVertex v1, TaskVertex v2, std::size_t windowID
     OMPL_ERROR("Unknown task level combination");
 
   // Visualize
-  visual_->viz(windowID)->edge(getState(v1), getState(v2), ompl::tools::MEDIUM, color);
+  visual_->viz(windowID)->edge(getModelBasedState(v1), getModelBasedState(v2), ompl::tools::MEDIUM, color);
 }
 
 void TaskGraph::debugState(const ompl::base::State *state)
@@ -1209,7 +1211,7 @@ void TaskGraph::debugState(const ompl::base::State *state)
 
 void TaskGraph::debugVertex(const TaskVertex v)
 {
-  debugState(getState(v));
+  debugState(getCompoundState(v));
 }
 
 void TaskGraph::debugNN()
@@ -1257,7 +1259,6 @@ void TaskGraph::printGraphStats(double generationDuration, std::size_t indent)
 
 bool TaskGraph::checkMotion(const base::State *a, const base::State *b)
 {
-  std::cout << "TaskGraph.checkMotion(): " << std::endl;
   return modelSI_->checkMotion(getModelBasedState(a), getModelBasedState(b));
 }
 
@@ -1310,7 +1311,7 @@ void otb::TaskAstarVisitor::discover_vertex(TaskVertex v, const TaskAdjList &) c
   parent_->recordNodeOpened();
 
   if (parent_->visualizeAstar_)
-    parent_->getVisual()->viz4()->state(parent_->getState(v), tools::SMALL, tools::GREEN, 1);
+    parent_->getVisual()->viz4()->state(parent_->getModelBasedState(v), tools::SMALL, tools::GREEN, 1);
 }
 #endif
 

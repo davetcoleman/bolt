@@ -38,7 +38,7 @@
 #ifndef OMPL_TOOLS_BOLT_BOLT_
 #define OMPL_TOOLS_BOLT_BOLT_
 
-#include <ompl/tools/experience/ExperienceSetup.h>  // the parent class
+#include <ompl/geometric/SimpleSetup.h>  // the parent class
 
 #include <bolt_core/SparseGraph.h>
 #include <bolt_core/TaskGraph.h>
@@ -81,10 +81,63 @@ OMPL_CLASS_FORWARD(SparseMirror);
 /** \class BoltPtr
     \brief A boost shared pointer wrapper for Bolt */
 
+/**
+ * \brief Simple logging functionality encapsled in a struct
+ */
+struct ExperienceStats
+{
+  ExperienceStats()
+    : numSolutionsFromRecall_(0)
+    , numSolutionsFromRecallSaved_(0)
+    , numSolutionsFromScratch_(0)
+    , numSolutionsFailed_(0)
+    , numSolutionsTimedout_(0)
+    , numSolutionsApproximate_(0)
+    , numSolutionsTooShort_(0)
+    , numProblems_(0)
+    , totalPlanningTime_(0.0)
+    , totalInsertionTime_(0.0)
+  {
+  }
+
+  double getAveragePlanningTime() const
+  {
+    if (!numProblems_)
+      return 0.0;
+
+    return totalPlanningTime_ / numProblems_;
+  }
+
+  double getAverageInsertionTime() const
+  {
+    if (!numProblems_)
+      return 0.0;
+
+    // Clean up output
+    double time = totalInsertionTime_ / numProblems_;
+    if (time < 1e-8)
+      return 0.0;
+    else
+      return totalInsertionTime_ / numProblems_;
+  }
+
+  double numSolutionsFromRecall_;
+  double numSolutionsFromRecallSaved_;
+  double numSolutionsFromScratch_;
+  double numSolutionsFailed_;
+  double numSolutionsTimedout_;
+  double numSolutionsApproximate_;
+  double numSolutionsTooShort_;  // less than 3 states
+  double numProblems_;           // input requests
+  double totalPlanningTime_;     // of all input requests, used for averaging
+  double totalInsertionTime_;    // of all input requests, used for averaging
+};
+
 /** \brief Built off of SimpleSetup but provides support for planning from experience */
-class Bolt : public tools::ExperienceSetup
+class Bolt : public geometric::SimpleSetup
 {
 public:
+
   /** \brief Constructor needs the state space used for planning. */
   explicit Bolt(const base::SpaceInformationPtr &si);
 
@@ -210,6 +263,12 @@ public:
     return sparseGenerator_;
   }
 
+  /** \brief Get class for managing various visualization features */
+  VisualizerPtr getVisual()
+  {
+    return visual_;
+  }
+
   /** \brief Allow accumlated experiences to be processed */
   // bool doPostProcessing();
 
@@ -244,6 +303,15 @@ protected:
 
   /** \brief Location to save logging file for benchmarks */
   std::string benchmarkFilePath_;
+
+  /** \brief File location of database */
+  std::string filePath_;
+
+  /** \brief Class for managing various visualization features */
+  VisualizerPtr visual_;
+
+  /** \brief States data for display to console  */
+  ExperienceStats stats_;
 
 public:
   /** \brief Verbose settings */

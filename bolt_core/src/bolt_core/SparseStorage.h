@@ -169,6 +169,9 @@ public:
     loggingPath_ = loggingPath;
   }
 
+  /** \brief Short name of class */
+  const std::string name_ = "SparseStorage";
+
   /* \brief The space information instance for this data. */
   base::SpaceInformationPtr si_;
 

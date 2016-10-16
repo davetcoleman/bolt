@@ -85,8 +85,8 @@ CartPathPlanner::CartPathPlanner(BoltMoveIt* parent)
   tolerance_increment_ = tolerance_pi_fraction_increment;
 
   // Load planning state
-  ik_state0_.reset(new moveit::core::RobotState(*parent_->moveit_start_));
-  shared_robot_state_.reset(new moveit::core::RobotState(*parent_->moveit_start_));
+  shared_robot_state0_.reset(new moveit::core::RobotState(*parent_->moveit_start_));
+  shared_robot_state1_.reset(new moveit::core::RobotState(*parent_->moveit_start_));
 
   // Create cartesian start pose interactive marker
   imarker_cartesian_.reset(new mvt::IMarkerRobotState(parent_->getPlanningSceneMonitor(), "cart", arm_datas_, rvt::BLUE,
@@ -646,7 +646,7 @@ bool CartPathPlanner::combineEETrajectories(const std::vector<RedunJointTrajecto
       else // randomly choose a pose from other trajectory
       {
         // Add multiple random poses
-        std::size_t num_rand_poses = 1;
+        std::size_t num_rand_poses = 1; //poses1->size();
         for (std::size_t i = 0; i < num_rand_poses; ++i)
         {
           std::size_t pose1_id;
@@ -656,7 +656,7 @@ bool CartPathPlanner::combineEETrajectories(const std::vector<RedunJointTrajecto
           else // random
             pose1_id = visual_tools_->iRand(0, poses1->size() - 1);
 
-          std::cout << "pose0_id: " << pose0_id << " pose1_id: " << pose1_id << std::endl;
+          //std::cout << "pose0_id: " << pose0_id << " pose1_id: " << pose1_id << std::endl;
 
           // Create new trajectory point
           BothArmsJointPose point;
@@ -774,12 +774,12 @@ bool CartPathPlanner::addEdgesToBoltGraph(const TaskVertexMatrix& point_vertices
     for (std::size_t vertex1_id = 0; vertex1_id < point_vertices1.size(); ++vertex1_id)
     {
       ompl::tools::bolt::TaskVertex v1 = point_vertices1[vertex1_id];
-      space->copyToRobotState(*shared_robot_state_, task_graph_->getState(v1));
+      space->copyToRobotState(*shared_robot_state1_, task_graph_->getModelBasedState(v1));
 
       BOLT_ASSERT(v1 > startingVertex && v1 <= endingVertex, "Attempting to create edge with out of range vertex");
 
       // Visualize
-      // visual_tools2_->publishRobotState(shared_robot_state_, rvt::ORANGE);
+      // visual_tools2_->publishRobotState(shared_robot_state1_, rvt::ORANGE);
 
       // Connect to every vertex in *previous* cartesian point
       for (std::size_t vertex0_id = 0; vertex0_id < point_vertices0.size(); ++vertex0_id)
@@ -788,17 +788,21 @@ bool CartPathPlanner::addEdgesToBoltGraph(const TaskVertexMatrix& point_vertices
         BOLT_ASSERT(v0 > startingVertex && v0 <= endingVertex, "Attempting to create edge with out of range vertex");
 
         // Convert OMPL state to MoveIt! state
-        space->copyToRobotState(*ik_state0_, task_graph_->getState(v0));
+        space->copyToRobotState(*shared_robot_state0_, task_graph_->getModelBasedState(v0));
 
-        if (!ik_state0_->isValidVelocityMove(*shared_robot_state_, parent_->planning_jmg_, timing_))
+        if (!shared_robot_state0_->isValidVelocityMove(*shared_robot_state1_, parent_->planning_jmg_, timing_))
         {
+          std::cout << "skipped edge " << std::endl;
+          visual_tools_->publishRobotState(shared_robot_state0_, rvt::GREEN);
+          parent_->waitForNextStep("from");
+          visual_tools_->publishRobotState(shared_robot_state1_, rvt::GREEN);
+          parent_->waitForNextStep("to");
+
           // BOLT_DEBUG(indent, true, "Skipping edge, total skipped: " << edges_skipped_count);
           edges_skipped_count++;
 
           continue;
         }
-
-        // visual_tools_->publishRobotState(ik_state0_, rvt::GREEN);
 
         // BOLT_DEBUG(indent, true, "Adding edge " << v0 << " to " << v1);
         task_graph_->addEdge(v0, v1, indent);
@@ -823,7 +827,7 @@ bool CartPathPlanner::addEdgesToBoltGraph(const TaskVertexMatrix& point_vertices
   }  // for
   std::cout << std::endl;
 
-  BOLT_DEBUG(indent, true, "Added " << new_edge_count << " new edges, rejected " << edges_skipped_count << " (rejected "
+  BOLT_INFO(indent, true, "Added " << new_edge_count << " new edges, rejected " << edges_skipped_count << " because of velocity constraint (rejected "
                                     << edges_skipped_count / (new_edge_count + double(edges_skipped_count)) * 100.0
                                     << "%)");
 
@@ -924,7 +928,7 @@ bool CartPathPlanner::getRedunJointPosesForCartPoint(const Eigen::Affine3d& pose
 
     // Bring the pose to the frame of the IK solver
     Eigen::Affine3d ik_query = candidate_pose;
-    ik_state0_->setToIKSolverFrame(ik_query, solver);
+    shared_robot_state0_->setToIKSolverFrame(ik_query, solver);
 
     // Convert pose to tip of ik solver
     // TODO: make this a helper function in robot_state
@@ -935,7 +939,7 @@ bool CartPathPlanner::getRedunJointPosesForCartPoint(const Eigen::Affine3d& pose
 
     if (query_frame != solver_tip_frame)
     {
-      const robot_model::LinkModel* lm = ik_state0_->getLinkModel(query_frame);
+      const robot_model::LinkModel* lm = shared_robot_state0_->getLinkModel(query_frame);
       BOOST_ASSERT_MSG(lm, "No link model found for query frame (ee_link name)");
 
       const robot_model::LinkTransformMap& fixed_links = lm->getAssociatedFixedTransforms();
@@ -961,7 +965,7 @@ bool CartPathPlanner::getRedunJointPosesForCartPoint(const Eigen::Affine3d& pose
     // Create seed state
     JointSpacePoint ik_seed_state;
     JointSpacePoint initial_values;
-    ik_state0_->copyJointGroupPositions(jmg, initial_values);
+    shared_robot_state0_->copyJointGroupPositions(jmg, initial_values);
     ik_seed_state.resize(initial_values.size());
 
     const std::vector<unsigned int>& bij = jmg->getKinematicsSolverJointBijection();
@@ -996,17 +1000,17 @@ bool CartPathPlanner::getRedunJointPosesForCartPoint(const Eigen::Affine3d& pose
       const JointSpacePoint& joint_state = solutions[i];
 
       // Copy joint values to a moveit robot state
-      shared_robot_state_->setJointGroupPositions(jmg, joint_state);
+      shared_robot_state1_->setJointGroupPositions(jmg, joint_state);
 
       // Check for validity
-      shared_robot_state_->update();
-      if (!parent_->getPlanningSceneMonitor()->getPlanningScene()->isStateValid(*shared_robot_state_, jmg,
+      shared_robot_state1_->update();
+      if (!parent_->getPlanningSceneMonitor()->getPlanningScene()->isStateValid(*shared_robot_state1_, jmg,
                                                                                 verbose_collision_check_))
       {
         //BOLT_DEBUG(indent, true, "Invalid robot state");
         if (visualize_show_rejected_states_)
         {
-          visual_tools_->publishRobotState(shared_robot_state_, rvt::RED);
+          visual_tools_->publishRobotState(shared_robot_state1_, rvt::RED);
           parent_->waitForNextStep("invalid");
         }
 
@@ -1058,8 +1062,8 @@ void CartPathPlanner::visualizeAllPointVertices(const TaskVertexMatrix& point_ve
       ompl::tools::bolt::TaskVertex v0 = point_vertices1[vertex1_id];
       std::cout << "vertex1_id: " << vertex1_id << " v0: " << v0 << std::endl;
 
-      space->copyToRobotState(*ik_state0_, task_graph_->getState(v0));
-      visual_tools2_->publishRobotState(ik_state0_, rvt::RAND);
+      space->copyToRobotState(*shared_robot_state0_, task_graph_->getModelBasedState(v0));
+      visual_tools2_->publishRobotState(shared_robot_state0_, rvt::RAND);
       // usleep(0.0001*1000000);
     }
   }

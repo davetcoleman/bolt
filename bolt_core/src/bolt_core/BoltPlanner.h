@@ -83,7 +83,7 @@ class BoltPlanner : public base::Planner
 {
 public:
   /** \brief Constructor */
-  BoltPlanner(const base::SpaceInformationPtr &modelSI, const base::SpaceInformationPtr &compoundSI,
+  BoltPlanner(const base::SpaceInformationPtr modelSI, const base::SpaceInformationPtr compoundSI,
               const TaskGraphPtr &taskGraph, VisualizerPtr visual);
 
   virtual ~BoltPlanner(void);
@@ -194,9 +194,13 @@ public:
 private:
 
   /** \brief This is included in parent class, but mentioned here. Use modelSI_ instead to reduce confusion   */
-  using Planner::si_;
+  //using Planner::si_;
 
 protected:
+
+  /** \brief Short name of class */
+  const std::string name_ = "BoltPlanner";
+
   /** \brief The database of motions to search through */
   TaskGraphPtr taskGraph_;
 

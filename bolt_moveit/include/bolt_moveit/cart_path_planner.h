@@ -148,8 +148,8 @@ private:
   ompl::tools::bolt::TaskGraphPtr task_graph_;
 
   // State used for solving IK
-  moveit::core::RobotStatePtr ik_state0_;
-  moveit::core::RobotStatePtr shared_robot_state_;
+  moveit::core::RobotStatePtr shared_robot_state0_;
+  moveit::core::RobotStatePtr shared_robot_state1_;
 
   // Rviz
   moveit_visual_tools::MoveItVisualToolsPtr visual_tools_;

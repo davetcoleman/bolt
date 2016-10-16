@@ -186,16 +186,16 @@ public:
     if (experience_planner_ == "bolt")
     {
       bolt_ = otb::BoltPtr(new otb::Bolt(space_));
-      experience_setup_ = bolt_;
-      simple_setup_ = experience_setup_;
+      bolt_ = bolt_;
+      simple_setup_ = bolt_;
       planner_name_ = BOLT;
     }
-    else if (experience_planner_ == "thunder")
-    {
-      experience_setup_ = ot::ThunderPtr(new ot::Thunder(space_));
-      simple_setup_ = experience_setup_;
-      planner_name_ = THUNDER;
-    }
+    // else if (experience_planner_ == "thunder")
+    // {
+    //   bolt_ = ot::ThunderPtr(new ot::Thunder(space_));
+    //   simple_setup_ = bolt_;
+    //   planner_name_ = THUNDER;
+    // }
     else if (experience_planner_ == "spars2")
     {
       std::cout << "SPARS2 " << std::endl;
@@ -223,7 +223,7 @@ public:
       else
         file_name = "2d_world_database";
       moveit_ompl::getFilePath(file_path, file_name, "ros/ompl_storage");
-      experience_setup_->setFilePath(file_path);  // this is here because its how we do it in moveit_ompl
+      bolt_->setFilePath(file_path);  // this is here because its how we do it in moveit_ompl
     }
 
     // Load visual tool objects
@@ -254,7 +254,7 @@ public:
     ot::VisualizerPtr visual;
     if (planner_name_ == BOLT)
     {
-      visual = experience_setup_->getVisual();
+      visual = bolt_->getVisual();
     }
     else if (planner_name_ == SPARS2)
     {
@@ -650,8 +650,8 @@ public:
     std::string file_path;
     moveit_ompl::getFilePath(file_path, "bolt_2d_world_logging.csv", "ros/ompl_storage");
 
-    std::ofstream logging_file;                           // open to append
-    logging_file.open(file_path.c_str(), std::ios::out);  // no append | std::ios::app);
+    // std::ofstream logging_file;                           // open to append
+    // logging_file.open(file_path.c_str(), std::ios::out);  // no append | std::ios::app);
 
     // Run the demo the desired number of times
     for (std::size_t run_id = 0; run_id < planning_runs_; ++run_id)
@@ -676,13 +676,13 @@ public:
       plan();
 
       // Console display
-      if (experience_setup_)
-        experience_setup_->printLogs();
+      if (bolt_)
+        bolt_->printLogs();
 
       // Logging
-      if (experience_setup_)
-        experience_setup_->saveDataLog(logging_file);
-      logging_file.flush();
+      // if (bolt_)
+      //   bolt_->saveDataLog(logging_file);
+      // logging_file.flush();
 
       if (visualize_wait_between_plans_)
         waitForNextStep("run next problem");
@@ -696,7 +696,7 @@ public:
 
     // Finishing up
     ROS_INFO_STREAM_NAMED(name_, "Saving experience db...");
-    experience_setup_->saveIfChanged();
+    bolt_->saveIfChanged();
 
     // Stats
     if (total_runs_ > 0)
@@ -1048,7 +1048,7 @@ public:
 
   bool save()
   {
-    return experience_setup_->saveIfChanged();
+    return bolt_->saveIfChanged();
   }
 
   void chooseStartGoal(ob::State *start, ob::State *goal, bool verbose = true)
@@ -1307,10 +1307,10 @@ public:
   }
 
   /** \brief Allow access to thunder framework */
-  ot::ExperienceSetupPtr getExperienceSetup()
-  {
-    return experience_setup_;
-  }
+  // ot::ExperienceSetupPtr getExperienceSetup()
+  // {
+  //   return bolt_;
+  // }
 
   void voronoiDiagram()
   {
@@ -1480,8 +1480,8 @@ public:
     // Show point
     if (false)
     {
-      experience_setup_->getVisual()->viz1()->state(temp_state, ompl::tools::MEDIUM, ompl::tools::BLUE, 0);
-      experience_setup_->getVisual()->viz1()->trigger();
+      bolt_->getVisual()->viz1()->state(temp_state, ompl::tools::MEDIUM, ompl::tools::BLUE, 0);
+      bolt_->getVisual()->viz1()->trigger();
       usleep(0.001 * 1000000);
     }
 
@@ -1515,7 +1515,7 @@ private:
   moveit_ompl::RemoteControl remote_control_;
 
   // Save the experience setup until the program ends so that the planner data is not lost
-  ot::ExperienceSetupPtr experience_setup_;
+  //ot::ExperienceSetupPtr bolt_;
   og::SimpleSetupPtr simple_setup_;
   otb::BoltPtr bolt_;
   og::SPARS2Ptr sparse_two_;

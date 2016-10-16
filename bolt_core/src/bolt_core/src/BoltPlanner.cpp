@@ -59,18 +59,14 @@ namespace tools
 {
 namespace bolt
 {
-BoltPlanner::BoltPlanner(const base::SpaceInformationPtr &modelSI, const base::SpaceInformationPtr &compoundSI,
+BoltPlanner::BoltPlanner(const base::SpaceInformationPtr modelSI, const base::SpaceInformationPtr compoundSI,
                          const TaskGraphPtr &taskGraph, VisualizerPtr visual)
-  : base::Planner(modelSI_, "Bolt_Planner")
+  : base::Planner(modelSI, "Bolt_Planner")
   , modelSI_(modelSI)
   , compoundSI_(compoundSI)
   , taskGraph_(taskGraph)
   , visual_(visual)
 {
-  // TEST
-  base::State *goalState1;
-  base::State *goalState2 = si_->getStateSpace()->cloneState(goalState1);
-
   specs_.approximateSolutions = false;
   specs_.directed = false;
 
@@ -297,7 +293,7 @@ bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
   for (TaskVertex startVertex : candidateStarts)
   {
     // Check if this start is visible from the actual start
-    if (!taskGraph_->checkMotion(actualStart, taskGraph_->getState(startVertex)))
+    if (!taskGraph_->checkMotion(actualStart, taskGraph_->getCompoundState(startVertex)))
     {
       BOLT_WARN(indent, verbose_, "Found start candidate that is not visible on vertex " << startVertex);
 
@@ -320,7 +316,7 @@ bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
     for (TaskVertex goal : candidateGoals)
     {
       BOLT_DEBUG(indent, verbose_, "foreach_goal: Checking motion from " << actualGoal << " to "
-                                                                         << taskGraph_->getState(goal));
+                                                                         << taskGraph_->getCompoundState(goal));
 
       if (ptc)  // Check if our planner is out of time
       {
@@ -329,7 +325,7 @@ bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
       }
 
       // Check if this goal is visible from the actual goal
-      if (!taskGraph_->checkMotion(actualGoal, taskGraph_->getState(goal)))
+      if (!taskGraph_->checkMotion(actualGoal, taskGraph_->getCompoundState(goal)))
       {
         BOLT_WARN(indent, verbose_, "FOUND GOAL CANDIDATE THAT IS NOT VISIBLE! ");
 
@@ -412,8 +408,8 @@ bool BoltPlanner::lazyCollisionSearch(const TaskVertex &startVertex, const TaskV
   // Error check all states are non-nullptr
   assert(actualStart);
   assert(actualGoal);
-  assert(taskGraph_->getState(startVertex));
-  assert(taskGraph_->getState(goalVertex));
+  assert(taskGraph_->getCompoundState(startVertex));
+  assert(taskGraph_->getCompoundState(goalVertex));
 
   // Visualize start vertex
   if (visualizeStartGoal_)
@@ -495,14 +491,14 @@ bool BoltPlanner::lazyCollisionCheck(std::vector<TaskVertex> &vertexPath, Termin
       return false;
     }
 
-    TaskEdge thisEdge = boost::edge(fromVertex, toVertex, taskGraph_->g_).first;
+    TaskEdge thisEdge = boost::edge(fromVertex, toVertex, taskGraph_->getGraph()).first;
 
     // Has this edge already been checked before?
     if (taskGraph_->getGraphNonConst()[thisEdge].collision_state_ == NOT_CHECKED)
     {
       // TODO - is checking edges sufficient, or do we also need to check vertices? I think its fine.
       // Check path between states
-      if (!taskGraph_->checkMotion(taskGraph_->getState(fromVertex), taskGraph_->getState(toVertex)))
+      if (!taskGraph_->checkMotion(taskGraph_->getCompoundState(fromVertex), taskGraph_->getCompoundState(toVertex)))
       {
         // Path between (from, to) states not valid, disable the edge
 
@@ -577,10 +573,10 @@ bool BoltPlanner::findGraphNeighbors(const base::State *state, std::vector<TaskV
   base::State *stateCopy = compoundSI_->cloneState(state);
 
   // Search
-  taskGraph_->getQueryStateNonConst(taskGraph_->queryVertices_[threadID]) = stateCopy;
-  // taskGraph_->nn_->nearestR(taskGraph_->queryVertices_[threadID], radius, neighbors);
-  taskGraph_->nn_->nearestK(taskGraph_->queryVertices_[threadID], kNearestNeighbors, neighbors);
-  taskGraph_->getQueryStateNonConst(taskGraph_->queryVertices_[threadID]) = nullptr;
+  taskGraph_->getCompoundQueryStateNonConst(taskGraph_->getQueryVertices()[threadID]) = stateCopy;
+  // taskGraph_->nn_->nearestR(taskGraph_->getQueryVertices()[threadID], radius, neighbors);
+  taskGraph_->getNN()->nearestK(taskGraph_->getQueryVertices()[threadID], kNearestNeighbors, neighbors);
+  taskGraph_->getCompoundQueryStateNonConst(taskGraph_->getQueryVertices()[threadID]) = nullptr;
 
   // Convert our list of neighbors to the proper level
   if (requiredLevel == 2)
@@ -616,7 +612,7 @@ bool BoltPlanner::convertVertexPathToStatePath(std::vector<TaskVertex> &vertexPa
     return false;
 
   // TODO: remove this check
-  BOLT_ASSERT(actualStart != taskGraph_->getState(vertexPath.back()), "Unexpected same states, should not append "
+  BOLT_ASSERT(actualStart != taskGraph_->getCompoundState(vertexPath.back()), "Unexpected same states, should not append "
                                                                       "actualStart");
   BOLT_WARN(indent, true, "not sure if this is needed");
   // Add original start
@@ -634,7 +630,7 @@ bool BoltPlanner::convertVertexPathToStatePath(std::vector<TaskVertex> &vertexPa
   // Reverse the vertexPath and convert to state path
   for (std::size_t i = vertexPath.size(); i > 0; --i)
   {
-    compoundSolution.append(taskGraph_->getState(vertexPath[i - 1]));
+    compoundSolution.append(taskGraph_->getCompoundState(vertexPath[i - 1]));
 
     // Add the edge status
     if (i > 1)  // skip the last vertex (its reversed)
@@ -647,7 +643,7 @@ bool BoltPlanner::convertVertexPathToStatePath(std::vector<TaskVertex> &vertexPa
         exit(-1);
       }
 
-      TaskEdge edge = boost::edge(vertexPath[i - 1], vertexPath[i - 2], taskGraph_->g_).first;
+      TaskEdge edge = boost::edge(vertexPath[i - 1], vertexPath[i - 2], taskGraph_->getGraph()).first;
 
       // Check if any edges in path are not free (then it an approximate path)
       if (taskGraph_->getGraphNonConst()[edge].collision_state_ == IN_COLLISION)
@@ -663,7 +659,7 @@ bool BoltPlanner::convertVertexPathToStatePath(std::vector<TaskVertex> &vertexPa
   }
 
   // Add original goal if it is different than the last state
-  if (actualGoal != taskGraph_->getState(vertexPath.front()))
+  if (actualGoal != taskGraph_->getCompoundState(vertexPath.front()))
   {
     compoundSolution.append(actualGoal);
   }
@@ -825,7 +821,7 @@ bool BoltPlanner::canConnect(const base::State *randomState, Termination &ptc, s
   for (TaskVertex nearState : candidateNeighbors)
   {
     const base::State *s1 = randomState;
-    const base::State *s2 = taskGraph_->getState(nearState);
+    const base::State *s2 = taskGraph_->getCompoundState(nearState);
 
     // Check if this nearState is visible from the random state
     if (!taskGraph_->checkMotion(s1, s2))

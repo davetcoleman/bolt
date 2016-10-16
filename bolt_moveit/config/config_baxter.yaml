@@ -200,7 +200,7 @@ cart_path_planner:
     discretization: 4 # 0.785 # pi / 4
   trajectory:
     discretization: 0.01 # how much space, in meters, between trajectory points
-    timing: 0.2 # time allowed between each Cartesian point, e.g. discretization for velocity
+    timing: 0.1 # time allowed between each Cartesian point, e.g. discretization for velocity
   tolerance:
     pi_fraction_increment: 0.3 # 2xPI / this number = number of steps to divide each dimension by
     roll: 0.314 # pi/10
