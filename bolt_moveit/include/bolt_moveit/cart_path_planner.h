@@ -178,11 +178,13 @@ private:
   bool verbose_collision_check_ = false;
 
   // Visualize
-  bool visualize_show_all_solutions_ = false;
-  double visualize_show_all_solutions_sleep_ = 0.001;
-  bool visualize_show_all_cart_poses_ = false;
-  bool visualize_show_combined_solutions_ = false;
-  bool visualize_show_rejected_states_ = false;
+  bool visualize_all_solutions_ = false;
+  double visualize_all_solutions_sleep_ = 0.001;
+  bool visualize_all_cart_poses_ = false;
+  bool visualize_all_cart_poses_individual_ = false;
+  bool visualize_combined_solutions_ = false;
+  bool visualize_rejected_states_ = false;
+  bool visualize_rejected_edges_due_to_timing_ = false;
 
   double tolerance_increment_ = 0.5;
   double tolerance_roll_;

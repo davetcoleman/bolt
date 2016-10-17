@@ -24,7 +24,7 @@ bolt_moveit:
 
   # run type
   headless: false
-  num_problems: 10
+  num_problems: 1
   problem_type: 1 # 0 - random, 1 - imarkers
 
   # solver type
@@ -181,11 +181,13 @@ debug_interface:
 # ====================================================
 bolt_planner:
   verbose:
-    verbose: true
+    verbose: false
+    collision_check: true
   visualize:
     smoothed_trajectory: true
     start_goal: false
-    lazy_collision_check: true
+    lazy_collision_check: false
+    each_solution_step: false
 
 # ====================================================
 bolt:
@@ -200,19 +202,23 @@ cart_path_planner:
     discretization: 4 # 0.785 # pi / 4
   trajectory:
     discretization: 0.01 # how much space, in meters, between trajectory points
-    timing: 0.1 # time allowed between each Cartesian point, e.g. discretization for velocity
+    timing: 0.3 # time allowed between each Cartesian point, e.g. discretization for velocity
   tolerance:
     pi_fraction_increment: 0.3 # 2xPI / this number = number of steps to divide each dimension by
-    roll: 0.314 # pi/10
-    pitch: 0.314 # pi/10
+    # roll: 0.314 # pi/10
+    # pitch: 0.314 # pi/10
+    roll: 0.628 # pi/5
+    pitch: 0.628 # pi/5
     yaw: 0 # pi
-  verbose: false
+  verbose: true
   visualize:
-    show_all_solutions: false # show each solution along trajectory when moving the interactive markers
-    show_all_solutions_sleep: 0.1 # time between each solution for viewing
-    show_all_cart_poses: false # show the markers for each pose location
-    show_combined_solutions: false # show the robot state for each combined pose
-    show_rejected_states: false # show invalid collision checks
+    all_cart_poses: false # show the markers for each pose location
+    all_cart_poses_individual: false # show the markers one by one for each pose location
+    all_solutions: false # show each solution along trajectory when moving the interactive markers
+    all_solutions_sleep: 0.1 # time between each solution for viewing
+    rejected_edges_due_to_timing: false
+    combined_solutions: false # show the robot state for each combined pose
+    rejected_states: false # show invalid collision checks
 
 # ====================================================
 # Interface for publishing joint/cartesian commands to the low level controllers

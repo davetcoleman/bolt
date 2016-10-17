@@ -104,7 +104,7 @@ void BoltPlanner::setup(void)
 base::PlannerStatus BoltPlanner::solve(Termination &ptc)
 {
   std::size_t indent = 0;
-  BOLT_FUNC(indent, verbose_, "BoltPlanner::solve()");
+  BOLT_FUNC(indent, verbose_, "solve()");
 
   // Check if the database is empty
   if (taskGraph_->isEmpty())
@@ -120,7 +120,6 @@ base::PlannerStatus BoltPlanner::solve(Termination &ptc)
   pis_.restart();  // PlannerInputStates
 
   // Get a single start and goal state
-  BOLT_INFO(indent, verbose_, "Getting OMPL start and goal state");
   base::State *startState = modelSI_->getStateSpace()->cloneState(pis_.nextStart());  // PlannerInputStates
   base::State *goalState = modelSI_->getStateSpace()->cloneState(pis_.nextGoal(ptc));
 
@@ -156,8 +155,6 @@ base::PlannerStatus BoltPlanner::solve(Termination &ptc)
 base::PlannerStatus BoltPlanner::solve(base::State *startState, base::State *goalState, Termination &ptc,
                                        std::size_t indent)
 {
-  BOLT_FUNC(indent, verbose_, "BoltPlanner::solve() 2");
-
   // Create solution path as pointer so memory is not unloaded
   ob::PathPtr compoundSolutionBase(new og::PathGeometric(compoundSI_));
   og::PathGeometric &compoundSolution = static_cast<og::PathGeometric &>(*compoundSolutionBase);
@@ -165,7 +162,7 @@ base::PlannerStatus BoltPlanner::solve(base::State *startState, base::State *goa
   // Search
   if (!getPathOffGraph(startState, goalState, compoundSolution, ptc, indent))
   {
-    BOLT_WARN(indent, true, "BoltPlanner::solve() No near start or goal found");
+    BOLT_WARN(indent, true, "solve() No near start or goal found");
     return base::PlannerStatus::TIMEOUT;  // The planner failed to find a solution
   }
 
@@ -213,7 +210,7 @@ base::PlannerStatus BoltPlanner::solve(base::State *startState, base::State *goa
 bool BoltPlanner::getPathOffGraph(const base::State *start, const base::State *goal,
                                   og::PathGeometric &compoundSolution, Termination &ptc, std::size_t indent)
 {
-  BOLT_FUNC(indent, verbose_, "BoltPlanner::getPathOffGraph()");
+  BOLT_FUNC(indent, verbose_, "getPathOffGraph()");
 
   // Attempt to connect to graph x times, because if it fails we start adding samples
   std::size_t maxAttempts = 2;
@@ -253,15 +250,18 @@ bool BoltPlanner::getPathOffGraph(const base::State *start, const base::State *g
     // Error check
     if (!result)
     {
+      return false;
+      /*
       BOLT_WARN(indent, true, "getPathOffGraph(): BoltPlanner returned FALSE for getPathOnGraph. Trying again in debug "
                               "mode");
 
       // Run getPathOnGraph again in debug mode
       getPathOnGraph(startVertexCandidateNeighbors_, goalVertexCandidateNeighbors_, start, goal, compoundSolution, ptc,
-                     /*debug*/ true, feedbackStartFailed, indent);
+                     /*debug* / true, feedbackStartFailed, indent);
 
       std::cout << "Shutting down for debugging " << std::endl;
       exit(-1);
+      */
     }
     else
       break;  // success, continue on
@@ -284,7 +284,7 @@ bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
                                  const base::State *actualGoal, og::PathGeometric &compoundSolution, Termination &ptc,
                                  bool debug, bool &feedbackStartFailed, std::size_t indent)
 {
-  BOLT_FUNC(indent, verbose_, "BoltPlanner::getPathOnGraph()");
+  BOLT_FUNC(indent, verbose_, "getPathOnGraph()");
 
   bool foundValidStart = false;
   bool foundValidGoal = false;
@@ -315,8 +315,8 @@ bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
 
     for (TaskVertex goal : candidateGoals)
     {
-      BOLT_DEBUG(indent, verbose_, "foreach_goal: Checking motion from " << actualGoal << " to "
-                                                                         << taskGraph_->getCompoundState(goal));
+      BOLT_DEBUG(indent, false && verbose_, "foreach_goal: Checking motion from "
+                                                << actualGoal << " to " << taskGraph_->getCompoundState(goal));
 
       if (ptc)  // Check if our planner is out of time
       {
@@ -343,7 +343,7 @@ bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
       foundValidGoal = true;
 
       // Repeatidly search through graph for connection then check for collisions then repeat
-      if (lazyCollisionSearch(startVertex, goal, actualStart, actualGoal, compoundSolution, ptc, indent))
+      if (onGraphSearch(startVertex, goal, actualStart, actualGoal, compoundSolution, ptc, indent))
       {
         // All save trajectories should be at least 1 state long, then we append the start and goal states, for
         // min of 3
@@ -363,9 +363,8 @@ bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
 
   if (foundValidStart && foundValidGoal)
   {
-    BOLT_ERROR(indent, "Unexpected condition - both a valid start and goal were found but still no path found. "
-                       "TODO ");
-    exit(-1);
+    BOLT_ERROR(indent, "Both a valid start and goal were found but still no path found.");
+    return false;
   }
 
   if (foundValidStart && !foundValidGoal)
@@ -382,11 +381,11 @@ bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
   return false;
 }
 
-bool BoltPlanner::lazyCollisionSearch(const TaskVertex &startVertex, const TaskVertex &goalVertex,
-                                      const base::State *actualStart, const base::State *actualGoal,
-                                      og::PathGeometric &compoundSolution, Termination &ptc, std::size_t indent)
+bool BoltPlanner::onGraphSearch(const TaskVertex &startVertex, const TaskVertex &goalVertex,
+                                const base::State *actualStart, const base::State *actualGoal,
+                                og::PathGeometric &compoundSolution, Termination &ptc, std::size_t indent)
 {
-  BOLT_FUNC(indent, verbose_, "BoltPlanner::lazyCollisionSearch()");
+  BOLT_FUNC(indent, verbose_, "onGraphSearch()");
 
   // Vector to store candidate paths in before they are converted to PathPtrs
   std::vector<TaskVertex> vertexPath;
@@ -438,15 +437,14 @@ bool BoltPlanner::lazyCollisionSearch(const TaskVertex &startVertex, const TaskV
     // Check if our planner is out of time
     if (ptc)
     {
-      BOLT_DEBUG(indent + 2, verbose_, "lazyCollisionSearch: function interrupted because termination condition is "
-                                       "true.");
+      BOLT_DEBUG(indent + 2, verbose_, "Function interrupted because termination condition is true");
       return false;
     }
 
     // Attempt to find a solution from start to goal
     if (!taskGraph_->astarSearch(startVertex, goalVertex, vertexPath, distance, indent + 2))
     {
-      BOLT_DEBUG(indent + 2, verbose_, "unable to construct solution between start and goal using astar");
+      BOLT_WARN(indent + 2, verbose_, "Unable to construct solution between start and goal using astar");
 
       // no path found what so ever
       return false;
@@ -470,7 +468,7 @@ bool BoltPlanner::lazyCollisionSearch(const TaskVertex &startVertex, const TaskV
 
 bool BoltPlanner::lazyCollisionCheck(std::vector<TaskVertex> &vertexPath, Termination &ptc, std::size_t indent)
 {
-  BOLT_FUNC(indent, verbose_, "BoltPlanner::lazyCollisionCheck() path of size " << vertexPath.size());
+  BOLT_FUNC(indent, verbose_, "lazyCollisionCheck() path of size " << vertexPath.size());
 
   bool hasInvalidEdges = false;
 
@@ -498,15 +496,21 @@ bool BoltPlanner::lazyCollisionCheck(std::vector<TaskVertex> &vertexPath, Termin
     {
       // TODO - is checking edges sufficient, or do we also need to check vertices? I think its fine.
       // Check path between states
-      if (!taskGraph_->checkMotion(taskGraph_->getCompoundState(fromVertex), taskGraph_->getCompoundState(toVertex)))
+      const base::State *fromState = taskGraph_->getModelBasedState(fromVertex);
+      const base::State *toState = taskGraph_->getModelBasedState(toVertex);
+      if (!modelSI_->getMotionValidator()->checkMotion(fromState, toState))
       {
-        // Path between (from, to) states not valid, disable the edge
-
         BOLT_MAGENTA(indent, vCollisionCheck_, "LAZY CHECK: disabling edge from vertex " << fromVertex << " to "
-                                                                                         << toVertex);
-
+                                                                                                 << toVertex);
         if (visualizeLazyCollisionCheck_)
+        {
+          visual_->waitForUserFeedback("see edge");
+
+          // Path between (from, to) states not valid, disable the edge
+          modelSI_->getMotionValidator()->checkMotion(fromState, toState, visual_);
+
           visualizeBadEdge(fromVertex, toVertex);
+        }
 
         // Disable edge
         taskGraph_->getGraphNonConst()[thisEdge].collision_state_ = IN_COLLISION;
@@ -548,7 +552,7 @@ bool BoltPlanner::lazyCollisionCheck(std::vector<TaskVertex> &vertexPath, Termin
 bool BoltPlanner::findGraphNeighbors(const base::State *state, std::vector<TaskVertex> &neighbors, int requiredLevel,
                                      std::size_t indent)
 {
-  BOLT_FUNC(indent, verbose_, "BoltPlanner::findGraphNeighbors()");
+  BOLT_FUNC(indent, verbose_, "findGraphNeighbors()");
 
   BOLT_ASSERT(requiredLevel == 0 || requiredLevel == 2, "Wrong required level");
 
@@ -605,16 +609,12 @@ bool BoltPlanner::convertVertexPathToStatePath(std::vector<TaskVertex> &vertexPa
                                                const base::State *actualGoal, og::PathGeometric &compoundSolution,
                                                std::size_t indent)
 {
-  BOLT_FUNC(indent, verbose_, "BoltPlanner::convertVertexPathToStatePath()");
+  BOLT_FUNC(indent, verbose_, "convertVertexPathToStatePath()");
 
   // Ensure the input path is not empty
   if (!vertexPath.size())
     return false;
 
-  // TODO: remove this check
-  BOLT_ASSERT(actualStart != taskGraph_->getCompoundState(vertexPath.back()), "Unexpected same states, should not append "
-                                                                      "actualStart");
-  BOLT_WARN(indent, true, "not sure if this is needed");
   // Add original start
   compoundSolution.append(actualStart);
 
@@ -757,6 +757,10 @@ bool BoltPlanner::simplifyTaskPath(og::PathGeometric &compoundPath, Termination 
   path_simplifier_->simplifyMax(modelPathSegments[0]);
   path_simplifier_->simplifyMax(modelPathSegments[2]);
 
+  // Interpolate the freespace paths but not the cartesian path
+  modelPathSegments[0].interpolate();
+  modelPathSegments[2].interpolate();
+
   // Combine the path segments back together
   for (int segmentLevel = 0; segmentLevel < int(NUM_LEVELS); ++segmentLevel)
   {
@@ -766,11 +770,11 @@ bool BoltPlanner::simplifyTaskPath(og::PathGeometric &compoundPath, Termination 
       base::State *modelState = modelPathSegments[segmentLevel].getState(i);
       base::State *compoundState = taskGraph_->createCompoundState(modelState, segmentLevel, indent);
 
-      if (true)
+      // Debug
+      if (visualizeEachSolutionStep_)
       {
-        std::cout << "segmentLevel: " << segmentLevel << std::endl;
-        visual_->viz4()->state(modelState, tools::ROBOT, tools::DEFAULT, 0);
-        visual_->waitForUserFeedback("next step");
+        visual_->viz6()->state(modelState, tools::ROBOT, tools::DEFAULT, 0);
+        visual_->waitForUserFeedback("next solution step");
       }
 
       // Check for repeated states
@@ -803,7 +807,7 @@ bool BoltPlanner::simplifyTaskPath(og::PathGeometric &compoundPath, Termination 
 // This is used to check connectivity of graph
 bool BoltPlanner::canConnect(const base::State *randomState, Termination &ptc, std::size_t indent)
 {
-  BOLT_FUNC(indent, verbose_, "BoltPlanner::canConnect()");
+  BOLT_FUNC(indent, verbose_, "canConnect()");
 
   std::vector<TaskVertex> candidateNeighbors;
 

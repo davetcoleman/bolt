@@ -168,9 +168,9 @@ public:
    * \brief Repeatidly search through graph for connection then check for collisions then repeat
    * \return true if a valid path is found
    */
-  bool lazyCollisionSearch(const bolt::TaskVertex &start, const bolt::TaskVertex &goal, const base::State *actualStart,
-                           const base::State *actualGoal, geometric::PathGeometric &compoundSolution, Termination &ptc,
-                           std::size_t indent);
+  bool onGraphSearch(const bolt::TaskVertex &start, const bolt::TaskVertex &goal, const base::State *actualStart,
+                     const base::State *actualGoal, geometric::PathGeometric &compoundSolution, Termination &ptc,
+                     std::size_t indent);
 
   /** \brief Check recalled path for collision and disable as needed */
   bool lazyCollisionCheck(std::vector<bolt::TaskVertex> &vertexPath, Termination &ptc, std::size_t indent);
@@ -234,6 +234,7 @@ public:
   bool visualizeSmoothedTrajectory_ = false;
   bool visualizeStartGoal_ = false;
   bool visualizeLazyCollisionCheck_ = true;
+  bool visualizeEachSolutionStep_ = false;
 
   int numStartGoalStatesAddedToTask_ = 0;
 };

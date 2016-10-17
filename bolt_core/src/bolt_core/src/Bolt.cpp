@@ -223,7 +223,7 @@ void Bolt::visualize(std::size_t indent)
 
   // Make a copy so that we can interpolate it
   geometric::PathGeometric solutionPathCopy(*solutionPath);
-  solutionPathCopy.interpolate();
+  //solutionPathCopy.interpolate();
 
   // Show smoothed & interpolated path
   if (visualizeSmoothTrajectory_)
@@ -235,7 +235,6 @@ void Bolt::visualize(std::size_t indent)
   // Show robot animated
   if (visualizeRobotTrajectory_)
   {
-    std::size_t indent = 0;
     BOLT_DEBUG(indent, true, "Blocking while visualizing solution path");
     visual_->viz6()->path(&solutionPathCopy, tools::ROBOT, tools::DEFAULT, tools::DEFAULT);
   }

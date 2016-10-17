@@ -50,7 +50,7 @@ moveit_ompl::StateValidityChecker::StateValidityChecker(const std::string &group
   , planning_scene_(planning_scene)
   , mb_state_space_(mb_state_space)
   , si_(si)
-  , verbose_(false)
+  , verbose_(true)
 {
   specs_.clearanceComputationType = ompl::base::StateValidityCheckerSpecs::APPROXIMATE;
   specs_.hasValidDirectionComputation = false;
@@ -78,8 +78,7 @@ void moveit_ompl::StateValidityChecker::setVerbose(bool flag)
 
 bool moveit_ompl::StateValidityChecker::isValid(const ompl::base::State *state, bool verbose) const
 {
-  // TODO: HACK
-  //verbose = true;
+  verbose = false; // hack
 
   // check bounds
   if (!si_->satisfiesBounds(state))
@@ -110,7 +109,7 @@ bool moveit_ompl::StateValidityChecker::isValid(const ompl::base::State *state, 
 
   // check collision avoidance
   collision_detection::CollisionResult res;
-  if (verbose)
+  if (verbose || verbose_)
   {
     planning_scene_->checkCollision(collision_request_simple_verbose_, res, *robot_state);
   }
@@ -120,24 +119,20 @@ bool moveit_ompl::StateValidityChecker::isValid(const ompl::base::State *state, 
   }
 
   // Visualize
-  // if (visual_.get() != nullptr)
-  // {
-  //   if (res.collision)
-  //     visual_->viz2()->state(state, ompl::tools::ROBOT, ompl::tools::RED, 0);
-  //   else
-  //     visual_->viz2()->state(state, ompl::tools::ROBOT, ompl::tools::GREEN, 0);
-  //   visual_->viz2()->trigger();
-  // }
+  if (visual_.get() != nullptr)
+  {
+    if (res.collision)
+      visual_->viz2()->state(state, ompl::tools::ROBOT, ompl::tools::RED, 0);
+    // else
+    //   visual_->viz2()->state(state, ompl::tools::ROBOT, ompl::tools::GREEN, 0);
+  }
 
   return res.collision == false;
 }
 
 bool moveit_ompl::StateValidityChecker::isValid(const ompl::base::State *state, double &dist, bool verbose) const
 {
-  // TODO: HACK
-  //verbose = true;
-
-  si_->printState(state);
+  verbose = false; // hack
 
   if (!si_->satisfiesBounds(state))
   {
@@ -177,7 +172,7 @@ bool moveit_ompl::StateValidityChecker::isValid(const ompl::base::State *state, 
 
   // check collision avoidance
   collision_detection::CollisionResult res;
-  if (verbose)
+  if (verbose || verbose_)
     planning_scene_->checkCollision(collision_request_with_distance_verbose_, res, *robot_state);
   else
     planning_scene_->checkCollision(collision_request_with_distance_, res, *robot_state);
@@ -191,7 +186,6 @@ bool moveit_ompl::StateValidityChecker::isValid(const ompl::base::State *state, 
   //     visual_->viz2()->state(state, ompl::tools::SMALL, ompl::tools::RED, 0);
   //   else
   //     visual_->viz2()->state(state, ompl::tools::SMALL, ompl::tools::GREEN, 0);
-  //   visual_->viz2()->trigger();
   // }
 
   return res.collision == false;

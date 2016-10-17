@@ -257,7 +257,7 @@ bool TaskGraph::astarSearch(const TaskVertex start, const TaskVertex goal, std::
       const TaskVertex v2 = vertexPredecessors[v1];
       if (v1 != v2)
       {
-        visual_->viz4()->edge(getState(v1), getState(v2), 10);
+        visual_->viz4()->edge(getModelBasedState(v1), getModelBasedState(v2), 10);
       }
     }
     visual_->viz4()->trigger();

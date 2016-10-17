@@ -73,11 +73,13 @@ CartPathPlanner::CartPathPlanner(BoltMoveIt* parent)
     error += !get(name_, rpnh, "tolerance/pitch", tolerance_pitch_);
     error += !get(name_, rpnh, "tolerance/yaw", tolerance_yaw_);
     error += !get(name_, rpnh, "verbose", verbose_);
-    error += !get(name_, rpnh, "visualize/show_all_solutions", visualize_show_all_solutions_);
-    error += !get(name_, rpnh, "visualize/show_all_solutions_sleep", visualize_show_all_solutions_sleep_);
-    error += !get(name_, rpnh, "visualize/show_all_cart_poses", visualize_show_all_cart_poses_);
-    error += !get(name_, rpnh, "visualize/show_combined_solutions", visualize_show_combined_solutions_);
-    error += !get(name_, rpnh, "visualize/show_rejected_states", visualize_show_rejected_states_);
+    error += !get(name_, rpnh, "visualize/all_solutions", visualize_all_solutions_);
+    error += !get(name_, rpnh, "visualize/all_solutions_sleep", visualize_all_solutions_sleep_);
+    error += !get(name_, rpnh, "visualize/all_cart_poses", visualize_all_cart_poses_);
+    error += !get(name_, rpnh, "visualize/all_cart_poses_individual", visualize_all_cart_poses_individual_);
+    error += !get(name_, rpnh, "visualize/combined_solutions", visualize_combined_solutions_);
+    error += !get(name_, rpnh, "visualize/rejected_states", visualize_rejected_states_);
+    error += !get(name_, rpnh, "visualize/rejected_edges_due_to_timing", visualize_rejected_edges_due_to_timing_);
     shutdownIfError(name_, error);
   }
 
@@ -172,7 +174,7 @@ void CartPathPlanner::generateExactPoses(const Eigen::Affine3d& start_pose, std:
   orientation_tol_ = OrientationTol(tolerance_roll_, tolerance_pitch_, tolerance_yaw_);
   // orientation_tol_ = OrientationTol(M_PI / 5.0, M_PI / 5.0, M_PI);
 
-  if (visualize_show_all_solutions_)
+  if (visualize_all_solutions_)
     debugShowAllIKSolutions(indent);
 }
 
@@ -247,20 +249,21 @@ bool CartPathPlanner::computeRedunPosesForCartPoint(const Eigen::Affine3d& pose,
   // Start recursion
   bool result = rotateOnAxis(pose, orientation_tol, X_AXIS, candidate_poses, indent);
 
-  if (visualize_show_all_cart_poses_)
+  if (visualize_all_cart_poses_ || visualize_all_cart_poses_individual_)
   {
     for (const Eigen::Affine3d& candidate_pose : candidate_poses)
     {
-      // visual_tools_->publishZArrow(candidate_pose, rvt::BLUE, rvt::SMALL);
-      visual_tools_->publishAxis(candidate_pose);
-
-      if (false)
+      if (visualize_all_cart_poses_individual_)
       {
         visual_tools_->deleteAllMarkers();
         visual_tools_->publishAxis(candidate_pose);
         //visual_tools_->publishZArrow(candidate_pose, rvt::BLUE, rvt::SMALL);
         visual_tools_->trigger();
         parent_->waitForNextStep("next pose");
+      }
+      else
+      {
+        visual_tools_->publishAxis(candidate_pose);
       }
     }
     visual_tools_->trigger();
@@ -394,7 +397,6 @@ bool CartPathPlanner::transform2DPath(const Eigen::Affine3d& starting_pose, Eige
 bool CartPathPlanner::populateBoltGraph(ompl::tools::bolt::TaskGraphPtr task_graph, std::size_t indent)
 {
   BOLT_FUNC(indent, true, "populateBoltGraph()");
-  // Benchmark runtime
   ros::Time start_time = ros::Time::now();
 
   task_graph_ = task_graph;  // copy pointer into this class to share among all functions
@@ -435,7 +437,7 @@ bool CartPathPlanner::populateBoltGraph(ompl::tools::bolt::TaskGraphPtr task_gra
   {
     const moveit::core::LinkModel* ee_link = arm_datas_[i].ee_link_;
     moveit::core::JointModelGroup* arm_jmg = arm_datas_[i].jmg_;
-    BOLT_DEBUG(indent, true, "Creating redundant poses for end effector " << ee_link->getName());
+    BOLT_DEBUG(indent, true, "Creating redundant poses for end effector \"" << ee_link->getName() << "\"");
     if (!createSingleDimTrajectory(exact_poses_[i], redun_traj_per_eef[i], ee_link, arm_jmg, indent))
     {
       BOLT_ERROR(indent, "Error creating single dim trajectory");
@@ -512,7 +514,7 @@ bool CartPathPlanner::createSingleDimTrajectory(const EigenSTL::vector_Affine3d&
                                                 const moveit::core::LinkModel* ee_link,
                                                 moveit::core::JointModelGroup* jmg, std::size_t indent)
 {
-  BOLT_FUNC(indent, true, "createSingleDimTrajectory()");
+  BOLT_FUNC(indent, true, "createSingleDimTrajectory() for " << exact_poses.size() << " trajectory points");
 
   // Enumerate the potential cartesian poses within tolerance
   for (std::size_t traj_id = 0; traj_id < exact_poses.size(); ++traj_id)
@@ -528,7 +530,7 @@ bool CartPathPlanner::createSingleDimTrajectory(const EigenSTL::vector_Affine3d&
     {
       BOLT_ERROR(indent, "No joint solutions found for pose " << traj_id);
 
-      visual_tools_->publishAxis(exact_pose, rvt::XXSMALL);
+      visual_tools_->publishAxis(exact_pose, rvt::SMALL);
       visual_tools_->trigger();
 
       // Show last valid pose if possible
@@ -542,7 +544,7 @@ bool CartPathPlanner::createSingleDimTrajectory(const EigenSTL::vector_Affine3d&
         visual_tools_->publishRobotState(joint_poses.front(), jmg, rvt::RED);
       }
       else
-        BOLT_ERROR(indent, "First pose is in valid, unable to visualize last pose");
+        BOLT_WARN(indent, true, "First pose is invalid, unable to visualize last pose");
 
       return false;
     }
@@ -625,6 +627,7 @@ bool CartPathPlanner::combineEETrajectories(const std::vector<RedunJointTrajecto
     {
       bool pairEveryPoseWithEveryPose = false;
 
+      // Enumerate every possible pair of poses
       if (pairEveryPoseWithEveryPose)
       {
         // std::cout << "pose0_id: " << pose0_id << " size: " << poses0->size() << std::endl;
@@ -646,7 +649,7 @@ bool CartPathPlanner::combineEETrajectories(const std::vector<RedunJointTrajecto
       else // randomly choose a pose from other trajectory
       {
         // Add multiple random poses
-        std::size_t num_rand_poses = 1; //poses1->size();
+        std::size_t num_rand_poses = std::min(std::size_t(5), poses1->size());
         for (std::size_t i = 0; i < num_rand_poses; ++i)
         {
           std::size_t pose1_id;
@@ -704,9 +707,9 @@ bool CartPathPlanner::addCartPointToBoltGraph(const CombinedPoints& combined_poi
     if (!parent_->getPlanningSceneMonitor()->getPlanningScene()->isStateValid(
             *moveit_robot_state, parent_->planning_jmg_, verbose_collision_check_))
     {
-      //BOLT_DEBUG(indent, verbose_, "Invalid robot state");
+      BOLT_DEBUG(indent, verbose_collision_check_, "Invalid robot state");
 
-      if (visualize_show_rejected_states_)
+      if (visualize_rejected_states_)
       {
         visual_tools_->publishRobotState(moveit_robot_state, rvt::BROWN);
         parent_->waitForNextStep("invalid");
@@ -725,7 +728,7 @@ bool CartPathPlanner::addCartPointToBoltGraph(const CombinedPoints& combined_poi
     // Add vertex to task graph
     point_vertices.push_back(task_graph_->addVertexWithLevel(ompl_state, level1, indent));
 
-    if (visualize_show_combined_solutions_)
+    if (visualize_combined_solutions_)
     {
       visual_tools_->publishRobotState(moveit_robot_state);
       parent_->waitForNextStep("added vertex");
@@ -759,12 +762,10 @@ bool CartPathPlanner::addEdgesToBoltGraph(const TaskVertexMatrix& point_vertices
     visualizeAllPointVertices(point_vertices, indent);
 
   // Step through each cartesian point, starting at second point
-  std::size_t feedbackFrequency = 1;  // std::max(10.0, point_vertices.size() / 10.0);
-  std::cout << "      Trajectory Point: ";
+  std::size_t feedbackFrequency = std::max(10.0, point_vertices.size() / 10.0);
+  std::cout << "          Adding edges at traj pt: ";
   for (std::size_t traj_id = 1; traj_id < point_vertices.size(); ++traj_id)
   {
-    // std::cout << "traj_id: " << traj_id << " out of " << point_vertices.size() << std::endl;
-
     // Get all vertices at previous cartesian point
     const TaskVertexPoint& point_vertices0 = point_vertices[traj_id - 1];
     // Get all vertices at this cartesian point
@@ -792,11 +793,14 @@ bool CartPathPlanner::addEdgesToBoltGraph(const TaskVertexMatrix& point_vertices
 
         if (!shared_robot_state0_->isValidVelocityMove(*shared_robot_state1_, parent_->planning_jmg_, timing_))
         {
-          std::cout << "skipped edge " << std::endl;
-          visual_tools_->publishRobotState(shared_robot_state0_, rvt::GREEN);
-          parent_->waitForNextStep("from");
-          visual_tools_->publishRobotState(shared_robot_state1_, rvt::GREEN);
-          parent_->waitForNextStep("to");
+          // Visualize
+          if (visualize_rejected_edges_due_to_timing_)
+          {
+            visual_tools_->publishRobotState(shared_robot_state0_, rvt::GREEN);
+            usleep(1*1000000);
+            visual_tools_->publishRobotState(shared_robot_state1_, rvt::LIME_GREEN);
+            parent_->waitForNextStep("showing rejected edge due to timing");
+          }
 
           // BOLT_DEBUG(indent, true, "Skipping edge, total skipped: " << edges_skipped_count);
           edges_skipped_count++;
@@ -833,9 +837,8 @@ bool CartPathPlanner::addEdgesToBoltGraph(const TaskVertexMatrix& point_vertices
 
   std::size_t warning_factor = 4;
   if (edges_skipped_count * warning_factor > new_edge_count)
-    BOLT_WARN(indent, true, "More than " << warning_factor << " times as many edges were rejected than accepted "
-                                                              "because of motion timing/velocity contraints. "
-                                                              "Consider tweaking.");
+    BOLT_INFO(indent, true, "More than " << warning_factor << " times as many edges were rejected than accepted "
+              "because of motion timing/velocity contraints.");
 
   return true;
 }
@@ -985,11 +988,12 @@ bool CartPathPlanner::getRedunJointPosesForCartPoint(const Eigen::Affine3d& pose
     // Solve
     if (!solver->getPositionIK(ik_queries, ik_seed_state, solutions, kin_result, options))
     {
-      BOLT_ERROR(indent, "Failed to find a solution for a pose");
+      BOLT_DEBUG(indent, true, "Failed to find a solution for a pose");
 
-      visual_tools_->publishZArrow(ik_queries.front(), rvt::RED, rvt::MEDIUM);
-      visual_tools_->trigger();
-      return false;
+      // visual_tools_->publishZArrow(pose, rvt::YELLOW, rvt::MEDIUM);
+      // visual_tools_->trigger();
+
+      continue;
     }
 
     // Collision check each potential solution
@@ -1008,7 +1012,7 @@ bool CartPathPlanner::getRedunJointPosesForCartPoint(const Eigen::Affine3d& pose
                                                                                 verbose_collision_check_))
       {
         //BOLT_DEBUG(indent, true, "Invalid robot state");
-        if (visualize_show_rejected_states_)
+        if (visualize_rejected_states_)
         {
           visual_tools_->publishRobotState(shared_robot_state1_, rvt::RED);
           parent_->waitForNextStep("invalid");
@@ -1038,7 +1042,7 @@ void CartPathPlanner::visualizeAllJointPoses(const RedunJointPoses& joint_poses,
   for (const JointSpacePoint& joint_pose : joint_poses)
   {
     visual_tools_->publishRobotState(joint_pose, jmg);
-    ros::Duration(visualize_show_all_solutions_sleep_).sleep();
+    ros::Duration(visualize_all_solutions_sleep_).sleep();
 
     if (!ros::ok())
       exit(0);
