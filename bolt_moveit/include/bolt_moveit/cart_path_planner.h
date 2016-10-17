@@ -91,7 +91,7 @@ public:
   bool debugShowAllIKSolutions(std::size_t indent);
 
   bool computeRedunPosesForCartPoint(const Eigen::Affine3d& pose, const OrientationTol& orientation_tol,
-                                     EigenSTL::vector_Affine3d& candidate_poses, std::size_t indent);
+                                     EigenSTL::vector_Affine3d& candidate_poses, bool verbose, std::size_t indent);
 
   bool rotateOnAxis(const Eigen::Affine3d& pose, const OrientationTol& orientation_tol, const Axis axis,
                     EigenSTL::vector_Affine3d& candidate_poses, std::size_t indent);
@@ -190,6 +190,8 @@ private:
   double tolerance_roll_;
   double tolerance_pitch_;
   double tolerance_yaw_;
+
+  std::size_t hybrid_rand_factor_ = 5;
 };  // end class
 
 // Create boost pointers for this class

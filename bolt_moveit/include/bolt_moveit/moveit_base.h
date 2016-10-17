@@ -52,6 +52,7 @@
 
 // moveit_boilerplate
 #include <moveit_boilerplate/namespaces.h>
+#include <moveit_boilerplate/execution_interface.h>
 
 // ROS parameter loading
 #include <rosparam_shortcuts/rosparam_shortcuts.h>

@@ -50,7 +50,7 @@ moveit_ompl::StateValidityChecker::StateValidityChecker(const std::string &group
   , planning_scene_(planning_scene)
   , mb_state_space_(mb_state_space)
   , si_(si)
-  , verbose_(true)
+  , verbose_(false)
 {
   specs_.clearanceComputationType = ompl::base::StateValidityCheckerSpecs::APPROXIMATE;
   specs_.hasValidDirectionComputation = false;
@@ -119,13 +119,13 @@ bool moveit_ompl::StateValidityChecker::isValid(const ompl::base::State *state, 
   }
 
   // Visualize
-  if (visual_.get() != nullptr)
-  {
-    if (res.collision)
-      visual_->viz2()->state(state, ompl::tools::ROBOT, ompl::tools::RED, 0);
-    // else
-    //   visual_->viz2()->state(state, ompl::tools::ROBOT, ompl::tools::GREEN, 0);
-  }
+  // if (visual_.get() != nullptr)
+  // {
+  //   if (res.collision)
+  //     visual_->viz2()->state(state, ompl::tools::ROBOT, ompl::tools::RED, 0);
+  //   // else
+  //   //   visual_->viz2()->state(state, ompl::tools::ROBOT, ompl::tools::GREEN, 0);
+  // }
 
   return res.collision == false;
 }
@@ -172,7 +172,7 @@ bool moveit_ompl::StateValidityChecker::isValid(const ompl::base::State *state, 
 
   // check collision avoidance
   collision_detection::CollisionResult res;
-  if (verbose || verbose_)
+  if (verbose)
     planning_scene_->checkCollision(collision_request_with_distance_verbose_, res, *robot_state);
   else
     planning_scene_->checkCollision(collision_request_with_distance_, res, *robot_state);

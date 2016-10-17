@@ -50,7 +50,7 @@
 
 // moveit_ompl
 #include <moveit_ompl/model_based_state_space.h>
-#include <moveit_ompl/remote_control.h>
+#include <moveit_dashboard/remote_control.h>
 
 // OMPL
 #include <ompl/tools/thunder/Thunder.h>
@@ -134,7 +134,7 @@ public:
   std::string name_ = "bolt_moveit";
 
   // Recieve input from Rviz
-  moveit_ompl::RemoteControl remote_control_;
+  moveit_dashboard::RemoteControlPtr remote_control_;
 
   // File location of this package
   std::string package_path_;
@@ -177,6 +177,9 @@ public:
 
   // End effector data including joint model groups
   std::vector<mvt::ArmData> arm_datas_;
+
+  // Execute trajectories
+  moveit_boilerplate::ExecutionInterfacePtr execution_interface_;
 
   // Modes
   bool run_problems_;

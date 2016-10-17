@@ -72,6 +72,7 @@ CartPathPlanner::CartPathPlanner(BoltMoveIt* parent)
     error += !get(name_, rpnh, "tolerance/roll", tolerance_roll_);
     error += !get(name_, rpnh, "tolerance/pitch", tolerance_pitch_);
     error += !get(name_, rpnh, "tolerance/yaw", tolerance_yaw_);
+    error += !get(name_, rpnh, "hybrid_rand_factor", hybrid_rand_factor_);
     error += !get(name_, rpnh, "verbose", verbose_);
     error += !get(name_, rpnh, "visualize/all_solutions", visualize_all_solutions_);
     error += !get(name_, rpnh, "visualize/all_solutions_sleep", visualize_all_solutions_sleep_);
@@ -85,6 +86,14 @@ CartPathPlanner::CartPathPlanner(BoltMoveIt* parent)
 
   //tolerance_increment_ = 2.0 * M_PI / tolerance_pi_fraction_increment;
   tolerance_increment_ = tolerance_pi_fraction_increment;
+
+  // Specify tolerance for new exact_poses
+  orientation_tol_ = OrientationTol(tolerance_roll_, tolerance_pitch_, tolerance_yaw_);
+
+  // Debug tolerances
+  EigenSTL::vector_Affine3d candidate_poses;
+  Eigen::Affine3d pose = Eigen::Affine3d::Identity();
+  computeRedunPosesForCartPoint(pose, orientation_tol_, candidate_poses, true, 0);
 
   // Load planning state
   shared_robot_state0_.reset(new moveit::core::RobotState(*parent_->moveit_start_));
@@ -166,13 +175,9 @@ void CartPathPlanner::generateExactPoses(const Eigen::Affine3d& start_pose, std:
   for (std::size_t i = 0; i < exact_poses_.size(); ++i)
   {
     visual_tools_->publishPath(exact_poses_[i], rvt::ORANGE, rvt::XXSMALL);
-    visual_tools_->publishAxisPath(exact_poses_[i], rvt::XXXSMALL);
+    //visual_tools_->publishAxisPath(exact_poses_[i], rvt::XXXSMALL);
   }
   visual_tools_->trigger();
-
-  // Specify tolerance for new exact_poses
-  orientation_tol_ = OrientationTol(tolerance_roll_, tolerance_pitch_, tolerance_yaw_);
-  // orientation_tol_ = OrientationTol(M_PI / 5.0, M_PI / 5.0, M_PI);
 
   if (visualize_all_solutions_)
     debugShowAllIKSolutions(indent);
@@ -224,13 +229,16 @@ bool CartPathPlanner::debugShowAllIKSolutions(std::size_t indent)
 }
 
 bool CartPathPlanner::computeRedunPosesForCartPoint(const Eigen::Affine3d& pose, const OrientationTol& orientation_tol,
-                                                    EigenSTL::vector_Affine3d& candidate_poses, std::size_t indent)
+                                                    EigenSTL::vector_Affine3d& candidate_poses, bool verbose, std::size_t indent)
 {
   BOLT_FUNC(indent, verbose_, "computeRedunPosesForCartPoint()");
   BOOST_ASSERT_MSG(tolerance_increment_ > std::numeric_limits<double>::epsilon(), "Divide by zero using orientation increment");
 
   const std::size_t num_axis = 3;
-  //std::cout << "tolerance_increment_: " << tolerance_increment_ << std::endl;
+
+  BOLT_INFO(indent, verbose, "----------------------------------");
+  BOLT_INFO(indent, verbose, "Poses per Point");
+  BOLT_INFO(indent, verbose, "  Tolerance Increment:   " << tolerance_increment_);
 
   // Reserve vector size
   std::vector<size_t> num_steps_per_axis(num_axis, 0 /* value */);
@@ -240,10 +248,22 @@ bool CartPathPlanner::computeRedunPosesForCartPoint(const Eigen::Affine3d& pose,
     num_steps_per_axis[i] = std::max(1.0, ceil(range / tolerance_increment_));
     // std::cout << "range: " << range << std::endl;
     // std::cout << "num_steps_per_axis[i]: " << num_steps_per_axis[i] << std::endl;
+
+    if (i == 0)
+      BOLT_INFO(indent, verbose, "  Roll:");
+    else if (i == 1)
+      BOLT_INFO(indent, verbose, "  Pitch:");
+    else if (i == 2)
+      BOLT_INFO(indent, verbose, "  Yaw:");
+    BOLT_INFO(indent, verbose, "    Tolerance:          " << orientation_tol.axis_dist_from_center_[i]);
+    BOLT_INFO(indent, verbose, "    Range (x2):         " << range);
+    BOLT_INFO(indent, verbose, "    Steps:              " << num_steps_per_axis[i]);
   }
   double total_num_steps = num_steps_per_axis[0] * num_steps_per_axis[1] * num_steps_per_axis[2];
-  BOLT_DEBUG(indent, verbose_, "Generating " << total_num_steps << " under-constrained poses for each "
-                                                                   "cartesian point");
+
+  BOLT_INFO(indent, verbose, "  Total Poses:          " << total_num_steps);
+  BOLT_INFO(indent, verbose, "----------------------------------");
+
   candidate_poses.reserve(total_num_steps);
 
   // Start recursion
@@ -649,7 +669,7 @@ bool CartPathPlanner::combineEETrajectories(const std::vector<RedunJointTrajecto
       else // randomly choose a pose from other trajectory
       {
         // Add multiple random poses
-        std::size_t num_rand_poses = std::min(std::size_t(5), poses1->size());
+        std::size_t num_rand_poses = std::min(std::size_t(hybrid_rand_factor_), poses1->size());
         for (std::size_t i = 0; i < num_rand_poses; ++i)
         {
           std::size_t pose1_id;
@@ -864,7 +884,7 @@ bool CartPathPlanner::connectTrajectoryEndPoints(const TaskVertexMatrix& point_v
     bool isStart = true;
     if (!task_graph_->connectVertexToNeighborsAtLevel(start_vertex, level0, isStart, indent))
     {
-      OMPL_WARN("Failed to connect start vertex");
+      BOLT_WARN(indent, true, "Failed to connect start vertex");
       return false;  // TODO(davetcoleman): return here?
     }
 
@@ -894,7 +914,7 @@ bool CartPathPlanner::connectTrajectoryEndPoints(const TaskVertexMatrix& point_v
     bool isStart = false;
     if (!task_graph_->connectVertexToNeighborsAtLevel(goal_vertex, level2, isStart, indent))
     {
-      OMPL_WARN("Failed to connect goal vertex");
+      BOLT_WARN(indent, true, "Failed to connect goal vertex");
       return false;  // TODO(davetcoleman): return here?
     }
 
@@ -913,7 +933,7 @@ bool CartPathPlanner::getRedunJointPosesForCartPoint(const Eigen::Affine3d& pose
   BOLT_FUNC(indent, verbose_, "getRedunJointPosesForCartPoint()");
 
   EigenSTL::vector_Affine3d candidate_poses;
-  if (!computeRedunPosesForCartPoint(pose, orientation_tol_, candidate_poses, indent))
+  if (!computeRedunPosesForCartPoint(pose, orientation_tol_, candidate_poses, false, indent))
     return false;
 
   // Get the IK solver for a given planning group
@@ -988,7 +1008,7 @@ bool CartPathPlanner::getRedunJointPosesForCartPoint(const Eigen::Affine3d& pose
     // Solve
     if (!solver->getPositionIK(ik_queries, ik_seed_state, solutions, kin_result, options))
     {
-      BOLT_DEBUG(indent, true, "Failed to find a solution for a pose");
+      BOLT_DEBUG(indent, verbose_, "Failed to find a solution for a pose");
 
       // visual_tools_->publishZArrow(pose, rvt::YELLOW, rvt::MEDIUM);
       // visual_tools_->trigger();

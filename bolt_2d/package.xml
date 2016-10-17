@@ -16,7 +16,8 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <depend>moveit_visual_tools</depend>
+  <depend>rviz_visual_tools</depend>
+  <depend>moveit_dashboard</depend>
   <depend>roscpp</depend>
   <depend>roslint</depend>
   <depend>ompl</depend>

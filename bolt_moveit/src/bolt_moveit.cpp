@@ -65,7 +65,10 @@ namespace rvt = rviz_visual_tools;
 namespace bolt_moveit
 {
 BoltMoveIt::BoltMoveIt(const std::string &hostname, const std::string &package_path)
-  : MoveItBase(), nh_("~"), remote_control_(nh_), package_path_(package_path)
+  : MoveItBase()
+  , nh_("~")
+  , remote_control_(std::make_shared<moveit_dashboard::RemoteControl>(nh_))
+  , package_path_(package_path)
 {
   std::size_t indent = 0;
 
@@ -187,7 +190,11 @@ BoltMoveIt::BoltMoveIt(const std::string &hostname, const std::string &package_p
   const double baxter_toros_height = -0.95;
   visual_moveit_start_->publishCollisionFloor(baxter_toros_height + 0.001, "floor", rvt::TRANSLUCENT_DARK);
   visual_moveit_start_->publishCollisionWall(/*x*/ -1.0, /*y*/ 0.0, /*z*/ baxter_toros_height, /*angle*/ 0,
-                                             /*width*/ 2, /*height*/ 2.0, "wall", rvt::BLACK);
+                                             /*width*/ 2, /*height*/ 2.0, "wall", rvt::CYAN);
+  visual_moveit_start_->publishCollisionTable(/*x*/ 0.7, /*y*/ 0.0, /*z*/ baxter_toros_height, /*angle*/ 0, /*width*/ 1,
+                                              /*height*/ -0.70 * baxter_toros_height, /*depth*/ 0.5, "table",
+                                              rvt::DARK_GREY);
+
   visual_moveit_start_->triggerPlanningSceneUpdate();
   ros::spinOnce();
 
@@ -227,7 +234,10 @@ BoltMoveIt::BoltMoveIt(const std::string &hostname, const std::string &package_p
   }
 
   // Set remote_control
-  remote_control_.setDisplayWaitingState(boost::bind(&BoltMoveIt::displayWaitingState, this, _1));
+  remote_control_->setDisplayWaitingState(boost::bind(&BoltMoveIt::displayWaitingState, this, _1));
+
+  execution_interface_ =
+      std::make_shared<moveit_boilerplate::ExecutionInterface>(remote_control_, planning_scene_monitor_);
 
   // Wait until user does something
   if (!auto_run_)
@@ -624,6 +634,14 @@ bool BoltMoveIt::plan()
   //   ros::Duration(1).sleep();
   // }
 
+  // Convert trajectory to a message
+  moveit_msgs::RobotTrajectory trajectory_msg;
+  traj->getRobotTrajectoryMsg(trajectory_msg);
+
+  // Execute the trajectory
+  bool wait_for_execution = true;
+  execution_interface_->executeTrajectory(trajectory_msg, planning_jmg_, wait_for_execution);
+
   // Visualize the doneness
   std::cout << std::endl;
 
@@ -643,7 +661,6 @@ void BoltMoveIt::loadCollisionChecker()
   // The interval in which obstacles are checked for between states
   // seems that it default to 0.01 but doesn't do a good job at that level
   // si_->setStateValidityCheckingResolution(0.005);
-
 }
 
 void BoltMoveIt::deleteAllMarkers(bool clearDatabase)
@@ -826,7 +843,7 @@ void BoltMoveIt::displayWaitingState(bool waiting)
 
 void BoltMoveIt::waitForNextStep(const std::string &msg)
 {
-  remote_control_.waitForNextStep(msg);
+  remote_control_->waitForNextStep(msg);
 }
 
 void BoltMoveIt::testConnectionToGraphOfRandStates()

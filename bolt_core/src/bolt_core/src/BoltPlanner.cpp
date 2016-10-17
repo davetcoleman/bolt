@@ -358,7 +358,12 @@ bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
         BOLT_DEBUG(indent, verbose_, "Did not find a path, looking for other start/goal combinations ");
       }
 
+      if (visual_->viz1()->shutdownRequested())
+        break;
     }  // foreach
+
+    if (visual_->viz1()->shutdownRequested())
+      break;
   }    // foreach
 
   if (foundValidStart && foundValidGoal)
@@ -437,26 +442,26 @@ bool BoltPlanner::onGraphSearch(const TaskVertex &startVertex, const TaskVertex 
     // Check if our planner is out of time
     if (ptc)
     {
-      BOLT_DEBUG(indent + 2, verbose_, "Function interrupted because termination condition is true");
+      BOLT_DEBUG(indent, verbose_, "Function interrupted because termination condition is true");
       return false;
     }
 
     // Attempt to find a solution from start to goal
-    if (!taskGraph_->astarSearch(startVertex, goalVertex, vertexPath, distance, indent + 2))
+    if (!taskGraph_->astarSearch(startVertex, goalVertex, vertexPath, distance, indent))
     {
-      BOLT_WARN(indent + 2, verbose_, "Unable to construct solution between start and goal using astar");
+      BOLT_WARN(indent, verbose_, "Unable to construct solution between start and goal using astar");
 
       // no path found what so ever
       return false;
     }
 
     // Check if all the points in the potential solution are valid
-    if (lazyCollisionCheck(vertexPath, ptc, indent + 2))
+    if (lazyCollisionCheck(vertexPath, ptc, indent))
     {
-      BOLT_DEBUG(indent + 2, verbose_, "Lazy collision check returned valid ");
+      BOLT_DEBUG(indent, verbose_, "Lazy collision check returned valid ");
 
       // the path is valid, we are done!
-      convertVertexPathToStatePath(vertexPath, actualStart, actualGoal, compoundSolution, indent + 2);
+      convertVertexPathToStatePath(vertexPath, actualStart, actualGoal, compoundSolution, indent);
       return true;
     }
     // else, loop with updated graph that has the invalid edges/states disabled
@@ -624,6 +629,8 @@ bool BoltPlanner::convertVertexPathToStatePath(std::vector<TaskVertex> &vertexPa
     std::stringstream o;
     for (std::size_t i = vertexPath.size(); i > 0; --i)
       o << vertexPath[i - 1] << ", ";
+    std::cout << "o.str(): " << o.str() << std::endl;
+    std::cout << "vertexPath.size(): " << vertexPath.size() << std::endl;
     BOLT_DEBUG(indent, true, "BoltPlanner.Vertices: " << o.str());
   }
 

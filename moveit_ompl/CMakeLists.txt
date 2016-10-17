@@ -53,7 +53,6 @@ link_directories(${Boost_LIBRARY_DIRS})
 add_library(${PROJECT_NAME}
   src/model_based_state_space.cpp
   src/detail/threadsafe_state_storage.cpp
-  src/remote_control.cpp
 )
 target_link_libraries(${PROJECT_NAME} ${OMPL_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 

@@ -182,7 +182,7 @@ debug_interface:
 bolt_planner:
   verbose:
     verbose: false
-    collision_check: true
+    collision_check: false
   visualize:
     smoothed_trajectory: true
     start_goal: false
@@ -205,12 +205,13 @@ cart_path_planner:
     timing: 0.3 # time allowed between each Cartesian point, e.g. discretization for velocity
   tolerance:
     pi_fraction_increment: 0.3 # 2xPI / this number = number of steps to divide each dimension by
-    # roll: 0.314 # pi/10
-    # pitch: 0.314 # pi/10
-    roll: 0.628 # pi/5
-    pitch: 0.628 # pi/5
+    roll: 0.314 # pi/10
+    pitch: 0.314 # pi/10
+    # roll: 0.628 # pi/5
+    # pitch: 0.628 # pi/5
     yaw: 0 # pi
-  verbose: true
+  hybrid_rand_factor: 50 # number of times to randomly add the two arm trajectories together
+  verbose: false
   visualize:
     all_cart_poses: false # show the markers for each pose location
     all_cart_poses_individual: false # show the markers one by one for each pose location
