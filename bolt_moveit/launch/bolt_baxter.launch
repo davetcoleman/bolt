@@ -7,6 +7,9 @@
     <arg name="robot_description" value="baxter/robot_description"/>
   </include>
 
+  <!-- move_group settings -->
+  <arg name="allow_trajectory_execution" default="true"/>
+
   <!-- GDB Debug Arguments -->
   <arg name="debug" default="false" />
   <arg unless="$(arg debug)" name="launch_prefix" value="" />
@@ -22,6 +25,12 @@
   <arg name="valgrind" default="false" />
   <arg unless="$(arg valgrind)" name="launch_prefix3" value="" />
   <arg     if="$(arg valgrind)" name="launch_prefix3" value="valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all" />
+
+  <!-- Trajectory Execution Functionality -->
+  <include ns="baxter" file="$(find baxter_moveit_config)/launch/trajectory_execution.launch.xml" if="$(arg allow_trajectory_execution)">
+    <arg name="moveit_manage_controllers" value="true" />
+    <arg name="moveit_controller_manager" value="baxter" />
+  </include>
 
   <!-- Main process -->
   <!-- <node name="$(anon bolt_baxter)" pkg="bolt_moveit" type="bolt_moveit_main" respawn="false" -->

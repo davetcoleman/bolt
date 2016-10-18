@@ -11,7 +11,7 @@ bolt_moveit:
   # create sparse graph
   load_spars: true
   create_spars: true
-  continue_spars: false # even if a file has been saved, randomly sample for more coverage
+  continue_spars: true # even if a file has been saved, randomly sample for more coverage
   run_problems: true # do plans?
   sweep_spars_maps: true
   sweep_map_start: 1 # Base 1, not 0
@@ -77,7 +77,8 @@ sparse_generator:
 # ====================================================
 sparse_criteria:
   #sparse_delta_fraction: 0.4
-  sparse_delta_fraction: 0.45
+  #sparse_delta_fraction: 0.45
+  sparse_delta_fraction: 0.5
   penetration_overlap_fraction: 0.01
   near_sample_points_multiple: 2 # multiply this times number of dimensions
 # VAR4
@@ -224,7 +225,8 @@ cart_path_planner:
 # ====================================================
 # Interface for publishing joint/cartesian commands to the low level controllers
 execution_interface:
-  command_mode: joint_publisher # method for publishing commands from this node to low level controller
+  #command_mode: joint_publisher # method for publishing commands from this node to low level controller
+  command_mode: joint_execution_manager
   cartesian_command_topic: /baxter/cartesian_controller/cartesian_command # command output from this node
   joint_trajectory_topic: /baxter/cartesian_controller/command # command output from this node
   save_traj_to_file: false # debug mode for creating a CSV for use with Matlab
@@ -235,7 +237,7 @@ execution_interface:
 
 # MoveIt Boilerplate Base Functionality
 moveit_base:
-  joint_state_topic: /baxter/joint_states # location to recieve updates of the robot's pose
+  joint_state_topic: /robot/joint_states # location to recieve updates of the robot's pose
   joint_model_group: both_arms # the main planning group to control
   planning_scene_topic: /swri/planning_scene  # topic for communicating the collision obj in the env with other nodes
   rviz:

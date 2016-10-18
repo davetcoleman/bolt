@@ -187,16 +187,19 @@ BoltMoveIt::BoltMoveIt(const std::string &hostname, const std::string &package_p
   loadVisualTools();
 
   // Add a collision objects
-  const double baxter_toros_height = -0.95;
-  visual_moveit_start_->publishCollisionFloor(baxter_toros_height + 0.001, "floor", rvt::TRANSLUCENT_DARK);
-  visual_moveit_start_->publishCollisionWall(/*x*/ -1.0, /*y*/ 0.0, /*z*/ baxter_toros_height, /*angle*/ 0,
-                                             /*width*/ 2, /*height*/ 2.0, "wall", rvt::CYAN);
-  visual_moveit_start_->publishCollisionTable(/*x*/ 0.7, /*y*/ 0.0, /*z*/ baxter_toros_height, /*angle*/ 0, /*width*/ 1,
-                                              /*height*/ -0.70 * baxter_toros_height, /*depth*/ 0.5, "table",
-                                              rvt::DARK_GREY);
+  if (true)
+  {
+    const double baxter_toros_height = -0.95;
+    visual_moveit_start_->publishCollisionFloor(baxter_toros_height + 0.001, "floor", rvt::TRANSLUCENT_DARK);
+    visual_moveit_start_->publishCollisionWall(/*x*/ -1.0, /*y*/ 0.0, /*z*/ baxter_toros_height, /*angle*/ 0,
+                                               /*width*/ 2, /*height*/ 2.0, "wall", rvt::CYAN);
+    visual_moveit_start_->publishCollisionTable(
+        /*x*/ 0.7, /*y*/ 0.0, /*z*/ baxter_toros_height, /*angle*/ 0, /*width*/ 1,
+        /*height*/ -0.70 * baxter_toros_height, /*depth*/ 0.5, "table", rvt::DARK_GREY);
 
-  visual_moveit_start_->triggerPlanningSceneUpdate();
-  ros::spinOnce();
+    // visual_moveit_start_->triggerPlanningSceneUpdate();
+    ros::spinOnce();
+  }
 
   // Append to allowed collision matrix
   {
@@ -215,9 +218,6 @@ BoltMoveIt::BoltMoveIt(const std::string &hostname, const std::string &package_p
   // Create start/goal state imarker
   if (!headless_)
   {
-    std::cout << std::endl;
-    std::cout << "-------------------------------------------------------" << std::endl;
-
     // Create cartesian planner
     cart_path_planner_.reset(new CartPathPlanner(this));
 
@@ -229,15 +229,56 @@ BoltMoveIt::BoltMoveIt(const std::string &hostname, const std::string &package_p
     // imarker_start_->setCollisionCheckingVerbose(true);
     // imarker_start_->setOnlyCheckSelfCollision(true);
     // imarker_start_->setUseCollisionChecking(true);
-    std::cout << "-------------------------------------------------------" << std::endl;
-    std::cout << std::endl;
+
+    std::cout << "1 " << std::endl;
+
+    ros::Duration(0.1).sleep();
+    ros::spinOnce();
+    imarker_start_->setToCurrentState();
+
+    bool check_verbose = true;
+    if (!planning_scene_->isStateValid(*imarker_start_->getRobotState(), "", check_verbose))
+    {
+      ROS_ERROR_STREAM_NAMED(name_, "INVALID ===================================================");
+      visual_moveit_goal_->publishRobotState(imarker_start_->getRobotState(), rvt::RED);
+      waitForNextStep("invalid start state");
+    }
+
+    std::cout << "2 " << std::endl;
+    // while (ros::ok())
+    // {
+    //   imarker_start_->setToCurrentState();
+    //   ros::spinOnce();
+    //   bool check_verbose = true;
+    //   if (planning_scene_->isStateValid(*imarker_start_->getRobotState(), "", check_verbose))
+    //   {
+    //     std::cout << "valid " << ros::Time::now() << std::endl;
+    //   }
+    //   else
+    //   {
+    //     ROS_ERROR_STREAM_NAMED(name_, "INVALID ===================================================");
+    //     visual_moveit_goal_->publishRobotState(imarker_start_->getRobotState(), rvt::RED);
+    //     waitForNextStep("invalid");
+    //   }
+    //   visual_moveit_start_->triggerPlanningSceneUpdate();
+    //   ros::spinOnce();
+    //   ros::Duration(0.1).sleep();
+    //   visual_moveit_start_->triggerPlanningSceneUpdate();
+    //   ros::spinOnce();
+    // }
   }
 
   // Set remote_control
   remote_control_->setDisplayWaitingState(boost::bind(&BoltMoveIt::displayWaitingState, this, _1));
 
-  execution_interface_ =
-      std::make_shared<moveit_boilerplate::ExecutionInterface>(remote_control_, planning_scene_monitor_);
+  std::cout << "3 " << std::endl;
+  execution_interface_ = std::make_shared<moveit_boilerplate::ExecutionInterface>(
+      remote_control_, planning_scene_monitor_, viz6_->getVisualTools());
+  std::cout << "4 " << std::endl;
+
+  ros::Duration(1.0).sleep();
+  std::cout << "shutting down " << std::endl;
+  exit(0);
 
   // Wait until user does something
   if (!auto_run_)
@@ -462,6 +503,7 @@ bool BoltMoveIt::runProblems()
       imarker_start_->setToRandomState();
       imarker_goal_->setToRandomState();
     }
+    imarker_start_->setToCurrentState();
     moveit_start_ = imarker_start_->getRobotState();
     moveit_goal_ = imarker_goal_->getRobotState();
 
@@ -639,8 +681,12 @@ bool BoltMoveIt::plan()
   traj->getRobotTrajectoryMsg(trajectory_msg);
 
   // Execute the trajectory
-  bool wait_for_execution = true;
-  execution_interface_->executeTrajectory(trajectory_msg, planning_jmg_, wait_for_execution);
+  while (ros::ok())
+  {
+    waitForNextStep("execute");
+    bool wait_for_execution = true;
+    execution_interface_->executeTrajectory(trajectory_msg, planning_jmg_, wait_for_execution);
+  }
 
   // Visualize the doneness
   std::cout << std::endl;

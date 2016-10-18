@@ -24,6 +24,6 @@
 
   <node pkg="tf" type="static_transform_publisher" name="tfdummy3" args="0 -4 0 0 0 0 /world /world_visual4 10" />
   <node pkg="tf" type="static_transform_publisher" name="tfdummy2" args="0 -2 0 0 0 0 /world /world_visual5 10" />
-  <node pkg="tf" type="static_transform_publisher" name="tfdummy1" args="0 0  0 0 0 0 /world /world_visual6 10" />
-
+  <!-- <node pkg="tf" type="static_transform_publisher" name="tfdummy1" args="0 0  0 0 0 0 /world /world_visual6 10" /> -->
+  <node pkg="tf" type="static_transform_publisher" name="tfdummy1" args="0 2  0 0 0 0 /world /world_visual6 10" />
 </launch>

@@ -106,13 +106,21 @@ bool MoveItBase::loadPlanningSceneMonitor(const std::string& joint_state_topic)
       new psm::PlanningSceneMonitor(planning_scene_, robot_model_loader_, tf_, PLANNING_SCENE_MONITOR_NAME));
   ros::spinOnce();
 
+  psm::PlanningSceneMonitor::SceneUpdateType event = psm::PlanningSceneMonitor::UPDATE_NONE;
+  //if (config.publish_geometry_updates)
+  //event = (PlanningSceneMonitor::SceneUpdateType) ((int)event | (int)PlanningSceneMonitor::UPDATE_GEOMETRY);
+  //if (config.publish_state_updates)
+  event = (psm::PlanningSceneMonitor::SceneUpdateType) ((int)event | (int)psm::PlanningSceneMonitor::UPDATE_STATE);
+  //if (config.publish_transforms_updates)
+  //event = (PlanningSceneMonitor::SceneUpdateType) ((int)event | (int)PlanningSceneMonitor::UPDATE_TRANSFORMS);
+
   if (planning_scene_monitor_->getPlanningScene())
   {
     // Optional monitors to start:
-    // planning_scene_monitor_->startStateMonitor(joint_state_topic, "");
+    planning_scene_monitor_->startStateMonitor(joint_state_topic, "");
     planning_scene_monitor_->getPlanningScene()->setName("bolt_scene");
-    planning_scene_monitor_->startPublishingPlanningScene(psm::PlanningSceneMonitor::UPDATE_NONE,
-                                                          planning_scene_topic_);
+    planning_scene_monitor_->startPublishingPlanningScene(event, planning_scene_topic_);
+
   }
   else
   {
