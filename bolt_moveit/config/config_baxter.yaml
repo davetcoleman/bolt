@@ -11,7 +11,7 @@ bolt_moveit:
   # create sparse graph
   load_spars: true
   create_spars: true
-  continue_spars: true # even if a file has been saved, randomly sample for more coverage
+  continue_spars: false # even if a file has been saved, randomly sample for more coverage
   run_problems: true # do plans?
   sweep_spars_maps: true
   sweep_map_start: 1 # Base 1, not 0
@@ -26,6 +26,9 @@ bolt_moveit:
   headless: false
   num_problems: 1
   problem_type: 1 # 0 - random, 1 - imarkers
+
+  # execution
+  velocity_scaling_factor: 0.5
 
   # solver type
   experience_planner: bolt
@@ -77,8 +80,8 @@ sparse_generator:
 # ====================================================
 sparse_criteria:
   #sparse_delta_fraction: 0.4
-  #sparse_delta_fraction: 0.45
-  sparse_delta_fraction: 0.5
+  sparse_delta_fraction: 0.45
+  #sparse_delta_fraction: 0.5
   penetration_overlap_fraction: 0.01
   near_sample_points_multiple: 2 # multiply this times number of dimensions
 # VAR4
@@ -177,7 +180,7 @@ task_graph:
 # ====================================================
 debug_interface:
   autonomous: false
-  full_autonomous: false # TODO this is not used
+  full_autonomous: false
 
 # ====================================================
 bolt_planner:
@@ -205,17 +208,17 @@ cart_path_planner:
     discretization: 0.01 # how much space, in meters, between trajectory points
     timing: 0.3 # time allowed between each Cartesian point, e.g. discretization for velocity
   tolerance:
-    pi_fraction_increment: 0.3 # 2xPI / this number = number of steps to divide each dimension by
+    pi_fraction_increment: 0.2 # 2xPI / this number = number of steps to divide each dimension by
     roll: 0.314 # pi/10
     pitch: 0.314 # pi/10
     # roll: 0.628 # pi/5
     # pitch: 0.628 # pi/5
     yaw: 0 # pi
-  hybrid_rand_factor: 50 # number of times to randomly add the two arm trajectories together
+  hybrid_rand_factor: 5 # number of times to randomly add the two arm trajectories together
   verbose: false
   visualize:
     all_cart_poses: false # show the markers for each pose location
-    all_cart_poses_individual: false # show the markers one by one for each pose location
+    all_cart_poses_individual: true # show the markers one by one for each pose location
     all_solutions: false # show each solution along trajectory when moving the interactive markers
     all_solutions_sleep: 0.1 # time between each solution for viewing
     rejected_edges_due_to_timing: false
@@ -231,8 +234,8 @@ execution_interface:
   joint_trajectory_topic: /baxter/cartesian_controller/command # command output from this node
   save_traj_to_file: false # debug mode for creating a CSV for use with Matlab
   save_traj_to_file_path: /home/dave/ros/current/ws_swri/src/trajectory_data/ # debug
-  visualize_trajectory_line: false # show in RViz a series of markers visualizing path
-  visualize_trajectory_path: false # show in RViz the robot moving on the trajectory path
+  visualize_trajectory_line: true # show in RViz a series of markers visualizing path
+  visualize_trajectory_path: true # show in RViz the robot moving on the trajectory path
   check_for_waypoint_jumps: false # ensure that any trajectory that is published does not have huge discontinuties in joint space
 
 # MoveIt Boilerplate Base Functionality

@@ -107,12 +107,12 @@ bool MoveItBase::loadPlanningSceneMonitor(const std::string& joint_state_topic)
   ros::spinOnce();
 
   psm::PlanningSceneMonitor::SceneUpdateType event = psm::PlanningSceneMonitor::UPDATE_NONE;
-  //if (config.publish_geometry_updates)
-  //event = (PlanningSceneMonitor::SceneUpdateType) ((int)event | (int)PlanningSceneMonitor::UPDATE_GEOMETRY);
-  //if (config.publish_state_updates)
+  // publish_geometry_updates
+  event = (psm::PlanningSceneMonitor::SceneUpdateType) ((int)event | (int)psm::PlanningSceneMonitor::UPDATE_GEOMETRY);
+  // publish_state_updates
   event = (psm::PlanningSceneMonitor::SceneUpdateType) ((int)event | (int)psm::PlanningSceneMonitor::UPDATE_STATE);
-  //if (config.publish_transforms_updates)
-  //event = (PlanningSceneMonitor::SceneUpdateType) ((int)event | (int)PlanningSceneMonitor::UPDATE_TRANSFORMS);
+  // publish_transforms_updates
+  event = (psm::PlanningSceneMonitor::SceneUpdateType) ((int)event | (int)psm::PlanningSceneMonitor::UPDATE_TRANSFORMS);
 
   if (planning_scene_monitor_->getPlanningScene())
   {

@@ -52,6 +52,9 @@
 #include <moveit_ompl/model_based_state_space.h>
 #include <moveit_dashboard/remote_control.h>
 
+// moveit_boilerplate
+#include <moveit_boilerplate/planning_interface.h>
+
 // OMPL
 #include <ompl/tools/thunder/Thunder.h>
 #include <bolt_core/Bolt.h>
@@ -181,6 +184,10 @@ public:
   // Execute trajectories
   moveit_boilerplate::ExecutionInterfacePtr execution_interface_;
 
+
+  // Interpolate and parameterize trajectories
+  moveit_boilerplate::PlanningInterfacePtr planning_interface_;
+
   // Modes
   bool run_problems_;
   bool create_spars_;
@@ -192,6 +199,7 @@ public:
   bool benchmark_performance_;
   bool post_processing_;
   int post_processing_interval_;
+  bool use_start_imarkers_ = false;
 
   // Type of planner
   std::string experience_planner_;
@@ -216,6 +224,7 @@ public:
   bool track_memory_consumption_ = false;
   bool use_logging_ = false;
   bool collision_checking_enabled_ = true;
+  bool velocity_scaling_factor_ = 0.2;
 
   // Verbosity levels
   bool debug_print_trajectory_;

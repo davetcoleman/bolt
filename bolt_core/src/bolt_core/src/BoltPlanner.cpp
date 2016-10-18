@@ -315,7 +315,7 @@ bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
 
     for (TaskVertex goal : candidateGoals)
     {
-      BOLT_DEBUG(indent, false && verbose_, "foreach_goal: Checking motion from "
+      BOLT_DEBUG(indent, true && verbose_, "foreach_goal: Planning from candidate start/goal pair "
                                                 << actualGoal << " to " << taskGraph_->getCompoundState(goal));
 
       if (ptc)  // Check if our planner is out of time
