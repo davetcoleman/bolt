@@ -1262,21 +1262,21 @@ bool TaskGraph::checkMotion(const base::State *a, const base::State *b)
   return modelSI_->checkMotion(getModelBasedState(a), getModelBasedState(b));
 }
 
-ob::PathPtr TaskGraph::convertPathToNonCompound(const ob::PathPtr compoundPath)
+geometric::PathGeometricPtr TaskGraph::convertPathToNonCompound(const geometric::PathGeometricPtr compoundPathGeometric)
 {
   // Convert input path
-  og::PathGeometric &compoundPathGeometric = static_cast<og::PathGeometric &>(*compoundPath);
+  //og::PathGeometric &compoundPathGeometric = static_cast<og::PathGeometric &>(*compoundPath);
 
   // Create new path
-  ob::PathPtr modelPathBase(new og::PathGeometric(modelSI_));
-  og::PathGeometric &modelPath = static_cast<og::PathGeometric &>(*modelPathBase);
+  geometric::PathGeometricPtr modelPath(new og::PathGeometric(modelSI_));
+  //og::PathGeometric &modelPath = static_cast<og::PathGeometric &>(*modelPathBase);
 
-  for (std::size_t i = 0; i < compoundPathGeometric.getStateCount(); ++i)
+  for (std::size_t i = 0; i < compoundPathGeometric->getStateCount(); ++i)
   {
-    modelPath.append(getModelBasedState(compoundPathGeometric.getState(i)));
+    modelPath->append(getModelBasedState(compoundPathGeometric->getState(i)));
   }
 
-  return modelPathBase;
+  return modelPath;
 }
 
 }  // namespace bolt

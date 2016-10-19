@@ -89,10 +89,10 @@ public:
   virtual ~BoltPlanner(void);
 
   /** \brief Wrapper function to show good user feedback while smoothing a path */
-  bool simplifyPath(geometric::PathGeometric &path, Termination &ptc, std::size_t indent);
+  bool simplifyPath(geometric::PathGeometricPtr path, Termination &ptc, std::size_t indent);
 
   /** \brief Simplify a multi-modal path for different task levels */
-  bool simplifyTaskPath(geometric::PathGeometric &compoundPath, Termination &ptc, std::size_t indent);
+  bool simplifyTaskPath(geometric::PathGeometricPtr compoundPath, Termination &ptc, std::size_t indent);
 
   /** \brief Main entry function for finding a path plan */
   virtual base::PlannerStatus solve(Termination &ptc);
@@ -124,7 +124,7 @@ public:
    * \param compoundSolution - the resulting path
    * \return
    */
-  bool getPathOffGraph(const base::State *start, const base::State *goal, geometric::PathGeometric &compoundSolution,
+  bool getPathOffGraph(const base::State *start, const base::State *goal, geometric::PathGeometricPtr compoundSolution,
                        Termination &ptc, std::size_t indent);
 
   /** \brief Clear verticies not on the specified level */
@@ -139,7 +139,7 @@ public:
    * \return true on success
    */
   bool convertVertexPathToStatePath(std::vector<bolt::TaskVertex> &vertexPath, const base::State *actualStart,
-                                    const base::State *actualGoal, geometric::PathGeometric &compoundSolution,
+                                    const base::State *actualGoal, geometric::PathGeometricPtr compoundSolution,
                                     std::size_t indent);
 
   /**
@@ -161,7 +161,7 @@ public:
    */
   bool getPathOnGraph(const std::vector<bolt::TaskVertex> &candidateStarts,
                       const std::vector<bolt::TaskVertex> &candidateGoals, const base::State *actualStart,
-                      const base::State *actualGoal, geometric::PathGeometric &compoundSolution, Termination &ptc,
+                      const base::State *actualGoal, geometric::PathGeometricPtr compoundSolution, Termination &ptc,
                       bool debug, bool &feedbackStartFailed, std::size_t indent);
 
   /**
@@ -169,7 +169,7 @@ public:
    * \return true if a valid path is found
    */
   bool onGraphSearch(const bolt::TaskVertex &start, const bolt::TaskVertex &goal, const base::State *actualStart,
-                     const base::State *actualGoal, geometric::PathGeometric &compoundSolution, Termination &ptc,
+                     const base::State *actualGoal, geometric::PathGeometricPtr compoundSolution, Termination &ptc,
                      std::size_t indent);
 
   /** \brief Check recalled path for collision and disable as needed */
@@ -186,7 +186,7 @@ public:
     return taskGraph_;
   }
 
-  std::shared_ptr<geometric::PathGeometric> getOriginalSolutionPath()
+  geometric::PathGeometricPtr getOriginalSolutionPath()
   {
     return originalSolutionPath_;
   }
@@ -213,8 +213,11 @@ protected:
   /** \brief Class for managing various visualization features */
   VisualizerPtr visual_;
 
-  /** \brief Save the recalled path before smoothing for introspection later */
-  std::shared_ptr<geometric::PathGeometric> originalSolutionPath_;
+  /** \brief Save the recalled path before smoothing for introspection later - ModelBasedStateSpace */
+  geometric::PathGeometricPtr originalSolutionPath_;
+
+  /** \brief Save components of the solution path - CompoundStateSpace */
+  geometric::PathGeometricPtr compoundSolutionPath_;
 
   /** \brief The instance of the path simplifier */
   geometric::PathSimplifierPtr path_simplifier_;

@@ -156,8 +156,9 @@ base::PlannerStatus BoltPlanner::solve(base::State *startState, base::State *goa
                                        std::size_t indent)
 {
   // Create solution path as pointer so memory is not unloaded
-  ob::PathPtr compoundSolutionBase(new og::PathGeometric(compoundSI_));
-  og::PathGeometric &compoundSolution = static_cast<og::PathGeometric &>(*compoundSolutionBase);
+  //ob::PathPtr compoundSolutionBase(new og::PathGeometric(compoundSI_));
+  //og::PathGeometric &compoundSolution = static_cast<og::PathGeometric &>(*compoundSolutionBase);
+  og::PathGeometricPtr compoundSolution = std::make_shared<og::PathGeometric>(compoundSI_);
 
   // Search
   if (!getPathOffGraph(startState, goalState, compoundSolution, ptc, indent))
@@ -166,13 +167,13 @@ base::PlannerStatus BoltPlanner::solve(base::State *startState, base::State *goa
     return base::PlannerStatus::TIMEOUT;  // The planner failed to find a solution
   }
 
-  BOLT_DEBUG(indent, verbose_, "getPathOffGraph() found a solution of size " << compoundSolution.getStateCount());
+  BOLT_DEBUG(indent, verbose_, "getPathOffGraph() found a solution of size " << compoundSolution->getStateCount());
 
   // Save this for future debugging
-  originalSolutionPath_.reset(new geometric::PathGeometric(compoundSolution));
+  originalSolutionPath_.reset(new geometric::PathGeometric(*compoundSolution));
 
   // All save trajectories should be at least 1 state long, then we append the start and goal states, for min of 3
-  assert(compoundSolution.getStateCount() >= 3);
+  assert(compoundSolution->getStateCount() >= 3);
 
   // Smooth the result
   if (smoothingEnabled_)
@@ -186,21 +187,21 @@ base::PlannerStatus BoltPlanner::solve(base::State *startState, base::State *goa
     BOLT_WARN(indent, true, "Smoothing not enabled");
 
   // Convert solution back to joint trajectory only (no discrete component)
-  ob::PathPtr modelSolutionBase = taskGraph_->convertPathToNonCompound(compoundSolutionBase);
-  og::PathGeometric &modelSolution = static_cast<og::PathGeometric &>(*modelSolutionBase);
+  geometric::PathGeometricPtr modelSolution = taskGraph_->convertPathToNonCompound(compoundSolution);
+  //og::PathGeometric &modelSolution = static_cast<og::PathGeometric &>(*modelSolutionBase);
 
   // Show the smoothed path
   if (visualizeSmoothedTrajectory_)
   {
     visual_->viz4()->deleteAllMarkers();
-    visual_->viz4()->path(&modelSolution, tools::MEDIUM, tools::BLACK, tools::BLACK);
+    visual_->viz4()->path(modelSolution.get(), tools::MEDIUM, tools::BLACK, tools::BLACK);
     visual_->viz4()->trigger();
   }
 
   // Save solution
   double approximateDifference = -1;
   bool approximate = false;
-  pdef_->addSolutionPath(modelSolutionBase, approximate, approximateDifference, getName());
+  pdef_->addSolutionPath(modelSolution, approximate, approximateDifference, getName());
   bool solved = true;
 
   BOLT_DEBUG(indent, verbose_, "Finished BoltPlanner.solve()");
@@ -208,7 +209,7 @@ base::PlannerStatus BoltPlanner::solve(base::State *startState, base::State *goa
 }
 
 bool BoltPlanner::getPathOffGraph(const base::State *start, const base::State *goal,
-                                  og::PathGeometric &compoundSolution, Termination &ptc, std::size_t indent)
+                                  og::PathGeometricPtr compoundSolution, Termination &ptc, std::size_t indent)
 {
   BOLT_FUNC(indent, verbose_, "getPathOffGraph()");
 
@@ -274,14 +275,14 @@ bool BoltPlanner::getPathOffGraph(const base::State *start, const base::State *g
   }
 
   // All save trajectories should be at least 1 state long, then we append the start and goal states, for min of 3
-  assert(compoundSolution.getStateCount() >= 3);
+  assert(compoundSolution->getStateCount() >= 3);
 
   return true;
 }
 
 bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
                                  const std::vector<TaskVertex> &candidateGoals, const base::State *actualStart,
-                                 const base::State *actualGoal, og::PathGeometric &compoundSolution, Termination &ptc,
+                                 const base::State *actualGoal, og::PathGeometricPtr compoundSolution, Termination &ptc,
                                  bool debug, bool &feedbackStartFailed, std::size_t indent)
 {
   BOLT_FUNC(indent, verbose_, "getPathOnGraph()");
@@ -347,7 +348,7 @@ bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
       {
         // All save trajectories should be at least 1 state long, then we append the start and goal states, for
         // min of 3
-        assert(compoundSolution.getStateCount() >= 3);
+        assert(compoundSolution->getStateCount() >= 3);
 
         // Found a path
         return true;
@@ -388,7 +389,7 @@ bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
 
 bool BoltPlanner::onGraphSearch(const TaskVertex &startVertex, const TaskVertex &goalVertex,
                                 const base::State *actualStart, const base::State *actualGoal,
-                                og::PathGeometric &compoundSolution, Termination &ptc, std::size_t indent)
+                                og::PathGeometricPtr compoundSolution, Termination &ptc, std::size_t indent)
 {
   BOLT_FUNC(indent, verbose_, "onGraphSearch()");
 
@@ -611,7 +612,7 @@ bool BoltPlanner::findGraphNeighbors(const base::State *state, std::vector<TaskV
 }
 
 bool BoltPlanner::convertVertexPathToStatePath(std::vector<TaskVertex> &vertexPath, const base::State *actualStart,
-                                               const base::State *actualGoal, og::PathGeometric &compoundSolution,
+                                               const base::State *actualGoal, og::PathGeometricPtr compoundSolution,
                                                std::size_t indent)
 {
   BOLT_FUNC(indent, verbose_, "convertVertexPathToStatePath()");
@@ -621,7 +622,7 @@ bool BoltPlanner::convertVertexPathToStatePath(std::vector<TaskVertex> &vertexPa
     return false;
 
   // Add original start
-  compoundSolution.append(actualStart);
+  compoundSolution->append(actualStart);
 
   // Error check that no consequtive verticies are the same
   if (verbose_)
@@ -637,7 +638,7 @@ bool BoltPlanner::convertVertexPathToStatePath(std::vector<TaskVertex> &vertexPa
   // Reverse the vertexPath and convert to state path
   for (std::size_t i = vertexPath.size(); i > 0; --i)
   {
-    compoundSolution.append(taskGraph_->getCompoundState(vertexPath[i - 1]));
+    compoundSolution->append(taskGraph_->getCompoundState(vertexPath[i - 1]));
 
     // Add the edge status
     if (i > 1)  // skip the last vertex (its reversed)
@@ -668,36 +669,36 @@ bool BoltPlanner::convertVertexPathToStatePath(std::vector<TaskVertex> &vertexPa
   // Add original goal if it is different than the last state
   if (actualGoal != taskGraph_->getCompoundState(vertexPath.front()))
   {
-    compoundSolution.append(actualGoal);
+    compoundSolution->append(actualGoal);
   }
 
   return true;
 }
 
-bool BoltPlanner::simplifyPath(og::PathGeometric &path, Termination &ptc, std::size_t indent)
+bool BoltPlanner::simplifyPath(og::PathGeometricPtr path, Termination &ptc, std::size_t indent)
 {
   BOLT_FUNC(indent, verbose_, "BoltPlanner: simplifyPath(): non-task version");
 
   time::point simplifyStart = time::now();
-  std::size_t numStates = path.getStateCount();
+  std::size_t numStates = path->getStateCount();
 
   BOLT_ERROR(indent, "this path simplifier might be using the wrong statespace path");
-  path_simplifier_->simplify(path, ptc);
+  path_simplifier_->simplify(*path, ptc);
   double simplifyTime = time::seconds(time::now() - simplifyStart);
 
-  int diff = numStates - path.getStateCount();
+  int diff = numStates - path->getStateCount();
   BOLT_DEBUG(indent, verbose_ || true, "BoltPlanner: Path simplification took "
                                            << simplifyTime << " seconds and removed " << diff << " states");
 
   return true;
 }
 
-bool BoltPlanner::simplifyTaskPath(og::PathGeometric &compoundPath, Termination &ptc, std::size_t indent)
+bool BoltPlanner::simplifyTaskPath(og::PathGeometricPtr compoundPath, Termination &ptc, std::size_t indent)
 {
   BOLT_FUNC(indent, true, "BoltPlanner: simplifyTaskPath()");
 
   time::point simplifyStart = time::now();
-  std::size_t origNumStates = compoundPath.getStateCount();
+  std::size_t origNumStates = compoundPath->getStateCount();
 
   // Number of levels
   const std::size_t NUM_LEVELS = 3;
@@ -708,14 +709,14 @@ bool BoltPlanner::simplifyTaskPath(og::PathGeometric &compoundPath, Termination 
     modelPathSegments.push_back(og::PathGeometric(modelSI_));
 
   // Create the solution path
-  og::PathGeometric compoundSmoothedPath(compoundSI_);
+  og::PathGeometricPtr compoundSmoothedPath = std::make_shared<og::PathGeometric>(compoundSI_);
 
   // Divide the path into different levels
   VertexLevel previousLevel = 0;  // Error check ordering of input path
   std::stringstream o;
-  for (std::size_t i = 0; i < compoundPath.getStateCount(); ++i)
+  for (std::size_t i = 0; i < compoundPath->getStateCount(); ++i)
   {
-    base::State *compoundState = compoundPath.getState(i);
+    base::State *compoundState = compoundPath->getState(i);
     VertexLevel level = taskGraph_->getTaskLevel(compoundState);
 
     // Debug
@@ -795,7 +796,7 @@ bool BoltPlanner::simplifyTaskPath(og::PathGeometric &compoundPath, Termination 
       }
 
       // Add to solution path
-      compoundSmoothedPath.append(compoundState);
+      compoundSmoothedPath->append(compoundState);
     }
   }
 
@@ -804,7 +805,7 @@ bool BoltPlanner::simplifyTaskPath(og::PathGeometric &compoundPath, Termination 
 
   double simplifyTime = time::seconds(time::now() - simplifyStart);
 
-  int diff = origNumStates - compoundPath.getStateCount();
+  int diff = origNumStates - compoundPath->getStateCount();
   BOLT_DEBUG(indent, verbose_, "BoltPlanner: Path simplification took " << simplifyTime << " seconds and removed "
                                                                         << diff << " states");
 

@@ -60,6 +60,12 @@
 
 namespace ompl
 {
+
+namespace geometric
+{
+typedef std::shared_ptr<geometric::PathGeometric> PathGeometricPtr;
+}
+
 namespace tools
 {
 namespace bolt

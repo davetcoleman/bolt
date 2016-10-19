@@ -195,8 +195,8 @@ public:
   void publishSampleRegion(const ob::ScopedState<>& state_area, const double& distance);
 
   /** \brief Convert path formats */
-  bool convertPath(const og::PathGeometric& path, const robot_model::JointModelGroup* jmg,
-                   robot_trajectory::RobotTrajectoryPtr& traj, double speed = 0.1);
+  bool convertPathToMoveIt(const og::PathGeometric& path, const robot_model::JointModelGroup* jmg,
+                           robot_trajectory::RobotTrajectoryPtr& traj, double speed = 0.1);
 
   /**
    * \brief Set the range to visualize the edge costs

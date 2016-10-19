@@ -421,8 +421,8 @@ void MoveItVizWindow::publishSampleRegion(const ob::ScopedState<>& state_area, c
   visuals_->publishSphere(temp_point_, rvt::TRANSLUCENT, rvt::REGULAR, "sample_region");
 }
 
-bool MoveItVizWindow::convertPath(const og::PathGeometric& path, const robot_model::JointModelGroup* jmg,
-                                  robot_trajectory::RobotTrajectoryPtr& traj, double speed)
+bool MoveItVizWindow::convertPathToMoveIt(const og::PathGeometric& path, const robot_model::JointModelGroup* jmg,
+                                          robot_trajectory::RobotTrajectoryPtr& traj, double speed)
 {
   // Error check
   if (path.getStateCount() <= 0)

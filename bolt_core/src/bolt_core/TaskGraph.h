@@ -419,7 +419,7 @@ public:
   bool checkMotion(const base::State* a, const base::State* b);
 
   /** \brief Convert a path of compound states into only the joint states component (ModelBasedStateSpace) */
-  base::PathPtr convertPathToNonCompound(const base::PathPtr compoundPath);
+  geometric::PathGeometricPtr convertPathToNonCompound(const geometric::PathGeometricPtr compoundPath);
 
 protected:
   /** \brief Short name of this class */

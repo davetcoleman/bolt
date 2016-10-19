@@ -195,7 +195,7 @@ base::PlannerStatus Bolt::solve(const base::PlannerTerminationCondition &ptc)
   planTime_ = time::seconds(time::now() - start);
 
   // Do logging
-  logResults(indent);
+  processResults(indent);
 
   return lastStatus_;
 }
@@ -205,7 +205,7 @@ void Bolt::visualize(std::size_t indent)
   // Optionally visualize raw trajectory
   if (visualizeRawTrajectory_)
   {
-    std::shared_ptr<geometric::PathGeometric> originalPath = boltPlanner_->getOriginalSolutionPath();
+    geometric::PathGeometricPtr originalPath = boltPlanner_->getOriginalSolutionPath();
 
     // Make the chosen path a different color and thickness
     visual_->viz5()->path(originalPath.get(), tools::MEDIUM, tools::BLUE, tools::BLACK);
@@ -223,7 +223,7 @@ void Bolt::visualize(std::size_t indent)
 
   // Make a copy so that we can interpolate it
   geometric::PathGeometric solutionPathCopy(*solutionPath);
-  //solutionPathCopy.interpolate();
+  // solutionPathCopy.interpolate();
 
   // Show smoothed & interpolated path
   if (visualizeSmoothTrajectory_)
@@ -273,7 +273,7 @@ bool Bolt::checkBoltPlannerOptimality(std::size_t indent)
   return true;
 }
 
-void Bolt::logResults(std::size_t indent)
+void Bolt::processResults(std::size_t indent)
 {
   // Record stats
   stats_.totalPlanningTime_ += planTime_;  // used for averaging
@@ -296,11 +296,8 @@ void Bolt::logResults(std::size_t indent)
     case base::PlannerStatus::EXACT_SOLUTION:
     {
       og::PathGeometric solutionPath = og::SimpleSetup::getSolutionPath();  // copied so that it is non-const
-
-      std::cout << ANSI_COLOR_BLUE;
-      std::cout << "Bolt Finished - solution found in " << planTime_ << " seconds with " << solutionPath.getStateCount()
-                << " states" << std::endl;
-      std::cout << ANSI_COLOR_RESET;
+      BOLT_BLUE(indent, true, "Bolt Finished - solution found in " << planTime_ << " seconds with "
+                                                                        << solutionPath.getStateCount() << " states");
 
       // Show in Rviz
       visualize(indent);
@@ -341,7 +338,8 @@ bool Bolt::checkRepeatedStates(const og::PathGeometric &path, std::size_t indent
   {
     if (si_->getStateSpace()->equalStates(path.getState(i - 1), path.getState(i)))
     {
-      BOLT_ERROR(indent, "Duplicate state found between " << i - 1 << " and " << i << " on trajectory, out of " <<  path.getStateCount());
+      BOLT_ERROR(indent, "Duplicate state found between " << i - 1 << " and " << i << " on trajectory, out of "
+                                                          << path.getStateCount());
 
       visual_->viz6()->state(path.getState(i), tools::ROBOT, tools::RED, 0);
       visual_->waitForUserFeedback("duplicate");

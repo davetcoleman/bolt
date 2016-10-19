@@ -193,8 +193,8 @@ public:
 
   bool checkBoltPlannerOptimality(std::size_t indent);
 
-  /** \brief Helper function for logging data to file */
-  void logResults(std::size_t indent);
+  /** \brief Logging  data to file and visualizing*/
+  void processResults(std::size_t indent);
 
   /** \brief Run the planner until \e ptc becomes true (at most) */
   virtual base::PlannerStatus solve(const base::PlannerTerminationCondition &ptc);

@@ -595,13 +595,6 @@ bool BoltMoveIt::plan()
   space_->copyToOMPLState(ompl_start_, *moveit_start_);
   space_->copyToOMPLState(ompl_goal_, *moveit_goal_);
 
-  // Convert the goal state to level 2
-  // if (use_task_planning_)
-  // {
-  //   const int level = 2;
-  //   space_->setLevel(ompl_goal_, level);
-  // }
-
   // Set the start and goal states
   bolt_->setStartAndGoalStates(ompl_start_, ompl_goal_);
 
@@ -629,10 +622,7 @@ bool BoltMoveIt::plan()
   }
 
   // Get solution
-  og::PathGeometric path = bolt_->getSolutionPath();
-
-  // Add start to solution
-  // path.prepend(ompl_start_);  // necessary?
+  og::PathGeometric geometric_path = bolt_->getSolutionPath();
 
   // Check/test the solution for errors
   // if (use_task_planning_)
@@ -645,10 +635,10 @@ bool BoltMoveIt::plan()
   // path.interpolate();
   // ROS_INFO_STREAM_NAMED(name_, "Interpolation added: " << path.getStateCount() - state_count << " states");
 
-  // Convert trajectory
+  // Convert trajectory from OMPL to MoveIt! format
   robot_trajectory::RobotTrajectoryPtr traj;
   const double speed = 0.025;
-  viz3_->convertPath(path, planning_jmg_, traj, speed);
+  viz3_->convertPathToMoveIt(geometric_path, planning_jmg_, traj, speed);
 
   // Check/test the solution for errors
   checkMoveItPathSolution(traj);
