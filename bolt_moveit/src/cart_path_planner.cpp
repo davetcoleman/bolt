@@ -65,7 +65,7 @@ CartPathPlanner::CartPathPlanner(BoltMoveIt* parent)
     using namespace rosparam_shortcuts;
     ros::NodeHandle rpnh(nh_, name_);
     std::size_t error = 0;
-    error += !get(name_, rpnh, "ik_solver/discretization", ik_discretization_);
+    error += !get(name_, rpnh, "ik_solver/discretization", ik_solver_discretization_);
     error += !get(name_, rpnh, "trajectory/discretization", trajectory_discretization_);
     error += !get(name_, rpnh, "trajectory/timing", timing_);
     error += !get(name_, rpnh, "tolerance/pi_fraction_increment", tolerance_pi_fraction_increment);
@@ -84,17 +84,6 @@ CartPathPlanner::CartPathPlanner(BoltMoveIt* parent)
     shutdownIfError(name_, error);
   }
 
-  //tolerance_increment_ = 2.0 * M_PI / tolerance_pi_fraction_increment;
-  tolerance_increment_ = tolerance_pi_fraction_increment;
-
-  // Specify tolerance for new exact_poses
-  orientation_tol_ = OrientationTol(tolerance_roll_, tolerance_pitch_, tolerance_yaw_);
-
-  // Debug tolerances
-  EigenSTL::vector_Affine3d candidate_poses;
-  Eigen::Affine3d pose = Eigen::Affine3d::Identity();
-  computeRedunPosesForCartPoint(pose, orientation_tol_, candidate_poses, true, 0);
-
   // Load planning state
   shared_robot_state0_.reset(new moveit::core::RobotState(*parent_->moveit_start_));
   shared_robot_state1_.reset(new moveit::core::RobotState(*parent_->moveit_start_));
@@ -107,6 +96,10 @@ CartPathPlanner::CartPathPlanner(BoltMoveIt* parent)
 
   // Set visual tools
   visual_tools_ = imarker_cartesian_->getVisualTools();
+
+  if (!visual_tools_)
+    BOLT_ERROR(indent, "Not loaded!");
+
   visual_tools_->setMarkerTopic(nh_.getNamespace() + "/cartesian_trajectory");
   visual_tools_->loadMarkerPub(true);
   visual_tools_->deleteAllMarkers();
@@ -118,6 +111,15 @@ CartPathPlanner::CartPathPlanner(BoltMoveIt* parent)
   const bool debug = false;
   if (!path_loader.get2DPath(path_from_file_, debug))
     exit(0);
+
+  // Specify tolerance for new exact_poses
+  tolerance_increment_ = tolerance_pi_fraction_increment;
+  orientation_tol_ = OrientationTol(tolerance_roll_, tolerance_pitch_, tolerance_yaw_);
+
+  // Debug tolerances
+  // EigenSTL::vector_Affine3d candidate_poses;
+  // Eigen::Affine3d pose = Eigen::Affine3d::Identity();
+  // computeRedunPosesForCartPoint(pose, orientation_tol_, candidate_poses, true, 0);
 
   // Trigger the first path viz
   generateExactPoses(indent);
@@ -234,11 +236,15 @@ bool CartPathPlanner::computeRedunPosesForCartPoint(const Eigen::Affine3d& pose,
   BOLT_FUNC(indent, verbose_, "computeRedunPosesForCartPoint()");
   BOOST_ASSERT_MSG(tolerance_increment_ > std::numeric_limits<double>::epsilon(), "Divide by zero using orientation increment");
 
+  // override input TODO
+  verbose = visualize_all_cart_poses_individual_;
+
   const std::size_t num_axis = 3;
 
   BOLT_INFO(indent, verbose, "----------------------------------");
   BOLT_INFO(indent, verbose, "Poses per Point");
-  BOLT_INFO(indent, verbose, "  Tolerance Increment:   " << tolerance_increment_);
+  BOLT_INFO(indent, verbose, "  IK Solver Discretization: " << ik_solver_discretization_);
+  BOLT_INFO(indent, verbose, "  Tolerance Increment:      " << tolerance_increment_);
 
   // Reserve vector size
   std::vector<size_t> num_steps_per_axis(num_axis, 0 /* value */);
@@ -645,7 +651,7 @@ bool CartPathPlanner::combineEETrajectories(const std::vector<RedunJointTrajecto
     // Loop through each pair of poses across end effectors
     for (std::size_t pose0_id = 0; pose0_id < poses0->size(); ++pose0_id)
     {
-      bool pairEveryPoseWithEveryPose = false;
+      bool pairEveryPoseWithEveryPose = (hybrid_rand_factor_ < std::numeric_limits<double>::epsilon());
 
       // Enumerate every possible pair of poses
       if (pairEveryPoseWithEveryPose)
@@ -933,7 +939,7 @@ bool CartPathPlanner::getRedunJointPosesForCartPoint(const Eigen::Affine3d& pose
   BOLT_FUNC(indent, verbose_, "getRedunJointPosesForCartPoint()");
 
   EigenSTL::vector_Affine3d candidate_poses;
-  if (!computeRedunPosesForCartPoint(pose, orientation_tol_, candidate_poses, false, indent))
+  if (!computeRedunPosesForCartPoint(pose, orientation_tol_, candidate_poses, true, indent))
     return false;
 
   // Get the IK solver for a given planning group
@@ -1003,7 +1009,7 @@ bool CartPathPlanner::getRedunJointPosesForCartPoint(const Eigen::Affine3d& pose
     kinematics::KinematicsResult kin_result;
 
     // Set discretization of redun joints
-    solver->setSearchDiscretization(ik_discretization_);
+    solver->setSearchDiscretization(ik_solver_discretization_);
 
     // Solve
     if (!solver->getPositionIK(ik_queries, ik_seed_state, solutions, kin_result, options))
@@ -1056,8 +1062,8 @@ bool CartPathPlanner::getRedunJointPosesForCartPoint(const Eigen::Affine3d& pose
 void CartPathPlanner::visualizeAllJointPoses(const RedunJointPoses& joint_poses,
                                              const moveit::core::JointModelGroup* jmg, std::size_t indent)
 {
-  BOLT_FUNC(indent, true, "visualizeAllJointPoses() found " << joint_poses.size() << " joint_poses for this cartesian "
-                                                                                     "point");
+  BOLT_FUNC(indent, true, "visualizeAllJointPoses() found " << joint_poses.size()
+            << " joint_poses for this cartesian point");
 
   for (const JointSpacePoint& joint_pose : joint_poses)
   {

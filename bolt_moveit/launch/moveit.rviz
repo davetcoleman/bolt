@@ -61,9 +61,8 @@ Panels:
         - /Viz1to61/ompl5 - state1/Links1/screen1
         - /Viz1to61/ompl5 - state1/Links1/sonar_ring1
         - /Viz1to61/ompl5 - state1/Links1/torso1
-        - /PlanningScene1/Scene Geometry1
+        - /PlanningScene1
         - /PlanningScene1/Scene Robot1
-        - /InteractiveMarkers1
         - /TF1/Frames1
       Splitter Ratio: 0.554561734
     Tree Height: 712
@@ -1252,15 +1251,14 @@ Visualization Manager:
           Enabled: true
           Links:
             All Links Enabled: true
-            Expand Joint Details: true
-            Expand Link Details: true
-            Expand Tree: true
-            Link Tree Style: true
+            Expand Joint Details: false
+            Expand Link Details: false
+            Expand Tree: false
+            Link Tree Style: Links in Alphabetic Order
             base:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: true
             collision_head_link_1:
               Alpha: 1
               Show Axes: false
@@ -1280,7 +1278,6 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: true
             head:
               Alpha: 1
               Show Axes: false
@@ -1290,17 +1287,14 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: true
             left_arm_itb:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: true
             left_arm_mount:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: true
             left_gripper:
               Alpha: 1
               Show Axes: false
@@ -1325,7 +1319,6 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: true
             left_hand:
               Alpha: 1
               Show Axes: false
@@ -1335,7 +1328,6 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: true
             left_hand_camera:
               Alpha: 1
               Show Axes: false
@@ -1345,7 +1337,6 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: true
             left_hand_range:
               Alpha: 1
               Show Axes: false
@@ -1370,7 +1361,6 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: true
             left_upper_elbow:
               Alpha: 1
               Show Axes: false
@@ -1410,12 +1400,10 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: true
             right_arm_mount:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: true
             right_gripper:
               Alpha: 1
               Show Axes: false
@@ -1440,7 +1428,6 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: true
             right_hand:
               Alpha: 1
               Show Axes: false
@@ -1450,7 +1437,6 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: true
             right_hand_camera:
               Alpha: 1
               Show Axes: false
@@ -1460,7 +1446,6 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: true
             right_hand_range:
               Alpha: 1
               Show Axes: false
@@ -1485,7 +1470,6 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: true
             right_upper_elbow:
               Alpha: 1
               Show Axes: false
@@ -1832,6 +1816,7 @@ Visualization Manager:
           Name: ompl6 - markers
           Namespaces:
             Cylinder: true
+            Sphere: true
             path_spheres: true
           Queue Size: 100
           Value: true
@@ -2113,14 +2098,14 @@ Visualization Manager:
       Show Robot Collision: false
       Show Robot Visual: true
       Show Trail: false
-      State Display Time: 0.05 s
+      State Display Time: 0.5 s
       Trajectory Topic: /baxter/display_trajectory
       Value: true
     - Class: moveit_rviz_plugin/PlanningScene
       Enabled: true
       Move Group Namespace: ""
       Name: PlanningScene
-      Planning Scene Topic: /baxter/monitored_planning_scene
+      Planning Scene Topic: /swri/planning_scene
       Robot Description: /baxter/robot_description
       Scene Geometry:
         Scene Alpha: 0.899999976
@@ -2398,24 +2383,24 @@ Visualization Manager:
             Show Trail: false
             Value: true
         Robot Alpha: 1
-        Show Robot Collision: true
-        Show Robot Visual: false
+        Show Robot Collision: false
+        Show Robot Visual: true
       Value: true
     - Class: rviz/Group
       Displays:
         - Class: rviz/InteractiveMarkers
           Enable Transparency: true
-          Enabled: true
+          Enabled: false
           Name: Start
           Show Axes: false
           Show Descriptions: true
           Show Visual Aids: false
           Update Topic: /baxter/start_imarker/update
-          Value: true
+          Value: false
         - Attached Body Color: 150; 50; 150
           Class: moveit_rviz_plugin/RobotState
           Collision Enabled: false
-          Enabled: true
+          Enabled: false
           Links:
             All Links Enabled: true
             Expand Joint Details: false
@@ -2688,7 +2673,7 @@ Visualization Manager:
           Robot State Topic: /baxter/imarker_start_state
           Show All Links: true
           Show Highlights: true
-          Value: true
+          Value: false
           Visual Enabled: true
         - Class: rviz/InteractiveMarkers
           Enable Transparency: true
@@ -3269,6 +3254,7 @@ Visualization Manager:
           Marker Topic: /baxter/cartesian_trajectory
           Name: Cart
           Namespaces:
+            Axis: true
             Cylinder: true
           Queue Size: 100
           Value: true
@@ -3325,22 +3311,22 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 7.82554722
+      Distance: 1.67552531
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.54111141
-        Y: -0.0799086094
-        Z: 1.1920929e-07
+        X: 0.907996893
+        Y: 0.278990954
+        Z: -2.38418579e-07
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.485399604
+      Pitch: 0.150398418
       Target Frame: robot_table_link
       Value: XYOrbit (rviz)
-      Yaw: 0.0904138982
+      Yaw: 0.265399456
     Saved: ~
 Window Geometry:
   Displays:

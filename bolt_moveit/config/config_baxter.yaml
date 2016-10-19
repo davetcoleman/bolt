@@ -28,7 +28,8 @@ bolt_moveit:
   problem_type: 1 # 0 - random, 1 - imarkers
 
   # execution
-  velocity_scaling_factor: 0.5
+  connect_to_hardware: true
+  velocity_scaling_factor: 1.0
 
   # solver type
   experience_planner: bolt
@@ -80,8 +81,8 @@ sparse_generator:
 # ====================================================
 sparse_criteria:
   #sparse_delta_fraction: 0.4
-  sparse_delta_fraction: 0.45
-  #sparse_delta_fraction: 0.5
+  #sparse_delta_fraction: 0.45
+  sparse_delta_fraction: 0.5
   penetration_overlap_fraction: 0.01
   near_sample_points_multiple: 2 # multiply this times number of dimensions
 # VAR4
@@ -179,8 +180,8 @@ task_graph:
 
 # ====================================================
 debug_interface:
-  autonomous: false
-  full_autonomous: false
+  autonomous: true
+  full_autonomous: true
 
 # ====================================================
 bolt_planner:
@@ -210,16 +211,16 @@ cart_path_planner:
   tolerance:
     pi_fraction_increment: 0.2 # 2xPI / this number = number of steps to divide each dimension by
     roll: 0.314 # pi/10
-    pitch: 0.314 # pi/10
+    pitch: 0 #0.314 # pi/10
     # roll: 0.628 # pi/5
     # pitch: 0.628 # pi/5
     yaw: 0 # pi
-  hybrid_rand_factor: 5 # number of times to randomly add the two arm trajectories together
+  hybrid_rand_factor: 0 # number of times to randomly add the two arm trajectories together. 0 means to use all combinations
   verbose: false
   visualize:
     all_cart_poses: false # show the markers for each pose location
-    all_cart_poses_individual: true # show the markers one by one for each pose location
-    all_solutions: false # show each solution along trajectory when moving the interactive markers
+    all_cart_poses_individual: false # show the markers one by one for each pose location
+    all_solutions: false # show each redundant IK solution along trajectory
     all_solutions_sleep: 0.1 # time between each solution for viewing
     rejected_edges_due_to_timing: false
     combined_solutions: false # show the robot state for each combined pose

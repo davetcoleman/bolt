@@ -165,7 +165,7 @@ private:
   // Timing between each pose in exact_poses
   double timing_;
 
-  double ik_discretization_ = M_PI / 4;
+  double ik_solver_discretization_ = M_PI / 4;
 
   // Trajectory settings
   double trajectory_discretization_;

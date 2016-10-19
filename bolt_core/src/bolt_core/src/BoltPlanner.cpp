@@ -315,8 +315,8 @@ bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
 
     for (TaskVertex goal : candidateGoals)
     {
-      BOLT_DEBUG(indent, true && verbose_, "foreach_goal: Planning from candidate start/goal pair "
-                                                << actualGoal << " to " << taskGraph_->getCompoundState(goal));
+      BOLT_DEBUG(indent, true || verbose_, "Planning from candidate start/goal pair "
+                 << actualGoal << " to " << taskGraph_->getCompoundState(goal));
 
       if (ptc)  // Check if our planner is out of time
       {
@@ -449,7 +449,7 @@ bool BoltPlanner::onGraphSearch(const TaskVertex &startVertex, const TaskVertex 
     // Attempt to find a solution from start to goal
     if (!taskGraph_->astarSearch(startVertex, goalVertex, vertexPath, distance, indent))
     {
-      BOLT_WARN(indent, verbose_, "Unable to construct solution between start and goal using astar");
+      BOLT_WARN(indent, true || verbose_, "Unable to construct solution between start and goal using astar");
 
       // no path found what so ever
       return false;

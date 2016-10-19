@@ -117,6 +117,7 @@ BoltMoveIt::BoltMoveIt(const std::string &hostname, const std::string &package_p
   error += !rosparam_shortcuts::get(name_, rpnh, "use_logging", use_logging_);
   error += !rosparam_shortcuts::get(name_, rpnh, "collision_checking_enabled", collision_checking_enabled_);
   // execution
+  error += !rosparam_shortcuts::get(name_, rpnh, "connect_to_hardware", connect_to_hardware_);
   error += !rosparam_shortcuts::get(name_, rpnh, "velocity_scaling_factor", velocity_scaling_factor_);
   // Visualize
   error += !rosparam_shortcuts::get(name_, rpnh, "visualize/display_database", visualize_display_database_);
@@ -194,10 +195,14 @@ BoltMoveIt::BoltMoveIt(const std::string &hostname, const std::string &package_p
     const double baxter_toros_height = -0.95;
     visual_moveit_start_->publishCollisionFloor(baxter_toros_height + 0.001, "floor", rvt::TRANSLUCENT_DARK);
     visual_moveit_start_->publishCollisionWall(/*x*/ -1.0, /*y*/ 0.0, /*z*/ baxter_toros_height, /*angle*/ 0,
-                                               /*width*/ 2, /*height*/ 2.0, "wall", rvt::CYAN);
-    visual_moveit_start_->publishCollisionTable(
-        /*x*/ 0.8, /*y*/ 0.0, /*z*/ baxter_toros_height, /*angle*/ 0, /*width*/ 1,
-        /*height*/ -0.75 * baxter_toros_height, /*depth*/ 0.8, "table", rvt::DARK_GREY);
+                                               /*width*/ 2, /*height*/ 2.0, "wall1", rvt::YELLOW);
+    visual_moveit_start_->publishCollisionWall(/*x*/ 0.0, /*y*/ -1.075, /*z*/ baxter_toros_height, /*angle*/ M_PI / 2.0,
+                                               /*width*/ 2, /*height*/ 2.0, "wall2", rvt::YELLOW);
+    visual_moveit_start_->publishCollisionWall(/*x*/ 0.0, /*y*/ 1.075, /*z*/ baxter_toros_height, /*angle*/ M_PI / 2.0,
+                                               /*width*/ 2, /*height*/ 2.0, "wall3", rvt::YELLOW);
+    visual_moveit_start_->publishCollisionTable(/*x*/ 0.85, /*y*/ 0.0, /*z*/ baxter_toros_height, /*angle*/ 0,
+                                                /*width*/ 2.0, /*height*/ -0.77 * baxter_toros_height, /*depth*/ 0.8,
+                                                "table", rvt::DARK_GREY);
 
     visual_moveit_start_->triggerPlanningSceneUpdate();
     ros::spinOnce();
@@ -210,72 +215,56 @@ BoltMoveIt::BoltMoveIt(const std::string &hostname, const std::string &package_p
     collision_matrix.setEntry("wall", "pedestal", true);
   }
 
-  // if (track_memory_consumption_)
-  // {
-  //   double vm1, rss1;
-  //   processMemUsage(vm1, rss1);
-  //   ROS_INFO_STREAM_NAMED(name_, "Current memory consumption - VM: " << vm1 << " MB | RSS: " << rss1 << " MB");
-  // }
-
   // Create start/goal state imarker
   if (!headless_)
   {
     // Create cartesian planner
     cart_path_planner_.reset(new CartPathPlanner(this));
 
-    if (use_start_imarkers_) // if running on hardware, these markers are not needed
+    if (use_start_imarkers_)  // if running on hardware, these markers are not needed
     {
       imarker_start_.reset(
-                           new mvt::IMarkerRobotState(planning_scene_monitor_, "start", arm_datas_, rvt::GREEN, package_path_));
+          new mvt::IMarkerRobotState(planning_scene_monitor_, "start", arm_datas_, rvt::GREEN, package_path_));
     }
     imarker_goal_.reset(
         new mvt::IMarkerRobotState(planning_scene_monitor_, "goal", arm_datas_, rvt::ORANGE, package_path_));
 
-    ros::Duration(0.1).sleep();
-    ros::spinOnce();
-    bool check_verbose = true;
-    while (!planning_scene_->isStateValid(*getCurrentState(), "", check_verbose))
+    if (connect_to_hardware_)
     {
-      ROS_ERROR_STREAM_NAMED(name_, "START STATE INVALID");
-      visual_moveit_start_->publishRobotState(getCurrentState(), rvt::RED);
-      waitForNextStep("invalid start state");
+      ros::Duration(0.1).sleep();
       ros::spinOnce();
+      bool check_verbose = true;
+      while (!planning_scene_->isStateValid(*getCurrentState(), "", check_verbose) && ros::ok())
+      {
+        ROS_ERROR_STREAM_NAMED(name_, "START STATE INVALID " << ros::Time::now());
+        viz5_->getVisualTools()->publishRobotState(getCurrentState(), rvt::RED);
+        ros::spinOnce();
+        ros::Duration(0.1).sleep();
+        ros::spinOnce();
+      }
+    }
+
+    // Set to a pose
+    if (false)
+    {
+      imarker_goal_->getRobotState()->setToDefaultValues(planning_jmg_, "both_ready");
+      imarker_goal_->saveToFile();
+      imarker_goal_->publishState();
     }
   }
 
   // Set remote_control
   remote_control_->setDisplayWaitingState(boost::bind(&BoltMoveIt::displayWaitingState, this, _1));
 
-  execution_interface_ = std::make_shared<moveit_boilerplate::ExecutionInterface>(
-      remote_control_, planning_scene_monitor_, viz6_->getVisualTools());
-
-  planning_interface_ = std::make_shared<moveit_boilerplate::PlanningInterface>(execution_interface_, planning_scene_monitor_, viz6_->getVisualTools(), planning_jmg_);
-
-  /*
-  ros::Duration(1.0).sleep();
-  // Execute the trajectory
-  while (ros::ok())
+  // Connect to physical hardware
+  if (connect_to_hardware_)
   {
-    // Create fake trajectory
-    std::vector<moveit::core::RobotStatePtr> robot_state_traj;
+    execution_interface_ = std::make_shared<moveit_boilerplate::ExecutionInterface>(
+        remote_control_, planning_scene_monitor_, viz6_->getVisualTools());
 
-    // Start
-    robot_state_traj.push_back(getCurrentState());
-
-    // Goal
-    robot_state_traj.push_back(imarker_goal_->getRobotState());
-
-    // Interpolate and execute
-    const double velocity_scaling_factor = 0.1;
-    bool use_interpolation = true;
-    robot_trajectory::RobotTrajectoryPtr robot_traj(new robot_trajectory::RobotTrajectory(robot_model_, planning_jmg_));
-    planning_interface_->convertRobotStatesToTraj(robot_state_traj, robot_traj, planning_jmg_, velocity_scaling_factor, use_interpolation);
-    std::cout << "bolt_moveit::executing " << std::endl;
-
-    bool wait_for_execution = true;
-    execution_interface_->executeTrajectory(robot_traj, planning_jmg_, wait_for_execution);
+    planning_interface_ = std::make_shared<moveit_boilerplate::PlanningInterface>(
+        execution_interface_, planning_scene_monitor_, viz6_->getVisualTools(), planning_jmg_);
   }
-  */
 
   // Wait until user does something
   if (!auto_run_)
@@ -497,11 +486,11 @@ bool BoltMoveIt::runProblems()
     // Generate start/goal pair
     if (problem_type_ == 0)
     {
-      if (use_start_imarkers_) // if running on hardware, these markers are not needed
+      if (use_start_imarkers_)  // if running on hardware, these markers are not needed
         imarker_start_->setToRandomState();
       imarker_goal_->setToRandomState();
     }
-    if (use_start_imarkers_) // if running on hardware, these markers are not needed
+    if (use_start_imarkers_)  // if running on hardware, these markers are not needed
     {
       moveit_start_ = imarker_start_->getRobotState();
     }
@@ -681,7 +670,7 @@ bool BoltMoveIt::plan()
   // }
 
   // Interpolate and execute
-  const bool use_interpolation = true;
+  const bool use_interpolation = false;
   planning_interface_->convertRobotStatesToTraj(traj, planning_jmg_, velocity_scaling_factor_, use_interpolation);
 
   // Execute

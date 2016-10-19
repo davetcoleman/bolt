@@ -224,7 +224,9 @@ public:
   bool track_memory_consumption_ = false;
   bool use_logging_ = false;
   bool collision_checking_enabled_ = true;
-  bool velocity_scaling_factor_ = 0.2;
+
+  double velocity_scaling_factor_ = 0.2;
+  bool connect_to_hardware_ = false;
 
   // Verbosity levels
   bool debug_print_trajectory_;
