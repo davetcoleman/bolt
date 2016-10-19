@@ -314,6 +314,9 @@ protected:
   ExperienceStats stats_;
 
 public:
+
+  const std::string name_ = "Bolt";
+
   /** \brief Verbose settings */
   bool verbose_ = true;
 

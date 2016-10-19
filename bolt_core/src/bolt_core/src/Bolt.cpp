@@ -202,6 +202,8 @@ base::PlannerStatus Bolt::solve(const base::PlannerTerminationCondition &ptc)
 
 void Bolt::visualize(std::size_t indent)
 {
+  BOLT_FUNC(indent, true, "visualizing()");
+
   // Optionally visualize raw trajectory
   if (visualizeRawTrajectory_)
   {
@@ -301,6 +303,8 @@ void Bolt::processResults(std::size_t indent)
 
       // Show in Rviz
       visualize(indent);
+
+      std::cout << "after visualize " << std::endl;
 
       // Error check for repeated states
       if (!checkRepeatedStates(solutionPath, indent))

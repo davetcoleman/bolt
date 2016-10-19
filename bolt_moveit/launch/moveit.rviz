@@ -6,6 +6,7 @@ Panels:
       Expanded:
         - /Grid1/Offset1
         - /Viz1to61
+        - /Viz1to61/ompl5 - state1
         - /Viz1to61/ompl5 - state1/Links1/base1
         - /Viz1to61/ompl5 - state1/Links1/collision_head_link_11
         - /Viz1to61/ompl5 - state1/Links1/collision_head_link_21
@@ -63,6 +64,8 @@ Panels:
         - /Viz1to61/ompl5 - state1/Links1/torso1
         - /PlanningScene1
         - /PlanningScene1/Scene Robot1
+        - /InteractiveMarkers1
+        - /InteractiveMarkers1/Cart2
         - /TF1/Frames1
       Splitter Ratio: 0.554561734
     Tree Height: 712
@@ -1247,7 +1250,7 @@ Visualization Manager:
           Value: true
         - Attached Body Color: 150; 50; 150
           Class: moveit_rviz_plugin/RobotState
-          Collision Enabled: true
+          Collision Enabled: false
           Enabled: true
           Links:
             All Links Enabled: true
@@ -1522,7 +1525,7 @@ Visualization Manager:
           Show All Links: true
           Show Highlights: true
           Value: true
-          Visual Enabled: false
+          Visual Enabled: true
         - Class: rviz/MarkerArray
           Enabled: true
           Marker Topic: /baxter/ompl_visual5
@@ -2677,17 +2680,17 @@ Visualization Manager:
           Visual Enabled: true
         - Class: rviz/InteractiveMarkers
           Enable Transparency: true
-          Enabled: true
+          Enabled: false
           Name: Goal
           Show Axes: false
           Show Descriptions: true
           Show Visual Aids: false
           Update Topic: /baxter/goal_imarker/update
-          Value: true
+          Value: false
         - Attached Body Color: 150; 50; 150
           Class: moveit_rviz_plugin/RobotState
           Collision Enabled: false
-          Enabled: true
+          Enabled: false
           Links:
             All Links Enabled: true
             Expand Joint Details: false
@@ -2960,7 +2963,7 @@ Visualization Manager:
           Robot State Topic: /baxter/imarker_goal_state
           Show All Links: true
           Show Highlights: true
-          Value: true
+          Value: false
           Visual Enabled: true
         - Class: rviz/InteractiveMarkers
           Enable Transparency: true
@@ -2973,7 +2976,7 @@ Visualization Manager:
           Value: true
         - Attached Body Color: 150; 50; 150
           Class: moveit_rviz_plugin/RobotState
-          Collision Enabled: false
+          Collision Enabled: true
           Enabled: true
           Links:
             All Links Enabled: true
@@ -3248,13 +3251,12 @@ Visualization Manager:
           Show All Links: true
           Show Highlights: true
           Value: true
-          Visual Enabled: true
+          Visual Enabled: false
         - Class: rviz/MarkerArray
           Enabled: true
           Marker Topic: /baxter/cartesian_trajectory
           Name: Cart
           Namespaces:
-            Axis: true
             Cylinder: true
           Queue Size: 100
           Value: true
@@ -3311,22 +3313,22 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 1.67552531
+      Distance: 5.67568684
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.907996893
-        Y: 0.278990954
-        Z: -2.38418579e-07
+        X: 0.509644985
+        Y: -1.62925792
+        Z: 0
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.150398418
+      Pitch: 0.520398319
       Target Frame: robot_table_link
       Value: XYOrbit (rviz)
-      Yaw: 0.265399456
+      Yaw: 0.0203900523
     Saved: ~
 Window Geometry:
   Displays:

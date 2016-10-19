@@ -32,12 +32,16 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-/* Author: Ioan Sucan, Dave Coleman */
+/* Author: Dave Coleman, Ioan Sucan */
 
 #ifndef MOVEIT_OMPL_MODEL_BASED_STATE_SPACE_
 #define MOVEIT_OMPL_MODEL_BASED_STATE_SPACE_
 
+// OMPL
 #include <ompl/base/StateSpace.h>
+#include <ompl/geometric/PathGeometric.h>
+
+// MoveIt
 #include <moveit/robot_model/robot_model.h>
 #include <moveit/robot_state/robot_state.h>
 #include <moveit/kinematic_constraints/kinematic_constraint.h>
@@ -193,11 +197,10 @@ public:
   virtual void copyJointToOMPLState(ompl::base::State *state, const robot_state::RobotState &robot_state,
                                     const moveit::core::JointModel *joint_model, int ompl_state_joint_index) const;
 
-  /** \brief Get the mode (for hybrid task planning) of this state */
-  // virtual int getLevel(const ompl::base::State *state) const;
+  /** \brief Convert from ompl path to moveit path */
+  bool convertPathToRobotState(const ompl::geometric::PathGeometric& path, const robot_model::JointModelGroup* jmg,
+                           robot_trajectory::RobotTrajectoryPtr& traj, double speed);
 
-  /** \brief Set the mode (for hybrid task planning) of this state */
-  // virtual void setLevel(ompl::base::State *state, int level);
 
 protected:
   ModelBasedStateSpaceSpecification spec_;

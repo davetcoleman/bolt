@@ -91,9 +91,9 @@ public:
 
   void run(std::size_t indent);
 
-  bool runProblems();
+  bool runProblems(std::size_t indent);
 
-  bool plan();
+  bool plan(std::size_t indent);
 
   /** \brief Create multiple dummy cartesian paths */
   bool generateCartGraph();

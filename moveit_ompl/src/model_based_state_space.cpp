@@ -37,10 +37,13 @@
 #include <moveit_ompl/model_based_state_space.h>
 #include <moveit_ompl/detail/default_state_sampler.h>
 
-namespace mo = moveit_ompl;
 namespace ob = ompl::base;
+namespace og = ompl::geometric;
 
-mo::ModelBasedStateSpace::ModelBasedStateSpace(const ModelBasedStateSpaceSpecification &spec)
+namespace moveit_ompl
+{
+
+ModelBasedStateSpace::ModelBasedStateSpace(const ModelBasedStateSpaceSpecification &spec)
   : ob::StateSpace(), spec_(spec)
 {
   // set the state space name
@@ -93,11 +96,11 @@ mo::ModelBasedStateSpace::ModelBasedStateSpace(const ModelBasedStateSpaceSpecifi
   }
 }
 
-mo::ModelBasedStateSpace::~ModelBasedStateSpace()
+ModelBasedStateSpace::~ModelBasedStateSpace()
 {
 }
 
-ob::State *mo::ModelBasedStateSpace::allocState() const
+ob::State *ModelBasedStateSpace::allocState() const
 {
   std::cout << "alloc MODELBASEDSTATESPACE " << std::endl;
   StateType *state = new StateType();
@@ -105,13 +108,13 @@ ob::State *mo::ModelBasedStateSpace::allocState() const
   return state;
 }
 
-void mo::ModelBasedStateSpace::freeState(ob::State *state) const
+void ModelBasedStateSpace::freeState(ob::State *state) const
 {
   delete[] state->as<StateType>()->values;
   delete state->as<StateType>();
 }
 
-void mo::ModelBasedStateSpace::copyFromReals(ob::State *destination, const std::vector<double> &reals) const
+void ModelBasedStateSpace::copyFromReals(ob::State *destination, const std::vector<double> &reals) const
 {
   std::cout << "todo model based state space copyFromReals " << std::endl;
   // TODO(davetcoleman): make more efficient
@@ -123,28 +126,28 @@ void mo::ModelBasedStateSpace::copyFromReals(ob::State *destination, const std::
   // reals.size() * sizeof(double));
 }
 
-void mo::ModelBasedStateSpace::copyState(ob::State *destination, const ob::State *source) const
+void ModelBasedStateSpace::copyState(ob::State *destination, const ob::State *source) const
 {
   memcpy(destination->as<StateType>()->values, source->as<StateType>()->values, state_values_size_);
 }
 
-unsigned int mo::ModelBasedStateSpace::getSerializationLength() const
+unsigned int ModelBasedStateSpace::getSerializationLength() const
 {
   return state_values_size_ + sizeof(int);
 }
 
-void mo::ModelBasedStateSpace::serialize(void *serialization, const ob::State *state) const
+void ModelBasedStateSpace::serialize(void *serialization, const ob::State *state) const
 {
   memcpy(reinterpret_cast<char *>(serialization), state->as<StateType>()->values, state_values_size_);
 }
 
-void mo::ModelBasedStateSpace::deserialize(ob::State *state, const void *serialization) const
+void ModelBasedStateSpace::deserialize(ob::State *state, const void *serialization) const
 {
   // state->as<StateType>()->values[0] = 1;
   memcpy(state->as<StateType>()->values, reinterpret_cast<const char *>(serialization), state_values_size_);
 }
 
-unsigned int mo::ModelBasedStateSpace::getDimension() const
+unsigned int ModelBasedStateSpace::getDimension() const
 {
   unsigned int d = 0;
   for (std::size_t i = 0; i < joint_model_vector_.size(); ++i)
@@ -152,12 +155,12 @@ unsigned int mo::ModelBasedStateSpace::getDimension() const
   return d;
 }
 
-double mo::ModelBasedStateSpace::getMaximumExtent() const
+double ModelBasedStateSpace::getMaximumExtent() const
 {
   return spec_.joint_model_group_->getMaximumExtent(spec_.joint_bounds_);
 }
 
-double mo::ModelBasedStateSpace::getMeasure() const
+double ModelBasedStateSpace::getMeasure() const
 {
   double m = 1.0;
   for (std::size_t i = 0; i < spec_.joint_bounds_.size(); ++i)
@@ -171,12 +174,12 @@ double mo::ModelBasedStateSpace::getMeasure() const
   return m;
 }
 
-double mo::ModelBasedStateSpace::distance(const ob::State *state1, const ob::State *state2) const
+double ModelBasedStateSpace::distance(const ob::State *state1, const ob::State *state2) const
 {
   return spec_.joint_model_group_->distance(state1->as<StateType>()->values, state2->as<StateType>()->values);
 }
 
-bool mo::ModelBasedStateSpace::equalStates(const ob::State *state1, const ob::State *state2) const
+bool ModelBasedStateSpace::equalStates(const ob::State *state1, const ob::State *state2) const
 {
   for (unsigned int i = 0; i < variable_count_; ++i)
     if (fabs(state1->as<StateType>()->values[i] - state2->as<StateType>()->values[i]) >
@@ -186,18 +189,18 @@ bool mo::ModelBasedStateSpace::equalStates(const ob::State *state1, const ob::St
   return true;
 }
 
-void mo::ModelBasedStateSpace::enforceBounds(ob::State *state) const
+void ModelBasedStateSpace::enforceBounds(ob::State *state) const
 {
   spec_.joint_model_group_->enforcePositionBounds(state->as<StateType>()->values, spec_.joint_bounds_);
 }
 
-bool mo::ModelBasedStateSpace::satisfiesBounds(const ob::State *state) const
+bool ModelBasedStateSpace::satisfiesBounds(const ob::State *state) const
 {
   return spec_.joint_model_group_->satisfiesPositionBounds(state->as<StateType>()->values, spec_.joint_bounds_,
                                                            std::numeric_limits<double>::epsilon());
 }
 
-void mo::ModelBasedStateSpace::interpolate(const ob::State *from, const ob::State *to, const double t,
+void ModelBasedStateSpace::interpolate(const ob::State *from, const ob::State *to, const double t,
                                            ob::State *state) const
 {
   // clear any cached info (such as validity known or not)
@@ -211,14 +214,14 @@ void mo::ModelBasedStateSpace::interpolate(const ob::State *from, const ob::Stat
   }
 }
 
-double *mo::ModelBasedStateSpace::getValueAddressAtIndex(ob::State *state, const unsigned int index) const
+double *ModelBasedStateSpace::getValueAddressAtIndex(ob::State *state, const unsigned int index) const
 {
   if (index >= variable_count_)
     return NULL;
   return state->as<StateType>()->values + index;
 }
 
-void mo::ModelBasedStateSpace::setPlanningVolume(double minX, double maxX, double minY, double maxY, double minZ,
+void ModelBasedStateSpace::setPlanningVolume(double minX, double maxX, double minY, double maxY, double minZ,
                                                  double maxZ)
 {
   for (std::size_t i = 0; i < joint_model_vector_.size(); ++i)
@@ -240,18 +243,18 @@ void mo::ModelBasedStateSpace::setPlanningVolume(double minX, double maxX, doubl
     }
 }
 
-ob::StateSamplerPtr mo::ModelBasedStateSpace::allocDefaultStateSampler() const
+ob::StateSamplerPtr ModelBasedStateSpace::allocDefaultStateSampler() const
 {
   return ob::StateSamplerPtr(static_cast<ob::StateSampler *>(
       new DefaultStateSampler<ModelBasedStateSpace::StateType>(this, spec_.joint_model_group_, &spec_.joint_bounds_)));
 }
 
-void mo::ModelBasedStateSpace::printSettings(std::ostream &out) const
+void ModelBasedStateSpace::printSettings(std::ostream &out) const
 {
   out << "ModelBasedStateSpace '" << getName() << "' at " << this << std::endl;
 }
 
-void mo::ModelBasedStateSpace::printState(const ob::State *state, std::ostream &out) const
+void ModelBasedStateSpace::printState(const ob::State *state, std::ostream &out) const
 {
   for (std::size_t j = 0; j < joint_model_vector_.size(); ++j)
   {
@@ -264,19 +267,19 @@ void mo::ModelBasedStateSpace::printState(const ob::State *state, std::ostream &
   }
 }
 
-void mo::ModelBasedStateSpace::copyToRobotState(robot_state::RobotState &rstate, const ob::State *state) const
+void ModelBasedStateSpace::copyToRobotState(robot_state::RobotState &rstate, const ob::State *state) const
 {
   rstate.setJointGroupPositions(spec_.joint_model_group_, state->as<StateType>()->values);
 
   rstate.update();
 }
 
-void mo::ModelBasedStateSpace::copyToOMPLState(ob::State *state, const robot_state::RobotState &rstate) const
+void ModelBasedStateSpace::copyToOMPLState(ob::State *state, const robot_state::RobotState &rstate) const
 {
   rstate.copyJointGroupPositions(spec_.joint_model_group_, state->as<StateType>()->values);
 }
 
-void mo::ModelBasedStateSpace::copyJointToOMPLState(ob::State *state, const robot_state::RobotState &robot_state,
+void ModelBasedStateSpace::copyJointToOMPLState(ob::State *state, const robot_state::RobotState &robot_state,
                                                     const moveit::core::JointModel *joint_model,
                                                     int ompl_state_joint_index) const
 {
@@ -286,15 +289,31 @@ void mo::ModelBasedStateSpace::copyJointToOMPLState(ob::State *state, const robo
          joint_model->getVariableCount() * sizeof(double));
 }
 
-// /** \brief Get the mode (for hybrid task planning) of this state */
-// int mo::ModelBasedStateSpace::getLevel(const ob::State *state) const
-// {
-//   ROS_ERROR_STREAM_NAMED(name_, "getLevel Not implemented");
-//   return 0;
-// }
+bool ModelBasedStateSpace::convertPathToRobotState(const og::PathGeometric& path, const robot_model::JointModelGroup* jmg,
+                                                   robot_trajectory::RobotTrajectoryPtr& traj, double speed)
+{
+  // Error check
+  if (path.getStateCount() <= 0)
+  {
+    ROS_WARN_STREAM("No states found in path");
+    return false;
+  }
 
-// /** \brief Set the mode (for hybrid task planning) of this state */
-// void mo::ModelBasedStateSpace::setLevel(ob::State *state, int level)
-// {
-//   ROS_ERROR_STREAM_NAMED(name_, "getLevel Not implemented");
-// }
+  // New trajectory
+  traj.reset(new robot_trajectory::RobotTrajectory(spec_.robot_model_, jmg));
+  moveit::core::RobotState state(spec_.robot_model_);  // TODO(davetcoleman):do i need to copy this?
+
+  // Convert solution to MoveIt! format, reversing the solution
+  for (std::size_t i = 0; i < path.getStateCount(); ++i)
+  {
+    // Convert format
+    copyToRobotState(state, path.getState(i));
+
+    // Add to trajectory
+    traj->addSuffixWayPoint(state, speed);
+  }
+
+  return true;
+}
+
+} // namespace moveit_ompl

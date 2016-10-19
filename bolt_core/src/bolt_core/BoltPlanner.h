@@ -191,6 +191,16 @@ public:
     return originalSolutionPath_;
   }
 
+  geometric::PathGeometricPtr getCompoundSolutionPath()
+  {
+    return compoundSolutionPath_;
+  }
+
+  std::vector<geometric::PathGeometricPtr> getModelSolutionSegments()
+  {
+    return modelSolutionSegments_;
+  }
+
 private:
 
   /** \brief This is included in parent class, but mentioned here. Use modelSI_ instead to reduce confusion   */
@@ -216,8 +226,11 @@ protected:
   /** \brief Save the recalled path before smoothing for introspection later - ModelBasedStateSpace */
   geometric::PathGeometricPtr originalSolutionPath_;
 
-  /** \brief Save components of the solution path - CompoundStateSpace */
+  /** \brief Save the solution path that includes the discrete modes - CompoundStateSpace */
   geometric::PathGeometricPtr compoundSolutionPath_;
+
+  /** \brief Save the solution path into separate paths for each discrete mode - ModelBasedStateSpace */
+  std::vector<geometric::PathGeometricPtr> modelSolutionSegments_;
 
   /** \brief The instance of the path simplifier */
   geometric::PathSimplifierPtr path_simplifier_;

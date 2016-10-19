@@ -180,13 +180,13 @@ task_graph:
 
 # ====================================================
 debug_interface:
-  autonomous: true
-  full_autonomous: true
+  autonomous: false
+  full_autonomous: false
 
 # ====================================================
 bolt_planner:
   verbose:
-    verbose: false
+    verbose: true
     collision_check: false
   visualize:
     smoothed_trajectory: true

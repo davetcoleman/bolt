@@ -308,7 +308,12 @@ void MoveItVizWindow::publishTrajectoryPath(const og::PathGeometric& path, const
   // Convert to MoveIt! format
   robot_trajectory::RobotTrajectoryPtr traj;
   double speed = 0.01;
-  if (!convertPath(path, jmg, traj, speed))
+
+  // Get correct type of space
+  moveit_ompl::ModelBasedStateSpacePtr mb_state_space =
+    std::static_pointer_cast<moveit_ompl::ModelBasedStateSpace>(si_->getStateSpace());
+
+  if (!mb_state_space->convertPathToRobotState(path, jmg, traj, speed))
   {
     return;
   }
@@ -419,38 +424,6 @@ void MoveItVizWindow::publishSampleRegion(const ob::ScopedState<>& state_area, c
   visuals_->publishSphere(temp_point_, rvt::BLACK, rvt::REGULAR, "sample_region");  // mid point
   // outer sphere (x2 b/c its a radius, x0.1 to make it look nicer)
   visuals_->publishSphere(temp_point_, rvt::TRANSLUCENT, rvt::REGULAR, "sample_region");
-}
-
-bool MoveItVizWindow::convertPathToMoveIt(const og::PathGeometric& path, const robot_model::JointModelGroup* jmg,
-                                          robot_trajectory::RobotTrajectoryPtr& traj, double speed)
-{
-  // Error check
-  if (path.getStateCount() <= 0)
-  {
-    ROS_WARN_STREAM_NAMED(name_, "No states found in path");
-    return false;
-  }
-
-  // New trajectory
-  traj.reset(new robot_trajectory::RobotTrajectory(visuals_->getRobotModel(), jmg));
-  moveit::core::RobotState state(*visuals_->getSharedRobotState());  // TODO(davetcoleman):do i need to copy this?
-
-  // Get correct type of space
-  moveit_ompl::ModelBasedStateSpacePtr mb_state_space =
-      std::static_pointer_cast<moveit_ompl::ModelBasedStateSpace>(si_->getStateSpace());
-
-  // Convert solution to MoveIt! format, reversing the solution
-  // for (std::size_t i = path.getStateCount(); i > 0; --i)
-  for (std::size_t i = 0; i < path.getStateCount(); ++i)
-  {
-    // Convert format
-    mb_state_space->copyToRobotState(state, path.getState(i));
-
-    // Add to trajectory
-    traj->addSuffixWayPoint(state, speed);
-  }
-
-  return true;
 }
 
 }  // namespace bolt_moveit

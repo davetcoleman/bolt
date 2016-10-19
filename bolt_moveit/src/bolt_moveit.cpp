@@ -447,7 +447,7 @@ void BoltMoveIt::run(std::size_t indent)
     ROS_INFO_STREAM("Solving requested to be skipped by config file");
   else
   {
-    runProblems();
+    runProblems(indent);
     // runPopularityExperiement();
     // runSparseFactorExperiment();
   }
@@ -456,10 +456,8 @@ void BoltMoveIt::run(std::size_t indent)
   bolt_->saveIfChanged();
 }
 
-bool BoltMoveIt::runProblems()
+bool BoltMoveIt::runProblems(std::size_t indent)
 {
-  std::size_t indent = 0;
-
   // Logging
   // std::ofstream logging_file;  // open to append
   // if (use_logging_)
@@ -533,7 +531,7 @@ bool BoltMoveIt::runProblems()
     }
 
     // Do one plan
-    plan();
+    plan(indent);
 
     // Console display
     bolt_->printLogs();
@@ -580,7 +578,7 @@ bool BoltMoveIt::runProblems()
   return true;
 }
 
-bool BoltMoveIt::plan()
+bool BoltMoveIt::plan(std::size_t indent)
 {
   // Setup -----------------------------------------------------------
 
@@ -610,6 +608,8 @@ bool BoltMoveIt::plan()
   // Attempt to solve the problem within x seconds of planning time
   ob::PlannerStatus solved = bolt_->solve(ptc);
 
+  waitForNextStep("after solve 1");
+
   // Benchmark runtime
   total_duration_ = (ros::Time::now() - start_time).toSec();
 
@@ -621,51 +621,46 @@ bool BoltMoveIt::plan()
     return false;
   }
 
-  // Get solution
-  og::PathGeometric geometric_path = bolt_->getSolutionPath();
+  // Get solution segments
+  std::vector<og::PathGeometricPtr> model_solution_segments = bolt_->getBoltPlanner()->getModelSolutionSegments();
+  robot_trajectory::RobotTrajectoryPtr combined_traj =
+      std::make_shared<robot_trajectory::RobotTrajectory>(robot_model_, planning_jmg_);
 
-  // Check/test the solution for errors
-  // if (use_task_planning_)
-  // {
-  //   bolt_->getTaskGraph()->checkTaskPathSolution(path, ompl_start_, ompl_goal_);
-  // }
+  // For each segement of trajectory
+  for (std::size_t i = 0; i < model_solution_segments.size(); ++i)
+  {
+    og::PathGeometricPtr path_segment = model_solution_segments[i];
 
-  // Add more states between waypoints
-  // state_count = path.getStateCount();
-  // path.interpolate();
-  // ROS_INFO_STREAM_NAMED(name_, "Interpolation added: " << path.getStateCount() - state_count << " states");
+    // Convert trajectory from OMPL to MoveIt! format
+    robot_trajectory::RobotTrajectoryPtr traj_segment;
+    const double speed = 0.025;
+    if (!space_->convertPathToRobotState(*path_segment, planning_jmg_, traj_segment, speed))
+    {
+      BOLT_ERROR(indent, "Unable to convert path");
+      return false;
+    }
 
-  // Convert trajectory from OMPL to MoveIt! format
-  robot_trajectory::RobotTrajectoryPtr traj;
-  const double speed = 0.025;
-  viz3_->convertPathToMoveIt(geometric_path, planning_jmg_, traj, speed);
+    // Check/test the solution for errors
+    checkMoveItPathSolution(traj_segment);
 
-  // Check/test the solution for errors
-  checkMoveItPathSolution(traj);
+    // For the cartesian path, go real slow
+    double velocity_scaling_factor = velocity_scaling_factor_;
+    if (i == 1)
+      velocity_scaling_factor = 0.1;
 
-  // Visualize the trajectory
-  // if (visualize_interpolated_traj_)
-  // {
-  //   ROS_INFO("Visualizing the interpolated trajectory");
+    // Interpolate and parameterize
+    const bool use_interpolation = false;
+    planning_interface_->convertRobotStatesToTraj(traj_segment, planning_jmg_, velocity_scaling_factor,
+                                                  use_interpolation);
 
-  //   // Show trajectory line
-  //   mvt::MoveItVisualToolsPtr visual_moveit3 = boost::dynamic_pointer_cast<mvt::MoveItVisualTools>(viz3_);
-  //   visual_moveit3->publishTrajectoryLine(traj, ee_link_, rvt::RED);
-
-  //   // Show trajectory
-  //   const bool wait_for_trajectory = true;
-  //   visual_moveit3->publishTrajectoryPath(traj, wait_for_trajectory);
-
-  //   ros::Duration(1).sleep();
-  // }
-
-  // Interpolate and execute
-  const bool use_interpolation = false;
-  planning_interface_->convertRobotStatesToTraj(traj, planning_jmg_, velocity_scaling_factor_, use_interpolation);
+    // Add to combined traj
+    const double dt = i == 0 ? 0.0 : 1.0;  // Quick pause between segments except first one
+    combined_traj->append(*traj_segment, dt);
+  }
 
   // Execute
   bool wait_for_execution = true;
-  execution_interface_->executeTrajectory(traj, planning_jmg_, wait_for_execution);
+  execution_interface_->executeTrajectory(combined_traj, planning_jmg_, wait_for_execution);
 
   // Visualize the doneness
   std::cout << std::endl;
@@ -911,7 +906,7 @@ void BoltMoveIt::visualizeRawTrajectory(og::PathGeometric &path)
   // Convert trajectory
   robot_trajectory::RobotTrajectoryPtr traj;
   const double speed = 0.05;
-  viz3_->convertPath(path, planning_jmg_, traj, speed);
+  space_->convertPathToRobotState(path, planning_jmg_, traj, speed);
 
   // Show trajectory line
   viz3_->getVisualTools()->publishTrajectoryLine(traj, arm_datas_[0].ee_link_, rvt::GREY);  // TODO multiple EEs
