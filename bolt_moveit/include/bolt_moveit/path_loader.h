@@ -98,7 +98,7 @@ public:
       Eigen::Affine3d point = Eigen::Affine3d::Identity();
 
       // For each item/column
-      for (std::size_t i = 0; i < 2; ++i)
+      for (std::size_t i = 0; i < 3; ++i)
       {
         // Get a variable
         if (!std::getline(lineStream, cell, ','))

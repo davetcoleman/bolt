@@ -180,6 +180,7 @@ public:
 
   /** \brief User feedback */
   void visualizeBadEdge(TaskVertex fromVertex, TaskVertex toVertex);
+  void visualizeBadEdge(const base::State *from, const base::State *to);
 
   TaskGraphPtr getTaskGraph()
   {
@@ -251,6 +252,7 @@ public:
   bool visualizeStartGoal_ = false;
   bool visualizeLazyCollisionCheck_ = true;
   bool visualizeEachSolutionStep_ = false;
+  bool visualizeStartGoalUnconnected_ = true;
 
   int numStartGoalStatesAddedToTask_ = 0;
 };

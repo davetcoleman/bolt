@@ -221,24 +221,29 @@ void Bolt::visualize(std::size_t indent)
     }
   }
 
-  geometric::PathGeometric *solutionPath = static_cast<geometric::PathGeometric *>(pdef_->getSolutionPath().get());
-
-  // Make a copy so that we can interpolate it
-  geometric::PathGeometric solutionPathCopy(*solutionPath);
-  // solutionPathCopy.interpolate();
+  //geometric::PathGeometric *solutionPath = static_cast<geometric::PathGeometric *>(pdef_->getSolutionPath().get());
 
   // Show smoothed & interpolated path
   if (visualizeSmoothTrajectory_)
   {
-    visual_->viz6()->path(&solutionPathCopy, tools::LARGE, tools::BLACK, tools::PURPLE);
+    std::vector<geometric::PathGeometricPtr> modelSolutionSegments = boltPlanner_->getModelSolutionSegments();
+    for (std::size_t i = 0; i < modelSolutionSegments.size(); ++i)
+    {
+      geometric::PathGeometricPtr modelSolutionSegment = modelSolutionSegments[i];
+      if (i == 1)
+        visual_->viz6()->path(modelSolutionSegment.get(), tools::LARGE, tools::BLACK, tools::PURPLE);
+      else
+        visual_->viz6()->path(modelSolutionSegment.get(), tools::LARGE, tools::BLACK, tools::BLUE);
+    }
     visual_->viz6()->trigger();
   }
+  visual_->waitForUserFeedback("review visual from Bolt.cpp");
 
   // Show robot animated
   if (visualizeRobotTrajectory_)
   {
-    BOLT_DEBUG(indent, true, "Blocking while visualizing solution path");
-    visual_->viz6()->path(&solutionPathCopy, tools::ROBOT, tools::DEFAULT, tools::DEFAULT);
+    BOLT_DEBUG(indent, true, "Blocking while visualizing solution path TODO");
+    //visual_->viz6()->path(&solutionPathCopy, tools::ROBOT, tools::DEFAULT, tools::DEFAULT);
   }
 }
 
@@ -285,14 +290,14 @@ void Bolt::processResults(std::size_t indent)
   {
     case base::PlannerStatus::TIMEOUT:
       stats_.numSolutionsTimedout_++;
-      OMPL_ERROR("Bolt::solve(): TIMEOUT - No solution found after %f seconds", planTime_);
+      BOLT_ERROR(indent, "Bolt::solve(): TIMEOUT - No solution found after " << planTime_);
       break;
     case base::PlannerStatus::ABORT:
       stats_.numSolutionsTimedout_++;
-      OMPL_ERROR("Bolt::solve(): ABORT - No solution found after %f seconds", planTime_);
+      BOLT_ERROR(indent, "Bolt::solve(): ABORT - No solution found after " << planTime_);
       break;
     case base::PlannerStatus::APPROXIMATE_SOLUTION:
-      OMPL_ERROR("Bolt::solve(): Approximate - should not happen!");
+      BOLT_ERROR(indent, "Bolt::solve(): Approximate - should not happen!");
       exit(-1);
       break;
     case base::PlannerStatus::EXACT_SOLUTION:
@@ -331,7 +336,7 @@ void Bolt::processResults(std::size_t indent)
     }
     break;
     default:
-      OMPL_ERROR("Unknown status type: %u", lastStatus_);
+      BOLT_ERROR(indent, "Unknown status type: " << lastStatus_);
       stats_.numSolutionsFailed_++;
   }
 }

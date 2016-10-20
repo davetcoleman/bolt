@@ -327,14 +327,8 @@ bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
       {
         BOLT_WARN(indent, verbose_, "FOUND GOAL CANDIDATE THAT IS NOT VISIBLE! ");
 
-        if (debug)
-        {
-          visual_->viz4()->state(taskGraph_->getModelBasedState(goal), tools::SMALL, tools::RED, 1);
-          visual_->viz4()->edge(taskGraph_->getModelBasedState(actualGoal), taskGraph_->getModelBasedState(goal),
-                                tools::MEDIUM, tools::BLACK);
-          visual_->viz4()->trigger();
-          usleep(0.1 * 1000000);
-        }
+        if (visualizeStartGoalUnconnected_)
+          visualizeBadEdge(actualGoal, taskGraph_->getCompoundState(goal));
 
         continue;  // this is actually not visible
       }
@@ -544,7 +538,7 @@ bool BoltPlanner::lazyCollisionCheck(std::vector<TaskVertex> &vertexPath, Termin
     fromVertex = toVertex;
 
     if (visual_->viz1()->shutdownRequested())
-      break;
+      return false;
 
   }  // for
 
@@ -912,8 +906,17 @@ void BoltPlanner::visualizeBadEdge(TaskVertex fromVertex, TaskVertex toVertex)
 {
   const base::State *from = taskGraph_->getModelBasedState(fromVertex);
   const base::State *to = taskGraph_->getModelBasedState(toVertex);
+  visualizeBadEdge(from, to);
+}
 
+void BoltPlanner::visualizeBadEdge(const base::State *from, const base::State *to)
+{
   // Line
+  visual_->viz4()->deleteAllMarkers();
+  visual_->viz4()->edge(from, to, tools::MEDIUM, tools::RED);
+  visual_->viz4()->trigger();
+
+  // Line again
   visual_->viz5()->deleteAllMarkers();
   visual_->viz5()->edge(from, to, tools::MEDIUM, tools::RED);
   visual_->viz5()->trigger();

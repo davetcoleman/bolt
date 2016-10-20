@@ -79,6 +79,7 @@ CartPathPlanner::CartPathPlanner(BoltMoveIt* parent)
     error += !get(name_, rpnh, "visualize/all_cart_poses", visualize_all_cart_poses_);
     error += !get(name_, rpnh, "visualize/all_cart_poses_individual", visualize_all_cart_poses_individual_);
     error += !get(name_, rpnh, "visualize/combined_solutions", visualize_combined_solutions_);
+    error += !get(name_, rpnh, "visualize/combined_solutions_sleep", combined_solutions_sleep_);
     error += !get(name_, rpnh, "visualize/rejected_states", visualize_rejected_states_);
     error += !get(name_, rpnh, "visualize/rejected_edges_due_to_timing", visualize_rejected_edges_due_to_timing_);
     shutdownIfError(name_, error);
@@ -355,6 +356,13 @@ bool CartPathPlanner::transform2DPaths(const Eigen::Affine3d& starting_pose,
     return false;
   }
 
+  // Remove the roll and pitch
+  // std::vector<double> xyzrpy;
+  // rviz_visual_tools::RvizVisualTools::convertToXYZRPY(starting_pose, xyzrpy);
+  // xyzrpy[3] = 0;
+  // xyzrpy[4] = 0;
+  // Eigen::Affine3d starting_pose_aligned = rviz_visual_tools::RvizVisualTools::convertFromXYZRPY(xyzrpy);
+
   exact_poses.clear();
   exact_poses.resize(path_from_file_.size());
 
@@ -475,7 +483,8 @@ bool CartPathPlanner::populateBoltGraph(ompl::tools::bolt::TaskGraphPtr task_gra
 
   // Re-arrange multiple trajectories so they are matched on each cartesian point (and multiplied together)
   CombinedTrajectory combined_traj_points;
-  combineEETrajectories(redun_traj_per_eef, combined_traj_points, indent);
+  if (!combineEETrajectories(redun_traj_per_eef, combined_traj_points, indent))
+    return false;
 
   // Track all created vertices - for each pt in the cartesian trajectory, contains multiple vertices
   TaskVertexMatrix point_vertices;
@@ -700,11 +709,19 @@ bool CartPathPlanner::combineEETrajectories(const std::vector<RedunJointTrajecto
     }
     BOLT_DEBUG(indent, verbose_, "Total combined points for this trajectory point: " << combined_points.size());
 
+    if (combined_points.size() == 0)
+    {
+      BOLT_DEBUG(indent, !verbose_, "Total combined points for this trajectory point: " << combined_points.size());
+      BOLT_ERROR(indent, "Trajectory point has no point!");
+      return false;
+    }
+
     // Add set of points to trajectory
     combined_traj_points.push_back(combined_points);
   }
 
   BOLT_DEBUG(indent, verbose_, "Total size of combined traj points vector: " << combined_traj_points.size());
+  return true;
 }
 
 bool CartPathPlanner::addCartPointToBoltGraph(const CombinedPoints& combined_points, TaskVertexPoint& point_vertices,
@@ -766,7 +783,11 @@ bool CartPathPlanner::addCartPointToBoltGraph(const CombinedPoints& combined_poi
     if (visualize_combined_solutions_)
     {
       visual_tools_->publishRobotState(moveit_robot_state);
-      parent_->waitForNextStep("added vertex");
+
+      if (combined_solutions_sleep_ < std::numeric_limits<double>::epsilon())
+        parent_->waitForNextStep("added vertex");
+      else
+        ros::Duration(combined_solutions_sleep_).sleep();
     }
 
     new_vertex_count++;

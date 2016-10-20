@@ -191,6 +191,8 @@ private:
   double tolerance_pitch_;
   double tolerance_yaw_;
 
+  double combined_solutions_sleep_ = 0;
+
   std::size_t hybrid_rand_factor_ = 5;
 };  // end class
 

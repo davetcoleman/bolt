@@ -193,6 +193,8 @@ BoltMoveIt::BoltMoveIt(const std::string &hostname, const std::string &package_p
   if (true)
   {
     const double baxter_toros_height = -0.95;
+    //const double table_height = -0.77 * baxter_toros_height;
+    const double table_height = -0.75 * baxter_toros_height;
     visual_moveit_start_->publishCollisionFloor(baxter_toros_height + 0.001, "floor", rvt::TRANSLUCENT_DARK);
     visual_moveit_start_->publishCollisionWall(/*x*/ -1.0, /*y*/ 0.0, /*z*/ baxter_toros_height, /*angle*/ 0,
                                                /*width*/ 2, /*height*/ 2.0, "wall1", rvt::YELLOW);
@@ -201,7 +203,7 @@ BoltMoveIt::BoltMoveIt(const std::string &hostname, const std::string &package_p
     visual_moveit_start_->publishCollisionWall(/*x*/ 0.0, /*y*/ 1.075, /*z*/ baxter_toros_height, /*angle*/ M_PI / 2.0,
                                                /*width*/ 2, /*height*/ 2.0, "wall3", rvt::YELLOW);
     visual_moveit_start_->publishCollisionTable(/*x*/ 0.85, /*y*/ 0.0, /*z*/ baxter_toros_height, /*angle*/ 0,
-                                                /*width*/ 2.0, /*height*/ -0.77 * baxter_toros_height, /*depth*/ 0.8,
+                                                /*width*/ 2.0, /*height*/ table_height, /*depth*/ 0.8,
                                                 "table", rvt::DARK_GREY);
 
     visual_moveit_start_->triggerPlanningSceneUpdate();
@@ -608,8 +610,6 @@ bool BoltMoveIt::plan(std::size_t indent)
   // Attempt to solve the problem within x seconds of planning time
   ob::PlannerStatus solved = bolt_->solve(ptc);
 
-  waitForNextStep("after solve 1");
-
   // Benchmark runtime
   total_duration_ = (ros::Time::now() - start_time).toSec();
 
@@ -617,7 +617,7 @@ bool BoltMoveIt::plan(std::size_t indent)
   if (!solved)
   {
     ROS_ERROR_STREAM_NAMED(name_, "No solution found");
-    exit(-1);
+    exit(0);
     return false;
   }
 
@@ -659,8 +659,12 @@ bool BoltMoveIt::plan(std::size_t indent)
   }
 
   // Execute
-  bool wait_for_execution = true;
-  execution_interface_->executeTrajectory(combined_traj, planning_jmg_, wait_for_execution);
+  while (ros::ok())
+  {
+    bool wait_for_execution = true;
+    execution_interface_->executeTrajectory(combined_traj, planning_jmg_, wait_for_execution);
+    waitForNextStep("execute again");
+  }
 
   // Visualize the doneness
   std::cout << std::endl;

@@ -186,7 +186,7 @@ debug_interface:
 # ====================================================
 bolt_planner:
   verbose:
-    verbose: true
+    verbose: false
     collision_check: false
   visualize:
     smoothed_trajectory: true
@@ -204,14 +204,14 @@ bolt:
 # ====================================================
 cart_path_planner:
   ik_solver:
-    discretization: 4 # 0.785 # pi / 4
+    discretization: 6 # 0.785 # pi / 4
   trajectory:
-    discretization: 0.01 # how much space, in meters, between trajectory points
+    discretization: 0.005 # how much space, in meters, between trajectory points
     timing: 0.3 # time allowed between each Cartesian point, e.g. discretization for velocity
   tolerance:
     pi_fraction_increment: 0.2 # 2xPI / this number = number of steps to divide each dimension by
     roll: 0.314 # pi/10
-    pitch: 0 #0.314 # pi/10
+    pitch: 0.314 # pi/10
     # roll: 0.628 # pi/5
     # pitch: 0.628 # pi/5
     yaw: 0 # pi
@@ -224,6 +224,7 @@ cart_path_planner:
     all_solutions_sleep: 0.1 # time between each solution for viewing
     rejected_edges_due_to_timing: false
     combined_solutions: false # show the robot state for each combined pose
+    combined_solutions_sleep: 0.001 # show the robot state for each combined pose
     rejected_states: false # show invalid collision checks
 
 # ====================================================
@@ -235,8 +236,8 @@ execution_interface:
   joint_trajectory_topic: /baxter/cartesian_controller/command # command output from this node
   save_traj_to_file: false # debug mode for creating a CSV for use with Matlab
   save_traj_to_file_path: /home/dave/ros/current/ws_swri/src/trajectory_data/ # debug
-  visualize_trajectory_line: true # show in RViz a series of markers visualizing path
-  visualize_trajectory_path: true # show in RViz the robot moving on the trajectory path
+  visualize_trajectory_line: false # show in RViz a series of markers visualizing path
+  visualize_trajectory_path: false # show in RViz the robot moving on the trajectory path
   check_for_waypoint_jumps: false # ensure that any trajectory that is published does not have huge discontinuties in joint space
 
 # MoveIt Boilerplate Base Functionality
