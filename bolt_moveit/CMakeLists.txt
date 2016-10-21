@@ -36,6 +36,7 @@ catkin_package(
     include
   LIBRARIES
     ${PROJECT_NAME}
+    ${PROJECT_NAME}_bolt_moveit_main
 )
 
 # If enabled, show debug message output
@@ -135,7 +136,7 @@ roslint_cpp()
 #############
 
 ## Mark executables and/or libraries for installation
-install(TARGETS ${PROJECT_NAME}_bolt_moveit_main
+install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_bolt_moveit_main
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

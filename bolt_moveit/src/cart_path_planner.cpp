@@ -757,7 +757,7 @@ bool CartPathPlanner::addCartPointToBoltGraph(const CombinedPoints& combined_poi
     // Check for validity
     moveit_robot_state->update();
 
-    if (!planning_scene->isStateValid(*moveit_robot_state, parent_->planning_jmg_, verbose_collision_check_))
+    if (!planning_scene->isStateValid(*moveit_robot_state, parent_->planning_jmg_->getName(), verbose_collision_check_))
     {
       BOLT_DEBUG(indent, verbose_collision_check_, "Invalid robot state");
 
@@ -1072,7 +1072,7 @@ bool CartPathPlanner::getRedunJointPosesForCartPoint(const Eigen::Affine3d& pose
       // Check for validity
       shared_robot_state1_->update();
 
-      if (!planning_scene->isStateValid(*shared_robot_state1_, jmg, verbose_collision_check_))
+      if (!planning_scene->isStateValid(*shared_robot_state1_, jmg->getName(), verbose_collision_check_))
       {
         // BOLT_DEBUG(indent, true, "Invalid robot state");
         if (visualize_rejected_states_)
