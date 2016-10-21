@@ -1,6 +1,9 @@
 # BOLT
 
-A new planner based on SPARS2.
+The project consists of two major components
+
+- The Bolt planner for efficiently pre-computing sparse roadmap spanners for experience-based planning
+- An multi-modal underconstrained Cartesian planner for dual arms similar to [Descartes](http://wiki.ros.org/descartes)
 
 Developed by [Dave Coleman](http://dav.ee/) at the University of Colorado Boulder in collaboration with ROS Industrial, Southwest Research Institute, and the National Institute of Standards and Technology.
 

@@ -1,19 +1,7 @@
 # Packages being released into bloom:
 - git:
-    local-name: moveit_boilerplate
-    uri: https://github.com/davetcoleman/moveit_boilerplate.git
-    version: kinetic-devel
-- git:
-    local-name: rviz_visual_tools
-    uri: https://github.com/davetcoleman/rviz_visual_tools.git
-    version: kinetic-devel
-- git:
-    local-name: moveit_visual_tools
-    uri: https://github.com/davetcoleman/moveit_visual_tools.git
-    version: kinetic-devel
-- git:
-    local-name: rosparam_shortcuts
-    uri: https://github.com/davetcoleman/rosparam_shortcuts.git
+    local-name: bolt
+    uri: https://github.com/davetcoleman/bolt.git
     version: kinetic-devel
 - git:
     local-name: baxter_cpp
@@ -23,11 +11,9 @@
     local-name: baxter_common
     uri: https://github.com/davetcoleman/baxter_common.git
     version: kinetic-devel
-
-# My custom code
 - git:
-    local-name: bolt
-    uri: https://github.com/davetcoleman/bolt.git
+    local-name: moveit_boilerplate
+    uri: https://github.com/davetcoleman/moveit_boilerplate.git
     version: kinetic-devel
 - git:
     local-name: moveit_dashboard
@@ -40,20 +26,4 @@
 - git:
     local-name: moveit
     uri: https://github.com/davetcoleman/moveit.git
-    version: kinetic-all
-- git:
-    local-name: geometric_shapes
-    uri: https://github.com/ros-planning/geometric_shapes.git
-    version: kinetic-devel
-- git:
-    local-name: moveit_msgs
-    uri: https://github.com/ros-planning/moveit_msgs.git
-    version: jade-devel
-- git:
-    local-name: warehouse_ros
-    uri: https://github.com/ros-planning/warehouse_ros.git
-    version: jade-devel
-- git:
-    local-name: moveit_resources
-    uri: https://github.com/ros-planning/moveit_resources.git
-    version: master
+    version: kinetic-all3
