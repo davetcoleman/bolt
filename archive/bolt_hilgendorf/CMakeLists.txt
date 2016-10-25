@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(bolt_moveit)
+project(bolt_hilgendorf)
 
 # C++ 11
 add_compile_options(-std=c++11)
@@ -8,18 +8,19 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   roslint
   moveit_boilerplate
-  moveit_dashboard
   moveit_core
   moveit_visual_tools
+  bolt_moveit
   rosparam_shortcuts
   bolt_core
-  bolt_ros
   tf_conversions
-  rostest
-  roslint
+  descartes_core
+  descartes_planner
+  descartes_moveit
+  bolt_ur5
 )
 
-find_package(Eigen3 REQUIRED)
+find_package(Boost REQUIRED)
 find_package(Boost REQUIRED system serialization)
 
 catkin_package(
@@ -28,26 +29,26 @@ catkin_package(
     moveit_boilerplate
     moveit_core
     moveit_visual_tools
+    bolt_moveit
     rosparam_shortcuts
     bolt_core
+  DEPENDS
+    Eigen
   INCLUDE_DIRS
-    ${EIGEN3_INCLUDE_DIR}
     include
   LIBRARIES
+    ${PROJECT_NAME}_cart_path_planner
+    ${PROJECT_NAME}_imarker_robot_state
     ${PROJECT_NAME}
-    ${PROJECT_NAME}_mbsp
 )
-
-# If enabled, show debug message output
-add_definitions(-DENABLE_DEBUG_MACRO)
 
 ###########
 ## Build ##
 ###########
 
 include_directories(SYSTEM
-  ${EIGEN3_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIR}
+  ${EIGEN_INCLUDE_DIRS}
 )
 
 include_directories(
@@ -55,28 +56,31 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-# link_directories(${OMPL_LIBRARY_DIRS})
-# link_directories(${catkin_LIBRARY_DIRS})
-# link_directories(${Boost_LIBRARY_DIRS})
-
-# Model Based State Space
-add_library(${PROJECT_NAME}_mbsp
-  src/model_based_state_space.cpp
-  src/threadsafe_state_storage.cpp
-)
-target_link_libraries(${PROJECT_NAME}_mbsp ${OMPL_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-
 # Library
 add_library(${PROJECT_NAME}
   src/projection_viz_window.cpp
   src/moveit_viz_window.cpp
+  src/bolt_hilgendorf.cpp
   src/state_validity_checker.cpp
   src/moveit_base.cpp
   src/cart_path_planner.cpp
 )
 # Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}
-  ${PROJECT_NAME}_mbsp
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
+
+# Main program
+add_executable(${PROJECT_NAME}_bolt_hilgendorf_main
+  src/bolt_hilgendorf_main.cpp
+)
+# Rename C++ executable without namespace
+set_target_properties(${PROJECT_NAME}_bolt_hilgendorf_main
+  PROPERTIES OUTPUT_NAME bolt_hilgendorf_main PREFIX "")
+# Specify libraries to link a library or executable target against
+target_link_libraries(${PROJECT_NAME}_bolt_hilgendorf_main
+  ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
@@ -112,18 +116,6 @@ target_link_libraries(${PROJECT_NAME}_test_pose_distance
 ## Testing ##
 #############
 
-if(CATKIN_ENABLE_TESTING)
-
-  catkin_add_gtest(moveit_bolt_test test/moveit_bolt_test.cpp)
-  target_link_libraries(moveit_bolt_test
-    ${PROJECT_NAME}
-    ${catkin_LIBRARIES}
-    ${Boost_LIBRARIES}
-  )
-  #add_rostest(test/moveit_bolt_test.test)
-
-endif()
-
 ## Test for correct C++ source code
 roslint_cpp()
 
@@ -132,13 +124,27 @@ roslint_cpp()
 #############
 
 ## Mark executables and/or libraries for installation
-install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_mbsp
+install(TARGETS ${PROJECT_NAME}_bolt_hilgendorf_main
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 # Mark cpp header files for installation
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+# install(DIRECTORY include/${PROJECT_NAME}/
+#   FILES_MATCHING PATTERN "*.h"
+#   PATTERN ".svn" EXCLUDE
+#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+# )
+
+# Mark roslaunch files for installation
+install(DIRECTORY launch
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
+
+# Mark config files for installation
+# install(FILES config
+#   FILES_MATCHING PATTERN "*.yaml"
+#   PATTERN ".svn" EXCLUDE
+#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+# )

@@ -34,10 +34,10 @@
 
 /* Author: Dave Coleman, Ioan Sucan */
 
-#include <bolt_moveit/state_validity_checker.h>
+#include <bolt_hilgendorf/state_validity_checker.h>
 #include <ompl/base/SpaceInformation.h>
 #include <ros/ros.h>
-#include <bolt_moveit/threadsafe_state_storage.h>
+#include <bolt_moveit/detail/threadsafe_state_storage.h>
 
 bolt_moveit::StateValidityChecker::StateValidityChecker(const std::string &group_name,
                                                         ompl::base::SpaceInformationPtr &si,
@@ -78,13 +78,11 @@ void bolt_moveit::StateValidityChecker::setVerbose(bool flag)
 
 bool bolt_moveit::StateValidityChecker::isValid(const ompl::base::State *state, bool verbose) const
 {
-  verbose = false; // hack
-
   // check bounds
   if (!si_->satisfiesBounds(state))
   {
-    //if (verbose)
-    ROS_INFO("State outside bounds 2");
+    if (verbose)
+      ROS_INFO("State outside bounds");
     return false;
   }
 
@@ -109,7 +107,7 @@ bool bolt_moveit::StateValidityChecker::isValid(const ompl::base::State *state, 
 
   // check collision avoidance
   collision_detection::CollisionResult res;
-  if (verbose || verbose_)
+  if (verbose)
   {
     planning_scene_->checkCollision(collision_request_simple_verbose_, res, *robot_state);
   }
@@ -118,26 +116,15 @@ bool bolt_moveit::StateValidityChecker::isValid(const ompl::base::State *state, 
     planning_scene_->checkCollision(collision_request_simple_, res, *robot_state);
   }
 
-  // Visualize
-  // if (visual_.get() != nullptr)
-  // {
-  //   if (res.collision)
-  //     visual_->viz2()->state(state, ompl::tools::ROBOT, ompl::tools::RED, 0);
-  //   // else
-  //   //   visual_->viz2()->state(state, ompl::tools::ROBOT, ompl::tools::GREEN, 0);
-  // }
-
   return res.collision == false;
 }
 
 bool bolt_moveit::StateValidityChecker::isValid(const ompl::base::State *state, double &dist, bool verbose) const
 {
-  verbose = false; // hack
-
   if (!si_->satisfiesBounds(state))
   {
-    //if (verbose)
-    ROS_INFO("State outside bounds");
+    if (verbose)
+      ROS_INFO("State outside bounds");
     return false;
   }
 
@@ -172,21 +159,16 @@ bool bolt_moveit::StateValidityChecker::isValid(const ompl::base::State *state, 
 
   // check collision avoidance
   collision_detection::CollisionResult res;
-  if (verbose)
-    planning_scene_->checkCollision(collision_request_with_distance_verbose_, res, *robot_state);
-  else
-    planning_scene_->checkCollision(collision_request_with_distance_, res, *robot_state);
-
+  planning_scene_->checkCollision(verbose ? collision_request_with_distance_verbose_ : collision_request_with_distance_,
+                                  res, *robot_state);
   dist = res.distance;
 
   // Visualize
-  // if (visual_.get() != nullptr)
-  // {
-  //   if (res.collision)
-  //     visual_->viz2()->state(state, ompl::tools::SMALL, ompl::tools::RED, 0);
-  //   else
-  //     visual_->viz2()->state(state, ompl::tools::SMALL, ompl::tools::GREEN, 0);
-  // }
+  // if (res.collision)
+  //   visual_->viz2()->state(state, ompl::tools::SMALL, ompl::tools::RED, 0);
+  // else
+  //   visual_->viz2()->state(state, ompl::tools::SMALL, ompl::tools::GREEN, 0);
+  // visual_->viz2()->trigger();
 
   return res.collision == false;
 }
@@ -216,12 +198,7 @@ double bolt_moveit::StateValidityChecker::clearance(const ompl::base::State *sta
 
   collision_detection::CollisionResult res;
   planning_scene_->checkCollision(collision_request_with_distance_, res, *robot_state);
-
-  if (res.collision)
-    return 0.0;
-  else if (res.distance < 0.0)
-    return std::numeric_limits<double>::infinity();
-  return res.distance;
+  return res.collision ? 0.0 : (res.distance < 0.0 ? std::numeric_limits<double>::infinity() : res.distance);
 }
 
 void bolt_moveit::StateValidityChecker::setCheckingEnabled(const bool &checking_enabled)

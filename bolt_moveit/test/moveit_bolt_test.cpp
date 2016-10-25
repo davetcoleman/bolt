@@ -56,7 +56,7 @@
 // MoveIt
 #include <moveit/planning_scene_monitor/planning_scene_monitor.h>
 #include <moveit/rdf_loader/rdf_loader.h>
-#include <moveit_ompl/model_based_state_space.h>
+#include <bolt_baxter/model_based_state_space.h>
 
 // OMPL
 #include <bolt_core/Bolt.h>
@@ -141,10 +141,10 @@ TEST(TestingBase, get_7d_state_by_vector)
   namespace otb = ompl::tools::bolt;
 
   // Setup space
-  moveit_ompl::ModelBasedStateSpaceSpecification mbss_spec(base.robot_model_, base.jmg_);
+  bolt_baxter::ModelBasedStateSpaceSpecification mbss_spec(base.robot_model_, base.jmg_);
 
   // Construct the state space we are planning in
-  ob::StateSpacePtr space_ = ob::StateSpacePtr(new moveit_ompl::ModelBasedStateSpace(mbss_spec));
+  ob::StateSpacePtr space_ = ob::StateSpacePtr(new bolt_baxter::ModelBasedStateSpace(mbss_spec));
   EXPECT_TRUE(space_ != NULL);
 
   // SpaceInfo
@@ -209,10 +209,10 @@ TEST(TestingBase, compound_state)
 
   // ------------------------------------------------------------------------
   // Create model based state space
-  moveit_ompl::ModelBasedStateSpaceSpecification mbss_spec(base.robot_model_, base.jmg_);
+  bolt_baxter::ModelBasedStateSpaceSpecification mbss_spec(base.robot_model_, base.jmg_);
 
   // Construct the state space we are planning in
-  ob::StateSpacePtr model_based_space = std::make_shared<moveit_ompl::ModelBasedStateSpace>(mbss_spec);
+  ob::StateSpacePtr model_based_space = std::make_shared<bolt_baxter::ModelBasedStateSpace>(mbss_spec);
   EXPECT_TRUE(model_based_space != NULL);
   model_based_space->setup();
   EXPECT_TRUE(model_based_space->getDimension() == 7);
@@ -294,7 +294,7 @@ TEST(TestingBase, compound_state)
 
   std::vector<double> output_values;  // Get values into a vector again
   model_based_space->copyToReals(
-      output_values, compound_state->as<ob::CompoundState>()->as<moveit_ompl::ModelBasedStateSpace::StateType>(0));
+      output_values, compound_state->as<ob::CompoundState>()->as<bolt_baxter::ModelBasedStateSpace::StateType>(0));
   EXPECT_TRUE(output_values.size() == 7);
   EXPECT_TRUE(output_values[0] == 0.1);
   EXPECT_TRUE(output_values[1] == 0.2);

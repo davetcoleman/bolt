@@ -34,10 +34,10 @@
 
 /* Author: Dave Coleman, Ioan Sucan */
 
-#ifndef BOLT_MOVEIT_DETAIL_STATE_VALIDITY_CHECKER_
-#define BOLT_MOVEIT_DETAIL_STATE_VALIDITY_CHECKER_
+#ifndef MOVEIT_OMPL_DETAIL_STATE_VALIDITY_CHECKER_
+#define MOVEIT_OMPL_DETAIL_STATE_VALIDITY_CHECKER_
 
-#include <bolt_moveit/threadsafe_state_storage.h>
+#include <bolt_moveit/detail/threadsafe_state_storage.h>
 #include <moveit/collision_detection/collision_common.h>
 #include <moveit/planning_scene/planning_scene.h>
 #include <ompl/base/StateValidityChecker.h>

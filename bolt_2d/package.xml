@@ -24,7 +24,7 @@
   <depend>libgflags-dev</depend>
   <depend>rosparam_shortcuts</depend>
   <depend>bolt_core</depend>
-  <depend>moveit_ompl</depend>
+  <depend>bolt_ros</depend>
 
   <test_depend>rostest</test_depend>
   <test_depend>rosunit</test_depend>

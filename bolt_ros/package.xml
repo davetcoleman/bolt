@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>bolt_ros</name>
+  <version>0.0.1</version>
+  <description>The bolt_ros package</description>
+
+  <maintainer email="davetcoleman@gmail.com">Dave Coleman</maintainer>
+
+  <license>BSD</license>
+
+  <url type="website">https://github.com/davetcoleman/bolt_ros</url>
+  <url type="butracker">https://github.com/davetcoleman/bolt_ros/issues</url>
+  <url type="repository">https://github.com/davetcoleman/bolt_ros/</url>
+
+  <author email="davetcoleman@gmail.com">Dave Coleman</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>roscpp</depend>
+  <depend>roslib</depend>
+  <depend>roslint</depend>
+  <depend>rosparam_shortcuts</depend>
+  <depend>eigen</depend>
+  <depend>cmake_modules</depend>
+  <depend>rviz_visual_tools</depend>
+
+  <export>
+  </export>
+</package>

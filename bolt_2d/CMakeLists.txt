@@ -11,7 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rosparam_shortcuts
   bolt_core
-  moveit_ompl
+  bolt_ros
   rostest
   roslint
 )
@@ -28,7 +28,7 @@ catkin_package(
     roscpp
     rosparam_shortcuts
     bolt_core
-    moveit_ompl
+    bolt_ros
   INCLUDE_DIRS include
 )
 

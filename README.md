@@ -34,15 +34,14 @@ Runs on ROS Kinetic. To build this package, create a [catkin workspace](http://w
 
 Run with just terminal:
 
-    docker run -it davetcoleman/bolt:bolt-jade-build
+    docker run -it davetcoleman/bolt:bolt-kinetic-build
 
 ## Layout
 
 - bolt_core: The core algorithm for sparse roadmap creation and multi-model task planning is locate
+- bolt_ros: a common interface for bolt_core and ROS components shared by other packages
 - bolt_2d: A simple 2d/3d toy problem for testing bolt in a low dimensional space using Rviz
 - bolt_moveit: A MoveIt!-based configuration space for running with Baxter
-- moveit_ompl: based on ``moveit_planners_ompl``, a simplified common interface for moveit and ompl that I've heavily customized
-- docker: just contains recipies for auto building docker images on Dockerhub
 
 ## Usage
 

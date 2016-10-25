@@ -51,7 +51,7 @@
 #include <ompl/base/spaces/SE3StateSpace.h>
 #include <ompl/base/ScopedState.h>
 
-#include <moveit/macros/deprecation.h>
+//#include <moveit/macros/deprecation.h>
 
 namespace ot = ompl::tools;
 namespace ob = ompl::base;

@@ -41,7 +41,6 @@
 
 // this package
 #include <bolt_moveit/cart_path_planner.h>
-#include <bolt_moveit/bolt_moveit.h>
 #include <bolt_moveit/path_loader.h>
 
 // moveit_boilerplate
@@ -52,11 +51,19 @@
 
 namespace bolt_moveit
 {
-CartPathPlanner::CartPathPlanner(BoltMoveIt* parent)
-  : nh_("~"), parent_(parent), arm_datas_(parent_->arm_datas_), visual_tools2_(parent_->viz6_->getVisualTools())
+CartPathPlanner::CartPathPlanner(std::vector<mvt::ArmData>& arm_datas, mvt::MoveItVisualToolsPtr visual_tools,
+                                 moveit::core::RobotStatePtr moveit_start, psm::PlanningSceneMonitorPtr planning_scene_monitor,
+                                 const std::string& package_path, bolt_moveit::ModelBasedStateSpacePtr mbs_space,
+                                 moveit::core::JointModelGroup* planning_jmg)
+  : nh_("~")
+  , arm_datas_(arm_datas)
+  , visual_tools2_(visual_tools)
+  , planning_scene_monitor_(planning_scene_monitor)
+  , package_path_(package_path)
+  , mbs_space_(mbs_space)
+  , planning_jmg_(planning_jmg)
 {
   std::size_t indent = 0;
-  // jmg_ = parent_->jmg_;
 
   double tolerance_pi_fraction_increment;
 
@@ -86,12 +93,12 @@ CartPathPlanner::CartPathPlanner(BoltMoveIt* parent)
   }
 
   // Load planning state
-  shared_robot_state0_.reset(new moveit::core::RobotState(*parent_->moveit_start_));
-  shared_robot_state1_.reset(new moveit::core::RobotState(*parent_->moveit_start_));
+  shared_robot_state0_.reset(new moveit::core::RobotState(*moveit_start));
+  shared_robot_state1_.reset(new moveit::core::RobotState(*moveit_start));
 
   // Create cartesian start pose interactive marker
-  imarker_cartesian_.reset(new mvt::IMarkerRobotState(parent_->getPlanningSceneMonitor(), "cart", arm_datas_, rvt::BLUE,
-                                                      parent_->package_path_));
+  imarker_cartesian_.reset(new mvt::IMarkerRobotState(planning_scene_monitor_, "cart", arm_datas_, rvt::BLUE,
+                                                      package_path_));
   imarker_cartesian_->setIMarkerCallback(
       std::bind(&CartPathPlanner::processIMarkerPose, this, std::placeholders::_1, std::placeholders::_2));
 
@@ -108,7 +115,7 @@ CartPathPlanner::CartPathPlanner(BoltMoveIt* parent)
   visual_tools_->loadTrajectoryPub(nh_.getNamespace() + "/display_trajectory");
 
   // Load desired path
-  PathLoader path_loader(parent_->package_path_);
+  PathLoader path_loader(package_path_);
   const bool debug = false;
   if (!path_loader.get2DPath(path_from_file_, debug))
     exit(0);
@@ -288,7 +295,8 @@ bool CartPathPlanner::computeRedunPosesForCartPoint(const Eigen::Affine3d& pose,
         visual_tools_->publishAxis(candidate_pose);
         // visual_tools_->publishZArrow(candidate_pose, rvt::BLUE, rvt::SMALL);
         visual_tools_->trigger();
-        parent_->waitForNextStep("next pose");
+        ROS_ERROR_STREAM_NAMED(name_, "TODO: implement wait");
+        //parent_->waitForNextStep("next pose");
       }
       else
       {
@@ -729,8 +737,6 @@ bool CartPathPlanner::addCartPointToBoltGraph(const CombinedPoints& combined_poi
 {
   BOLT_FUNC(indent, verbose_, "addCartPointToBoltGraph() - total points: " << combined_points.size());
 
-  moveit_ompl::ModelBasedStateSpacePtr space = parent_->space_;
-
   std::size_t new_vertex_count = 0;
   const ompl::tools::bolt::VertexType vertex_type = ompl::tools::bolt::CARTESIAN;
   const ompl::tools::bolt::VertexLevel level1 = 1;  // middle layer
@@ -740,7 +746,7 @@ bool CartPathPlanner::addCartPointToBoltGraph(const CombinedPoints& combined_poi
 
   // Lock planning scene
   std::shared_ptr<planning_scene_monitor::LockedPlanningSceneRO> ls =
-    std::make_shared<planning_scene_monitor::LockedPlanningSceneRO>(parent_->getPlanningSceneMonitor());
+    std::make_shared<planning_scene_monitor::LockedPlanningSceneRO>(planning_scene_monitor_);
   const planning_scene::PlanningScene* planning_scene =
     static_cast<const planning_scene::PlanningSceneConstPtr&>(*ls).get();
 
@@ -757,14 +763,15 @@ bool CartPathPlanner::addCartPointToBoltGraph(const CombinedPoints& combined_poi
     // Check for validity
     moveit_robot_state->update();
 
-    if (!planning_scene->isStateValid(*moveit_robot_state, parent_->planning_jmg_->getName(), verbose_collision_check_))
+    if (!planning_scene->isStateValid(*moveit_robot_state, planning_jmg_->getName(), verbose_collision_check_))
     {
       BOLT_DEBUG(indent, verbose_collision_check_, "Invalid robot state");
 
       if (visualize_rejected_states_)
       {
         visual_tools_->publishRobotState(moveit_robot_state, rvt::BROWN);
-        parent_->waitForNextStep("invalid");
+        ROS_ERROR_STREAM_NAMED(name_, "TODO: implement wait");
+        //parent_->waitForNextStep("invalid");
       }
 
       states_rejected++;
@@ -772,10 +779,10 @@ bool CartPathPlanner::addCartPointToBoltGraph(const CombinedPoints& combined_poi
     }
 
     // Create new OMPL state
-    ompl::base::State* ompl_state = space->allocState();
+    ompl::base::State* ompl_state = mbs_space_->allocState();
 
     // Convert the MoveIt! robot state into an OMPL state
-    space->copyToOMPLState(ompl_state, *moveit_robot_state);
+    mbs_space_->copyToOMPLState(ompl_state, *moveit_robot_state);
 
     // Add vertex to task graph
     point_vertices.push_back(task_graph_->addVertexWithLevel(ompl_state, level1, indent));
@@ -785,7 +792,10 @@ bool CartPathPlanner::addCartPointToBoltGraph(const CombinedPoints& combined_poi
       visual_tools_->publishRobotState(moveit_robot_state);
 
       if (combined_solutions_sleep_ < std::numeric_limits<double>::epsilon())
-        parent_->waitForNextStep("added vertex");
+      {
+        ROS_ERROR_STREAM_NAMED(name_, "TODO: implement wait");
+        //parent_->waitForNextStep("added vertex");
+      }
       else
         ros::Duration(combined_solutions_sleep_).sleep();
     }
@@ -805,8 +815,6 @@ bool CartPathPlanner::addEdgesToBoltGraph(const TaskVertexMatrix& point_vertices
                                           ompl::tools::bolt::TaskVertex endingVertex, std::size_t indent)
 {
   BOLT_FUNC(indent, true, "addEdgesToBoltGraph()");
-
-  moveit_ompl::ModelBasedStateSpacePtr space = parent_->space_;
 
   // Iterate to create edges
   std::size_t new_edge_count = 0;
@@ -831,7 +839,7 @@ bool CartPathPlanner::addEdgesToBoltGraph(const TaskVertexMatrix& point_vertices
     for (std::size_t vertex1_id = 0; vertex1_id < point_vertices1.size(); ++vertex1_id)
     {
       ompl::tools::bolt::TaskVertex v1 = point_vertices1[vertex1_id];
-      space->copyToRobotState(*shared_robot_state1_, task_graph_->getModelBasedState(v1));
+      mbs_space_->copyToRobotState(*shared_robot_state1_, task_graph_->getModelBasedState(v1));
 
       BOLT_ASSERT(v1 > startingVertex && v1 <= endingVertex, "Attempting to create edge with out of range vertex");
 
@@ -845,9 +853,9 @@ bool CartPathPlanner::addEdgesToBoltGraph(const TaskVertexMatrix& point_vertices
         BOLT_ASSERT(v0 > startingVertex && v0 <= endingVertex, "Attempting to create edge with out of range vertex");
 
         // Convert OMPL state to MoveIt! state
-        space->copyToRobotState(*shared_robot_state0_, task_graph_->getModelBasedState(v0));
+        mbs_space_->copyToRobotState(*shared_robot_state0_, task_graph_->getModelBasedState(v0));
 
-        if (!shared_robot_state0_->isValidVelocityMove(*shared_robot_state1_, parent_->planning_jmg_, timing_))
+        if (!shared_robot_state0_->isValidVelocityMove(*shared_robot_state1_, planning_jmg_, timing_))
         {
           // Visualize
           if (visualize_rejected_edges_due_to_timing_)
@@ -855,7 +863,8 @@ bool CartPathPlanner::addEdgesToBoltGraph(const TaskVertexMatrix& point_vertices
             visual_tools_->publishRobotState(shared_robot_state0_, rvt::GREEN);
             usleep(1 * 1000000);
             visual_tools_->publishRobotState(shared_robot_state1_, rvt::LIME_GREEN);
-            parent_->waitForNextStep("showing rejected edge due to timing");
+            ROS_ERROR_STREAM_NAMED(name_, "TODO: implement wait");
+            //parent_->waitForNextStep("showing rejected edge due to timing");
           }
 
           // BOLT_DEBUG(indent, true, "Skipping edge, total skipped: " << edges_skipped_count);
@@ -1055,7 +1064,7 @@ bool CartPathPlanner::getRedunJointPosesForCartPoint(const Eigen::Affine3d& pose
 
     // Lock planning scene
     std::shared_ptr<planning_scene_monitor::LockedPlanningSceneRO> ls =
-      std::make_shared<planning_scene_monitor::LockedPlanningSceneRO>(parent_->getPlanningSceneMonitor());
+      std::make_shared<planning_scene_monitor::LockedPlanningSceneRO>(planning_scene_monitor_);
     const planning_scene::PlanningScene* planning_scene =
       static_cast<const planning_scene::PlanningSceneConstPtr&>(*ls).get();
 
@@ -1078,7 +1087,8 @@ bool CartPathPlanner::getRedunJointPosesForCartPoint(const Eigen::Affine3d& pose
         if (visualize_rejected_states_)
         {
           visual_tools_->publishRobotState(shared_robot_state1_, rvt::RED);
-          parent_->waitForNextStep("invalid");
+          ROS_ERROR_STREAM_NAMED(name_, "TODO: implement wait");
+          //parent_->waitForNextStep("invalid");
         }
 
         states_rejected++;
@@ -1114,8 +1124,6 @@ void CartPathPlanner::visualizeAllJointPoses(const RedunJointPoses& joint_poses,
 
 void CartPathPlanner::visualizeAllPointVertices(const TaskVertexMatrix& point_vertices, std::size_t indent)
 {
-  moveit_ompl::ModelBasedStateSpacePtr space = parent_->space_;
-
   for (std::size_t traj_id = 0; traj_id < point_vertices.size(); ++traj_id)
   {
     BOLT_DEBUG(indent, true, "traj_id: " << traj_id);
@@ -1129,7 +1137,7 @@ void CartPathPlanner::visualizeAllPointVertices(const TaskVertexMatrix& point_ve
       ompl::tools::bolt::TaskVertex v0 = point_vertices1[vertex1_id];
       std::cout << "vertex1_id: " << vertex1_id << " v0: " << v0 << std::endl;
 
-      space->copyToRobotState(*shared_robot_state0_, task_graph_->getModelBasedState(v0));
+      mbs_space_->copyToRobotState(*shared_robot_state0_, task_graph_->getModelBasedState(v0));
       visual_tools2_->publishRobotState(shared_robot_state0_, rvt::RAND);
       // usleep(0.0001*1000000);
     }

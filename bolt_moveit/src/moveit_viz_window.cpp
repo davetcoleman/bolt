@@ -48,7 +48,7 @@
 #include <ompl/base/ScopedState.h>
 
 // For converting OMPL state to a MoveIt robot state
-#include <moveit_ompl/model_based_state_space.h>
+#include <bolt_moveit/model_based_state_space.h>
 #include <moveit/robot_state/robot_state.h>
 #include <moveit/macros/deprecation.h>
 
@@ -73,8 +73,8 @@ void MoveItVizWindow::state(const ob::State* state, ot::VizSizes size, ot::VizCo
                             ob::SpaceInformationPtr si)
 {
   // We do not use stateToPoint() because the publishRobotState() function might need the robot state in this function
-  moveit_ompl::ModelBasedStateSpacePtr mb_state_space =
-      std::static_pointer_cast<moveit_ompl::ModelBasedStateSpace>(si->getStateSpace());
+  bolt_moveit::ModelBasedStateSpacePtr mb_state_space =
+      std::static_pointer_cast<bolt_moveit::ModelBasedStateSpace>(si->getStateSpace());
 
   // We must use the root_robot_state here so that the virtual_joint isn't affected
   mb_state_space->copyToRobotState(*visuals_->getRootRobotState(), state);
@@ -292,8 +292,8 @@ void MoveItVizWindow::publishSpheres(const og::PathGeometric& path, const rvt::c
 
 void MoveItVizWindow::publishRobotState(const ob::State* state)
 {
-  moveit_ompl::ModelBasedStateSpacePtr mb_state_space =
-      std::static_pointer_cast<moveit_ompl::ModelBasedStateSpace>(si_->getStateSpace());
+  bolt_moveit::ModelBasedStateSpacePtr mb_state_space =
+      std::static_pointer_cast<bolt_moveit::ModelBasedStateSpace>(si_->getStateSpace());
 
   // Convert to robot state
   mb_state_space->copyToRobotState(*visuals_->getSharedRobotState(), state);
@@ -310,8 +310,8 @@ void MoveItVizWindow::publishTrajectoryPath(const og::PathGeometric& path, const
   double speed = 0.01;
 
   // Get correct type of space
-  moveit_ompl::ModelBasedStateSpacePtr mb_state_space =
-    std::static_pointer_cast<moveit_ompl::ModelBasedStateSpace>(si_->getStateSpace());
+  bolt_moveit::ModelBasedStateSpacePtr mb_state_space =
+    std::static_pointer_cast<bolt_moveit::ModelBasedStateSpace>(si_->getStateSpace());
 
   if (!mb_state_space->convertPathToRobotState(path, jmg, traj, speed))
   {
@@ -368,8 +368,8 @@ Eigen::Vector3d MoveItVizWindow::stateToPoint(const ob::State* state, const move
   // visuals_->loadSharedRobotState();
 
   // Get StateSpace
-  moveit_ompl::ModelBasedStateSpacePtr mb_state_space =
-      std::static_pointer_cast<moveit_ompl::ModelBasedStateSpace>(si_->getStateSpace());
+  bolt_moveit::ModelBasedStateSpacePtr mb_state_space =
+      std::static_pointer_cast<bolt_moveit::ModelBasedStateSpace>(si_->getStateSpace());
 
   // Convert to robot state
   mb_state_space->copyToRobotState(*visuals_->getRootRobotState(), state);

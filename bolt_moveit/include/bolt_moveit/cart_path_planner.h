@@ -42,20 +42,21 @@
 
 // MoveIt
 #include <moveit/robot_state/robot_state.h>
-#include <moveit_visual_tools/moveit_visual_tools.h>
 
-// ROS
-#include <ros/ros.h>
+// Visualization
+#include <moveit_visual_tools/moveit_visual_tools.h>
+#include <moveit_visual_tools/imarker_robot_state.h>
 
 // Eigen
 #include <eigen_conversions/eigen_msg.h>
 
-// OMPL
+// bolt
 #include <bolt_core/TaskGraph.h>
-
-// this package
-#include <moveit_visual_tools/imarker_robot_state.h>
+#include <bolt_moveit/model_based_state_space.h>
 #include <bolt_moveit/tolerances.h>
+
+namespace mvt = moveit_visual_tools;
+namespace psm = planning_scene_monitor;
 
 namespace bolt_moveit
 {
@@ -71,15 +72,16 @@ typedef std::vector<CombinedPoints> CombinedTrajectory;
 typedef std::vector<ompl::tools::bolt::TaskVertex> TaskVertexPoint;
 typedef std::vector<TaskVertexPoint> TaskVertexMatrix;
 
-class BoltMoveIt;
-
 class CartPathPlanner
 {
 public:
   /**
    * \brief Constructor
    */
-  CartPathPlanner(BoltMoveIt* parent);
+  CartPathPlanner(std::vector<mvt::ArmData>& arm_datas, mvt::MoveItVisualToolsPtr visual_tools,
+                  moveit::core::RobotStatePtr moveit_start, psm::PlanningSceneMonitorPtr planning_scene_monitor,
+                  const std::string& package_path, bolt_moveit::ModelBasedStateSpacePtr mbs_space,
+                  moveit::core::JointModelGroup* planning_jmg);
 
   void processIMarkerPose(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback,
                           const Eigen::Affine3d& feedback_pose);
@@ -138,11 +140,13 @@ private:
   // A shared node handle
   ros::NodeHandle nh_;
 
-  // Parent class
-  BoltMoveIt* parent_;
+  const std::string package_path_;
 
   // Data about the arms
   std::vector<moveit_visual_tools::ArmData> arm_datas_;
+
+  bolt_moveit::ModelBasedStateSpacePtr mbs_space_;
+  moveit::core::JointModelGroup* planning_jmg_;
 
   // The main graph
   ompl::tools::bolt::TaskGraphPtr task_graph_;
@@ -157,6 +161,8 @@ private:
 
   // Interactive markers
   moveit_visual_tools::IMarkerRobotStatePtr imarker_cartesian_;
+
+  psm::PlanningSceneMonitorPtr planning_scene_monitor_;
 
   // The exact trajectory to follow
   std::vector<EigenSTL::vector_Affine3d> exact_poses_;

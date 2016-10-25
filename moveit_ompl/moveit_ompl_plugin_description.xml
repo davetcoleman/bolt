@@ -1,7 +1,0 @@
-<library path="libompl_planner_manager">
-  <class name="moveit_ompl/OMPLPlannerManager" type="moveit_ompl::OMPLPlannerManager" base_class_type="planning_interface::PlannerManager">
-    <description>
-      Interface for OMPL
-    </description>
-  </class>
-</library>

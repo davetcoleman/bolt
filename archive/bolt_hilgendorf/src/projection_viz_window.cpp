@@ -36,7 +36,7 @@
    Desc:   Tools for displaying OMPL components in Rviz
 */
 
-#include <bolt_moveit/projection_viz_window.h>
+#include <bolt_hilgendorf/projection_viz_window.h>
 
 // ROS
 #include <ros/ros.h>
@@ -51,6 +51,9 @@
 #include <ompl/base/spaces/SE3StateSpace.h>
 #include <ompl/base/ScopedState.h>
 
+// Custom validity checker that accounts for cost
+//#include <bolt_hilgendorf/costs/cost_map_2d_optimization_objective.h>
+
 // MoveIt
 #include <bolt_moveit/model_based_state_space.h>
 
@@ -59,24 +62,23 @@ namespace ob = ompl::base;
 namespace og = ompl::geometric;
 namespace bnu = boost::numeric::ublas;
 
-namespace bolt_moveit
+namespace bolt_hilgendorf
 {
 ProjectionVizWindow::ProjectionVizWindow(rviz_visual_tools::RvizVisualToolsPtr visuals,
                                          ompl::base::SpaceInformationPtr si)
-  : ot::VizWindow(si), name_("projection_viz_window"), visuals_(visuals)
+  : name_("projection_viz_window"), visuals_(visuals), si_(si)
 {
+  // with this OMPL interface to Rviz all pubs must be manually triggered
+  // visuals_->enableBatchPublishing(false);
+
   // Calculate ranges
   bolt_moveit::ModelBasedStateSpacePtr mb_state_space =
       std::static_pointer_cast<bolt_moveit::ModelBasedStateSpace>(si_->getStateSpace());
   ompl::base::RealVectorBounds bounds = mb_state_space->getBounds();
 
   // Only allow up to 6 dimensions
-  if (!(si_->getStateSpace()->getDimension() > 0 && si_->getStateSpace()->getDimension() <= 6))
-  {
-    ROS_INFO_STREAM_NAMED(name_, "Invalid number of dimensions, disabling projection viz window");
-    enabled_ = false;
-    return;
-  }
+  BOOST_ASSERT_MSG(si_->getStateSpace()->getDimension() > 0 && si_->getStateSpace()->getDimension() <= 6,
+                   "Invalid number of dimensions");
 
   // For each dimension
   for (std::size_t i = 0; i < si_->getStateSpace()->getDimension(); ++i)
@@ -90,11 +92,8 @@ ProjectionVizWindow::ProjectionVizWindow(rviz_visual_tools::RvizVisualToolsPtr v
 }
 
 void ProjectionVizWindow::state(const ompl::base::State* state, ot::VizSizes size, ot::VizColors color,
-                                double extra_data, ob::SpaceInformationPtr si)
+                                double extra_data)
 {
-  if (!enabled_)
-    return;
-
   Eigen::Vector3d point2 = stateToPoint(state);
 
   switch (size)
@@ -129,9 +128,6 @@ void ProjectionVizWindow::state(const ompl::base::State* state, ot::VizSizes siz
 void ProjectionVizWindow::states(std::vector<const ompl::base::State*> states, std::vector<ot::VizColors> colors,
                                  ot::VizSizes size)
 {
-  if (!enabled_)
-    return;
-
   // Cache spheres
   EigenSTL::vector_Vector3d sphere_points;
   std::vector<rvt::colors> sphere_colors;
@@ -150,9 +146,6 @@ void ProjectionVizWindow::states(std::vector<const ompl::base::State*> states, s
 
 void ProjectionVizWindow::edge(const ompl::base::State* stateA, const ompl::base::State* stateB, double cost)
 {
-  if (!enabled_)
-    return;
-
   // Error check
   if (si_->getStateSpace()->equalStates(stateA, stateB))
   {
@@ -185,9 +178,6 @@ void ProjectionVizWindow::edge(const ompl::base::State* stateA, const ompl::base
 void ProjectionVizWindow::edge(const ompl::base::State* stateA, const ompl::base::State* stateB, ot::VizSizes size,
                                ot::VizColors color)
 {
-  if (!enabled_)
-    return;
-
   visuals_->publishCylinder(stateToPoint(stateA), stateToPoint(stateB), visuals_->intToRvizColor(color),
                             visuals_->intToRvizScale(size));
 }
@@ -196,9 +186,6 @@ void ProjectionVizWindow::edges(const std::vector<const ompl::base::State*> stat
                                 const std::vector<const ompl::base::State*> stateBs,
                                 std::vector<ompl::tools::VizColors> colors, ompl::tools::VizSizes size)
 {
-  if (!enabled_)
-    return;
-
   // Cache edges
   EigenSTL::vector_Vector3d aPoints;
   EigenSTL::vector_Vector3d bPoints;
@@ -218,20 +205,16 @@ void ProjectionVizWindow::edges(const std::vector<const ompl::base::State*> stat
   visuals_->publishLines(aPoints, bPoints, rviz_colors, visuals_->intToRvizScale(size));
 }
 
-void ProjectionVizWindow::path(ompl::geometric::PathGeometric* path, ompl::tools::VizSizes type,
-                               ot::VizColors vertexColor, ot::VizColors edgeColor)
+void ProjectionVizWindow::path(ompl::geometric::PathGeometric* path, ompl::tools::VizSizes type, ot::VizColors color)
 {
-  if (!enabled_)
-    return;
-
   // Convert
   const og::PathGeometric& geometric_path = *path;  // static_cast<og::PathGeometric&>(*path);
 
   switch (type)
   {
     case ompl::tools::SMALL:  // Basic black line with vertiices
-      publish2DPath(geometric_path, visuals_->intToRvizColor(edgeColor), min_edge_radius_);
-      publishSpheres(geometric_path, visuals_->intToRvizColor(vertexColor), rvt::SMALL);
+      publish2DPath(geometric_path, visuals_->intToRvizColor(color), min_edge_radius_);
+      publishSpheres(geometric_path, visuals_->intToRvizColor(color), rvt::SMALL);
       break;
     case ompl::tools::ROBOT:
       // Playback motion for real robot, which is not applicable for this space
@@ -241,12 +224,9 @@ void ProjectionVizWindow::path(ompl::geometric::PathGeometric* path, ompl::tools
   }
 }
 
-void ProjectionVizWindow::trigger(std::size_t queueSize)
+void ProjectionVizWindow::trigger()
 {
-  if (!enabled_)
-    return;
-
-  visuals_->triggerEvery(queueSize);
+  visuals_->trigger();
 }
 
 void ProjectionVizWindow::deleteAllMarkers()
@@ -270,7 +250,7 @@ bool ProjectionVizWindow::shutdownRequested()
   return false;
 }
 
-// From bolt_moveit ------------------------------------------------------
+// From bolt_hilgendorf ------------------------------------------------------
 
 bool ProjectionVizWindow::publishEdge(const ob::State* stateA, const ob::State* stateB,
                                       const std_msgs::ColorRGBA& color, const double radius)
@@ -305,12 +285,11 @@ bool ProjectionVizWindow::publishSpheres(const og::PathGeometric& path, const rv
 }
 
 // Deprecated
-// bool ProjectionVizWindow::publishPath(const og::PathGeometric& path, const rvt::colors& color, const double
-// thickness,
-//                                       const std::string& ns)
-// {
-//   return publish2DPath(path, color, thickness, ns);
-//}
+bool ProjectionVizWindow::publishPath(const og::PathGeometric& path, const rvt::colors& color, const double thickness,
+                                      const std::string& ns)
+{
+  return publish2DPath(path, color, thickness, ns);
+}
 
 bool ProjectionVizWindow::publish2DPath(const og::PathGeometric& path, const rvt::colors& color, const double thickness,
                                         const std::string& ns)
@@ -435,4 +414,4 @@ Eigen::Vector3d ProjectionVizWindow::stateToPoint(const ob::State* state)
   return temp_eigen_point_;
 }
 
-}  // namespace bolt_moveit
+}  // namespace bolt_hilgendorf

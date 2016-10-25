@@ -58,7 +58,7 @@
 #include <bolt_core/SparseFormula.h>
 
 // Interface for loading rosparam settings into OMPL
-#include <moveit_ompl/ompl_rosparam.h>
+#include <bolt_ros/ompl_rosparam.h>
 #include <moveit_dashboard/remote_control.h>
 
 namespace ob = ompl::base;
@@ -222,8 +222,8 @@ public:
         file_name = "2d_world_" + std::to_string(bolt_->getSparseCriteria()->sparseDeltaFraction_) + "_database";
       else
         file_name = "2d_world_database";
-      moveit_ompl::getFilePath(file_path, file_name, "ros/ompl_storage");
-      bolt_->setFilePath(file_path);  // this is here because its how we do it in moveit_ompl
+      bolt_moveit::getFilePath(file_path, file_name, "ros/ompl_storage");
+      bolt_->setFilePath(file_path);  // this is here because its how we do it in bolt_moveit
     }
 
     // Load visual tool objects
@@ -234,7 +234,7 @@ public:
 
     // Run interface for loading rosparam settings into OMPL
     if (planner_name_ == BOLT)
-      moveit_ompl::loadOMPLParameters(nh_, name_, bolt_);
+      bolt_moveit::loadOMPLParameters(nh_, name_, bolt_);
     if (planner_name_ == SPARS2)
       loadSPARS2Data();
 
@@ -648,7 +648,7 @@ public:
   {
     // Logging
     std::string file_path;
-    moveit_ompl::getFilePath(file_path, "bolt_2d_world_logging.csv", "ros/ompl_storage");
+    bolt_moveit::getFilePath(file_path, "bolt_2d_world_logging.csv", "ros/ompl_storage");
 
     // std::ofstream logging_file;                           // open to append
     // logging_file.open(file_path.c_str(), std::ios::out);  // no append | std::ios::app);
