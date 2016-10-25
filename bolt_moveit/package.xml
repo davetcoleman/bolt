@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>bolt_moveit</name>
-  <version>0.0.1</version>
+  <version>0.1.0</version>
   <description>Demonstrate dual arm manipulation using a combination of free space and Cartesian planning</description>
 
   <maintainer email="davetcoleman@gmail.com">Dave Coleman</maintainer>

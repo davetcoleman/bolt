@@ -2,8 +2,8 @@
 Changelog for package bolt_core
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.1.0 (2016-10-25)
+------------------
 * Improve documentation and install instructions
 * Add approach to cartesian trajectory
   Visualize components of trajectory separate

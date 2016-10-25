@@ -2,8 +2,8 @@
 Changelog for package moveit_ompl
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.1.0 (2016-10-25)
+------------------
 * Add PathGeometricPtr throughout codebase
   Move convertPath to model_based_state_space
 * Add execution_interface
