@@ -1,6 +1,6 @@
 <package>
   <name>moveit_ompl</name>
-  <version>1.0.0</version>
+  <version>0.0.1</version>
   <description>MoveIt interface to OMPL</description>
   <maintainer email="davetcoleman@gmail.com">Dave Coleman</maintainer>
   <author email="davetcoleman@gmail.com">Dave Coleman</author>
