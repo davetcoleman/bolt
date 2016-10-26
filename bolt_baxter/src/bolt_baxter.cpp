@@ -177,7 +177,7 @@ BoltBaxter::BoltBaxter(const std::string &hostname, const std::string &package_p
   for (std::size_t i = 0; i < arm_jmgs.size(); ++i)
   {
     arm_datas_.push_back(
-        mvt::ArmData(robot_model_->getJointModelGroup(arm_jmgs[i]), robot_model_->getLinkModel(ee_tip_links[i])));
+                         mvt::ArmData(robot_model_->getJointModelGroup(arm_jmgs[i]), robot_model_->getLinkModel(ee_tip_links[i])));
     if (!arm_datas_.back().jmg_)
     {
       BOLT_ERROR(indent, "No joint model group found for jmg name " << arm_jmgs[i]);
@@ -214,11 +214,9 @@ BoltBaxter::BoltBaxter(const std::string &hostname, const std::string &package_p
   if (connect_to_hardware_)
   {
     execution_interface_ =
-        std::make_shared<moveit_boilerplate::ExecutionInterface>(remote_control_, psm_, viz6_->getVisualTools());
-
-    planning_interface_ = std::make_shared<moveit_boilerplate::PlanningInterface>(
-        execution_interface_, psm_, viz6_->getVisualTools(), planning_jmg_);
+      std::make_shared<moveit_boilerplate::ExecutionInterface>(remote_control_, psm_, viz6_->getVisualTools());
   }
+  planning_interface_ = std::make_shared<moveit_boilerplate::PlanningInterface>(psm_, viz6_->getVisualTools(), planning_jmg_, execution_interface_);
 
   // Wait until user does something
   if (!auto_run_)
@@ -295,7 +293,7 @@ std::string BoltBaxter::getFilePath(const std::string &planning_group_name)
   if (is_bolt_)
   {
     file_name = file_name + "bolt_" + planning_group_name + "_" +
-                std::to_string(bolt_->getSparseCriteria()->sparseDeltaFraction_) + "_database";
+      std::to_string(bolt_->getSparseCriteria()->sparseDeltaFraction_) + "_database";
   }
   else
   {
@@ -441,24 +439,10 @@ bool BoltBaxter::runProblems(std::size_t indent)
     std::cout << "***************************************************************" << std::endl;
 
     if (headless_)
-      ROS_WARN_STREAM_NAMED(name_, "imarker start/goal not loaded");
+      ROS_WARN_STREAM_NAMED(name_, "IMarker start/goal not loaded, should not be planning in headless mode");
 
     // Generate start/goal pair
-    if (problem_type_ == 0)
-    {
-      if (!connect_to_hardware_)  // if running on hardware, these markers are not needed
-        imarker_start_->setToRandomState();
-      imarker_goal_->setToRandomState();
-    }
-    if (!connect_to_hardware_)  // if running on hardware, these markers are not needed
-      moveit_start_ = imarker_start_->getRobotState();
-    else
-      moveit_start_ = getCurrentState();
-    moveit_goal_ = imarker_goal_->getRobotState();
-
-    // Visualize
-    if (visualize_start_goal_states_)
-      visualizeStartGoal();
+    chooseStartGoal(run_id, indent);
 
     // Optionally create cartesian path, if this is a task plan
     double vm1, rss1;
@@ -577,18 +561,26 @@ bool BoltBaxter::plan(std::size_t indent)
     return false;
   }
 
-  robot_trajectory::RobotTrajectoryPtr execution_traj;
-  //if (use_task_planning_) // Process segments
-  {
-    execution_traj = processSegments(indent);
-  }
+  // Interpolate and parameterize
+  robot_trajectory::RobotTrajectoryPtr execution_traj = processSegments(indent);
 
   // Execute
-  while (ros::ok())
+  if (connect_to_hardware_)
   {
-    bool wait_for_execution = true;
-    execution_interface_->executeTrajectory(execution_traj, planning_jmg_, wait_for_execution);
-    waitForNextStep("execute again");
+    while (ros::ok())
+    {
+      bool wait_for_execution = true;
+      execution_interface_->executeTrajectory(execution_traj, planning_jmg_, wait_for_execution);
+      waitForNextStep("execute again");
+    }
+  }
+  else // Simulation
+  {
+    // viz6_->getVisualTools()->deleteAllMarkers();
+    // viz6_->getVisualTools()->publishTrajectoryLine(execution_traj, planning_jmg_, rvt::LIME_GREEN);
+    // viz6_->getVisualTools()->trigger();
+    bool blocking = false;
+    viz6_->getVisualTools()->publishTrajectoryPath(execution_traj, blocking);
   }
 
   // Visualize the doneness
@@ -601,7 +593,7 @@ void BoltBaxter::loadCollisionChecker()
 {
   // Create state validity checking for this space
   validity_checker_ =
-      new bolt_moveit::StateValidityChecker(planning_group_name_, si_, *current_state_, planning_scene_, space_);
+    new bolt_moveit::StateValidityChecker(planning_group_name_, si_, *current_state_, planning_scene_, space_);
   validity_checker_->setCheckingEnabled(collision_checking_enabled_);
 
   // Set checker
@@ -650,7 +642,7 @@ void BoltBaxter::loadVisualTools()
   for (std::size_t i = 1; i <= NUM_VISUALS; ++i)
   {
     MoveItVisualToolsPtr moveit_visual = MoveItVisualToolsPtr(new MoveItVisualTools(
-        "/world_visual" + std::to_string(i), namesp + "/ompl_visual" + std::to_string(i), robot_model_));
+                                                                                    "/world_visual" + std::to_string(i), namesp + "/ompl_visual" + std::to_string(i), robot_model_));
     moveit_visual->loadMarkerPub(false);
     moveit_visual->setPlanningSceneMonitor(psm_);
     moveit_visual->setManualSceneUpdating(true);
@@ -1009,13 +1001,13 @@ void BoltBaxter::mirrorGraph(std::size_t indent)
   // Create state validity checking for both arms
   bolt_moveit::StateValidityChecker *both_arms_validity_checker;
   both_arms_validity_checker = new bolt_moveit::StateValidityChecker(
-      both_arms_group_name_, both_arms_space_info, *current_state_, planning_scene_, both_arms_state_space_);
+                                                                     both_arms_group_name_, both_arms_space_info, *current_state_, planning_scene_, both_arms_state_space_);
   both_arms_space_info->setStateValidityChecker(ob::StateValidityCheckerPtr(both_arms_validity_checker));
 
   // Create state validity checking for left arm
   bolt_moveit::StateValidityChecker *left_arm_validity_checker;
   left_arm_validity_checker = new bolt_moveit::StateValidityChecker(
-      opposite_arm_name_, left_arm_space_info, *current_state_, planning_scene_, left_arm_state_space_);
+                                                                    opposite_arm_name_, left_arm_space_info, *current_state_, planning_scene_, left_arm_state_space_);
   left_arm_space_info->setStateValidityChecker(ob::StateValidityCheckerPtr(left_arm_validity_checker));
 
   // Set the database file location
@@ -1042,14 +1034,14 @@ ob::State *BoltBaxter::combineStates(const ob::State *state1, const ob::State *s
 {
   /* Notes:
      state1
-       state space: space_
-       jmg: planning_jmg_
+     state space: space_
+     jmg: planning_jmg_
      state2
-       state space: left_arm_state_space_
-       jmg: left_arm_jmg_
+     state space: left_arm_state_space_
+     jmg: left_arm_jmg_
      return state
-       state space: both_arms_state_space_
-       jmg: both_arms_jmg_
+     state space: both_arms_state_space_
+     jmg: both_arms_jmg_
   */
 
   ob::State *both_arms_state = both_arms_state_space_->allocState();
@@ -1133,9 +1125,9 @@ void BoltBaxter::benchmarkMemoryAllocation(std::size_t indent)
 
   // METHOD 3
   /*
-  ros::Time start_time0 = ros::Time::now();  // Benchmark runtime
-  for (std::size_t test = 0; test < tests; ++test)
-  {
+    ros::Time start_time0 = ros::Time::now();  // Benchmark runtime
+    for (std::size_t test = 0; test < tests; ++test)
+    {
     using namespace bolt_moveit;
 
     // Allocate
@@ -1146,12 +1138,12 @@ void BoltBaxter::benchmarkMemoryAllocation(std::size_t indent)
     std::cout << "allocStates: " << std::endl;
     for (std::size_t i = 0; i < numStates; ++i)
     {
-      std::cout << " - states[i]: " << &states[i] << std::endl;
-      for (std::size_t j = 0; j < 14; ++j)
-      {
-        std::cout << "     - value " << j << ": " << states[i].as<ModelSize14StateSpace::StateType>()->values[j] <<
-  std::endl;
-      }
+    std::cout << " - states[i]: " << &states[i] << std::endl;
+    for (std::size_t j = 0; j < 14; ++j)
+    {
+    std::cout << "     - value " << j << ": " << states[i].as<ModelSize14StateSpace::StateType>()->values[j] <<
+    std::endl;
+    }
     }
 
     std::cout << "allocated states " << std::endl;
@@ -1160,31 +1152,31 @@ void BoltBaxter::benchmarkMemoryAllocation(std::size_t indent)
     // space->freeStates(states);
     for (std::size_t i = 0; i < numStates; ++i)
     {
-      std::cout << "i: " << i << std::endl;
-      // std::cout << "states[i]: " << states[i] << std::endl;
-      std::cout << &states[i] << " &states[i]" << std::endl;
-      std::cout << (&states[i])->as<ModelSize14StateSpace::StateType>() << "
-  (&states[i])->as<ModelSize14StateSpace::StateType>()" << std::endl;
-      std::cout << (&states[i])->as<ModelSize14StateSpace::StateType>()->values << "
-  (&states[i])->as<ModelSize14StateSpace::StateType>()->values" << std::endl;
+    std::cout << "i: " << i << std::endl;
+    // std::cout << "states[i]: " << states[i] << std::endl;
+    std::cout << &states[i] << " &states[i]" << std::endl;
+    std::cout << (&states[i])->as<ModelSize14StateSpace::StateType>() << "
+    (&states[i])->as<ModelSize14StateSpace::StateType>()" << std::endl;
+    std::cout << (&states[i])->as<ModelSize14StateSpace::StateType>()->values << "
+    (&states[i])->as<ModelSize14StateSpace::StateType>()->values" << std::endl;
 
-      for (std::size_t j = 0; j < 14; ++j)
-      {
-        std::cout << " - " << (&states[i])->as<ModelSize14StateSpace::StateType>()->values[j] << std::endl;
-      }
-
-      std::cout << "1 " << std::endl;
-      (&states[i])->as<ModelSize14StateSpace::StateType>()->values[0] = 0;
-      std::cout << "2 " << std::endl;
-      (&states[i])->as<ModelSize14StateSpace::StateType>()->values[7] = 7;
-      (&states[i])->as<ModelSize14StateSpace::StateType>()->values[13] = 13;
-
-      std::cout << "delete: " << std::endl;
-      delete[] states;
-      // space->freeState(&states[i]);
+    for (std::size_t j = 0; j < 14; ++j)
+    {
+    std::cout << " - " << (&states[i])->as<ModelSize14StateSpace::StateType>()->values[j] << std::endl;
     }
-  }
-  ROS_INFO_STREAM_NAMED(name_, "Array Total time: " << (ros::Time::now() - start_time0).toSec() << " seconds");
+
+    std::cout << "1 " << std::endl;
+    (&states[i])->as<ModelSize14StateSpace::StateType>()->values[0] = 0;
+    std::cout << "2 " << std::endl;
+    (&states[i])->as<ModelSize14StateSpace::StateType>()->values[7] = 7;
+    (&states[i])->as<ModelSize14StateSpace::StateType>()->values[13] = 13;
+
+    std::cout << "delete: " << std::endl;
+    delete[] states;
+    // space->freeState(&states[i]);
+    }
+    }
+    ROS_INFO_STREAM_NAMED(name_, "Array Total time: " << (ros::Time::now() - start_time0).toSec() << " seconds");
   */
   waitForNextStep("finished running");
 
@@ -1243,8 +1235,8 @@ void BoltBaxter::loadAmazonScene()
 
   // Calculate offset
   mesh_centroid = Eigen::AngleAxisd(M_PI / 2.0, Eigen::Vector3d::UnitX()) *
-                  Eigen::AngleAxisd(M_PI / 2.0, Eigen::Vector3d::UnitY()) *
-                  Eigen::AngleAxisd(0, Eigen::Vector3d::UnitZ());
+    Eigen::AngleAxisd(M_PI / 2.0, Eigen::Vector3d::UnitY()) *
+    Eigen::AngleAxisd(0, Eigen::Vector3d::UnitZ());
   mesh_centroid.translation().x() = distance_to_shelf_;
   mesh_centroid.translation().y() = 0;
   mesh_centroid.translation().z() = baxter_torso_height_;
@@ -1256,7 +1248,7 @@ void BoltBaxter::loadAmazonScene()
   if (!mesh || !shapes::constructMsgFromShape(mesh, shape_msg))
   {
     ROS_ERROR_STREAM_NAMED("collision_object", "Unable to create mesh shape message from resource "
-                                                   << collision_mesh_path);
+                           << collision_mesh_path);
     return;
   }
 
@@ -1330,7 +1322,6 @@ void BoltBaxter::loadIMarkersFromFile(std::vector<moveit::core::RobotStatePtr> &
   std::size_t count = 0;
   while (std::getline(input_file, line))
   {
-    ROS_INFO_STREAM_NAMED(name_, "Saving line " << count++);
     moveit::core::streamToRobotState(*imarker_goal_->getRobotState(), line);
     robot_states.push_back(std::make_shared<moveit::core::RobotState>(*imarker_goal_->getRobotState()));
   }
@@ -1347,10 +1338,12 @@ void BoltBaxter::loadIMarkers()
                                                               package_path_, space_, planning_jmg_));
   }
 
+  // Create start/goal imarkers
   if (!connect_to_hardware_)  // if running on hardware, these imarkers are not needed
     imarker_start_.reset(new mvt::IMarkerRobotState(psm_, "start", arm_datas_, rvt::GREEN, package_path_));
   imarker_goal_.reset(new mvt::IMarkerRobotState(psm_, "goal", arm_datas_, rvt::ORANGE, package_path_));
 
+  // Error message until current state is valid
   if (connect_to_hardware_)
   {
     ros::Duration(0.1).sleep();
@@ -1365,14 +1358,6 @@ void BoltBaxter::loadIMarkers()
       ros::spinOnce();
     }
   }
-
-  // Set to a pose
-  if (false)
-  {
-    imarker_goal_->getRobotState()->setToDefaultValues(planning_jmg_, "both_ready");
-    imarker_goal_->saveToFile();
-    imarker_goal_->publishState();
-  }
 }
 
 robot_trajectory::RobotTrajectoryPtr BoltBaxter::processSegments(std::size_t indent)
@@ -1382,7 +1367,7 @@ robot_trajectory::RobotTrajectoryPtr BoltBaxter::processSegments(std::size_t ind
   // Get solution segments
   std::vector<og::PathGeometricPtr> model_solution_segments = bolt_->getBoltPlanner()->getModelSolutionSegments();
   robot_trajectory::RobotTrajectoryPtr combined_traj =
-      std::make_shared<robot_trajectory::RobotTrajectory>(robot_model_, planning_jmg_);
+    std::make_shared<robot_trajectory::RobotTrajectory>(robot_model_, planning_jmg_);
 
   // For each segment of trajectory
   for (std::size_t i = 0; i < model_solution_segments.size(); ++i)
@@ -1406,11 +1391,15 @@ robot_trajectory::RobotTrajectoryPtr BoltBaxter::processSegments(std::size_t ind
 
 
     // Loop through each state in subtrajectory
-    for (std::size_t i = 0; i < traj_segment->getWayPointCount(); ++i)
-    {
-      viz6_->getVisualTools()->publishRobotState(traj_segment->getWayPoint(i), rvt::BLUE);
-      waitForNextStep("next step");
-    }
+    if (false)
+      for (std::size_t i = 0; i < traj_segment->getWayPointCount(); ++i)
+      {
+        std::cout << "i: " << i << std::endl;
+        viz6_->getVisualTools()->publishRobotState(traj_segment->getWayPoint(i), rvt::BLUE);
+
+        //traj_segment->getWayPoint(i).printStateInfo();
+        waitForNextStep("next step");
+      }
 
     // For the cartesian path, go real slow
     double velocity_scaling_factor = velocity_scaling_factor_;
@@ -1419,16 +1408,65 @@ robot_trajectory::RobotTrajectoryPtr BoltBaxter::processSegments(std::size_t ind
 
     // Interpolate and parameterize
     const bool use_interpolation = false;
-    std::cout << "10 " << std::endl;
     planning_interface_->convertRobotStatesToTraj(traj_segment, planning_jmg_, velocity_scaling_factor,
                                                   use_interpolation);
-    std::cout << "11 " << std::endl;
+
     // Add to combined traj
     const double dt = i == 0 ? 0.0 : 1.0;  // Quick pause between segments except first one
     combined_traj->append(*traj_segment, dt);
   }
 
   return combined_traj;
+}
+
+void BoltBaxter::chooseStartGoal(std::size_t run_id, std::size_t indent)
+{
+  BOLT_FUNC(indent, true, "chooseStartGoal()");
+
+  switch (problem_type_)
+  {
+    case 0: // random
+      if (!connect_to_hardware_)  // if running on hardware, these markers are not needed
+        imarker_start_->setToRandomState();
+      imarker_goal_->setToRandomState();
+      break;
+    case 1: // imarkers
+      // do nothing
+      break;
+    case 2: // imarker goal list
+      {
+        // start is always the same
+        imarker_start_->getRobotState()->setToDefaultValues(planning_jmg_, "both_ready");
+        imarker_start_->publishState();
+
+        // load goals
+        std::vector<moveit::core::RobotStatePtr> robot_states;
+        loadIMarkersFromFile(robot_states, indent);
+
+        // choose goal
+        std::size_t state_id = run_id % robot_states.size();
+        std::cout << "total states: " << robot_states.size() << " run_id: " << run_id << " state_id: " << state_id << std::endl;
+
+        imarker_goal_->getRobotState() = robot_states[state_id];
+        imarker_goal_->publishState();
+      }
+      break;
+    default:
+      ROS_ERROR_STREAM_NAMED(name_, "Unknown problem type");
+  }
+
+  // Get start
+  if (!connect_to_hardware_)  // if running on hardware, these markers are not needed
+    moveit_start_ = imarker_start_->getRobotState();
+  else
+    moveit_start_ = getCurrentState();
+
+  // Get goal
+  moveit_goal_ = imarker_goal_->getRobotState();
+
+  // Visualize
+  if (visualize_start_goal_states_)
+    visualizeStartGoal();
 }
 
 }  // namespace bolt_baxter

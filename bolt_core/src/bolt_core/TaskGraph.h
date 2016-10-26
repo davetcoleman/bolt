@@ -181,6 +181,11 @@ public:
    * Get graph properties
    * --------------------------------------------------------------------------------- */
 
+  /** \brief Get the state of a vertex used for querying - i.e. vertices 0-11 for 12 thread system */
+  base::State*& getQueryStateNonConst(std::size_t threadID);
+
+  TaskVertex getQueryVertices(std::size_t threadID);
+
   std::vector<TaskVertex> getQueryVertices()
   {
     return queryVertices_;

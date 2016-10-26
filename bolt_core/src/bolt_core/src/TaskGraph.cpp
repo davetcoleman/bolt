@@ -402,6 +402,19 @@ double TaskGraph::astarTaskHeuristic(const TaskVertex a, const TaskVertex b) con
   return dist;
 }
 
+base::State *&TaskGraph::getQueryStateNonConst(std::size_t threadID)
+{
+  BOLT_ASSERT(threadID < queryVertices_.size(), "Attempted to request state of regular vertex using query "
+                                                "function");
+  return queryStates_[threadID];
+}
+
+SparseVertex TaskGraph::getQueryVertices(std::size_t threadID)
+{
+  BOLT_ASSERT(threadID < queryVertices_.size(), "Attempted to request vertex beyond threadID count");
+  return queryVertices_[threadID];
+}
+
 bool TaskGraph::isEmpty() const
 {
   assert(!(getNumVertices() < getNumQueryVertices()));
@@ -595,7 +608,6 @@ bool TaskGraph::addCartPath(std::vector<base::State *> path, std::size_t indent)
     addEdge(v1, v2, indent);
     v1 = v2;
   }
-
   // Tell the planner to require task planning
   taskPlanningEnabled_ = true;
   */

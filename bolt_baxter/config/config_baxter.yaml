@@ -26,16 +26,15 @@ bolt_baxter:
   # run type
   run_problems: true # do plans?
   headless: false
-  num_problems: 1
-  problem_type: 1 # 0 - random, 1 - imarkers
-  use_task_planning: true  # cartesian hybrid planning
+  num_problems: 10
+  problem_type: 2 # 0 - random, 1 - imarkers, 2 - imarker goal list
 
   # scene
-  scene_type: 0 # 0 - office, 1 - amazon
+  scene_type: 1 # 0 - office, 1 - amazon
   distance_to_shelf: 1.25
 
   # execution
-  connect_to_hardware: true
+  connect_to_hardware: false
   velocity_scaling_factor: 1.0
 
   # solver type
@@ -49,6 +48,7 @@ bolt_baxter:
   ee_tip_links: [right_gripper_tip, left_gripper_tip]
 
   # other
+  use_task_planning: false  # cartesian hybrid planning
   post_processing: false
   post_processing_interval: 20 # how often (in runs) to adjust the graphs
   seed_random: true
@@ -193,7 +193,7 @@ debug_interface:
 bolt_planner:
   smoothing_enabled: false
   verbose:
-    verbose: false
+    verbose: true
     collision_check: false
   visualize:
     smoothed_trajectory: false

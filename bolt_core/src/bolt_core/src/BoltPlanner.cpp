@@ -165,8 +165,8 @@ base::PlannerStatus BoltPlanner::solve(base::State *startState, base::State *goa
   // Search
   if (!getPathOffGraph(startState, goalState, compoundSolutionPath_, ptc, indent))
   {
-    BOLT_WARN(indent, true, "solve() No near start or goal found");
-    return base::PlannerStatus::TIMEOUT;  // The planner failed to find a solution
+    BOLT_WARN(indent, true, "BoltPlanner::solve() No near start or goal found");
+    return base::PlannerStatus::ABORT;  // The planner failed to find a solution
   }
 
   BOLT_DEBUG(indent, verbose_, "getPathOffGraph() found a solution of size " << compoundSolutionPath_->getStateCount());
@@ -183,19 +183,15 @@ base::PlannerStatus BoltPlanner::solve(base::State *startState, base::State *goa
   else
     simplifyNonTaskPath(compoundSolutionPath_, ptc, indent);
 
-  std::cout << "1 " << std::endl;
   // Convert solution back to joint trajectory only (no discrete component)
   geometric::PathGeometricPtr modelSolution = taskGraph_->convertPathToNonCompound(compoundSolutionPath_);
 
   // Show the smoothed path
   if (visualizeSmoothedTrajectory_)
   {
-    std::cout << "2 " << std::endl;
     visual_->viz4()->deleteAllMarkers();
     visual_->viz4()->path(modelSolution.get(), tools::MEDIUM, tools::BLACK, tools::BLUE);
-    std::cout << "4 " << std::endl;
     visual_->viz4()->path(modelSolution.get(), tools::ROBOT, tools::BLACK, tools::BLACK);
-    std::cout << "5 " << std::endl;
     visual_->viz4()->trigger();
     visual_->waitForUserFeedback("BoltPlanner: visualize smoothed trajectory");
   }
@@ -220,7 +216,11 @@ bool BoltPlanner::getPathOffGraph(const base::State *start, const base::State *g
   std::size_t attempt = 0;
   for (; attempt < maxAttempts; ++attempt)
   {
-    BOLT_DEBUG(indent, verbose_, "Starting getPathOffGraph() attempt " << attempt);
+    std::cout << "-------------------------------------------------------" << std::endl;
+    std::cout << "-------------------------------------------------------" << std::endl;
+    BOLT_DEBUG(indent, true, "Starting getPathOffGraph() attempt " << attempt);
+    std::cout << "-------------------------------------------------------" << std::endl;
+    std::cout << "-------------------------------------------------------" << std::endl;
 
     // Get neighbors near start and goal. Note: potentially they are not *visible* - will test for this later
 
@@ -251,13 +251,16 @@ bool BoltPlanner::getPathOffGraph(const base::State *start, const base::State *g
                                  compoundSolution, ptc, debug, feedbackStartFailed, indent);
 
     // Error check
-    if (!result)
+    if (result)
+      break;
+
+    BOLT_WARN(indent, true, "getPathOffGraph(): BoltPlanner returned FALSE for getPathOnGraph, attempt " << attempt);
+
+    if (attempt == 0)
     {
-      BOLT_WARN(indent, true, "getPathOffGraph(): BoltPlanner returned FALSE for getPathOnGraph");
-      return false;
+      // Start sampling
+      addSamples(indent);
     }
-    else
-      break;  // success, continue on
   }
 
   // Did we finally get it?
@@ -306,31 +309,31 @@ bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
     }
     foundValidStart = true;
 
-    for (TaskVertex goal : candidateGoals)
+    for (TaskVertex goalVertex : candidateGoals)
     {
       BOLT_DEBUG(indent, true || verbose_, "Planning from candidate start/goal pair "
-                                               << actualGoal << " to " << taskGraph_->getCompoundState(goal));
+                                               << actualGoal << " to " << taskGraph_->getCompoundState(goalVertex));
 
       if (ptc)  // Check if our planner is out of time
       {
-        BOLT_DEBUG(indent, verbose_, "getPathOnGraph function interrupted because termination condition is true.");
+        BOLT_DEBUG(indent + 2, verbose_, "getPathOnGraph function interrupted because termination condition is true.");
         return false;
       }
 
       // Check if this goal is visible from the actual goal
-      if (!taskGraph_->checkMotion(actualGoal, taskGraph_->getCompoundState(goal)))
+      if (!taskGraph_->checkMotion(actualGoal, taskGraph_->getCompoundState(goalVertex)))
       {
-        BOLT_WARN(indent, verbose_, "FOUND GOAL CANDIDATE THAT IS NOT VISIBLE! ");
+        BOLT_WARN(indent + 2, verbose_, "Found goal candidate that is not visible on vertex " << goalVertex);
 
         if (visualizeStartGoalUnconnected_)
-          visualizeBadEdge(actualGoal, taskGraph_->getCompoundState(goal));
+          visualizeBadEdge(actualGoal, taskGraph_->getCompoundState(goalVertex));
 
         continue;  // this is actually not visible
       }
       foundValidGoal = true;
 
       // Repeatidly search through graph for connection then check for collisions then repeat
-      if (onGraphSearch(startVertex, goal, actualStart, actualGoal, compoundSolution, ptc, indent))
+      if (onGraphSearch(startVertex, goalVertex, actualStart, actualGoal, compoundSolution, ptc, indent + 2))
       {
         // All save trajectories should be at least 1 state long, then we append the start and goal states, for
         // min of 3
@@ -946,6 +949,55 @@ void BoltPlanner::visualizeBadEdge(const base::State *from, const base::State *t
   visual_->viz5()->state(to, tools::ROBOT, tools::RED, 0);
 
   visual_->waitForUserFeedback("collision on edge from viz4 to viz5");
+}
+
+void BoltPlanner::addSamples(std::size_t indent)
+{
+  BOLT_FUNC(indent, true, "addSamples()");
+
+  // for (std::size_t i = 0; i < 1000; ++i)
+  // {
+  //   base::State *candidateState = modelSI_->getStateSpace()->allocState();
+
+  //   // Choose sampler based on clearance
+  //   base::ValidStateSamplerPtr sampler = taskGraph_->getSparseGraph()->getSampler(modelSI_, taskGraph_->getSparseGraph()->getObstacleClearance(), indent);
+  //   if (!sampler->sample(candidateState))
+  //     throw Exception(name_, "Unable to find valid sample");
+
+  //   // Add the vertex
+  //   VertexLevel level = 0;
+  //   TaskVertex v = taskGraph_->addVertexWithLevel(candidateState, level, indent);
+
+  //   // Add edges around vertex ----------------------------------------------------
+
+  //   // Get neighbots
+  //   double distance = 2.0 * taskGraph_->getSparseGraph()->getSparseDelta();
+  //   std::vector<TaskVertex> graphNeighborhood;
+  //   taskGraph_->getQueryStateNonConst(threadID) = candidateState;
+  //   taskGraph_->getNN()->nearestR(taskGraph_->getQueryVertices(threadID), distance, graphNeighborhood);
+  //   taskGraph_->getQueryStateNonConst(threadID) = nullptr;
+
+  //   // Now that we got the neighbors from the NN, we must remove any we can't see
+  //   for (std::size_t i = 0; i < graphNeighborhood.size(); ++i)
+  //   {
+  //     const TaskVertex &v2 = graphNeighborhood[i];
+
+  //     // Don't collision check if they are the same state
+  //     if (candidateState != taskGraph_->getState(v2))
+  //     {
+  //       if (!si_->checkMotion(candidateD.state_, taskGraph_->getState(v2)))
+  //       {
+  //         continue;
+  //       }
+  //     }
+  //     else if (vFindGraphNeighbors_)
+  //       std::cout << " ---- Skipping collision checking because same vertex " << std::endl;
+
+  //     // The two are visible to each other!
+  //     candidateD.visibleNeighborhood_.push_back(graphNeighborhood[i]);
+  //   }
+
+  // }
 }
 
 }  // namespace bolt

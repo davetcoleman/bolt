@@ -237,7 +237,7 @@ void Bolt::visualize(std::size_t indent)
     }
     visual_->viz6()->trigger();
   }
-  visual_->waitForUserFeedback("Bolt: visualize smooth trajectory");
+  //visual_->waitForUserFeedback("Bolt: visualize smooth trajectory");
 
   // Show robot animated
   if (visualizeRobotTrajectory_)

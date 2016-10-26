@@ -182,6 +182,8 @@ public:
   void visualizeBadEdge(TaskVertex fromVertex, TaskVertex toVertex);
   void visualizeBadEdge(const base::State *from, const base::State *to);
 
+  void addSamples(std::size_t indent);
+
   TaskGraphPtr getTaskGraph()
   {
     return taskGraph_;

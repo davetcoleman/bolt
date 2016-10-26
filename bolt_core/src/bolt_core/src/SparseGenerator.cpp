@@ -557,6 +557,8 @@ void SparseGenerator::showNoQualityStatus(std::size_t indent)
 
 void SparseGenerator::findGraphNeighbors(CandidateData &candidateD, std::size_t threadID, std::size_t indent)
 {
+  // TODO: should this be 2 * sparseCriteria_->getSparseDelta() ?
+  BOLT_ERROR(indent, "should this be 2*sparseCriteria_->getSparseDelta()");
   findGraphNeighbors(candidateD, sparseCriteria_->getSparseDelta(), threadID, indent);
 }
 
@@ -567,7 +569,6 @@ void SparseGenerator::findGraphNeighbors(CandidateData &candidateD, double dista
                                               << sparseCriteria_->getSparseDelta());
 
   // Search in thread-safe manner
-  // Note that the main thread could be modifying the NN, so we have to lock it
   sg_->getQueryStateNonConst(threadID) = candidateD.state_;
   sg_->getNN()->nearestR(sg_->getQueryVertices(threadID), distance, candidateD.graphNeighborhood_);
   sg_->getQueryStateNonConst(threadID) = nullptr;

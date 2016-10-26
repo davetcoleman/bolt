@@ -142,6 +142,8 @@ public:
 
   robot_trajectory::RobotTrajectoryPtr processSegments(std::size_t indent);
 
+  void chooseStartGoal(std::size_t run_id, std::size_t indent);
+
   // --------------------------------------------------------
 
   // A shared node handle
@@ -253,7 +255,7 @@ public:
   bool visualize_start_goal_states_;
   bool visualize_cart_neighbors_;
   bool visualize_cart_path_;
-  bool visualize_wait_between_plans_;
+  bool visualize_wait_between_plans_ = false;
   double visualize_time_between_plans_;
   bool visualize_database_every_plan_;
 
