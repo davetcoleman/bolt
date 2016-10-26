@@ -98,7 +98,7 @@ public:
   virtual base::PlannerStatus solve(Termination &ptc);
 
   /** \brief Solving after converting states to compound state space */
-  base::PlannerStatus solve(base::State *startState, base::State *goalState, Termination &ptc, std::size_t indent);
+  base::PlannerStatus solve(base::CompoundState *startState, base::CompoundState *goalState, Termination &ptc, std::size_t indent);
 
   /** \brief Clear memory */
   virtual void clear(void);
@@ -124,7 +124,7 @@ public:
    * \param compoundSolution - the resulting path
    * \return
    */
-  bool getPathOffGraph(const base::State *start, const base::State *goal, geometric::PathGeometricPtr compoundSolution,
+  bool getPathOffGraph(const base::CompoundState *start, const base::CompoundState *goal, geometric::PathGeometricPtr compoundSolution,
                        Termination &ptc, std::size_t indent);
 
   /** \brief Clear verticies not on the specified level */
@@ -138,8 +138,8 @@ public:
    * \param path - returned solution
    * \return true on success
    */
-  bool convertVertexPathToStatePath(std::vector<bolt::TaskVertex> &vertexPath, const base::State *actualStart,
-                                    const base::State *actualGoal, geometric::PathGeometricPtr compoundSolution,
+  bool convertVertexPathToStatePath(std::vector<bolt::TaskVertex> &vertexPath, const base::CompoundState *actualStart,
+                                    const base::CompoundState *actualGoal, geometric::PathGeometricPtr compoundSolution,
                                     std::size_t indent);
 
   /**
@@ -149,7 +149,7 @@ public:
    * \param requiredLevel - if -1, allows states from all levels, otherwise only returns states from a certain level
    * \return false is no neighbors found
    */
-  bool findGraphNeighbors(const base::State *state, std::vector<bolt::TaskVertex> &neighbors, int requiredLevel = -1,
+  bool findGraphNeighbors(const base::CompoundState *state, std::vector<bolt::TaskVertex> &neighbors, int requiredLevel = -1,
                           std::size_t indent = 0);
 
   /** \brief Check if there exists a solution, i.e., there exists a pair of milestones such that the
@@ -160,23 +160,23 @@ public:
    * to conenct
    */
   bool getPathOnGraph(const std::vector<bolt::TaskVertex> &candidateStarts,
-                      const std::vector<bolt::TaskVertex> &candidateGoals, const base::State *actualStart,
-                      const base::State *actualGoal, geometric::PathGeometricPtr compoundSolution, Termination &ptc,
+                      const std::vector<bolt::TaskVertex> &candidateGoals, const base::CompoundState *actualStart,
+                      const base::CompoundState *actualGoal, geometric::PathGeometricPtr compoundSolution, Termination &ptc,
                       bool debug, bool &feedbackStartFailed, std::size_t indent);
 
   /**
    * \brief Repeatidly search through graph for connection then check for collisions then repeat
    * \return true if a valid path is found
    */
-  bool onGraphSearch(const bolt::TaskVertex &start, const bolt::TaskVertex &goal, const base::State *actualStart,
-                     const base::State *actualGoal, geometric::PathGeometricPtr compoundSolution, Termination &ptc,
+  bool onGraphSearch(const bolt::TaskVertex &start, const bolt::TaskVertex &goal, const base::CompoundState *actualStart,
+                     const base::CompoundState *actualGoal, geometric::PathGeometricPtr compoundSolution, Termination &ptc,
                      std::size_t indent);
 
   /** \brief Check recalled path for collision and disable as needed */
   bool lazyCollisionCheck(std::vector<bolt::TaskVertex> &vertexPath, Termination &ptc, std::size_t indent);
 
   /** \brief Test if the passed in random state can connect to a nearby vertex in the graph */
-  bool canConnect(const base::State *randomState, Termination &ptc, std::size_t indent);
+  bool canConnect(const base::CompoundState *randomState, Termination &ptc, std::size_t indent);
 
   /** \brief User feedback */
   void visualizeBadEdge(TaskVertex fromVertex, TaskVertex toVertex);

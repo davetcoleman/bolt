@@ -144,8 +144,8 @@ base::PlannerStatus BoltPlanner::solve(Termination &ptc)
     level2 = 0;  // regular single-task planning
 
   // These compound states now own the startState/goalState
-  base::State *startStateCompound = taskGraph_->createCompoundState(startState, level0, indent);
-  base::State *goalStateCompound = taskGraph_->createCompoundState(goalState, level2, indent);
+  base::CompoundState *startStateCompound = taskGraph_->createCompoundState(startState, level0, indent);
+  base::CompoundState *goalStateCompound = taskGraph_->createCompoundState(goalState, level2, indent);
 
   base::PlannerStatus result = solve(startStateCompound, goalStateCompound, ptc, indent);
 
@@ -156,7 +156,7 @@ base::PlannerStatus BoltPlanner::solve(Termination &ptc)
   return result;
 }
 
-base::PlannerStatus BoltPlanner::solve(base::State *startState, base::State *goalState, Termination &ptc,
+base::PlannerStatus BoltPlanner::solve(base::CompoundState *startState, base::CompoundState *goalState, Termination &ptc,
                                        std::size_t indent)
 {
   // Create solution structure
@@ -206,7 +206,7 @@ base::PlannerStatus BoltPlanner::solve(base::State *startState, base::State *goa
   return base::PlannerStatus(solved, approximate);
 }
 
-bool BoltPlanner::getPathOffGraph(const base::State *start, const base::State *goal,
+bool BoltPlanner::getPathOffGraph(const base::CompoundState *start, const base::CompoundState *goal,
                                   og::PathGeometricPtr compoundSolution, Termination &ptc, std::size_t indent)
 {
   BOLT_FUNC(indent, verbose_, "getPathOffGraph()");
@@ -276,8 +276,8 @@ bool BoltPlanner::getPathOffGraph(const base::State *start, const base::State *g
 }
 
 bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
-                                 const std::vector<TaskVertex> &candidateGoals, const base::State *actualStart,
-                                 const base::State *actualGoal, og::PathGeometricPtr compoundSolution, Termination &ptc,
+                                 const std::vector<TaskVertex> &candidateGoals, const base::CompoundState *actualStart,
+                                 const base::CompoundState *actualGoal, og::PathGeometricPtr compoundSolution, Termination &ptc,
                                  bool debug, bool &feedbackStartFailed, std::size_t indent)
 {
   BOLT_FUNC(indent, verbose_, "getPathOnGraph()");
@@ -377,7 +377,7 @@ bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
 }
 
 bool BoltPlanner::onGraphSearch(const TaskVertex &startVertex, const TaskVertex &goalVertex,
-                                const base::State *actualStart, const base::State *actualGoal,
+                                const base::CompoundState *actualStart, const base::CompoundState *actualGoal,
                                 og::PathGeometricPtr compoundSolution, Termination &ptc, std::size_t indent)
 {
   BOLT_FUNC(indent, verbose_, "onGraphSearch()");
@@ -544,7 +544,7 @@ bool BoltPlanner::lazyCollisionCheck(std::vector<TaskVertex> &vertexPath, Termin
   return !hasInvalidEdges;
 }
 
-bool BoltPlanner::findGraphNeighbors(const base::State *state, std::vector<TaskVertex> &neighbors, int requiredLevel,
+bool BoltPlanner::findGraphNeighbors(const base::CompoundState *state, std::vector<TaskVertex> &neighbors, int requiredLevel,
                                      std::size_t indent)
 {
   BOLT_FUNC(indent, verbose_, "findGraphNeighbors()");
@@ -568,8 +568,10 @@ bool BoltPlanner::findGraphNeighbors(const base::State *state, std::vector<TaskV
 
   // Setup search by getting a non-const version of the focused state
   const std::size_t threadID = 0;
+
   // TODO avoid this memory allocation but keeping as member variable
-  base::State *stateCopy = compoundSI_->cloneState(state);
+  const base::State* castedState = state->as<base::State>();
+  base::CompoundState *stateCopy = compoundSI_->cloneState(castedState)->as<base::CompoundState>();
 
   // Search
   taskGraph_->getCompoundQueryStateNonConst(taskGraph_->getQueryVertices()[threadID]) = stateCopy;
@@ -600,8 +602,8 @@ bool BoltPlanner::findGraphNeighbors(const base::State *state, std::vector<TaskV
   return neighbors.size();
 }
 
-bool BoltPlanner::convertVertexPathToStatePath(std::vector<TaskVertex> &vertexPath, const base::State *actualStart,
-                                               const base::State *actualGoal, og::PathGeometricPtr compoundSolution,
+bool BoltPlanner::convertVertexPathToStatePath(std::vector<TaskVertex> &vertexPath, const base::CompoundState *actualStart,
+                                               const base::CompoundState *actualGoal, og::PathGeometricPtr compoundSolution,
                                                std::size_t indent)
 {
   BOLT_FUNC(indent, verbose_, "convertVertexPathToStatePath()");
@@ -694,7 +696,7 @@ bool BoltPlanner::simplifyNonTaskPath(og::PathGeometricPtr compoundPath, Termina
   {
     int segmentLevel = 0;
     base::State *modelState = modelPath->getState(i);
-    base::State *compoundState = taskGraph_->createCompoundState(modelState, segmentLevel, indent);
+    base::CompoundState *compoundState = taskGraph_->createCompoundState(modelState, segmentLevel, indent);
     compoundPath->append(compoundState);
   }
   BOLT_ASSERT(compoundPath->getStateCount() == modelPath->getStateCount(), "Non-matching number of states when copying between state spaces");
@@ -728,7 +730,7 @@ bool BoltPlanner::simplifyTaskPath(og::PathGeometricPtr compoundPath, Terminatio
   std::stringstream o;
   for (std::size_t i = 0; i < compoundPath->getStateCount(); ++i)
   {
-    base::State *compoundState = compoundPath->getState(i);
+    base::CompoundState *compoundState = compoundPath->getState(i)->as<base::CompoundState>();
     VertexLevel level = taskGraph_->getTaskLevel(compoundState);
 
     // Debug
@@ -744,7 +746,7 @@ bool BoltPlanner::simplifyTaskPath(og::PathGeometricPtr compoundPath, Terminatio
 
       visual_->viz6()->state(taskGraph_->getModelBasedState(compoundState), tools::ROBOT, tools::RED, 0);
       visual_->waitForUserFeedback("prev level");
-      base::State *compoundState2 = compoundPath->getState(i - 1);
+      base::CompoundState *compoundState2 = compoundPath->getState(i - 1)->as<base::CompoundState>();
       visual_->viz6()->state(taskGraph_->getModelBasedState(compoundState2), tools::ROBOT, tools::RED, 0);
 
       exit(-1);
@@ -808,7 +810,7 @@ bool BoltPlanner::simplifyTaskPath(og::PathGeometricPtr compoundPath, Terminatio
     {
       // This state is not compound
       base::State *modelState = modelSolSegments_[segmentLevel]->getState(i);
-      base::State *compoundState = taskGraph_->createCompoundState(modelState, segmentLevel, indent);
+      base::CompoundState *compoundState = taskGraph_->createCompoundState(modelState, segmentLevel, indent);
 
       // Debug
       if (visualizeEachSolutionStep_)
@@ -845,7 +847,7 @@ bool BoltPlanner::simplifyTaskPath(og::PathGeometricPtr compoundPath, Terminatio
 }
 
 // This is used to check connectivity of graph
-bool BoltPlanner::canConnect(const base::State *randomState, Termination &ptc, std::size_t indent)
+bool BoltPlanner::canConnect(const base::CompoundState *randomState, Termination &ptc, std::size_t indent)
 {
   BOLT_FUNC(indent, verbose_, "canConnect()");
 
@@ -864,8 +866,8 @@ bool BoltPlanner::canConnect(const base::State *randomState, Termination &ptc, s
   std::size_t count = 0;
   for (TaskVertex nearState : candidateNeighbors)
   {
-    const base::State *s1 = randomState;
-    const base::State *s2 = taskGraph_->getCompoundState(nearState);
+    const base::CompoundState *s1 = randomState;
+    const base::CompoundState *s2 = taskGraph_->getCompoundState(nearState);
 
     // Check if this nearState is visible from the random state
     if (!taskGraph_->checkMotion(s1, s2))
@@ -884,8 +886,9 @@ bool BoltPlanner::canConnect(const base::State *randomState, Termination &ptc, s
       // Optional Debug
       if (false)
       {
+        /*
         std::cout << "checking path " << std::endl;
-        std::vector<base::State *> states;
+        std::vector<base::CompoundState *> states;
         unsigned int count = compoundSI_->getStateSpace()->validSegmentCount(s1, s2);
         // std::cout << "count: " << count << std::endl;
 
@@ -894,7 +897,7 @@ bool BoltPlanner::canConnect(const base::State *randomState, Termination &ptc, s
         compoundSI_->getMotionStates(s1, s2, states, count, endpoints, alloc);
         // std::cout << "state size: " << states.size() << std::endl;
 
-        for (base::State *interState : states)
+        for (base::CompoundState *interState : states)
         {
           // Check if our planner is out of time
           if (ptc)
@@ -911,9 +914,10 @@ bool BoltPlanner::canConnect(const base::State *randomState, Termination &ptc, s
           }
           else
           {
-            // visual_->viz5()->state(taskGraph_->getModelBasedState(interState), /*mode=*/1, 1); // GREEN
+            // visual_->viz5()->state(taskGraph_->getModelBasedState(interState), 1, 1); // GREEN
           }
-        }
+        } // for
+        */
       }
     }
     else
@@ -927,26 +931,26 @@ bool BoltPlanner::canConnect(const base::State *randomState, Termination &ptc, s
 
 void BoltPlanner::visualizeBadEdge(TaskVertex fromVertex, TaskVertex toVertex)
 {
-  const base::State *from = taskGraph_->getModelBasedState(fromVertex);
-  const base::State *to = taskGraph_->getModelBasedState(toVertex);
-  visualizeBadEdge(from, to);
+  const base::State *modelFrom = taskGraph_->getModelBasedState(fromVertex);
+  const base::State *modelTo = taskGraph_->getModelBasedState(toVertex);
+  visualizeBadEdge(modelFrom, modelTo);
 }
 
-void BoltPlanner::visualizeBadEdge(const base::State *from, const base::State *to)
+void BoltPlanner::visualizeBadEdge(const base::State *modelFrom, const base::State *modelTo)
 {
   // Line
   visual_->viz4()->deleteAllMarkers();
-  visual_->viz4()->edge(from, to, tools::MEDIUM, tools::RED);
+  visual_->viz4()->edge(modelFrom, modelTo, tools::MEDIUM, tools::RED);
   visual_->viz4()->trigger();
 
   // Line again
   visual_->viz5()->deleteAllMarkers();
-  visual_->viz5()->edge(from, to, tools::MEDIUM, tools::RED);
+  visual_->viz5()->edge(modelFrom, modelTo, tools::MEDIUM, tools::RED);
   visual_->viz5()->trigger();
 
   // Robot states
-  visual_->viz4()->state(from, tools::ROBOT, tools::RED, 0);
-  visual_->viz5()->state(to, tools::ROBOT, tools::RED, 0);
+  visual_->viz4()->state(modelFrom, tools::ROBOT, tools::RED, 0);
+  visual_->viz5()->state(modelTo, tools::ROBOT, tools::RED, 0);
 
   visual_->waitForUserFeedback("collision on edge from viz4 to viz5");
 }

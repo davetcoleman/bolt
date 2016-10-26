@@ -810,9 +810,11 @@ void BoltBaxter::testConnectionToGraphOfRandStates()
     // Test
     const ob::PlannerTerminationCondition ptc = ob::timedPlannerTerminationCondition(60.0);
     std::size_t indent = 0;
-    bool result = bolt_->getBoltPlanner()->canConnect(random_state, ptc, indent);
-    if (result)
-      successful_connections++;
+
+    BOLT_ERROR(indent, "bolt_baxter: not implemented");
+    //bool result = bolt_->getBoltPlanner()->canConnect(random_state, ptc, indent);
+    // if (result)
+    //   successful_connections++;
 
     ROS_ERROR_STREAM_NAMED(name_, "Percent connnected: " << successful_connections / double(run_id + 1) * 100.0);
   }

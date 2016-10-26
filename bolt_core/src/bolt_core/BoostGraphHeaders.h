@@ -201,7 +201,7 @@ typedef boost::graph_traits<SparseAdjList>::edge_descriptor SparseEdge;
 // Vertex Properties
 struct TaskVertexStruct
 {
-  base::State* state_;
+  base::CompoundState* state_;
   std::size_t task_mirror_;  // Link to corresponding free space TaskVertex, if one exists TODO is this needed?
 };
 

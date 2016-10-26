@@ -753,7 +753,8 @@ public:
     // Check/test the solution for errors
     if (use_task_planning_)
     {
-      bolt_->getTaskGraph()->checkTaskPathSolution(path, ompl_start_, ompl_goal_);
+      BOLT_ERROR(0, "bolt_2d: not implemented");
+      //bolt_->getTaskGraph()->checkTaskPathSolution(path, ompl_start_, ompl_goal_);
     }
 
     // Visualize the doneness
@@ -1292,11 +1293,12 @@ public:
     // Insert into graph
     std::cout << "adding path --------------------- " << std::endl;
     std::size_t indent = 0;
-    if (!bolt_->getTaskGraph()->addCartPath(ompl_path, indent))
-    {
-      ROS_ERROR_STREAM_NAMED(name_, "Unable to add cartesian path");
-      exit(-1);
-    }
+    BOLT_ERROR(indent, "bolt_2d: not implemented");
+    // if (!bolt_->getTaskGraph()->addCartPath(ompl_path, indent))
+    // {
+    //   ROS_ERROR_STREAM_NAMED(name_, "Unable to add cartesian path");
+    //   exit(-1);
+    // }
 
     // assert(space_->getLevel(start) == 1);
     // assert(space_->getLevel(goal) == 1);

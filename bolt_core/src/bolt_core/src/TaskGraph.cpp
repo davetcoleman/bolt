@@ -125,7 +125,7 @@ void TaskGraph::freeMemory()
     if (g_[v].state_ == nullptr)
       continue;
 
-    base::CompoundState *compoundState = g_[v].state_->as<base::CompoundState>();
+    base::CompoundState *compoundState = g_[v].state_;
     base::DiscreteStateSpace::StateType *discreteState =
         compoundState->as<base::DiscreteStateSpace::StateType>(DISCRETE);
     base::State *modelBasedState = compoundState->as<base::DiscreteStateSpace::StateType>(MODEL_BASED);
@@ -290,7 +290,7 @@ double TaskGraph::distanceVertex(const TaskVertex a, const TaskVertex b) const
   return distanceState(getCompoundState(a), getCompoundState(b));
 }
 
-double TaskGraph::distanceState(const base::State *a, const base::State *b) const
+double TaskGraph::distanceState(const base::CompoundState *a, const base::CompoundState *b) const
 {
   // Disregard task level
   // const base::CompoundState *cA = static_cast<const base::CompoundState *>(a);
@@ -402,7 +402,7 @@ double TaskGraph::astarTaskHeuristic(const TaskVertex a, const TaskVertex b) con
   return dist;
 }
 
-base::State *&TaskGraph::getQueryStateNonConst(std::size_t threadID)
+base::CompoundState *&TaskGraph::getQueryStateNonConst(std::size_t threadID)
 {
   BOLT_ASSERT(threadID < queryVertices_.size(), "Attempted to request state of regular vertex using query "
                                                 "function");
@@ -542,7 +542,7 @@ void TaskGraph::generateTaskSpace(std::size_t indent)
   taskPlanningEnabled_ = true;
 }
 
-bool TaskGraph::addCartPath(std::vector<base::State *> path, std::size_t indent)
+bool TaskGraph::addCartPath(std::vector<base::CompoundState *> path, std::size_t indent)
 {
   BOLT_ERROR(indent, "TODO implement");
   /*
@@ -670,7 +670,7 @@ void TaskGraph::getNeighborsAtLevel(const TaskVertex origVertex, const VertexLev
   BOLT_ASSERT(level != 1, "Unhandled level, does not support level 1");
 
   const std::size_t threadID = 0;
-  base::State *origState = getCompoundStateNonConst(origVertex);
+  base::CompoundState *origState = getCompoundStateNonConst(origVertex);
 
   // Get nearby state
   queryStates_[threadID] = origState;
@@ -718,7 +718,7 @@ void TaskGraph::getNeighborsAtLevel(const TaskVertex origVertex, const VertexLev
   }
 }
 
-bool TaskGraph::checkTaskPathSolution(og::PathGeometric &path, ob::State *start, ob::State *goal)
+bool TaskGraph::checkTaskPathSolution(og::PathGeometric &path, base::CompoundState *start, base::CompoundState *goal)
 {
   // TODO: this assumes the path has task data, which it no longer does
   BOLT_ERROR(0, "checkTaskPathSolution() - broken");
@@ -892,7 +892,7 @@ bool TaskGraph::smoothQualityPath(geometric::PathGeometric *path, double clearan
  *  \param level - the discrete step of a level
  *  \return new state that is compound
 */
-base::State *TaskGraph::createCompoundState(base::State *jointState, const VertexLevel level, std::size_t indent)
+base::CompoundState *TaskGraph::createCompoundState(base::State *jointState, const VertexLevel level, std::size_t indent)
 {
   base::CompoundState *state = new base::CompoundState();
   state->components = new base::State *[compoundSpace_->getSubspaceCount()];
@@ -905,7 +905,7 @@ base::State *TaskGraph::createCompoundState(base::State *jointState, const Verte
   // Set level
   state->as<ob::DiscreteStateSpace::StateType>(DISCRETE)->value = level;
 
-  return static_cast<base::State *>(state);
+  return state;
 }
 
 TaskVertex TaskGraph::addVertexWithLevel(base::State *state, VertexLevel level, std::size_t indent)
@@ -914,7 +914,7 @@ TaskVertex TaskGraph::addVertexWithLevel(base::State *state, VertexLevel level, 
   return addVertex(createCompoundState(state, level, indent), indent);
 }
 
-TaskVertex TaskGraph::addVertex(base::State *state, std::size_t indent)
+TaskVertex TaskGraph::addVertex(base::CompoundState *state, std::size_t indent)
 {
   // Create vertex
   TaskVertex v = boost::add_vertex(g_);
@@ -1213,7 +1213,7 @@ void TaskGraph::visualizeEdge(TaskVertex v1, TaskVertex v2, std::size_t windowID
   visual_->viz(windowID)->edge(getModelBasedState(v1), getModelBasedState(v2), ompl::tools::MEDIUM, color);
 }
 
-void TaskGraph::debugState(const ompl::base::State *state)
+void TaskGraph::debugState(const ompl::base::CompoundState *state)
 {
   compoundSI_->printState(state, std::cout);
 }
@@ -1266,7 +1266,7 @@ void TaskGraph::printGraphStats(double generationDuration, std::size_t indent)
   BOLT_INFO(indent, 1, "---------------------------------------------");
 }
 
-bool TaskGraph::checkMotion(const base::State *a, const base::State *b)
+bool TaskGraph::checkMotion(const base::CompoundState *a, const base::CompoundState *b)
 {
   return modelSI_->checkMotion(getModelBasedState(a), getModelBasedState(b));
 }
@@ -1282,7 +1282,7 @@ geometric::PathGeometricPtr TaskGraph::convertPathToNonCompound(const geometric:
 
   for (std::size_t i = 0; i < compoundPathGeometric->getStateCount(); ++i)
   {
-    modelPath->append(getModelBasedState(compoundPathGeometric->getState(i)));
+    modelPath->append(getModelBasedState(compoundPathGeometric->getState(i)->as<base::CompoundState>()));
   }
 
   return modelPath;

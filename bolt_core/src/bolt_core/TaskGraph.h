@@ -161,7 +161,7 @@ public:
 
   /** \brief Compute distance between two states ignoreing task level */
   double distanceVertex(const TaskVertex a, const TaskVertex b) const;
-  double distanceState(const base::State* a, const base::State* b) const;
+  double distanceState(const base::CompoundState* a, const base::CompoundState* b) const;
 
   /** \brief Distance between two vertices in a task space */
   double astarTaskHeuristic(const TaskVertex a, const TaskVertex b) const;
@@ -182,7 +182,7 @@ public:
    * --------------------------------------------------------------------------------- */
 
   /** \brief Get the state of a vertex used for querying - i.e. vertices 0-11 for 12 thread system */
-  base::State*& getQueryStateNonConst(std::size_t threadID);
+  base::CompoundState*& getQueryStateNonConst(std::size_t threadID);
 
   TaskVertex getQueryVertices(std::size_t threadID);
 
@@ -227,23 +227,22 @@ public:
    * --------------------------------------------------------------------------------- */
   inline VertexLevel getTaskLevel(const TaskVertex v) const
   {
-    return g_[v].state_->as<base::CompoundState>()->as<base::DiscreteStateSpace::StateType>(DISCRETE)->value;
+    return g_[v].state_->as<base::DiscreteStateSpace::StateType>(DISCRETE)->value;
   }
 
-  inline VertexLevel getTaskLevel(const base::State* state) const
+  inline VertexLevel getTaskLevel(const base::CompoundState* state) const
   {
-    // return state->as<base::DiscreteStateSpace::StateType>(DISCRETE)->value;
-    return state->as<base::CompoundState>()->as<base::DiscreteStateSpace::StateType>(DISCRETE)->value;
+    return state->as<base::DiscreteStateSpace::StateType>(DISCRETE)->value;
   }
 
   inline void setVertexTaskLevel(TaskVertex v, VertexLevel level)
   {
-    g_[v].state_->as<base::CompoundState>()->as<base::DiscreteStateSpace::StateType>(DISCRETE)->value = level;
+    g_[v].state_->as<base::DiscreteStateSpace::StateType>(DISCRETE)->value = level;
   }
 
-  inline void setStateTaskLevel(base::State* state, VertexLevel level)
+  inline void setStateTaskLevel(base::CompoundState* state, VertexLevel level)
   {
-    state->as<base::CompoundState>()->as<base::DiscreteStateSpace::StateType>(DISCRETE)->value = level;
+    state->as<base::DiscreteStateSpace::StateType>(DISCRETE)->value = level;
   }
 
   bool taskPlanningEnabled() const
@@ -269,7 +268,7 @@ public:
   /** \brief Add a cartesian path into the middle layer of the task dimension
    *         This is only used for the 2D planning case (toy problem)
    */
-  bool addCartPath(std::vector<base::State*> path, std::size_t indent);
+  bool addCartPath(std::vector<base::CompoundState*> path, std::size_t indent);
 
   /**
    * \brief Helper for connecting both sides of a cartesian path into a dual level graph
@@ -286,7 +285,7 @@ public:
                            std::vector<TaskVertex>& neighbors, std::size_t indent);
 
   /** \brief Error checking function to ensure solution has correct task path/level changes */
-  bool checkTaskPathSolution(geometric::PathGeometric& path, base::State* start, base::State* goal);
+  bool checkTaskPathSolution(geometric::PathGeometric& path, base::CompoundState* start, base::CompoundState* goal);
 
   /** \brief Getter for ShortestDistAcrossCart */
   const double& getShortestDistAcrossCart() const
@@ -327,11 +326,11 @@ public:
    *  \param level - the discrete step of a level
    *  \return new state that is compound
    */
-  base::State* createCompoundState(base::State* jointState, const VertexLevel level, std::size_t indent);
+  base::CompoundState* createCompoundState(base::State* jointState, const VertexLevel level, std::size_t indent);
 
   /** \brief Add vertices to graph. The state passed in will be owned by the AdjList graph */
   TaskVertex addVertexWithLevel(base::State* state, VertexLevel level, std::size_t indent);
-  TaskVertex addVertex(base::State* state, std::size_t indent);
+  TaskVertex addVertex(base::CompoundState* state, std::size_t indent);
 
   /** \brief Remove vertex from graph */
   void removeVertex(TaskVertex v);
@@ -346,7 +345,7 @@ public:
   bool hasEdge(TaskVertex v1, TaskVertex v2);
 
   /** \brief Get the state of a vertex used for querying - i.e. vertices 0-11 for 12 thread system */
-  inline base::State*& getCompoundQueryStateNonConst(TaskVertex v)
+  inline base::CompoundState*& getCompoundQueryStateNonConst(TaskVertex v)
   {
 #ifndef NDEBUG
     BOLT_ASSERT(v < queryVertices_.size(), "Attempted to request state of regular vertex using query function");
@@ -355,7 +354,7 @@ public:
   }
 
   /** \brief Shortcut function for getting the state of a vertex */
-  inline base::State*& getCompoundStateNonConst(TaskVertex v)
+  inline base::CompoundState*& getCompoundStateNonConst(TaskVertex v)
   {
 #ifndef NDEBUG
     BOLT_ASSERT(v >= queryVertices_.size(), "Attempted to request state of query vertex using wrong function");
@@ -364,7 +363,7 @@ public:
   }
 
   /** \brief Shortcut function for getting the state of a vertex */
-  inline const base::State* getCompoundState(TaskVertex v) const
+  inline const base::CompoundState* getCompoundState(TaskVertex v) const
   {
 #ifndef NDEBUG
     BOLT_ASSERT(v >= queryVertices_.size(), "Attempted to request state of query vertex using wrong function");
@@ -374,10 +373,9 @@ public:
 
   /** \brief Convert a compound state to just the ModelBasedStateSpace component (joints) ignoring the discrete
    * component */
-  inline const base::State* getModelBasedState(const base::State* state) const
+  inline const base::State* getModelBasedState(const base::CompoundState* compoundState) const
   {
     // Disregard task level
-    const base::CompoundState* compoundState = static_cast<const base::CompoundState*>(state);
     return compoundState->components[MODEL_BASED];
   }
 
@@ -409,7 +407,7 @@ public:
    * --------------------------------------------------------------------------------- */
 
   /** \brief Print info to console */
-  void debugState(const base::State* state);
+  void debugState(const base::CompoundState* state);
 
   /** \brief Print info to console */
   void debugVertex(const TaskVertex v);
@@ -421,7 +419,7 @@ public:
   void printGraphStats(double generationDuration, std::size_t indent);
 
   /** \brief Convert two CompoundStates to ModelBased states and check motion */
-  bool checkMotion(const base::State* a, const base::State* b);
+  bool checkMotion(const base::CompoundState* a, const base::CompoundState* b);
 
   /** \brief Convert a path of compound states into only the joint states component (ModelBasedStateSpace) */
   geometric::PathGeometricPtr convertPathToNonCompound(const geometric::PathGeometricPtr compoundPath);
@@ -451,7 +449,7 @@ protected:
 
   /** \brief Vertices for performing nearest neighbor queries on multiple threads */
   std::vector<TaskVertex> queryVertices_;
-  std::vector<base::State*> queryStates_;
+  std::vector<base::CompoundState*> queryStates_;
 
   /** \brief A path simplifier used to simplify dense paths added to S */
   geometric::PathSimplifierPtr pathSimplifier_;
