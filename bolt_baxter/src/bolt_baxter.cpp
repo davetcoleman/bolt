@@ -51,6 +51,14 @@
 // this package
 #include <bolt_baxter/bolt_baxter.h>
 
+#include <geometric_shapes/shape_operations.h>
+#include <geometric_shapes/mesh_operations.h>
+#include <geometric_shapes/shape_messages.h>
+
+// MoveIt
+#include <moveit/robot_state/conversions.h>
+#include <moveit/collision_detection/collision_tools.h>
+
 // Profiling
 #include <valgrind/callgrind.h>
 
@@ -89,6 +97,8 @@ BoltBaxter::BoltBaxter(const std::string &hostname, const std::string &package_p
   error += !rosparam_shortcuts::get(name_, rpnh, "check_valid_vertices", check_valid_vertices_);
   error += !rosparam_shortcuts::get(name_, rpnh, "display_disjoint_sets", display_disjoint_sets_);
   error += !rosparam_shortcuts::get(name_, rpnh, "benchmark_performance", benchmark_performance_);
+  error += !rosparam_shortcuts::get(name_, rpnh, "save_imarkers_to_file", save_imarkers_to_file_);
+  error += !rosparam_shortcuts::get(name_, rpnh, "view_imarkers_from_file", view_imarkers_from_file_);
 
   // mirror
   error += !rosparam_shortcuts::get(name_, rpnh, "mirror_graph", mirror_graph_);
@@ -114,6 +124,9 @@ BoltBaxter::BoltBaxter(const std::string &hostname, const std::string &package_p
   error += !rosparam_shortcuts::get(name_, rpnh, "post_processing_interval", post_processing_interval_);
   error += !rosparam_shortcuts::get(name_, rpnh, "use_logging", use_logging_);
   error += !rosparam_shortcuts::get(name_, rpnh, "collision_checking_enabled", collision_checking_enabled_);
+  // collision
+  error += !rosparam_shortcuts::get(name_, rpnh, "scene_type", scene_type_);
+  error += !rosparam_shortcuts::get(name_, rpnh, "distance_to_shelf", distance_to_shelf_);
   // execution
   error += !rosparam_shortcuts::get(name_, rpnh, "connect_to_hardware", connect_to_hardware_);
   error += !rosparam_shortcuts::get(name_, rpnh, "velocity_scaling_factor", velocity_scaling_factor_);
@@ -188,71 +201,11 @@ BoltBaxter::BoltBaxter(const std::string &hostname, const std::string &package_p
   loadVisualTools();
 
   // Add a collision objects
-  if (true)
-  {
-    const double baxter_toros_height = -0.95;
-    //const double table_height = -0.77 * baxter_toros_height;
-    const double table_height = -0.75 * baxter_toros_height;
-    visual_moveit_start_->publishCollisionFloor(baxter_toros_height + 0.001, "floor", rvt::TRANSLUCENT_DARK);
-    visual_moveit_start_->publishCollisionWall(/*x*/ -1.0, /*y*/ 0.0, /*z*/ baxter_toros_height, /*angle*/ 0,
-                                               /*width*/ 2, /*height*/ 2.0, "wall1", rvt::YELLOW);
-    visual_moveit_start_->publishCollisionWall(/*x*/ 0.0, /*y*/ -1.075, /*z*/ baxter_toros_height, /*angle*/ M_PI / 2.0,
-                                               /*width*/ 2, /*height*/ 2.0, "wall2", rvt::YELLOW);
-    visual_moveit_start_->publishCollisionWall(/*x*/ 0.0, /*y*/ 1.075, /*z*/ baxter_toros_height, /*angle*/ M_PI / 2.0,
-                                               /*width*/ 2, /*height*/ 2.0, "wall3", rvt::YELLOW);
-    visual_moveit_start_->publishCollisionTable(/*x*/ 0.85, /*y*/ 0.0, /*z*/ baxter_toros_height, /*angle*/ 0,
-                                                /*width*/ 2.0, /*height*/ table_height, /*depth*/ 0.8,
-                                                "table", rvt::DARK_GREY);
-
-    visual_moveit_start_->triggerPlanningSceneUpdate();
-    ros::spinOnce();
-  }
-
-  // Append to allowed collision matrix
-  {
-    planning_scene_monitor::LockedPlanningSceneRW scene(planning_scene_monitor_);  // Lock planning
-    collision_detection::AllowedCollisionMatrix &collision_matrix = scene->getAllowedCollisionMatrixNonConst();
-    collision_matrix.setEntry("wall", "pedestal", true);
-  }
+  loadScene();
 
   // Create start/goal state imarker
   if (!headless_)
-  {
-    // Create cartesian planner
-    cart_path_planner_.reset(new bolt_moveit::CartPathPlanner(arm_datas_, viz6_->getVisualTools(), moveit_start_,
-                                                 planning_scene_monitor_, package_path_, space_, planning_jmg_));
-
-    if (use_start_imarkers_)  // if running on hardware, these markers are not needed
-    {
-      imarker_start_.reset(
-          new mvt::IMarkerRobotState(planning_scene_monitor_, "start", arm_datas_, rvt::GREEN, package_path_));
-    }
-    imarker_goal_.reset(
-        new mvt::IMarkerRobotState(planning_scene_monitor_, "goal", arm_datas_, rvt::ORANGE, package_path_));
-
-    if (connect_to_hardware_)
-    {
-      ros::Duration(0.1).sleep();
-      ros::spinOnce();
-      bool check_verbose = true;
-      while (!planning_scene_->isStateValid(*getCurrentState(), "", check_verbose) && ros::ok())
-      {
-        ROS_ERROR_STREAM_NAMED(name_, "START STATE INVALID " << ros::Time::now());
-        viz5_->getVisualTools()->publishRobotState(getCurrentState(), rvt::RED);
-        ros::spinOnce();
-        ros::Duration(0.1).sleep();
-        ros::spinOnce();
-      }
-    }
-
-    // Set to a pose
-    if (false)
-    {
-      imarker_goal_->getRobotState()->setToDefaultValues(planning_jmg_, "both_ready");
-      imarker_goal_->saveToFile();
-      imarker_goal_->publishState();
-    }
-  }
+    loadIMarkers();
 
   // Set remote_control
   remote_control_->setDisplayWaitingState(boost::bind(&BoltBaxter::displayWaitingState, this, _1));
@@ -260,11 +213,11 @@ BoltBaxter::BoltBaxter(const std::string &hostname, const std::string &package_p
   // Connect to physical hardware
   if (connect_to_hardware_)
   {
-    execution_interface_ = std::make_shared<moveit_boilerplate::ExecutionInterface>(
-        remote_control_, planning_scene_monitor_, viz6_->getVisualTools());
+    execution_interface_ =
+        std::make_shared<moveit_boilerplate::ExecutionInterface>(remote_control_, psm_, viz6_->getVisualTools());
 
     planning_interface_ = std::make_shared<moveit_boilerplate::PlanningInterface>(
-        execution_interface_, planning_scene_monitor_, viz6_->getVisualTools(), planning_jmg_);
+        execution_interface_, psm_, viz6_->getVisualTools(), planning_jmg_);
   }
 
   // Wait until user does something
@@ -395,6 +348,14 @@ void BoltBaxter::run(std::size_t indent)
     exit(0);
   }
 
+  // Create list of goal states
+  if (save_imarkers_to_file_)
+    saveIMarkersToFile();
+
+  // View list of goal states
+  if (view_imarkers_from_file_)
+    viewIMarkersFromFile(indent);
+
   // Load from file
   bool loaded = false;
   if (load_spars_)
@@ -475,9 +436,9 @@ bool BoltBaxter::runProblems(std::size_t indent)
       break;
 
     std::cout << std::endl;
-    std::cout << "------------------------------------------------------------------------" << std::endl;
+    std::cout << "***************************************************************" << std::endl;
     ROS_INFO_STREAM_NAMED("plan", "Planning " << run_id + 1 << " out of " << num_problems_);
-    std::cout << "------------------------------------------------------------------------" << std::endl;
+    std::cout << "***************************************************************" << std::endl;
 
     if (headless_)
       ROS_WARN_STREAM_NAMED(name_, "imarker start/goal not loaded");
@@ -485,18 +446,14 @@ bool BoltBaxter::runProblems(std::size_t indent)
     // Generate start/goal pair
     if (problem_type_ == 0)
     {
-      if (use_start_imarkers_)  // if running on hardware, these markers are not needed
+      if (!connect_to_hardware_)  // if running on hardware, these markers are not needed
         imarker_start_->setToRandomState();
       imarker_goal_->setToRandomState();
     }
-    if (use_start_imarkers_)  // if running on hardware, these markers are not needed
-    {
+    if (!connect_to_hardware_)  // if running on hardware, these markers are not needed
       moveit_start_ = imarker_start_->getRobotState();
-    }
     else
-    {
       moveit_start_ = getCurrentState();
-    }
     moveit_goal_ = imarker_goal_->getRobotState();
 
     // Visualize
@@ -620,48 +577,17 @@ bool BoltBaxter::plan(std::size_t indent)
     return false;
   }
 
-  // Get solution segments
-  std::vector<og::PathGeometricPtr> model_solution_segments = bolt_->getBoltPlanner()->getModelSolutionSegments();
-  robot_trajectory::RobotTrajectoryPtr combined_traj =
-      std::make_shared<robot_trajectory::RobotTrajectory>(robot_model_, planning_jmg_);
-
-  // For each segement of trajectory
-  for (std::size_t i = 0; i < model_solution_segments.size(); ++i)
+  robot_trajectory::RobotTrajectoryPtr execution_traj;
+  //if (use_task_planning_) // Process segments
   {
-    og::PathGeometricPtr path_segment = model_solution_segments[i];
-
-    // Convert trajectory from OMPL to MoveIt! format
-    robot_trajectory::RobotTrajectoryPtr traj_segment;
-    const double speed = 0.025;
-    if (!space_->convertPathToRobotState(*path_segment, planning_jmg_, traj_segment, speed))
-    {
-      BOLT_ERROR(indent, "Unable to convert path");
-      return false;
-    }
-
-    // Check/test the solution for errors
-    checkMoveItPathSolution(traj_segment);
-
-    // For the cartesian path, go real slow
-    double velocity_scaling_factor = velocity_scaling_factor_;
-    if (i == 1)
-      velocity_scaling_factor = 0.1;
-
-    // Interpolate and parameterize
-    const bool use_interpolation = false;
-    planning_interface_->convertRobotStatesToTraj(traj_segment, planning_jmg_, velocity_scaling_factor,
-                                                  use_interpolation);
-
-    // Add to combined traj
-    const double dt = i == 0 ? 0.0 : 1.0;  // Quick pause between segments except first one
-    combined_traj->append(*traj_segment, dt);
+    execution_traj = processSegments(indent);
   }
 
   // Execute
   while (ros::ok())
   {
     bool wait_for_execution = true;
-    execution_interface_->executeTrajectory(combined_traj, planning_jmg_, wait_for_execution);
+    execution_interface_->executeTrajectory(execution_traj, planning_jmg_, wait_for_execution);
     waitForNextStep("execute again");
   }
 
@@ -726,7 +652,7 @@ void BoltBaxter::loadVisualTools()
     MoveItVisualToolsPtr moveit_visual = MoveItVisualToolsPtr(new MoveItVisualTools(
         "/world_visual" + std::to_string(i), namesp + "/ompl_visual" + std::to_string(i), robot_model_));
     moveit_visual->loadMarkerPub(false);
-    moveit_visual->setPlanningSceneMonitor(planning_scene_monitor_);
+    moveit_visual->setPlanningSceneMonitor(psm_);
     moveit_visual->setManualSceneUpdating(true);
     moveit_visual->setGlobalScale(0.8);
     moveit_visual->enableBatchPublishing();
@@ -787,7 +713,7 @@ void BoltBaxter::loadVisualTools()
   }
 
   viz6_->getVisualTools()->setBaseFrame("world");
-  visual_moveit_start_ = viz6_->getVisualTools();
+  visual_moveit_start_ = viz4_->getVisualTools();
   visual_moveit_goal_ = viz5_->getVisualTools();
 
   ros::spinOnce();
@@ -946,53 +872,58 @@ bool BoltBaxter::checkMoveItPathSolution(robot_trajectory::RobotTrajectoryPtr tr
 
   std::vector<std::size_t> index;
   const bool verbose = true;
-  if (!planning_scene_->isPathValid(*traj, "", verbose, &index))
+  std::cout << "before isPathValid " << std::endl;
+  if (planning_scene_->isPathValid(*traj, "", verbose, &index))
   {
-    if (index.size() == 1 && index[0] == 0)  // ignore cases when the robot starts at invalid location
-      ROS_DEBUG("It appears the robot is starting at an invalid state, but that is ok.");
-    else
-    {
-      // display error messages
-      std::stringstream ss;
-      for (std::size_t i = 0; i < index.size(); ++i)
-        ss << index[i] << " ";
-      ROS_ERROR_STREAM_NAMED(
-          name_, "checkMoveItPathSolution: Computed path is not valid. Invalid states at index locations: [ "
-                     << ss.str() << "] out of " << state_count << ". Explanations follow in command line.");
-
-      // Call validity checks in verbose mode for the problematic states
-      visualization_msgs::MarkerArray arr;
-      for (std::size_t i = 0; i < index.size(); ++i)
-      {
-        /*
-        // check validity with verbose on
-        const robot_state::RobotState &robot_state = traj->getWayPoint(index[i]);
-        planning_scene_->isStateValid(robot_state, request.path_constraints, request.group_name, true);
-
-        // compute the contacts if any
-        collision_detection::CollisionRequest c_req;
-        collision_detection::CollisionResult c_res;
-        c_req.contacts = true;
-        c_req.max_contacts = 10;
-        c_req.max_contacts_per_pair = 3;
-        c_req.verbose = false;
-        planning_scene_->checkCollision(c_req, c_res, robot_state);
-        */
-        ROS_ERROR_STREAM_NAMED(name_, "checkMoveItPathSolution: TODO: show collision states in code " << i);
-        /*
-          if (c_res.contact_count > 0)
-          {
-          visualization_msgs::MarkerArray arr_i;
-          collision_detection::getCollisionMarkersFromContacts(arr_i, planning_scene_->getPlanningFrame(),
-          c_res.contacts);
-          arr.markers.insert(arr.markers.end(), arr_i.markers.begin(), arr_i.markers.end());
-          }
-        */
-      }
-      ROS_ERROR_STREAM_NAMED(name_, "checkMoveItPathSolution: Completed listing of explanations for invalid states.");
-    }
+    return true;
   }
-  return true;
+
+  std::cout << "after isPathValid " << std::endl;
+  // if (index.size() == 1 && index[0] == 0)  // ignore cases when the robot starts at invalid location
+  //   ROS_DEBUG("It appears the robot is starting at an invalid state, but that is ok.");
+  // else
+  {
+    // display error messages
+    std::stringstream ss;
+    for (std::size_t i = 0; i < index.size(); ++i)
+      ss << index[i] << " ";
+    ROS_ERROR_STREAM_NAMED(
+                           name_, "checkMoveItPathSolution: Computed path is not valid. Invalid states at index locations: [ "
+                           << ss.str() << "] out of " << state_count << ". Explanations follow in command line.");
+
+    // Call validity checks in verbose mode for the problematic states
+    visualization_msgs::MarkerArray combined_array;
+    for (std::size_t i = 0; i < index.size(); ++i)
+    {
+      // check validity with verbose on
+      const robot_state::RobotState &robot_state = traj->getWayPoint(index[i]);
+      bool check_verbose = true;
+      planning_scene_->isStateValid(robot_state, planning_group_name_, check_verbose);
+
+      // compute the contacts if any
+      collision_detection::CollisionRequest c_req;
+      collision_detection::CollisionResult c_res;
+      c_req.contacts = true;
+      c_req.max_contacts = 10;
+      c_req.max_contacts_per_pair = 3;
+      c_req.verbose = false;
+      planning_scene_->checkCollision(c_req, c_res, robot_state);
+
+      if (c_res.contact_count > 0)
+      {
+        visualization_msgs::MarkerArray single_array;
+        collision_detection::getCollisionMarkersFromContacts(single_array, planning_scene_->getPlanningFrame(),
+                                                             c_res.contacts);
+        combined_array.markers.insert(combined_array.markers.end(), single_array.markers.begin(), single_array.markers.end());
+      }
+    } // end for
+      // publish marker array
+    viz6_->getVisualTools()->publishMarkers(combined_array);
+
+    ROS_ERROR_STREAM_NAMED(name_, "checkMoveItPathSolution: Completed listing of explanations for invalid states.");
+  }
+
+  return false;
 }
 
 bool BoltBaxter::getRandomState(moveit::core::RobotStatePtr &robot_state)
@@ -1261,57 +1192,243 @@ void BoltBaxter::benchmarkMemoryAllocation(std::size_t indent)
   std::cout << std::endl;
 }
 
-// Allow e.g. a 7dof arm be generated in 6dof then have the last dim populated automatically
-// void BoltBaxter::fillInDimension(std::size_t indent)
-// {
-//   // Choose planning group
-//   moveit::core::JointModelGroup* full_arm_jmg_ = robot_model_->getJointModelGroup(full_arm_name_);
+void BoltBaxter::loadScene()
+{
+  std::cout << "scene_type_: " << scene_type_ << std::endl;
+  switch (scene_type_)
+  {
+    case 0:
+      loadOfficeScene();
+      break;
+    case 1:
+      loadAmazonScene();
+      break;
+  }
 
-//   // Setup space
-//   bolt_moveit::ModelBasedStateSpaceSpecification full_arm_mbss_spec(robot_model_, full_arm_jmg_);
+  visual_moveit_start_->triggerPlanningSceneUpdate();
+  ros::spinOnce();
 
-//   // Construct the state space we are planning in
-//   bolt_moveit::ModelBasedStateSpacePtr full_arm_state_space_ =
-//   bolt_moveit::chooseModelSizeStateSpace(full_arm_mbss_spec);
-//   full_arm_state_space_->setup();
-//   full_arm_state_space_->setName(full_arm_name_);
+  // Append to allowed collision matrix
+  {
+    planning_scene_monitor::LockedPlanningSceneRW scene(psm_);  // Lock planning
+    collision_detection::AllowedCollisionMatrix &collision_matrix = scene->getAllowedCollisionMatrixNonConst();
+    collision_matrix.setEntry("wall", "pedestal", true);
+  }
+}
 
-//   // SpaceInfo
-//   ob::SpaceInformationPtr full_arm_space_info = std::make_shared<ob::SpaceInformation>(full_arm_state_space_);
-//   full_arm_space_info->setup();
+void BoltBaxter::loadOfficeScene()
+{
+  // const double table_height = -0.77 * baxter_torso_height_;
+  const double table_height = -0.75 * baxter_torso_height_;
+  visual_moveit_start_->publishCollisionFloor(baxter_torso_height_ + 0.001, "floor", rvt::TRANSLUCENT_DARK);
+  visual_moveit_start_->publishCollisionWall(/*x*/ -1.0, /*y*/ 0.0, /*z*/ baxter_torso_height_, /*angle*/ 0,
+                                             /*width*/ 2, /*height*/ 2.0, "wall1", rvt::YELLOW);
+  visual_moveit_start_->publishCollisionWall(/*x*/ 0.0, /*y*/ -1.075, /*z*/ baxter_torso_height_, /*angle*/ M_PI / 2.0,
+                                             /*width*/ 2, /*height*/ 2.0, "wall2", rvt::YELLOW);
+  visual_moveit_start_->publishCollisionWall(/*x*/ 0.0, /*y*/ 1.075, /*z*/ baxter_torso_height_, /*angle*/ M_PI / 2.0,
+                                             /*width*/ 2, /*height*/ 2.0, "wall3", rvt::YELLOW);
+  visual_moveit_start_->publishCollisionTable(/*x*/ 0.85, /*y*/ 0.0, /*z*/ baxter_torso_height_, /*angle*/ 0,
+                                              /*width*/ 2.0, /*height*/ table_height, /*depth*/ 0.8, "table",
+                                              rvt::DARK_GREY);
+}
 
-//   // Create state validity checking for left arm
-//   // bolt_moveit::StateValidityChecker *full_arm_validity_checker;
-//   // full_arm_validity_checker = new bolt_moveit::StateValidityChecker(
-//   //     opposite_arm_name_, full_arm_space_info, *current_state_, planning_scene_, full_arm_state_space_);
-//   // full_arm_space_info->setStateValidityChecker(ob::StateValidityCheckerPtr(full_arm_validity_checker));
+void BoltBaxter::loadAmazonScene()
+{
+  // Load mesh file name
+  std::string collision_mesh_path = "file://" + package_path_ + "/meshes/kiva_pod/meshes/pod_lowres.stl";
 
-//   // Set the database file location
-//   const std::string file_path = getFilePath(full_arm_name_);
+  ROS_INFO_STREAM_NAMED(name_, "Loading mesh from " << collision_mesh_path);
 
-//   // Create SparseGraph for full arm
-//   SparseGraphPtr fullSG = ompl::tools::SparseGraphPtr(new ompl::tools::SparseGraph(full_arm_space_info, visual_));
-//   fullSG->setFilePath(file_path + ".ompl");
-//   fullSG->savingEnabled_ = true;
-//   // Improve sparsegraph speed
-//   dualSG->setFastMirrorMode(true);
-//   dualSG->setHasUnsavedChanges(true);  // because this is not automatically enabled when in fast mirror mode
+  Eigen::Affine3d mesh_centroid = Eigen::Affine3d::Identity();
 
-//   std::size_t showEvery = std::max((unsigned int)(1), monoSG_->getNumVertices() / 100);
-//   foreach (SparseVertex sparseV1, boost::vertices(monoSG_->getGraph()))
-//   {
-//     // The first thread number of verticies are used for queries and should be skipped
-//     if (sparseV1 < monoSG_->getNumQueryVertices())
-//       continue;
+  // Calculate offset
+  mesh_centroid = Eigen::AngleAxisd(M_PI / 2.0, Eigen::Vector3d::UnitX()) *
+                  Eigen::AngleAxisd(M_PI / 2.0, Eigen::Vector3d::UnitY()) *
+                  Eigen::AngleAxisd(0, Eigen::Vector3d::UnitZ());
+  mesh_centroid.translation().x() = distance_to_shelf_;
+  mesh_centroid.translation().y() = 0;
+  mesh_centroid.translation().z() = baxter_torso_height_;
 
-//     BOLT_INFO(indent + 2, (sparseV1 % showEvery == 0) || true,
-//               "Mirroring graph progress: " << (double(sparseV1) / monoSG_->getNumVertices() * 100.0)
-//                                            << "%. Dual graph verticies: " << dualSG->getNumVertices()
-//                                            << ", Dual graph edges: " << dualSG->getNumEdges());
+  const std::string collision_object_name = "shelf";
 
-//     const base::State *state1 = monoSG_->getState(sparseV1);
+  shapes::Shape *mesh = shapes::createMeshFromResource(collision_mesh_path);  // make sure its prepended by file://
+  shapes::ShapeMsg shape_msg;  // this is a boost::variant type from shape_messages.h
+  if (!mesh || !shapes::constructMsgFromShape(mesh, shape_msg))
+  {
+    ROS_ERROR_STREAM_NAMED("collision_object", "Unable to create mesh shape message from resource "
+                                                   << collision_mesh_path);
+    return;
+  }
 
-//   BOLT_INFO(indent, true, "Done filling in missing dimension!");
-// }
+  shape_msgs::Mesh mesh_msg = boost::get<shape_msgs::Mesh>(shape_msg);
+
+  // Add mesh to scene
+  viz6_->getVisualTools()->publishCollisionMesh(mesh_centroid, collision_object_name, mesh_msg, rvt::BROWN);
+}
+
+void BoltBaxter::saveIMarkersToFile()
+{
+  const std::string file_name = "bolt_" + planning_group_name_ + "_goals.moveit";
+  std::string file_path;
+  bolt_moveit::getFilePath(file_path, file_name, "ros/ompl_storage");
+  ROS_INFO_STREAM_NAMED(name_, "Saving goal states to " << file_path);
+
+  std::ofstream output_file;
+  output_file.open(file_path, std::ofstream::out | std::ofstream::app);  // append
+
+  while (ros::ok())
+  {
+    waitForNextStep("save state to file");
+
+    if (!imarker_goal_->isStateValid())
+    {
+      ROS_WARN_STREAM_NAMED(name_, "IMarker goal state is in collision, try again");
+      continue;
+    }
+
+    moveit::core::robotStateToStream(*imarker_goal_->getRobotState(), output_file, false);
+  }
+
+  output_file.close();
+}
+
+void BoltBaxter::viewIMarkersFromFile(std::size_t indent)
+{
+  BOLT_FUNC(indent, true, "viewIMarkersFromFile()");
+  std::vector<moveit::core::RobotStatePtr> robot_states;
+
+  loadIMarkersFromFile(robot_states, indent);
+
+  std::size_t count = 0;
+  for (moveit::core::RobotStatePtr state : robot_states)
+  {
+    ROS_INFO_STREAM_NAMED(name_, "Viewing state " << count++);
+    viz6_->getVisualTools()->publishRobotState(state);
+    ros::Duration(1.0).sleep();
+  }
+}
+
+void BoltBaxter::loadIMarkersFromFile(std::vector<moveit::core::RobotStatePtr> &robot_states, std::size_t indent)
+{
+  BOLT_FUNC(indent, true, "loadIMarkersFromFile()");
+
+  const std::string file_name = "bolt_" + planning_group_name_ + "_goals.moveit";
+  std::string file_path;
+  bolt_moveit::getFilePath(file_path, file_name, "ros/ompl_storage");
+  ROS_INFO_STREAM_NAMED(name_, "Loading goal states from " << file_path);
+
+  // Error check
+  if (!boost::filesystem::exists(file_path))
+  {
+    ROS_WARN_STREAM_NAMED(name_, "File not found: " << file_path);
+    return;
+  }
+
+  std::ifstream input_file(file_path);
+
+  std::string line;
+  std::size_t count = 0;
+  while (std::getline(input_file, line))
+  {
+    ROS_INFO_STREAM_NAMED(name_, "Saving line " << count++);
+    moveit::core::streamToRobotState(*imarker_goal_->getRobotState(), line);
+    robot_states.push_back(std::make_shared<moveit::core::RobotState>(*imarker_goal_->getRobotState()));
+  }
+
+  input_file.close();
+}
+
+void BoltBaxter::loadIMarkers()
+{
+  // Create cartesian planner
+  if (use_task_planning_)
+  {
+    cart_path_planner_.reset(new bolt_moveit::CartPathPlanner(arm_datas_, viz6_->getVisualTools(), moveit_start_, psm_,
+                                                              package_path_, space_, planning_jmg_));
+  }
+
+  if (!connect_to_hardware_)  // if running on hardware, these imarkers are not needed
+    imarker_start_.reset(new mvt::IMarkerRobotState(psm_, "start", arm_datas_, rvt::GREEN, package_path_));
+  imarker_goal_.reset(new mvt::IMarkerRobotState(psm_, "goal", arm_datas_, rvt::ORANGE, package_path_));
+
+  if (connect_to_hardware_)
+  {
+    ros::Duration(0.1).sleep();
+    ros::spinOnce();
+    bool check_verbose = true;
+    while (!planning_scene_->isStateValid(*getCurrentState(), "", check_verbose) && ros::ok())
+    {
+      ROS_ERROR_STREAM_NAMED(name_, "START STATE INVALID " << ros::Time::now());
+      viz5_->getVisualTools()->publishRobotState(getCurrentState(), rvt::RED);
+      ros::spinOnce();
+      ros::Duration(0.1).sleep();
+      ros::spinOnce();
+    }
+  }
+
+  // Set to a pose
+  if (false)
+  {
+    imarker_goal_->getRobotState()->setToDefaultValues(planning_jmg_, "both_ready");
+    imarker_goal_->saveToFile();
+    imarker_goal_->publishState();
+  }
+}
+
+robot_trajectory::RobotTrajectoryPtr BoltBaxter::processSegments(std::size_t indent)
+{
+  BOLT_FUNC(indent, true, "processSegments()");
+
+  // Get solution segments
+  std::vector<og::PathGeometricPtr> model_solution_segments = bolt_->getBoltPlanner()->getModelSolutionSegments();
+  robot_trajectory::RobotTrajectoryPtr combined_traj =
+      std::make_shared<robot_trajectory::RobotTrajectory>(robot_model_, planning_jmg_);
+
+  // For each segment of trajectory
+  for (std::size_t i = 0; i < model_solution_segments.size(); ++i)
+  {
+    og::PathGeometricPtr path_segment = model_solution_segments[i];
+
+    // Convert trajectory from OMPL to MoveIt! format
+    robot_trajectory::RobotTrajectoryPtr traj_segment;
+    const double speed = 0.025;
+    if (!space_->convertPathToRobotState(*path_segment, planning_jmg_, traj_segment, speed))
+    {
+      BOLT_ERROR(indent, "Unable to convert path");
+      return false;
+    }
+
+    // Check/test the solution for errors
+    // if (!checkMoveItPathSolution(traj_segment))
+    // {
+    //   BOLT_WARN(indent, true, "Invalid path");
+    // }
+
+
+    // Loop through each state in subtrajectory
+    for (std::size_t i = 0; i < traj_segment->getWayPointCount(); ++i)
+    {
+      viz6_->getVisualTools()->publishRobotState(traj_segment->getWayPoint(i), rvt::BLUE);
+      waitForNextStep("next step");
+    }
+
+    // For the cartesian path, go real slow
+    double velocity_scaling_factor = velocity_scaling_factor_;
+    if (i == 1)
+      velocity_scaling_factor = 0.1;
+
+    // Interpolate and parameterize
+    const bool use_interpolation = false;
+    std::cout << "10 " << std::endl;
+    planning_interface_->convertRobotStatesToTraj(traj_segment, planning_jmg_, velocity_scaling_factor,
+                                                  use_interpolation);
+    std::cout << "11 " << std::endl;
+    // Add to combined traj
+    const double dt = i == 0 ? 0.0 : 1.0;  // Quick pause between segments except first one
+    combined_traj->append(*traj_segment, dt);
+  }
+
+  return combined_traj;
+}
 
 }  // namespace bolt_baxter

@@ -126,6 +126,22 @@ public:
 
   void benchmarkMemoryAllocation(std::size_t indent);
 
+  void loadScene();
+
+  void loadOfficeScene();
+
+  void loadAmazonScene();
+
+  void saveIMarkersToFile();
+
+  void viewIMarkersFromFile(std::size_t indent);
+
+  void loadIMarkersFromFile(std::vector<moveit::core::RobotStatePtr>& robot_states, std::size_t indent);
+
+  void loadIMarkers();
+
+  robot_trajectory::RobotTrajectoryPtr processSegments(std::size_t indent);
+
   // --------------------------------------------------------
 
   // A shared node handle
@@ -195,9 +211,10 @@ public:
   bool check_valid_vertices_;
   bool display_disjoint_sets_;
   bool benchmark_performance_;
+  bool save_imarkers_to_file_;
+  bool view_imarkers_from_file_;
   bool post_processing_;
   int post_processing_interval_;
-  bool use_start_imarkers_ = false;
 
   // Type of planner
   std::string experience_planner_;
@@ -254,6 +271,12 @@ public:
 
   // Validity checker
   bolt_moveit::StateValidityChecker* validity_checker_;
+
+  // Scene vars
+  std::size_t scene_type_;
+  const double baxter_torso_height_ = -0.95;
+  double distance_to_shelf_ = 0;
+
 };  // end class
 
 // Create boost pointers for this class

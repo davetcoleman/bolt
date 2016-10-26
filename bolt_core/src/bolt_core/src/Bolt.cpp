@@ -237,12 +237,12 @@ void Bolt::visualize(std::size_t indent)
     }
     visual_->viz6()->trigger();
   }
-  visual_->waitForUserFeedback("review visual from Bolt.cpp");
+  visual_->waitForUserFeedback("Bolt: visualize smooth trajectory");
 
   // Show robot animated
   if (visualizeRobotTrajectory_)
   {
-    BOLT_DEBUG(indent, true, "Blocking while visualizing solution path TODO");
+    //BOLT_DEBUG(indent, true, "Blocking while visualizing solution path TODO");
     //visual_->viz6()->path(&solutionPathCopy, tools::ROBOT, tools::DEFAULT, tools::DEFAULT);
   }
 }
@@ -308,8 +308,6 @@ void Bolt::processResults(std::size_t indent)
 
       // Show in Rviz
       visualize(indent);
-
-      std::cout << "after visualize " << std::endl;
 
       // Error check for repeated states
       if (!checkRepeatedStates(solutionPath, indent))

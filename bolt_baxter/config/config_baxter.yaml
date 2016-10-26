@@ -7,12 +7,13 @@ bolt_baxter:
   display_disjoint_sets: false # connected components
   eliminate_dense_disjoint_sets: false
   check_valid_vertices: false # Collision check every vertex in sparse graph and return error if invalid found
+  save_imarkers_to_file: false
+  view_imarkers_from_file: false
 
   # create sparse graph
   load_spars: true
   create_spars: true
   continue_spars: false # even if a file has been saved, randomly sample for more coverage
-  run_problems: true # do plans?
   sweep_spars_maps: true
   sweep_map_start: 1 # Base 1, not 0
   sweep_map_end: 1 # Base 1, not 0
@@ -23,9 +24,15 @@ bolt_baxter:
   both_arms_group_name: both_arms
 
   # run type
+  run_problems: true # do plans?
   headless: false
   num_problems: 1
   problem_type: 1 # 0 - random, 1 - imarkers
+  use_task_planning: true  # cartesian hybrid planning
+
+  # scene
+  scene_type: 0 # 0 - office, 1 - amazon
+  distance_to_shelf: 1.25
 
   # execution
   connect_to_hardware: true
@@ -42,7 +49,6 @@ bolt_baxter:
   ee_tip_links: [right_gripper_tip, left_gripper_tip]
 
   # other
-  use_task_planning: true  # cartesian hybrid planning
   post_processing: false
   post_processing_interval: 20 # how often (in runs) to adjust the graphs
   seed_random: true
@@ -52,7 +58,7 @@ bolt_baxter:
   # debugging
   visualize:
     display_database: false # does not display database as it is built, however
-    start_goal_states: false
+    start_goal_states: true
     interpolated_traj: false
     time_between_plans: 2
     database_every_plan: false
@@ -185,14 +191,16 @@ debug_interface:
 
 # ====================================================
 bolt_planner:
+  smoothing_enabled: false
   verbose:
     verbose: false
     collision_check: false
   visualize:
-    smoothed_trajectory: true
+    smoothed_trajectory: false
     start_goal: false
     lazy_collision_check: false
     each_solution_step: false
+    start_goal_unconnected: false
 
 # ====================================================
 bolt:

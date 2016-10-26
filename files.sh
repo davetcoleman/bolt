@@ -1,4 +1,4 @@
-/home/dave/ros/current/ws_swri/src/bolt/.files.sh
+/home/dave/ros/current/ws_swri/src/bolt/files.sh
 
 /home/dave/ros/current/ws_swri/src/rviz_visual_tools/include/rviz_visual_tools/rviz_visual_tools.h
 /home/dave/ros/current/ws_swri/src/rviz_visual_tools/src/rviz_visual_tools.cpp

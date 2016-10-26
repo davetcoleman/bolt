@@ -410,9 +410,7 @@ bool TaskGraph::isEmpty() const
 
 void TaskGraph::generateMonoLevelTaskSpace(std::size_t indent)
 {
-  BOLT_ERROR(indent, "TODO: implement");
-  /*
-  BOLT_FUNC(indent, verbose_, "TaskGraph.generateMonoLevelTaskTaskSpace()");
+  BOLT_FUNC(indent, verbose_, "generateMonoLevelTaskTaskSpace()");
   time::point startTime = time::now();  // Benchmark
 
   // Clear pre-existing graphs
@@ -425,7 +423,7 @@ void TaskGraph::generateMonoLevelTaskSpace(std::size_t indent)
   // Record a mapping from SparseVertex to the TaskVertex
   std::vector<TaskVertex> sparseToTaskVertex0(sg_->getNumVertices());
 
-  // Loop through every vertex in sparse graph and copy twice to task graph
+  // Loop through every vertex in sparse graph and copy once to task graph
   BOLT_DEBUG(indent + 2, true || vGenerateTask_, "Adding " << sg_->getNumVertices() << " task space vertices");
   foreach (SparseVertex sparseV, boost::vertices(sg_->getGraph()))
   {
@@ -433,11 +431,11 @@ void TaskGraph::generateMonoLevelTaskSpace(std::size_t indent)
     if (sparseV < sg_->getNumQueryVertices())
       continue;
 
-    const base::State *state = sg_->getState(sparseV);
+    base::State *jointState = sg_->getStateNonConst(sparseV);  // TODO - should this be const?
 
     // Create level 0 vertex
-    VertexLevel level = 0;
-    TaskVertex taskV0 = addVertex(compoundSI_->cloneState(state), level, indent);
+    const VertexLevel level0 = 0;
+    TaskVertex taskV0 = addVertexWithLevel(jointState, level0, indent);
     sparseToTaskVertex0[sparseV] = taskV0;  // record mapping
   }
 
@@ -461,11 +459,10 @@ void TaskGraph::generateMonoLevelTaskSpace(std::size_t indent)
   // Visualize
   // displayDatabase();
 
-  printGraphStats(time::seconds(time::now() - startTime));
+  printGraphStats(time::seconds(time::now() - startTime), indent);
 
   // Tell the planner to require task planning
   taskPlanningEnabled_ = false;
-  */
 }
 
 void TaskGraph::generateTaskSpace(std::size_t indent)

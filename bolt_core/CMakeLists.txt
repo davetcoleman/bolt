@@ -10,9 +10,7 @@ add_compile_options(-std=c++11)
 #   -Winit-self -Wredundant-decls
 #   -Wno-unused-parameter -Wno-unused-function)
 
-find_package(catkin REQUIRED COMPONENTS
-)
-
+find_package(catkin)
 find_package(OMPL REQUIRED)
 find_package(Boost REQUIRED)
 
@@ -43,7 +41,7 @@ include_directories(SYSTEM
 include_directories(
   src
   ${catkin_INCLUDE_DIRS}
-  ${OMPL_INCLUDE_DIRS}
+  #${OMPL_INCLUDE_DIRS}
 )
 
 # Library
@@ -68,6 +66,10 @@ target_link_libraries(${PROJECT_NAME}
   ${OMPL_LIBRARIES}
   ${Boost_LIBRARIES}
 )
+
+#############
+## Testing ##
+#############
 
 #############
 ## Install ##

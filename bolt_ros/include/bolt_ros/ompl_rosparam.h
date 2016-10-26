@@ -198,10 +198,12 @@ void loadOMPLParameters(ros::NodeHandle nh, const std::string &name, ompl::tools
   // BoltPlanner
   {
     ros::NodeHandle rpnh(nh, "bolt_planner");
+    error += !get(name, rpnh, "smoothing_enabled", boltPlanner->smoothingEnabled_);
     error += !get(name, rpnh, "verbose/verbose", boltPlanner->verbose_);
     error += !get(name, rpnh, "verbose/collision_check", boltPlanner->vCollisionCheck_);
     error += !get(name, rpnh, "visualize/smoothed_trajectory", boltPlanner->visualizeSmoothedTrajectory_);
     error += !get(name, rpnh, "visualize/start_goal", boltPlanner->visualizeStartGoal_);
+    error += !get(name, rpnh, "visualize/start_goal_unconnected", boltPlanner->visualizeStartGoalUnconnected_);
     error += !get(name, rpnh, "visualize/lazy_collision_check", boltPlanner->visualizeLazyCollisionCheck_);
     error += !get(name, rpnh, "visualize/each_solution_step", boltPlanner->visualizeEachSolutionStep_);
     shutdownIfError(name, error);

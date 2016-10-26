@@ -83,7 +83,7 @@ bool MoveItBase::init(ros::NodeHandle& nh)
 
   // Create initial robot state
   {
-    psm::LockedPlanningSceneRO scene(planning_scene_monitor_);  // Lock planning scene
+    psm::LockedPlanningSceneRO scene(psm_);  // Lock planning scene
     current_state_.reset(new moveit::core::RobotState(scene->getCurrentState()));
   }  // end scoped pointer of locked planning scene
 
@@ -102,7 +102,7 @@ bool MoveItBase::loadPlanningSceneMonitor(const std::string& joint_state_topic)
   // Allows us to sycronize to Rviz and also publish collision objects to ourselves
   ROS_DEBUG_STREAM_NAMED(name_, "Loading Planning Scene Monitor");
   static const std::string PLANNING_SCENE_MONITOR_NAME = "MoveItBasePlanningScene";
-  planning_scene_monitor_.reset(
+  psm_.reset(
       new psm::PlanningSceneMonitor(planning_scene_, robot_model_loader_, tf_, PLANNING_SCENE_MONITOR_NAME));
   ros::spinOnce();
 
@@ -114,12 +114,12 @@ bool MoveItBase::loadPlanningSceneMonitor(const std::string& joint_state_topic)
   // publish_transforms_updates
   event = (psm::PlanningSceneMonitor::SceneUpdateType) ((int)event | (int)psm::PlanningSceneMonitor::UPDATE_TRANSFORMS);
 
-  if (planning_scene_monitor_->getPlanningScene())
+  if (psm_->getPlanningScene())
   {
     // Optional monitors to start:
-    planning_scene_monitor_->startStateMonitor(joint_state_topic, "");
-    planning_scene_monitor_->getPlanningScene()->setName("bolt_scene");
-    planning_scene_monitor_->startPublishingPlanningScene(event, planning_scene_topic_);
+    psm_->startStateMonitor(joint_state_topic, "");
+    psm_->getPlanningScene()->setName("bolt_scene");
+    psm_->startPublishingPlanningScene(event, planning_scene_topic_);
 
   }
   else
@@ -138,7 +138,7 @@ bool MoveItBase::loadPlanningSceneMonitor(const std::string& joint_state_topic)
 
   std::vector<std::string> missing_joints;
   std::size_t counter = 0;
-  while (!planning_scene_monitor_->getStateMonitor()->haveCompleteState() && ros::ok())
+  while (!psm_->getStateMonitor()->haveCompleteState() && ros::ok())
   {
     ROS_INFO_STREAM_THROTTLE_NAMED(1, name_, "Waiting for complete state from topic " << joint_state_topic);
     ros::Duration(0.1).sleep();
@@ -147,7 +147,7 @@ bool MoveItBase::loadPlanningSceneMonitor(const std::string& joint_state_topic)
     // Show unpublished joints
     if (counter % 10 == 0)
     {
-      planning_scene_monitor_->getStateMonitor()->haveCompleteState(missing_joints);
+      psm_->getStateMonitor()->haveCompleteState(missing_joints);
       for (std::size_t i = 0; i < missing_joints.size(); ++i)
         ROS_WARN_STREAM_NAMED(name_, "Unpublished joints: " << missing_joints[i]);
     }
@@ -220,7 +220,7 @@ void MoveItBase::printJointLimits(double min, double max, double value, const st
 moveit::core::RobotStatePtr MoveItBase::getCurrentState()
 {
   // Get the real current state
-  psm::LockedPlanningSceneRO scene(planning_scene_monitor_);  // Lock planning scene
+  psm::LockedPlanningSceneRO scene(psm_);  // Lock planning scene
   (*current_state_) = scene->getCurrentState();
   return current_state_;
 }

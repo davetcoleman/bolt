@@ -34,10 +34,6 @@
 
 /* Author: Dave Coleman <dave@dav.ee>
    Desc:   Near-asypmotically optimal roadmap datastructure
-
-   Future Improvements:
-     - Consolidate vertex data into single struct so memory is closer together
-     - Store state as non-pointer so memory is closer together
 */
 
 #ifndef OMPL_TOOLS_BOLT_SPARSE_GRAPH_

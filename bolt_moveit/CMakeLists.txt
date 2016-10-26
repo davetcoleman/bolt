@@ -19,6 +19,7 @@ find_package(catkin REQUIRED COMPONENTS
   roslint
 )
 
+find_package(ompl REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(Boost REQUIRED system serialization)
 
@@ -30,6 +31,7 @@ catkin_package(
     moveit_visual_tools
     rosparam_shortcuts
     bolt_core
+    bolt_ros
   INCLUDE_DIRS
     ${EIGEN3_INCLUDE_DIR}
     include
@@ -53,6 +55,7 @@ include_directories(SYSTEM
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
+  ${OMPL_INCLUDE_DIRS}
 )
 
 # link_directories(${OMPL_LIBRARY_DIRS})

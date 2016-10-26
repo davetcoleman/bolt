@@ -303,6 +303,7 @@ bool ModelBasedStateSpace::convertPathToRobotState(const og::PathGeometric& path
   // New trajectory
   traj.reset(new robot_trajectory::RobotTrajectory(spec_.robot_model_, jmg));
   moveit::core::RobotState state(spec_.robot_model_);  // TODO(davetcoleman):do i need to copy this?
+  state.setToDefaultValues();
 
   // Convert solution to MoveIt! format, reversing the solution
   for (std::size_t i = 0; i < path.getStateCount(); ++i)

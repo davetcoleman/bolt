@@ -136,8 +136,12 @@ base::PlannerStatus BoltPlanner::solve(Termination &ptc)
   }
 
   // Convert start and goal to compound states
-  const int level0 = 0;
-  const int level2 = 2;
+  int level0 = 0;
+  int level2;
+  if (taskGraph_->taskPlanningEnabled())
+    level2 = 2;
+  else
+    level2 = 0;  // regular single-task planning
 
   // These compound states now own the startState/goalState
   base::State *startStateCompound = taskGraph_->createCompoundState(startState, level0, indent);
@@ -174,25 +178,26 @@ base::PlannerStatus BoltPlanner::solve(base::State *startState, base::State *goa
   assert(compoundSolutionPath_->getStateCount() >= 3);
 
   // Smooth the result
-  if (smoothingEnabled_)
-  {
-    if (taskGraph_->taskPlanningEnabled())
-      simplifyTaskPath(compoundSolutionPath_, ptc, indent);
-    else
-      simplifyPath(compoundSolutionPath_, ptc, indent);
-  }
+  if (taskGraph_->taskPlanningEnabled())
+    simplifyTaskPath(compoundSolutionPath_, ptc, indent);
   else
-    BOLT_WARN(indent, true, "Smoothing not enabled");
+    simplifyNonTaskPath(compoundSolutionPath_, ptc, indent);
 
+  std::cout << "1 " << std::endl;
   // Convert solution back to joint trajectory only (no discrete component)
   geometric::PathGeometricPtr modelSolution = taskGraph_->convertPathToNonCompound(compoundSolutionPath_);
 
   // Show the smoothed path
   if (visualizeSmoothedTrajectory_)
   {
+    std::cout << "2 " << std::endl;
     visual_->viz4()->deleteAllMarkers();
-    visual_->viz4()->path(modelSolution.get(), tools::MEDIUM, tools::BLACK, tools::BLACK);
+    visual_->viz4()->path(modelSolution.get(), tools::MEDIUM, tools::BLACK, tools::BLUE);
+    std::cout << "4 " << std::endl;
+    visual_->viz4()->path(modelSolution.get(), tools::ROBOT, tools::BLACK, tools::BLACK);
+    std::cout << "5 " << std::endl;
     visual_->viz4()->trigger();
+    visual_->waitForUserFeedback("BoltPlanner: visualize smoothed trajectory");
   }
 
   // Save solution
@@ -248,18 +253,8 @@ bool BoltPlanner::getPathOffGraph(const base::State *start, const base::State *g
     // Error check
     if (!result)
     {
+      BOLT_WARN(indent, true, "getPathOffGraph(): BoltPlanner returned FALSE for getPathOnGraph");
       return false;
-      /*
-      BOLT_WARN(indent, true, "getPathOffGraph(): BoltPlanner returned FALSE for getPathOnGraph. Trying again in debug "
-                              "mode");
-
-      // Run getPathOnGraph again in debug mode
-      getPathOnGraph(startVertexCandidateNeighbors_, goalVertexCandidateNeighbors_, start, goal, compoundSolution, ptc,
-                     /*debug* / true, feedbackStartFailed, indent);
-
-      std::cout << "Shutting down for debugging " << std::endl;
-      exit(-1);
-      */
     }
     else
       break;  // success, continue on
@@ -666,27 +661,50 @@ bool BoltPlanner::convertVertexPathToStatePath(std::vector<TaskVertex> &vertexPa
   return true;
 }
 
-bool BoltPlanner::simplifyPath(og::PathGeometricPtr path, Termination &ptc, std::size_t indent)
+bool BoltPlanner::simplifyNonTaskPath(og::PathGeometricPtr compoundPath, Termination &ptc, std::size_t indent)
 {
-  BOLT_FUNC(indent, verbose_, "BoltPlanner: simplifyPath(): non-task version");
+  BOLT_FUNC(indent, true, "simplifyNonTaskPath()");
 
+  // Stats
   time::point simplifyStart = time::now();
-  std::size_t numStates = path->getStateCount();
+  std::size_t origNumStates = compoundPath->getStateCount();
 
-  BOLT_ERROR(indent, "this path simplifier might be using the wrong statespace path");
-  path_simplifier_->simplify(*path, ptc);
+  // Convert to ModelBasedStateSpace
+  geometric::PathGeometricPtr modelPath = taskGraph_->convertPathToNonCompound(compoundPath);
+
+  // Smooth
+  path_simplifier_->simplify(*modelPath, ptc);
   double simplifyTime = time::seconds(time::now() - simplifyStart);
 
-  int diff = numStates - path->getStateCount();
-  BOLT_DEBUG(indent, verbose_ || true, "BoltPlanner: Path simplification took "
-                                           << simplifyTime << " seconds and removed " << diff << " states");
+  // Interpolate the freespace paths but not the cartesian path
+  std::size_t stateCount = modelPath->getStateCount();
+  modelPath->interpolate();
+  BOLT_DEBUG(indent, true, "Interpolation added: " << modelPath->getStateCount() - stateCount << " states");
+
+  // Create single path segments
+  modelSolSegments_.clear();
+  modelSolSegments_.push_back(modelPath);
+
+  // Re-create compoundPath
+  compoundPath->clear();
+  for (std::size_t i = 0; i < modelPath->getStateCount(); ++i)
+  {
+    int segmentLevel = 0;
+    base::State *modelState = modelPath->getState(i);
+    base::State *compoundState = taskGraph_->createCompoundState(modelState, segmentLevel, indent);
+    compoundPath->append(compoundState);
+  }
+  BOLT_ASSERT(compoundPath->getStateCount() == modelPath->getStateCount(), "Non-matching number of states when copying between state spaces");
+
+  std::size_t diff = origNumStates - compoundPath->getStateCount();
+  BOLT_DEBUG(indent, true, "Path simplification took " << simplifyTime << " seconds and removed " << diff << " states");
 
   return true;
 }
 
 bool BoltPlanner::simplifyTaskPath(og::PathGeometricPtr compoundPath, Termination &ptc, std::size_t indent)
 {
-  BOLT_FUNC(indent, true, "BoltPlanner: simplifyTaskPath()");
+  BOLT_FUNC(indent, true, "simplifyTaskPath()");
 
   time::point simplifyStart = time::now();
   std::size_t origNumStates = compoundPath->getStateCount();
@@ -695,9 +713,9 @@ bool BoltPlanner::simplifyTaskPath(og::PathGeometricPtr compoundPath, Terminatio
   const std::size_t NUM_LEVELS = 3;
 
   // Create three path segments
-  modelSolutionSegments_.clear();
+  modelSolSegments_.clear();
   for (int segmentLevel = 0; segmentLevel < int(NUM_LEVELS); ++segmentLevel)
-    modelSolutionSegments_.push_back(std::make_shared<og::PathGeometric>(modelSI_));
+    modelSolSegments_.push_back(std::make_shared<og::PathGeometric>(modelSI_));
 
   // Create the solution path
   og::PathGeometricPtr compoundSmoothedPath = std::make_shared<og::PathGeometric>(compoundSI_);
@@ -714,77 +732,79 @@ bool BoltPlanner::simplifyTaskPath(og::PathGeometricPtr compoundPath, Terminatio
     o << level << ", ";
     assert(level < NUM_LEVELS);
 
-    modelSolutionSegments_[level]->append(taskGraph_->getModelBasedState(compoundState));
+    modelSolSegments_[level]->append(taskGraph_->getModelBasedState(compoundState));
 
     if (previousLevel > level)  // Error check ordering of input path
     {
       BOLT_ERROR(indent, "Level " << previousLevel << " increasing in wrong order to " << level
-                 << ". Path levels: " << o.str());
+                                  << ". Path levels: " << o.str());
 
       visual_->viz6()->state(taskGraph_->getModelBasedState(compoundState), tools::ROBOT, tools::RED, 0);
       visual_->waitForUserFeedback("prev level");
-      base::State *compoundState2 = compoundPath->getState(i-1);
+      base::State *compoundState2 = compoundPath->getState(i - 1);
       visual_->viz6()->state(taskGraph_->getModelBasedState(compoundState2), tools::ROBOT, tools::RED, 0);
-
 
       exit(-1);
     }
     previousLevel = level;
   }
-  std::cout << ANSI_COLOR_GREEN << std::string(indent, ' ') << "Path levels: " << o.str() << ANSI_COLOR_RESET << std::endl;
+  std::cout << ANSI_COLOR_GREEN << std::string(indent, ' ') << "Path levels: " << o.str() << ANSI_COLOR_RESET
+            << std::endl;
 
   // Add the start and end vertex of the Cartesian path into the respective freespace paths
-  if (modelSolutionSegments_[1]->getStateCount() >= 2)
+  if (modelSolSegments_[1]->getStateCount() >= 2)
   {
     // For checking for errors
-    std::size_t seg0Size = modelSolutionSegments_[0]->getStateCount();
-    std::size_t seg1Size = modelSolutionSegments_[1]->getStateCount();
-    std::size_t seg2Size = modelSolutionSegments_[2]->getStateCount();
+    std::size_t seg0Size = modelSolSegments_[0]->getStateCount();
+    std::size_t seg1Size = modelSolSegments_[1]->getStateCount();
+    std::size_t seg2Size = modelSolSegments_[2]->getStateCount();
 
     // Move first state
-    modelSolutionSegments_[0]->append(modelSolutionSegments_[1]->getStates().front());
-    modelSolutionSegments_[1]->getStates().erase(modelSolutionSegments_[1]->getStates().begin());
+    modelSolSegments_[0]->append(modelSolSegments_[1]->getStates().front());
+    modelSolSegments_[1]->getStates().erase(modelSolSegments_[1]->getStates().begin());
 
     // Move last state
-    modelSolutionSegments_[2]->prepend(modelSolutionSegments_[1]->getStates().back());
-    modelSolutionSegments_[1]->getStates().pop_back();
+    modelSolSegments_[2]->prepend(modelSolSegments_[1]->getStates().back());
+    modelSolSegments_[1]->getStates().pop_back();
 
     // Check the operations were correct
-    BOLT_ASSERT(seg0Size + 1 == modelSolutionSegments_[0]->getStateCount(), "Invalid size of pathSegement after "
-                                                                            "rearrangment");
-    BOLT_ASSERT(seg1Size - 2 == modelSolutionSegments_[1]->getStateCount(), "Invalid size of pathSegement after "
-                                                                            "rearrangment");
-    BOLT_ASSERT(seg2Size + 1 == modelSolutionSegments_[2]->getStateCount(), "Invalid size of pathSegement after "
-                                                                            "rearrangment");
+    BOLT_ASSERT(seg0Size + 1 == modelSolSegments_[0]->getStateCount(), "Invalid size of pathSegement after "
+                                                                       "rearrangment");
+    BOLT_ASSERT(seg1Size - 2 == modelSolSegments_[1]->getStateCount(), "Invalid size of pathSegement after "
+                                                                       "rearrangment");
+    BOLT_ASSERT(seg2Size + 1 == modelSolSegments_[2]->getStateCount(), "Invalid size of pathSegement after "
+                                                                       "rearrangment");
   }
   else
   {
-    BOLT_WARN(indent, true, "The Cartesian path segement 1 has only " << modelSolutionSegments_[1]->getStateCount()
-                                                                      << " stat"
-                                                                         "es");
+    BOLT_WARN(indent, true, "The Cartesian path segement 1 has only " << modelSolSegments_[1]->getStateCount()
+                                                                      << " states");
   }
 
   // Loop through two numbers [0,2]
   for (std::size_t i = 0; i < 3; i += 2)
   {
     // Smooth the freespace paths
-    path_simplifier_->simplifyMax(*modelSolutionSegments_[i]);
+    if (smoothingEnabled_)
+      path_simplifier_->simplifyMax(*modelSolSegments_[i]);
+    else
+      BOLT_WARN(indent, true, "Smoothing not enabled");
 
     // Interpolate the freespace paths but not the cartesian path
-    std::size_t state_count = modelSolutionSegments_[i]->getStateCount();
-    modelSolutionSegments_[i]->interpolate();
+    std::size_t stateCount = modelSolSegments_[i]->getStateCount();
+    modelSolSegments_[i]->interpolate();
 
-    BOLT_DEBUG(indent, true, "Interpolation added: " << modelSolutionSegments_[i]->getStateCount() - state_count
-                                                     << " states");
+    BOLT_DEBUG(indent, true, "Interpolation added: " << modelSolSegments_[i]->getStateCount() - stateCount << " state"
+                                                                                                              "s");
   }
 
   // Combine the path segments back together
   for (int segmentLevel = 0; segmentLevel < int(NUM_LEVELS); ++segmentLevel)
   {
-    for (std::size_t i = 0; i < modelSolutionSegments_[segmentLevel]->getStateCount(); ++i)
+    for (std::size_t i = 0; i < modelSolSegments_[segmentLevel]->getStateCount(); ++i)
     {
       // This state is not compound
-      base::State *modelState = modelSolutionSegments_[segmentLevel]->getState(i);
+      base::State *modelState = modelSolSegments_[segmentLevel]->getState(i);
       base::State *compoundState = taskGraph_->createCompoundState(modelState, segmentLevel, indent);
 
       // Debug
@@ -797,8 +817,8 @@ bool BoltPlanner::simplifyTaskPath(og::PathGeometricPtr compoundPath, Terminatio
       // Check for repeated states
       if (i > 0)
       {
-        if (modelSI_->equalStates(modelSolutionSegments_[segmentLevel]->getState(i - 1),
-                                  modelSolutionSegments_[segmentLevel]->getState(i)))
+        if (modelSI_->equalStates(modelSolSegments_[segmentLevel]->getState(i - 1),
+                                  modelSolSegments_[segmentLevel]->getState(i)))
         {
           BOLT_ERROR(indent, "Repeated states at " << i << " on level " << segmentLevel);
         }
@@ -815,8 +835,8 @@ bool BoltPlanner::simplifyTaskPath(og::PathGeometricPtr compoundPath, Terminatio
   double simplifyTime = time::seconds(time::now() - simplifyStart);
 
   int diff = origNumStates - compoundPath->getStateCount();
-  BOLT_DEBUG(indent, verbose_, "BoltPlanner: Path simplification took " << simplifyTime << " seconds and removed "
-                                                                        << diff << " states");
+  BOLT_DEBUG(indent, verbose_, "Path simplification took " << simplifyTime << " seconds and removed " << diff << " stat"
+                                                                                                                 "es");
 
   return true;
 }

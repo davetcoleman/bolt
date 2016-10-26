@@ -9,11 +9,13 @@ find_package(catkin REQUIRED COMPONENTS
   roslint
 )
 
-find_package(Boost REQUIRED system serialization)
+find_package(OMPL REQUIRED)
+find_package(Boost REQUIRED serialization)
 
 catkin_package(
   CATKIN_DEPENDS
     bolt_moveit
+    geometric_shapes
   INCLUDE_DIRS
     include
   LIBRARIES
@@ -29,6 +31,7 @@ add_definitions(-DENABLE_DEBUG_MACRO)
 
 include_directories(SYSTEM
   ${Boost_INCLUDE_DIR}
+  ${OMPL_INCLUDE_DIRS}
 )
 
 include_directories(
@@ -43,6 +46,7 @@ add_library(${PROJECT_NAME}
 # Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
+  ${OMPL_LIBRARIES}
   ${Boost_LIBRARIES}
 )
 

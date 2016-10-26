@@ -115,7 +115,7 @@ public:
   /** \brief Getting for planning scene monitor */
   psm::PlanningSceneMonitorPtr getPlanningSceneMonitor()
   {
-    return planning_scene_monitor_;
+    return psm_;
   }
 
 protected:
@@ -135,7 +135,7 @@ protected:
   robot_model_loader::RobotModelLoaderPtr robot_model_loader_;
   robot_model::RobotModelPtr robot_model_;
   planning_scene::PlanningScenePtr planning_scene_;
-  psm::PlanningSceneMonitorPtr planning_scene_monitor_;
+  psm::PlanningSceneMonitorPtr psm_;
 
   // Allocated memory for robot state
   moveit::core::RobotStatePtr current_state_;

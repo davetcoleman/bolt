@@ -19,8 +19,6 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(ompl REQUIRED)
 find_package(Boost REQUIRED serialization)
 
-include_directories(${Boost_INCLUDE_DIRS} ${OMPL_INCLUDE_DIRS})
-
 catkin_package(
   CATKIN_DEPENDS
     rviz_visual_tools
@@ -32,20 +30,19 @@ catkin_package(
   INCLUDE_DIRS include
 )
 
-include_directories(
-  include
-  #/home/dave/ros/current/ws_moveit/src/ompl/src/  # TODO fix
-  ${catkin_INCLUDE_DIRS}
-  ${OMPL_INCLUDE_DIRS}
-)
-
 # User debug code only if not release
 add_definitions(-DENABLE_DEBUG_MACRO)
-
 
 ###########
 ## Build ##
 ###########
+
+include_directories(
+  include
+  ${catkin_INCLUDE_DIRS}
+  ${OMPL_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIRS}
+)
 
 # Bolt Demo
 add_executable(${PROJECT_NAME}

@@ -89,7 +89,7 @@ public:
   virtual ~BoltPlanner(void);
 
   /** \brief Wrapper function to show good user feedback while smoothing a path */
-  bool simplifyPath(geometric::PathGeometricPtr path, Termination &ptc, std::size_t indent);
+  bool simplifyNonTaskPath(geometric::PathGeometricPtr path, Termination &ptc, std::size_t indent);
 
   /** \brief Simplify a multi-modal path for different task levels */
   bool simplifyTaskPath(geometric::PathGeometricPtr compoundPath, Termination &ptc, std::size_t indent);
@@ -199,7 +199,7 @@ public:
 
   std::vector<geometric::PathGeometricPtr> getModelSolutionSegments()
   {
-    return modelSolutionSegments_;
+    return modelSolSegments_;
   }
 
 private:
@@ -231,19 +231,19 @@ protected:
   geometric::PathGeometricPtr compoundSolutionPath_;
 
   /** \brief Save the solution path into separate paths for each discrete mode - ModelBasedStateSpace */
-  std::vector<geometric::PathGeometricPtr> modelSolutionSegments_;
+  std::vector<geometric::PathGeometricPtr> modelSolSegments_;
 
   /** \brief The instance of the path simplifier */
   geometric::PathSimplifierPtr path_simplifier_;
-
-  /** \brief Optionally smooth retrieved and repaired paths from database */
-  bool smoothingEnabled_ = true;
 
   /** \brief Used by getPathOffGraph */
   std::vector<bolt::TaskVertex> startVertexCandidateNeighbors_;
   std::vector<bolt::TaskVertex> goalVertexCandidateNeighbors_;
 
 public:
+  /** \brief Optionally smooth retrieved and repaired paths from database */
+  bool smoothingEnabled_ = true;
+
   /** \brief Output user feedback to console */
   bool verbose_ = false;
   bool vCollisionCheck_ = false;
@@ -252,7 +252,7 @@ public:
   bool visualizeStartGoal_ = false;
   bool visualizeLazyCollisionCheck_ = true;
   bool visualizeEachSolutionStep_ = false;
-  bool visualizeStartGoalUnconnected_ = true;
+  bool visualizeStartGoalUnconnected_ = false;
 
   int numStartGoalStatesAddedToTask_ = 0;
 };
