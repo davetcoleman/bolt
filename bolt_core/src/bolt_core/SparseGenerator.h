@@ -171,6 +171,8 @@ public:
     return mean;
   }
 
+  void addPath(geometric::PathGeometric& path, std::size_t indent);
+
 protected:
   /** \brief Short name of this class */
   const std::string name_ = "SparseGenerator";

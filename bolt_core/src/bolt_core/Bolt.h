@@ -202,6 +202,9 @@ public:
   /** \brief Sanity check for solution paths */
   bool checkRepeatedStates(const geometric::PathGeometric &path, std::size_t indent);
 
+  /** \brief Insert experiences into database */
+  bool doPostProcessing(std::size_t indent);
+
   /** \brief Set the database file to load. Actual loading occurs when setup() is called
    *  \param filePath - full absolute path to a experience database to load
    */

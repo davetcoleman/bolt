@@ -131,6 +131,7 @@ void loadOMPLParameters(ros::NodeHandle nh, const std::string &name, ompl::tools
   {
     ros::NodeHandle rpnh(nh, "sparse_criteria");
     error += !get(name, rpnh, "sparse_delta_fraction", sparseCriteria->sparseDeltaFraction_);
+    error += !get(name, rpnh, "sparse_delta_fraction_secondary", sparseCriteria->sparseDeltaFractionSecondary_);
     error += !get(name, rpnh, "near_sample_points_multiple", sparseCriteria->nearSamplePointsMultiple_);
     error += !get(name, rpnh, "stretch_factor", sparseCriteria->stretchFactor_);
     error += !get(name, rpnh, "penetration_overlap_fraction", sparseCriteria->penetrationOverlapFraction_);
@@ -201,11 +202,13 @@ void loadOMPLParameters(ros::NodeHandle nh, const std::string &name, ompl::tools
     error += !get(name, rpnh, "smoothing_enabled", boltPlanner->smoothingEnabled_);
     error += !get(name, rpnh, "verbose/verbose", boltPlanner->verbose_);
     error += !get(name, rpnh, "verbose/collision_check", boltPlanner->vCollisionCheck_);
+    error += !get(name, rpnh, "verbose/sampling", boltPlanner->vSampling_);
     error += !get(name, rpnh, "visualize/smoothed_trajectory", boltPlanner->visualizeSmoothedTrajectory_);
     error += !get(name, rpnh, "visualize/start_goal", boltPlanner->visualizeStartGoal_);
     error += !get(name, rpnh, "visualize/start_goal_unconnected", boltPlanner->visualizeStartGoalUnconnected_);
     error += !get(name, rpnh, "visualize/lazy_collision_check", boltPlanner->visualizeLazyCollisionCheck_);
     error += !get(name, rpnh, "visualize/each_solution_step", boltPlanner->visualizeEachSolutionStep_);
+    error += !get(name, rpnh, "visualize/sampling", boltPlanner->visualizeSampling_);
     shutdownIfError(name, error);
   }
 

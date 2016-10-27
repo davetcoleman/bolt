@@ -252,6 +252,9 @@ public:
   /** \brief Maximum visibility range for nodes in the graph as a fraction of maximum extent. */
   double sparseDeltaFraction_ = 0.25;
 
+  /** \brief When saving experiences, save at smaller discretization */
+  double sparseDeltaFractionSecondary_ = 0.25;
+
   /** \brief Multiply this number by the dimension of the state space to choose how much sampling to perform */
   double nearSamplePointsMultiple_ = 2.0;
 

@@ -1092,6 +1092,39 @@ void SparseGenerator::benchmarkMemoryAllocation(std::size_t indent)
   std::cout << std::endl;
 }
 
+void SparseGenerator::addPath(geometric::PathGeometric& path, std::size_t indent)
+{
+  // Set sparseDelta to be way lower
+  sparseCriteria_->sparseDeltaFraction_ = sparseCriteria_->sparseDeltaFractionSecondary_;
+  sparseCriteria_->setup(indent);
+
+  // Turn on visibility
+  sg_->visualizeSparseGraph_ = true;
+  sg_->vAdd_ = true;
+
+  std::vector<std::size_t> shuffledIDs;
+  for (std::size_t i = 1; i < path.getStateCount(); ++i)
+  {
+    shuffledIDs.push_back(i);
+  } // for each state in path
+  std::random_shuffle(shuffledIDs.begin(), shuffledIDs.end());  // using built-in random generator
+
+  // Insert paths at random
+  for (std::size_t i = 1; i < shuffledIDs.size(); ++i)
+  {
+    std::cout << "shuffledIDs[i]: " << shuffledIDs[i] << std::endl;
+
+    const std::size_t threadID = 0;
+    bool usedState;
+    if (!addSample(path.getState(shuffledIDs[i]), threadID, usedState, indent))
+    {
+      BOLT_ERROR(indent, "SparseGraph is completed - this should not happen");
+    }
+  }
+
+  visual_->waitForUserFeedback("Done adding path");
+}
+
 }  // namespace bolt
 }  // namespace tools
 }  // namespace ompl

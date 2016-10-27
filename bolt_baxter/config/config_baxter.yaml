@@ -89,6 +89,7 @@ sparse_criteria:
   #sparse_delta_fraction: 0.4
   #sparse_delta_fraction: 0.45
   sparse_delta_fraction: 0.5
+  sparse_delta_fraction_secondary: 0.1
   penetration_overlap_fraction: 0.01
   near_sample_points_multiple: 2 # multiply this times number of dimensions
 # VAR4
@@ -195,12 +196,14 @@ bolt_planner:
   verbose:
     verbose: true
     collision_check: false
+    sampling: true
   visualize:
     smoothed_trajectory: false
     start_goal: false
     lazy_collision_check: false
     each_solution_step: false
     start_goal_unconnected: false
+    sampling: true
 
 # ====================================================
 bolt:

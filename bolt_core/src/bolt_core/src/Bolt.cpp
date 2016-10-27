@@ -185,8 +185,8 @@ base::PlannerStatus Bolt::solve(const base::PlannerTerminationCondition &ptc)
   time::point start = time::now();
 
   // Warn if there are queued paths that have not been added to the experience database
-  // OMPL_INFORM("Num solved paths uninserted into the experience database in the post-proccessing queue: %u",
-  //             queuedSolutionPaths_.size());
+  OMPL_INFORM("Num solved paths uninserted into the experience database in the post-proccessing queue: %u",
+              queuedSolutionPaths_.size());
 
   // SOLVE
   lastStatus_ = boltPlanner_->solve(ptc);
@@ -330,6 +330,7 @@ void Bolt::processResults(std::size_t indent)
       {
         // Queue the solution path for future insertion into experience database (post-processing)
         queuedSolutionPaths_.push_back(solutionPath);
+        doPostProcessing(indent);
       }
     }
     break;
@@ -337,6 +338,21 @@ void Bolt::processResults(std::size_t indent)
       BOLT_ERROR(indent, "Unknown status type: " << lastStatus_);
       stats_.numSolutionsFailed_++;
   }
+}
+
+bool Bolt::doPostProcessing(std::size_t indent)
+{
+    BOLT_FUNC(indent, true, "doPostProcessing()");
+
+    for (geometric::PathGeometric &queuedSolutionPath : queuedSolutionPaths_)
+    {
+      sparseGenerator_->addPath(queuedSolutionPath, indent);
+    }
+
+    // Remove all inserted paths from the queue
+    queuedSolutionPaths_.clear();
+
+    return true;
 }
 
 bool Bolt::checkRepeatedStates(const og::PathGeometric &path, std::size_t indent)

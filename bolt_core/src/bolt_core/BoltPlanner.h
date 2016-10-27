@@ -182,7 +182,7 @@ public:
   void visualizeBadEdge(TaskVertex fromVertex, TaskVertex toVertex);
   void visualizeBadEdge(const base::State *from, const base::State *to);
 
-  void addSamples(std::size_t indent);
+  void addSamples(const base::State* near, std::size_t indent);
 
   TaskGraphPtr getTaskGraph()
   {
@@ -249,12 +249,14 @@ public:
   /** \brief Output user feedback to console */
   bool verbose_ = false;
   bool vCollisionCheck_ = false;
+  bool vSampling_ = true;
 
   bool visualizeSmoothedTrajectory_ = false;
   bool visualizeStartGoal_ = false;
   bool visualizeLazyCollisionCheck_ = true;
   bool visualizeEachSolutionStep_ = false;
   bool visualizeStartGoalUnconnected_ = false;
+  bool visualizeSampling_ = true;
 
   int numStartGoalStatesAddedToTask_ = 0;
 };
