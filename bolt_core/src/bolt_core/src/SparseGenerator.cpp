@@ -1092,9 +1092,15 @@ void SparseGenerator::benchmarkMemoryAllocation(std::size_t indent)
 
 void SparseGenerator::addExperiencePath(geometric::PathGeometric& path, std::size_t indent)
 {
+  // Reset this class
+  clear();
+
   // Set sparseDelta to be way lower
   sparseCriteria_->sparseDeltaFraction_ = sparseCriteria_->sparseDeltaFractionSecondary_;
   sparseCriteria_->setup(indent);
+  sparseCriteria_->vAddedReason_ = true;
+  sparseCriteria_->vCriteria_ = true;
+  sparseCriteria_->visualizeAttemptedStates_ = true;
 
   // Turn on visibility
   sg_->visualizeSparseGraph_ = true;
@@ -1112,14 +1118,23 @@ void SparseGenerator::addExperiencePath(geometric::PathGeometric& path, std::siz
   {
     std::cout << "shuffledIDs[i]: " << shuffledIDs[i] << std::endl;
 
+    visual_->viz4()->state(path.getState(shuffledIDs[i]), tools::ROBOT, tools::DEFAULT, 0);
+    visual_->viz4()->state(path.getState(shuffledIDs[i]), tools::XLARGE, tools::RED, 0);
+    visual_->viz4()->trigger();
+
     const std::size_t threadID = 0;
     bool usedState;
     if (!addSample(path.getState(shuffledIDs[i]), threadID, usedState, indent))
     {
       BOLT_ERROR(indent, "SparseGraph is completed - this should not happen");
     }
+    // SparseGraph requires its visuals to be manually published
+    visual_->viz1()->trigger();
+
+    visual_->waitForUserFeedback("Added segment");
   }
 
+  std::cout << "done " << std::endl;
   visual_->waitForUserFeedback("Done adding path");
 }
 

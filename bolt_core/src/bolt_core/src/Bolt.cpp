@@ -186,7 +186,7 @@ base::PlannerStatus Bolt::solve(const base::PlannerTerminationCondition &ptc)
 
   // Warn if there are queued paths that have not been added to the experience database
   OMPL_INFORM("Num solved paths uninserted into the experience database in the post-proccessing queue: %u",
-              queuedSolutionPaths_.size());
+              queuedModelSolPaths_.size());
 
   // SOLVE
   lastStatus_ = boltPlanner_->solve(ptc);
@@ -207,21 +207,19 @@ void Bolt::visualize(std::size_t indent)
   // Optionally visualize raw trajectory
   if (visualizeRawTrajectory_)
   {
-    geometric::PathGeometricPtr originalPath = boltPlanner_->getOrigModelSolPath();
+    geometric::PathGeometricPtr origModelSolPath = boltPlanner_->getOrigModelSolPath();
 
     // Make the chosen path a different color and thickness
-    visual_->viz5()->path(originalPath.get(), tools::MEDIUM, tools::BLUE, tools::BLACK);
+    visual_->viz5()->path(origModelSolPath.get(), tools::MEDIUM, tools::BLUE, tools::BLACK);
     visual_->viz5()->trigger();
 
     // Don't show raw trajectory twice in larger dimensions
     if (si_->getStateSpace()->getDimension() == 3)
     {
-      visual_->viz6()->path(originalPath.get(), tools::MEDIUM, tools::BLUE, tools::BLACK);
+      visual_->viz6()->path(origModelSolPath.get(), tools::MEDIUM, tools::BLUE, tools::BLACK);
       visual_->viz6()->trigger();
     }
   }
-
-  //geometric::PathGeometric *solutionPath = static_cast<geometric::PathGeometric *>(pdef_->getSolutionPath().get());
 
   // Show smoothed & interpolated path
   if (visualizeSmoothTrajectory_)
@@ -302,15 +300,16 @@ void Bolt::processResults(std::size_t indent)
       break;
     case base::PlannerStatus::EXACT_SOLUTION:
     {
-      og::PathGeometric solutionPath = og::SimpleSetup::getSolutionPath();  // copied so that it is non-const
+      //og::PathGeometric smoothedModelSolPath = og::SimpleSetup::getSolutionPath();  // copied so that it is non-const
+      og::PathGeometricPtr smoothedModelSolPath = boltPlanner_->getSmoothedModelSolPath();
       BOLT_BLUE(indent, true, "Bolt Finished - solution found in " << planTime_ << " seconds with "
-                                                                        << solutionPath.getStateCount() << " states");
+                                                                        << smoothedModelSolPath->getStateCount() << " states");
 
       // Show in Rviz
       visualize(indent);
 
       // Error check for repeated states
-      if (!checkRepeatedStates(solutionPath, indent))
+      if (!checkRepeatedStates(*smoothedModelSolPath, indent))
         exit(-1);
 
       // Check optimality
@@ -321,7 +320,7 @@ void Bolt::processResults(std::size_t indent)
       stats_.numSolutionsFromRecall_++;
 
       // Make sure solution has at least 2 states
-      if (solutionPath.getStateCount() < 2)
+      if (smoothedModelSolPath->getStateCount() < 2)
       {
         OMPL_INFORM("NOT saving to database because solution is less than 2 states long");
         stats_.numSolutionsTooShort_++;
@@ -329,7 +328,7 @@ void Bolt::processResults(std::size_t indent)
       else
       {
         // Queue the solution path for future insertion into experience database (post-processing)
-        queuedSolutionPaths_.push_back(solutionPath);
+        queuedModelSolPaths_.push_back(*smoothedModelSolPath);
       }
     }
     break;
@@ -343,13 +342,13 @@ bool Bolt::doPostProcessing(std::size_t indent)
 {
     BOLT_FUNC(indent, true, "doPostProcessing()");
 
-    for (geometric::PathGeometric &queuedSolutionPath : queuedSolutionPaths_)
+    for (geometric::PathGeometric &queuedSolutionPath : queuedModelSolPaths_)
     {
       sparseGenerator_->addExperiencePath(queuedSolutionPath, indent);
     }
 
     // Remove all inserted paths from the queue
-    queuedSolutionPaths_.clear();
+    queuedModelSolPaths_.clear();
 
     return true;
 }

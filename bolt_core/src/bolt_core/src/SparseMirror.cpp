@@ -228,6 +228,8 @@ void SparseMirror::mirrorGraphDualArm(base::SpaceInformationPtr dualSpaceInfo,
 
   // Save graph
   dualSG->save(indent);
+
+  dualSG->setFastMirrorMode(false);
 }
 
 void SparseMirror::addEdgesForDim(std::vector<SparseVertex> &sparseV2ToDualVertex, SparseGraphPtr &dualSG,

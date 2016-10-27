@@ -129,11 +129,11 @@ sparse_graph:
     add: false # debug when addVertex() and addEdge() are called
     search: false
   visualize:
-    spars_graph: false
-    spars_graph_speed: 0.000001 # if 0, does not animate but only single image draw
-    database_vertices: true # must have spars_graph enabled
-    database_edges: true # must have spars_graph enabled
-    database_coverage: false # the grey circles around vertices, must have spars_graph enabled
+    sparse_graph: false
+    sparse_graph_speed: 0.000001 # if 0, does not animate but only single image draw
+    database_vertices: true # must have sparse_graph enabled
+    database_edges: true # must have sparse_graph enabled
+    database_coverage: false # the grey circles around vertices, must have sparse_graph enabled
     projection: false # show the joint space in a nD grid
     graph_after_loading: false # show graph after loading from file (can be slow!)
     quality_path_smoothing: false # simplification

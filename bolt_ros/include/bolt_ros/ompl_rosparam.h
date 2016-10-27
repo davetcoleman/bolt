@@ -106,8 +106,8 @@ void loadOMPLParameters(ros::NodeHandle nh, const std::string &name, ompl::tools
     error += !get(name, rpnh, "super_debug", sparseGraph->superDebug_);
     error += !get(name, rpnh, "verbose/add", sparseGraph->vAdd_);
     error += !get(name, rpnh, "verbose/search", sparseGraph->vSearch_);
-    error += !get(name, rpnh, "visualize/spars_graph", sparseGraph->visualizeSparseGraph_);
-    error += !get(name, rpnh, "visualize/spars_graph_speed", sparseGraph->visualizeSparseGraphSpeed_);
+    error += !get(name, rpnh, "visualize/sparse_graph", sparseGraph->visualizeSparseGraph_);
+    error += !get(name, rpnh, "visualize/sparse_graph_speed", sparseGraph->visualizeSparseGraphSpeed_);
     error += !get(name, rpnh, "visualize/database_vertices", sparseGraph->visualizeDatabaseVertices_);
     error += !get(name, rpnh, "visualize/database_edges", sparseGraph->visualizeDatabaseEdges_);
     error += !get(name, rpnh, "visualize/database_coverage", sparseGraph->visualizeDatabaseCoverage_);

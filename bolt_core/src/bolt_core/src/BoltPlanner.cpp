@@ -174,7 +174,8 @@ base::PlannerStatus BoltPlanner::solve(base::CompoundState *startState, base::Co
   // All save trajectories should be at least 1 state long, then we append the start and goal states, for min of 3
   assert(origCompoundSolPath_->getStateCount() >= 3);
 
-    smoothedModelSolPath_ = taskGraph_->convertPathToNonCompound(smoothedCompoundSolPath_);
+  // Convert orginal ModelBasedStateSpace
+  origModelSolPath_ = taskGraph_->convertPathToNonCompound(origCompoundSolPath_);
 
   // Create new PathGeometric that we can modify by smoothing
   smoothedCompoundSolPath_.reset(new geometric::PathGeometric(*origCompoundSolPath_));
@@ -638,9 +639,7 @@ bool BoltPlanner::convertVertexPathToStatePath(std::vector<TaskVertex> &vertexPa
     std::stringstream o;
     for (std::size_t i = vertexPath.size(); i > 0; --i)
       o << vertexPath[i - 1] << ", ";
-    std::cout << "o.str(): " << o.str() << std::endl;
-    std::cout << "vertexPath.size(): " << vertexPath.size() << std::endl;
-    BOLT_DEBUG(indent, true, "BoltPlanner.Vertices: " << o.str());
+    std::cout << "Verticies: " << o.str() << std::endl;
   }
 
   // Reverse the vertexPath and convert to state path
@@ -976,7 +975,11 @@ void BoltPlanner::addSamples(const base::State* near, std::size_t indent)
 {
   BOLT_FUNC(indent, true, "addSamples()");
 
-  std::size_t numAttempts = 50;
+  // Choose sampler based on clearance
+  base::ValidStateSamplerPtr sampler = taskGraph_->getSparseGraph()->getSampler(modelSI_, taskGraph_->getSparseGraph()->getObstacleClearance(), indent);
+  sampler->setNrAttempts(1000);
+
+  std::size_t numAttempts = 100;
   for (std::size_t i = 0; i < numAttempts; ++i)
   {
     // 0.1 is magic num
@@ -985,13 +988,10 @@ void BoltPlanner::addSamples(const base::State* near, std::size_t indent)
 
     base::State *candidateState = modelSI_->getStateSpace()->allocState();
 
-    // Choose sampler based on clearance
-    base::ValidStateSamplerPtr sampler = taskGraph_->getSparseGraph()->getSampler(modelSI_, taskGraph_->getSparseGraph()->getObstacleClearance(), indent);
-
     if (near)
     {
       if (!sampler->sampleNear(candidateState, near, distance))
-        throw Exception(name_, "Unable to find valid sample");
+        throw Exception(name_, "Unable to find valid sample near state");
     }
     else
     {

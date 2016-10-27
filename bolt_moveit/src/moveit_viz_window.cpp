@@ -121,7 +121,7 @@ void MoveItVizWindow::state(const ob::State* state, ot::VizSizes size, ot::VizCo
       }
       break;
       default:
-        ROS_ERROR_STREAM_NAMED(name_, "vizStateRobot: Invalid state type value");
+        ROS_ERROR_STREAM_NAMED(name_, "vizStateRobot: Invalid state type value: " << size);
     }  // end switch
   }    // end for
 }

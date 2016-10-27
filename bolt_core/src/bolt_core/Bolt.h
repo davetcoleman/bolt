@@ -301,8 +301,8 @@ protected:
   /** \brief Graph used for combining multiple layers of sparse graph */
   TaskGraphPtr taskGraph_;
 
-  /** \brief Accumulated experiences to be later added to experience database */
-  std::vector<geometric::PathGeometric> queuedSolutionPaths_;
+  /** \brief Accumulated experiences to be later added to experience database - ModelBasedStateSpace*/
+  std::vector<geometric::PathGeometric> queuedModelSolPaths_;
 
   /** \brief Location to save logging file for benchmarks */
   std::string benchmarkFilePath_;

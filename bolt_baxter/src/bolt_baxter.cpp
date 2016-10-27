@@ -1195,7 +1195,7 @@ void BoltBaxter::loadScene()
   {
     case 0:
       loadOfficeScene();
-      break;
+      //break;
     case 1:
       loadAmazonScene();
       break;
@@ -1369,14 +1369,14 @@ robot_trajectory::RobotTrajectoryPtr BoltBaxter::processSegments(std::size_t ind
   BOLT_FUNC(indent, true, "processSegments()");
 
   // Get solution segments
-  std::vector<og::PathGeometricPtr> model_solution_segments = bolt_->getBoltPlanner()->getModelSolSegments();
+  std::vector<og::PathGeometricPtr> model_sol_segments = bolt_->getBoltPlanner()->getModelSolSegments();
   robot_trajectory::RobotTrajectoryPtr combined_traj =
     std::make_shared<robot_trajectory::RobotTrajectory>(robot_model_, planning_jmg_);
 
   // For each segment of trajectory
-  for (std::size_t i = 0; i < model_solution_segments.size(); ++i)
+  for (std::size_t i = 0; i < model_sol_segments.size(); ++i)
   {
-    og::PathGeometricPtr path_segment = model_solution_segments[i];
+    og::PathGeometricPtr path_segment = model_sol_segments[i];
 
     // Convert trajectory from OMPL to MoveIt! format
     robot_trajectory::RobotTrajectoryPtr traj_segment;
