@@ -207,7 +207,7 @@ void Bolt::visualize(std::size_t indent)
   // Optionally visualize raw trajectory
   if (visualizeRawTrajectory_)
   {
-    geometric::PathGeometricPtr originalPath = boltPlanner_->getOriginalSolutionPath();
+    geometric::PathGeometricPtr originalPath = boltPlanner_->getOrigModelSolPath();
 
     // Make the chosen path a different color and thickness
     visual_->viz5()->path(originalPath.get(), tools::MEDIUM, tools::BLUE, tools::BLACK);
@@ -226,7 +226,7 @@ void Bolt::visualize(std::size_t indent)
   // Show smoothed & interpolated path
   if (visualizeSmoothTrajectory_)
   {
-    std::vector<geometric::PathGeometricPtr> modelSolutionSegments = boltPlanner_->getModelSolutionSegments();
+    std::vector<geometric::PathGeometricPtr> modelSolutionSegments = boltPlanner_->getModelSolSegments();
     for (std::size_t i = 0; i < modelSolutionSegments.size(); ++i)
     {
       geometric::PathGeometricPtr modelSolutionSegment = modelSolutionSegments[i];
@@ -249,7 +249,7 @@ void Bolt::visualize(std::size_t indent)
 
 bool Bolt::checkBoltPlannerOptimality(std::size_t indent)
 {
-  geometric::PathGeometric *rawPath = boltPlanner_->getOriginalSolutionPath().get();
+  geometric::PathGeometric *rawPath = boltPlanner_->getOrigModelSolPath().get();
   geometric::PathGeometric *smoothedPath = static_cast<geometric::PathGeometric *>(pdef_->getSolutionPath().get());
 
   double optimalLength = smoothedPath->length();
@@ -330,7 +330,6 @@ void Bolt::processResults(std::size_t indent)
       {
         // Queue the solution path for future insertion into experience database (post-processing)
         queuedSolutionPaths_.push_back(solutionPath);
-        doPostProcessing(indent);
       }
     }
     break;
@@ -346,7 +345,7 @@ bool Bolt::doPostProcessing(std::size_t indent)
 
     for (geometric::PathGeometric &queuedSolutionPath : queuedSolutionPaths_)
     {
-      sparseGenerator_->addPath(queuedSolutionPath, indent);
+      sparseGenerator_->addExperiencePath(queuedSolutionPath, indent);
     }
 
     // Remove all inserted paths from the queue

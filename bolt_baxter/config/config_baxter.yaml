@@ -172,7 +172,7 @@ task_graph:
   verbose:
     verbose: false
     add: false # debug when addVertex() and addEdge() are called
-    search: false
+    search: true
     visualize: false
     heuristic: false
     clear: false
@@ -203,7 +203,7 @@ bolt_planner:
     lazy_collision_check: false
     each_solution_step: false
     start_goal_unconnected: false
-    sampling: true
+    sampling: false
 
 # ====================================================
 bolt:

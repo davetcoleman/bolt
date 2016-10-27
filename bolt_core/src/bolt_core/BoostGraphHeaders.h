@@ -270,9 +270,11 @@ public:
    */
   double get(TaskEdge e) const
   {
-    // Get the status of collision checking for this edge
+    // Use the status of collision checking to determine this edge's weight
     if (g_[e].collision_state_ == IN_COLLISION)
       return std::numeric_limits<double>::infinity();
+
+    // TODO: if on level 2, check level 0's edge collision_state instead - that should be master
 
     return boost::get(boost::get(&TaskEdgeStruct::weight_, g_), e);
   }

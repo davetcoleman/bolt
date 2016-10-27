@@ -305,16 +305,16 @@ bool SparseGraph::astarSearch(const SparseVertex start, const SparseVertex goal,
   bool foundGoal = false;
   double *vertexDistances = new double[getNumVertices()];
 
-#ifndef NDEBUG
+#ifdef ENABLE_ASTAR_DEBUG
   // Reset statistics
   numNodesOpened_ = 0;
   numNodesClosed_ = 0;
-#endif
 
   if (visualizeAstar_)
   {
     visual_->viz4()->deleteAllMarkers();
   }
+#endif
 
   try
   {
@@ -351,7 +351,7 @@ bool SparseGraph::astarSearch(const SparseVertex start, const SparseVertex goal,
 
   distance = vertexDistances[goal];
 
-#ifndef NDEBUG
+#ifdef ENABLE_ASTAR_DEBUG
   // the custom exception from SparseAstarVisitor
   BOLT_DEBUG(indent, vSearch_, "AStar found solution. Distance to goal: " << vertexDistances[goal]);
 
@@ -374,7 +374,7 @@ bool SparseGraph::astarSearch(const SparseVertex start, const SparseVertex goal,
     vertexPath.push_back(v);
   }
 
-#ifndef NDEBUG
+#ifdef ENABLE_ASTAR_DEBUG
   BOLT_ASSERT(vertexPath.size(), "Vertex path is empty! " << vertexPath.size());
   // Ensure start and goal states are included in path
   BOLT_ASSERT(si_->getStateSpace()->equalStates(getState(vertexPath.back()), getState(start)), "Start states are "
@@ -421,7 +421,7 @@ bool SparseGraph::astarSearchLength(SparseVertex start, SparseVertex goal, doubl
 
   distance = std::numeric_limits<double>::infinity();
 
-#ifndef NDEBUG
+#ifdef ENABLE_ASTAR_DEBUG
   // Reset statistics
   numNodesOpened_ = 0;
   numNodesClosed_ = 0;
@@ -1533,7 +1533,7 @@ otb::SparseAstarVisitor::SparseAstarVisitor(SparseVertex goal, SparseGraph *pare
 {
 }
 
-#ifndef NDEBUG
+#ifdef ENABLE_ASTAR_DEBUG
 void otb::SparseAstarVisitor::discover_vertex(SparseVertex v, const SparseAdjList &) const
 {
   // Statistics
@@ -1546,7 +1546,7 @@ void otb::SparseAstarVisitor::discover_vertex(SparseVertex v, const SparseAdjLis
 
 void otb::SparseAstarVisitor::examine_vertex(SparseVertex v, const SparseAdjList &) const
 {
-#ifndef NDEBUG
+#ifdef ENABLE_ASTAR_DEBUG
   // Statistics
   parent_->recordNodeClosed();
   if (parent_->visualizeAstar_)

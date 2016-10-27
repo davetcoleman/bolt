@@ -581,7 +581,7 @@ public:
  * \param g graph we are searching on
  */
 
-#ifndef NDEBUG
+#ifdef ENABLE_ASTAR_DEBUG
   void discover_vertex(SparseVertex v, const SparseAdjList& g) const;
 #endif
 

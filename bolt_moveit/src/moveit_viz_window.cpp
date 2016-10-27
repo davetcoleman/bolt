@@ -165,7 +165,6 @@ void MoveItVizWindow::edge(const ob::State* stateA, const ob::State* stateB, dou
       visuals_->publishSphere(stateToPoint(stateA, link), rvt::RED, rvt::XLARGE);
     }
     visuals_->trigger();
-    ros::Duration(0.01).sleep();
     return;
   }
 

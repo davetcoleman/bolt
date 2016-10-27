@@ -23,11 +23,23 @@ catkin_package(
     ${PROJECT_NAME}
 )
 
-# If enabled, show debug message output
+###########
+## Debug ##
+###########
+
+# If uncommented, show debug message output
+# This will slow down processing
 add_definitions(-DENABLE_DEBUG_MACRO)
-# If enabled, use quality criteria data structures
+
+# If uncommented, use quality criteria data structures
+# This will slow down processing
 #add_definitions(-DENABLE_QUALITY)
-# Note: NDEBUG is enabled when the CMake build type is Debug
+
+# If uncommented, astar is in debug mode
+# This will slow down processing
+add_definitions(-DENABLE_ASTAR_DEBUG)
+
+# Note: NDEBUG is uncommented when the CMake build type is Debug
 
 ###########
 ## Build ##

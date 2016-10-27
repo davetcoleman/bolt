@@ -541,7 +541,7 @@ bool BoltBaxter::plan(std::size_t indent)
   // Solve -----------------------------------------------------------
 
   // Create the termination condition
-  double seconds = 5 * 60;
+  double seconds = 60 * 60; // 1 hour
   ob::PlannerTerminationCondition ptc = ob::timedPlannerTerminationCondition(seconds, 0.1);
 
   // Benchmark runtime
@@ -582,6 +582,8 @@ bool BoltBaxter::plan(std::size_t indent)
     bool blocking = false;
     viz6_->getVisualTools()->publishTrajectoryPath(execution_traj, blocking);
   }
+
+  bolt_->doPostProcessing(indent);
 
   // Visualize the doneness
   std::cout << std::endl;
@@ -1367,7 +1369,7 @@ robot_trajectory::RobotTrajectoryPtr BoltBaxter::processSegments(std::size_t ind
   BOLT_FUNC(indent, true, "processSegments()");
 
   // Get solution segments
-  std::vector<og::PathGeometricPtr> model_solution_segments = bolt_->getBoltPlanner()->getModelSolutionSegments();
+  std::vector<og::PathGeometricPtr> model_solution_segments = bolt_->getBoltPlanner()->getModelSolSegments();
   robot_trajectory::RobotTrajectoryPtr combined_traj =
     std::make_shared<robot_trajectory::RobotTrajectory>(robot_model_, planning_jmg_);
 

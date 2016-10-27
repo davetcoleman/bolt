@@ -557,8 +557,6 @@ void SparseGenerator::showNoQualityStatus(std::size_t indent)
 
 void SparseGenerator::findGraphNeighbors(CandidateData &candidateD, std::size_t threadID, std::size_t indent)
 {
-  // TODO: should this be 2 * sparseCriteria_->getSparseDelta() ?
-  BOLT_ERROR(indent, "should this be 2*sparseCriteria_->getSparseDelta()");
   findGraphNeighbors(candidateD, sparseCriteria_->getSparseDelta(), threadID, indent);
 }
 
@@ -1092,7 +1090,7 @@ void SparseGenerator::benchmarkMemoryAllocation(std::size_t indent)
   std::cout << std::endl;
 }
 
-void SparseGenerator::addPath(geometric::PathGeometric& path, std::size_t indent)
+void SparseGenerator::addExperiencePath(geometric::PathGeometric& path, std::size_t indent)
 {
   // Set sparseDelta to be way lower
   sparseCriteria_->sparseDeltaFraction_ = sparseCriteria_->sparseDeltaFractionSecondary_;

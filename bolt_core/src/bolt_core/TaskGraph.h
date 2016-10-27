@@ -341,6 +341,9 @@ public:
   /** \brief Add edge to graph */
   TaskEdge addEdge(TaskVertex v1, TaskVertex v2, std::size_t indent);
 
+  /** \brief Remove edge from graph */
+  void removeEdge(TaskEdge e, std::size_t indent);
+
   /** \brief Check graph for edge existence */
   bool hasEdge(TaskVertex v1, TaskVertex v2);
 
@@ -530,7 +533,7 @@ public:
  * \param v current Vertex
  * \param g graph we are searching on
  */
-#ifndef NDEBUG
+#ifdef ENABLE_ASTAR_DEBUG
   void discover_vertex(TaskVertex v, const TaskAdjList& g) const;
 #endif
 

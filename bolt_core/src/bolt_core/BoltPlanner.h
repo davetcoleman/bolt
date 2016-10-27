@@ -189,19 +189,30 @@ public:
     return taskGraph_;
   }
 
-  geometric::PathGeometricPtr getOriginalSolutionPath()
+  geometric::PathGeometricPtr getOrigCompoundSolPath()
   {
-    return originalSolutionPath_;
+    return origCompoundSolPath_;
   }
 
-  geometric::PathGeometricPtr getCompoundSolutionPath()
+  geometric::PathGeometricPtr getOrigModelSolPath()
   {
-    return compoundSolutionPath_;
+    return origModelSolPath_;
   }
 
-  std::vector<geometric::PathGeometricPtr> getModelSolutionSegments()
+  geometric::PathGeometricPtr getSmoothedCompoundSolPath()
   {
-    return modelSolSegments_;
+    return smoothedCompoundSolPath_;
+  }
+
+  // Same as the planner "solution"
+  geometric::PathGeometricPtr getSmoothedModelSolPath()
+  {
+    return smoothedModelSolPath_;
+  }
+
+  std::vector<geometric::PathGeometricPtr> getModelSolSegments()
+  {
+    return smoothedModelSolSegments_;
   }
 
 private:
@@ -226,21 +237,30 @@ protected:
   /** \brief Class for managing various visualization features */
   VisualizerPtr visual_;
 
-  /** \brief Save the recalled path before smoothing for introspection later - ModelBasedStateSpace */
-  geometric::PathGeometricPtr originalSolutionPath_;
-
-  /** \brief Save the solution path that includes the discrete modes - CompoundStateSpace */
-  geometric::PathGeometricPtr compoundSolutionPath_;
-
-  /** \brief Save the solution path into separate paths for each discrete mode - ModelBasedStateSpace */
-  std::vector<geometric::PathGeometricPtr> modelSolSegments_;
-
   /** \brief The instance of the path simplifier */
   geometric::PathSimplifierPtr path_simplifier_;
 
   /** \brief Used by getPathOffGraph */
   std::vector<bolt::TaskVertex> startVertexCandidateNeighbors_;
   std::vector<bolt::TaskVertex> goalVertexCandidateNeighbors_;
+
+  // SOLUTION VERSIONS ----------------------------
+
+  /** \brief Original solution path before smoothing for introspection later - CompoundStateSpace */
+  geometric::PathGeometricPtr origCompoundSolPath_;
+
+  /** \brief Original solution path before smoothing for introspection later - ModelBasedStateSpace */
+  geometric::PathGeometricPtr origModelSolPath_;
+
+  /** \brief Solution path after smoothing - CompoundStateSpace */
+  geometric::PathGeometricPtr smoothedCompoundSolPath_;
+
+  /** \brief Solution path after smoothing, this version is set as Planner solution - ModelBasedStateSpace */
+  geometric::PathGeometricPtr smoothedModelSolPath_;
+
+  /** \brief Solution path divided into separate pieces for each discrete mode - ModelBasedStateSpace */
+  std::vector<geometric::PathGeometricPtr> smoothedModelSolSegments_;
+
 
 public:
   /** \brief Optionally smooth retrieved and repaired paths from database */

@@ -177,7 +177,19 @@ void TaskGraph::initializeQueryState()
 bool TaskGraph::astarSearch(const TaskVertex start, const TaskVertex goal, std::vector<TaskVertex> &vertexPath,
                             double &distance, std::size_t indent)
 {
-  BOLT_FUNC(indent, vSearch_, "TaskGraph.astarSearch()");
+  BOLT_FUNC(indent, vSearch_, "astarSearch()");
+
+  // Check if start and goal are the same
+  if (compoundSI_->getStateSpace()->equalStates(getCompoundState(start), getCompoundState(goal)))
+  {
+    BOLT_DEBUG(indent, vSearch_, "astarSearch: start and goal states are the same");
+
+    // Just add one vertex - this is the whole path
+    vertexPath.push_back(start);
+
+    distance = 0;
+    return true;
+  }
 
   // Hold a list of the shortest path parent to each vertex
   TaskVertex *vertexPredecessors = new TaskVertex[getNumVertices()];
@@ -186,17 +198,17 @@ bool TaskGraph::astarSearch(const TaskVertex start, const TaskVertex goal, std::
   bool foundGoal = false;
   double *vertexDistances = new double[getNumVertices()];
 
-#ifndef NDEBUG
+#ifdef ENABLE_ASTAR_DEBUG
   // Reset statistics
   numNodesOpened_ = 0;
   numNodesClosed_ = 0;
-#endif
 
   if (visualizeAstar_)
   {
     // Assume this was cleared by the parent program
     visual_->viz4()->deleteAllMarkers();
   }
+#endif
 
   try
   {
@@ -214,53 +226,90 @@ bool TaskGraph::astarSearch(const TaskVertex start, const TaskVertex goal, std::
   }
   catch (FoundGoalException &)
   {
-    distance = vertexDistances[goal];
-
-#ifndef NDEBUG
-    // the custom exception from TaskAstarVisitor
-    BOLT_DEBUG(indent, vSearch_, "AStar found solution. Distance to goal: " << vertexDistances[goal]);
-    BOLT_DEBUG(indent, vSearch_, "Number nodes opened: " << numNodesOpened_
-                                                         << ", Number nodes closed: " << numNodesClosed_);
-#endif
-
-    // Only clear the vertexPath after we know we have a new solution, otherwise it might have a good
-    // previous one
-    vertexPath.clear();  // remove any old solutions
-
-    // Trace back the shortest path in reverse and only save the states
-    TaskVertex v;
-    for (v = goal; v != vertexPredecessors[v]; v = vertexPredecessors[v])
+    if (std::isinf(vertexDistances[goal]))
     {
-      vertexPath.push_back(v);
+      BOLT_WARN(indent, true, "Distance is inifinity");
     }
-
-    // Add the start state to the path, unless this path is just one vertex long and the start==goal
-    if (v != goal)
+    else if (vertexDistances[goal] > 1e300)
     {
-      vertexPath.push_back(v);
+      BOLT_WARN(indent, true, "Distance is close to inifinity");
     }
-
-    foundGoal = true;
+    else
+      foundGoal = true;
   }
 
+  // Search failed
   if (!foundGoal)
+  {
     BOLT_WARN(indent, vSearch_, "Did not find goal");
 
-#ifndef NDEBUG
+    // Unload
+    delete[] vertexPredecessors;
+    delete[] vertexDistances;
+
+    // No solution found from start to goal
+    return false;
+  }
+
+  distance = vertexDistances[goal];
+
+#ifdef ENABLE_ASTAR_DEBUG
+  // the custom exception from SparseAstarVisitor
+  BOLT_DEBUG(indent, vSearch_, "AStar found solution. Distance to goal: " << vertexDistances[goal]);
+
+  BOLT_DEBUG(indent, vSearch_, "Number nodes opened: " << numNodesOpened_
+                                                       << ", Number nodes closed: " << numNodesClosed_);
+#endif
+
+  // Only clear the vertexPath after we know we have a new solution, otherwise it might have a good
+  // previous one
+  vertexPath.clear();  // remove any old solutions
+
+  // Trace back the shortest path in reverse and only save the states
+  SparseVertex v;
+  for (v = goal; v != vertexPredecessors[v]; v = vertexPredecessors[v])
+    vertexPath.push_back(v);
+
+  // Add the start state to the path, unless this path is just one vertex long and the start==goal
+  if (v != goal)
+  {
+    vertexPath.push_back(v);
+  }
+
+#ifdef ENABLE_ASTAR_DEBUG
+  BOLT_ASSERT(vertexPath.size(), "Vertex path is empty! " << vertexPath.size());
+  // Ensure start and goal states are included in path
+  BOLT_ASSERT(compoundSI_->getStateSpace()->equalStates(getCompoundState(vertexPath.back()), getCompoundState(start)), "Start states are "
+                                                                                               "not the same");
+  BOLT_ASSERT(compoundSI_->getStateSpace()->equalStates(getCompoundState(vertexPath.front()), getCompoundState(goal)), "Goal states are "
+                                                                                               "not the same");
+  BOLT_ASSERT(vertexPath.size() >= 2, "Vertex path size is too small");
+
   // Show all predecessors
   if (visualizeAstar_)
   {
-    BOLT_DEBUG(indent + 2, vSearch_, "Show all predecessors");
-    for (std::size_t i = numThreads_; i < getNumVertices(); ++i)  // skip vertex 0-11 because those are query vertices
+    BOLT_DEBUG(indent, vSearch_, "Show all predecessors");
+    visual_->viz4()->deleteAllMarkers();
+    for (std::size_t i = getNumQueryVertices(); i < getNumVertices(); ++i)  // skip query vertices
     {
-      const TaskVertex v1 = i;
-      const TaskVertex v2 = vertexPredecessors[v1];
+      const SparseVertex v1 = i;
+      const SparseVertex v2 = vertexPredecessors[v1];
       if (v1 != v2)
       {
-        visual_->viz4()->edge(getModelBasedState(v1), getModelBasedState(v2), 10);
+        visual_->viz4()->edge(getModelBasedState(v1), getModelBasedState(v2), ot::XXXSMALL, ot::GREEN);
       }
     }
+
+    // Show solution path
+    SparseVertex v_prev = goal;
+    SparseVertex v = vertexPredecessors[v_prev];
+    for (; v != vertexPredecessors[v]; v = vertexPredecessors[v])
+    {
+      visual_->viz4()->edge(getModelBasedState(v_prev), getModelBasedState(v), ot::MEDIUM, ot::RED);
+    }
+
     visual_->viz4()->trigger();
+    //visual_->waitForUserFeedback("predecessors and solution");
   }
 #endif
 
@@ -275,11 +324,11 @@ bool TaskGraph::astarSearch(const TaskVertex start, const TaskVertex goal, std::
 double TaskGraph::distanceVertex(const TaskVertex a, const TaskVertex b) const
 {
   // Special case: query vertices store their states elsewhere. Both cannot be query vertices
-  if (a < numThreads_)
+  if (a < getNumQueryVertices())
   {
     return distanceState(queryStates_[a], getCompoundState(b));
   }
-  if (b < numThreads_)
+  if (b < getNumQueryVertices())
   {
     return distanceState(getCompoundState(a), queryStates_[b]);
   }
@@ -480,7 +529,7 @@ void TaskGraph::generateMonoLevelTaskSpace(std::size_t indent)
 
 void TaskGraph::generateTaskSpace(std::size_t indent)
 {
-  BOLT_FUNC(indent, verbose_, "TaskGraph.generateTaskSpace()");
+  BOLT_FUNC(indent, verbose_, "generateTaskSpace()");
   time::point startTime = time::now();  // Benchmark
 
   // Clear pre-existing graphs
@@ -546,7 +595,7 @@ bool TaskGraph::addCartPath(std::vector<base::CompoundState *> path, std::size_t
 {
   BOLT_ERROR(indent, "TODO implement");
   /*
-  BOLT_FUNC(indent, verbose_, "TaskGraph.addCartPath()");
+  BOLT_FUNC(indent, verbose_, "addCartPath()");
 
   // Error check
   if (path.size() < 2)
@@ -618,7 +667,7 @@ bool TaskGraph::addCartPath(std::vector<base::CompoundState *> path, std::size_t
 bool TaskGraph::connectVertexToNeighborsAtLevel(TaskVertex fromVertex, const VertexLevel level, bool isStart,
                                                 std::size_t indent)
 {
-  BOLT_FUNC(indent, vGenerateTask_, "TaskGraph.connectVertexToNeighborsAtLevel()");
+  BOLT_FUNC(indent, vGenerateTask_, "connectVertexToNeighborsAtLevel()");
 
   // Get nearby states to goal
   std::vector<TaskVertex> neighbors;
@@ -665,7 +714,7 @@ bool TaskGraph::connectVertexToNeighborsAtLevel(TaskVertex fromVertex, const Ver
 void TaskGraph::getNeighborsAtLevel(const TaskVertex origVertex, const VertexLevel level, const std::size_t kNeighbors,
                                     std::vector<TaskVertex> &neighbors, std::size_t indent)
 {
-  BOLT_FUNC(indent, vGenerateTask_, "TaskGraph.getNeighborsAtLevel()");
+  BOLT_FUNC(indent, vGenerateTask_, "getNeighborsAtLevel()");
 
   BOLT_ASSERT(level != 1, "Unhandled level, does not support level 1");
 
@@ -796,7 +845,7 @@ void TaskGraph::clearEdgeCollisionStates()
 
 void TaskGraph::errorCheckDuplicateStates(std::size_t indent)
 {
-  BOLT_ERROR(indent, "TaskGraph.errorCheckDuplicateStates() - NOT IMPLEMENTEDpart of super debug");
+  BOLT_ERROR(indent, "errorCheckDuplicateStates() - NOT IMPLEMENTEDpart of super debug");
 
   // bool found = false;
   // // Error checking: check for any duplicate states
@@ -818,7 +867,7 @@ void TaskGraph::errorCheckDuplicateStates(std::size_t indent)
 
 bool TaskGraph::smoothQualityPath(geometric::PathGeometric *path, double clearance, std::size_t indent)
 {
-  BOLT_FUNC(indent, visualizeQualityPathSmoothing_, "TaskGraph.smoothQualityPath()");
+  BOLT_FUNC(indent, visualizeQualityPathSmoothing_, "smoothQualityPath()");
 
   BOLT_ERROR(indent, "smoothQualityPath is using compound state space which has unknown smoothing results...");
 
@@ -918,7 +967,7 @@ TaskVertex TaskGraph::addVertex(base::CompoundState *state, std::size_t indent)
 {
   // Create vertex
   TaskVertex v = boost::add_vertex(g_);
-  BOLT_FUNC(indent, vAdd_, "TaskGraph.addVertex(): v: " << v);
+  BOLT_FUNC(indent, vAdd_, "addVertex(): v: " << v);
 
   // Add properties
   g_[v].state_ = state;
@@ -962,7 +1011,7 @@ void TaskGraph::removeVertex(TaskVertex v)
 
 void TaskGraph::removeDeletedVertices(std::size_t indent)
 {
-  BOLT_FUNC(indent, verbose_, "TaskGraph.removeDeletedVertices()");
+  BOLT_FUNC(indent, verbose_, "removeDeletedVertices()");
   bool verbose = true;
 
   // Remove all vertices that are set to 0
@@ -972,7 +1021,7 @@ void TaskGraph::removeDeletedVertices(std::size_t indent)
   typedef boost::graph_traits<TaskAdjList>::vertex_iterator VertexIterator;
   for (VertexIterator v = boost::vertices(g_).first; v != boost::vertices(g_).second; /* manual */)
   {
-    if (*v < numThreads_)  // Skip query vertices
+    if (*v < getNumQueryVertices())  // Skip query vertices
     {
       v++;
       continue;
@@ -1004,7 +1053,7 @@ void TaskGraph::removeDeletedVertices(std::size_t indent)
   // Reinsert vertices into nearest neighbor
   foreach (TaskVertex v, boost::vertices(g_))
   {
-    if (v < numThreads_)  // Skip the query vertices
+    if (v < getNumQueryVertices())  // Skip the query vertices
       continue;
 
     nn_->add(v);
@@ -1013,7 +1062,7 @@ void TaskGraph::removeDeletedVertices(std::size_t indent)
 
 TaskEdge TaskGraph::addEdge(TaskVertex v1, TaskVertex v2, std::size_t indent)
 {
-  // BOLT_FUNC(indent, vAdd_, "TaskGraph.addEdge(): from vertex " << v1 << " to " << v2);
+  // BOLT_FUNC(indent, vAdd_, "addEdge(): from vertex " << v1 << " to " << v2);
 
   if (superDebug_)  // Extra checks
   {
@@ -1054,6 +1103,11 @@ TaskEdge TaskGraph::addEdge(TaskVertex v1, TaskVertex v2, std::size_t indent)
   return e;
 }
 
+void TaskGraph::removeEdge(TaskEdge e, std::size_t indent)
+{
+  boost::remove_edge(e, g_);
+}
+
 bool TaskGraph::hasEdge(TaskVertex v1, TaskVertex v2)
 {
   return boost::edge(v1, v2, g_).second;
@@ -1061,7 +1115,7 @@ bool TaskGraph::hasEdge(TaskVertex v1, TaskVertex v2)
 
 void TaskGraph::displayDatabase(bool showVertices, std::size_t indent)
 {
-  BOLT_FUNC(indent, vVisualize_, "TaskGraph.displayDatabase()");
+  BOLT_FUNC(indent, vVisualize_, "displayDatabase()");
 
   // Error check
   if (getNumVertices() == 0 || getNumEdges() == 0)
@@ -1313,7 +1367,7 @@ otb::TaskAstarVisitor::TaskAstarVisitor(TaskVertex goal, TaskGraph *parent) : go
 {
 }
 
-#ifndef NDEBUG
+#ifdef ENABLE_ASTAR_DEBUG
 void otb::TaskAstarVisitor::discover_vertex(TaskVertex v, const TaskAdjList &) const
 {
   // Statistics
@@ -1326,7 +1380,7 @@ void otb::TaskAstarVisitor::discover_vertex(TaskVertex v, const TaskAdjList &) c
 
 void otb::TaskAstarVisitor::examine_vertex(TaskVertex v, const TaskAdjList &) const
 {
-#ifndef NDEBUG
+#ifdef ENABLE_ASTAR_DEBUG
   parent_->recordNodeClosed();  // Statistics
 
   if (parent_->visualizeAstar_)  // Visualize

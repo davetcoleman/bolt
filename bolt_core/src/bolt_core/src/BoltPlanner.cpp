@@ -160,38 +160,40 @@ base::PlannerStatus BoltPlanner::solve(base::CompoundState *startState, base::Co
                                        std::size_t indent)
 {
   // Create solution structure
-  compoundSolutionPath_ = std::make_shared<og::PathGeometric>(compoundSI_);
+  origCompoundSolPath_ = std::make_shared<og::PathGeometric>(compoundSI_);
 
   // Search
-  if (!getPathOffGraph(startState, goalState, compoundSolutionPath_, ptc, indent))
+  if (!getPathOffGraph(startState, goalState, origCompoundSolPath_, ptc, indent))
   {
     BOLT_WARN(indent, true, "BoltPlanner::solve() No near start or goal found");
     return base::PlannerStatus::ABORT;  // The planner failed to find a solution
   }
 
-  BOLT_DEBUG(indent, verbose_, "getPathOffGraph() found a solution of size " << compoundSolutionPath_->getStateCount());
-
-  // Save this for future debugging
-  originalSolutionPath_.reset(new geometric::PathGeometric(*compoundSolutionPath_));
+  BOLT_DEBUG(indent, verbose_, "getPathOffGraph() found a solution of size " << origCompoundSolPath_->getStateCount());
 
   // All save trajectories should be at least 1 state long, then we append the start and goal states, for min of 3
-  assert(compoundSolutionPath_->getStateCount() >= 3);
+  assert(origCompoundSolPath_->getStateCount() >= 3);
+
+    smoothedModelSolPath_ = taskGraph_->convertPathToNonCompound(smoothedCompoundSolPath_);
+
+  // Create new PathGeometric that we can modify by smoothing
+  smoothedCompoundSolPath_.reset(new geometric::PathGeometric(*origCompoundSolPath_));
 
   // Smooth the result
   if (taskGraph_->taskPlanningEnabled())
-    simplifyTaskPath(compoundSolutionPath_, ptc, indent);
+    simplifyTaskPath(smoothedCompoundSolPath_, ptc, indent);
   else
-    simplifyNonTaskPath(compoundSolutionPath_, ptc, indent);
+    simplifyNonTaskPath(smoothedCompoundSolPath_, ptc, indent);
 
   // Convert solution back to joint trajectory only (no discrete component)
-  geometric::PathGeometricPtr modelSolution = taskGraph_->convertPathToNonCompound(compoundSolutionPath_);
+  smoothedModelSolPath_ = taskGraph_->convertPathToNonCompound(smoothedCompoundSolPath_);
 
   // Show the smoothed path
   if (visualizeSmoothedTrajectory_)
   {
     visual_->viz4()->deleteAllMarkers();
-    visual_->viz4()->path(modelSolution.get(), tools::MEDIUM, tools::BLACK, tools::BLUE);
-    visual_->viz4()->path(modelSolution.get(), tools::ROBOT, tools::BLACK, tools::BLACK);
+    visual_->viz4()->path(smoothedModelSolPath_.get(), tools::MEDIUM, tools::BLACK, tools::BLUE);
+    visual_->viz4()->path(smoothedModelSolPath_.get(), tools::ROBOT, tools::BLACK, tools::BLACK);
     visual_->viz4()->trigger();
     visual_->waitForUserFeedback("BoltPlanner: visualize smoothed trajectory");
   }
@@ -199,7 +201,7 @@ base::PlannerStatus BoltPlanner::solve(base::CompoundState *startState, base::Co
   // Save solution
   double approximateDifference = -1;
   bool approximate = false;
-  pdef_->addSolutionPath(modelSolution, approximate, approximateDifference, getName());
+  pdef_->addSolutionPath(smoothedModelSolPath_, approximate, approximateDifference, getName());
   bool solved = true;
 
   BOLT_DEBUG(indent, verbose_, "Finished BoltPlanner.solve()");
@@ -212,7 +214,7 @@ bool BoltPlanner::getPathOffGraph(const base::CompoundState *start, const base::
   BOLT_FUNC(indent, verbose_, "getPathOffGraph()");
 
   // Attempt to connect to graph x times, because if it fails we start adding samples
-  std::size_t maxAttempts = 3;
+  std::size_t maxAttempts = 10;
   std::size_t attempt = 0;
   for (; attempt < maxAttempts; ++attempt)
   {
@@ -256,11 +258,8 @@ bool BoltPlanner::getPathOffGraph(const base::CompoundState *start, const base::
 
     BOLT_WARN(indent, true, "getPathOffGraph(): BoltPlanner returned FALSE for getPathOnGraph, attempt " << attempt);
 
-    // if (attempt == 0)
-    // {
-    //   // Start sampling
-    //   addSamples(taskGraph_->getModelBasedState(start), taskGraph_->getModelBasedState(goal), indent);
-    // }
+    if (visual_->viz1()->shutdownRequested())
+      break;
   }
 
   // Did we finally get it?
@@ -291,7 +290,7 @@ bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
     // Check if this start is visible from the actual start
     if (!taskGraph_->checkMotion(actualStart, taskGraph_->getCompoundState(startVertex)))
     {
-      BOLT_WARN(indent, verbose_, "getPathOnGraph() Found start candidate that is not visible on vertex " << startVertex);
+      BOLT_WARN(indent, verbose_, "getPathOnGraph() Found start candidate that is not visible to nearby vertex " << startVertex);
 
       if (debug)
       {
@@ -363,7 +362,7 @@ bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
     // Re-attempt to connect both
     addSamples(taskGraph_->getModelBasedState(actualGoal), indent);
     addSamples(taskGraph_->getModelBasedState(actualStart), indent);
-    addSamples(NULL, indent); // do general sampling
+    //addSamples(NULL, indent); // do general sampling
     return false;
   }
 
@@ -444,6 +443,7 @@ bool BoltPlanner::onGraphSearch(const TaskVertex &startVertex, const TaskVertex 
     }
 
     // Attempt to find a solution from start to goal
+    time::point startTime0 = time::now(); // Benchmark
     if (!taskGraph_->astarSearch(startVertex, goalVertex, vertexPath, distance, indent))
     {
       BOLT_WARN(indent, true || verbose_, "Unable to construct solution between start and goal using astar");
@@ -451,8 +451,11 @@ bool BoltPlanner::onGraphSearch(const TaskVertex &startVertex, const TaskVertex 
       // no path found what so ever
       return false;
     }
+    OMPL_INFORM("astar search took %f seconds", time::seconds(time::now() - startTime0)); // Benchmark
 
     // Check if all the points in the potential solution are valid
+
+    time::point startTime1 = time::now(); // Benchmark
     if (lazyCollisionCheck(vertexPath, ptc, indent))
     {
       BOLT_DEBUG(indent, verbose_, "Lazy collision check returned valid ");
@@ -461,6 +464,9 @@ bool BoltPlanner::onGraphSearch(const TaskVertex &startVertex, const TaskVertex 
       convertVertexPathToStatePath(vertexPath, actualStart, actualGoal, compoundSolution, indent);
       return true;
     }
+
+    OMPL_INFORM("collision check took %f seconds", time::seconds(time::now() - startTime1)); // Benchmark
+
     // else, loop with updated graph that has the invalid edges/states disabled
   }  // end while
 
@@ -471,6 +477,8 @@ bool BoltPlanner::onGraphSearch(const TaskVertex &startVertex, const TaskVertex 
 bool BoltPlanner::lazyCollisionCheck(std::vector<TaskVertex> &vertexPath, Termination &ptc, std::size_t indent)
 {
   BOLT_FUNC(indent, verbose_, "lazyCollisionCheck() path of size " << vertexPath.size());
+
+  std::size_t origNumEdges = taskGraph_->getNumEdges();
 
   bool hasInvalidEdges = false;
 
@@ -483,13 +491,6 @@ bool BoltPlanner::lazyCollisionCheck(std::vector<TaskVertex> &vertexPath, Termin
   {
     // Increment location on path
     toVertex = vertexPath[toID];
-
-    // Check if our planner is out of time
-    if (ptc)
-    {
-      BOLT_DEBUG(indent, verbose_, "Lazy collision check function interrupted because termination condition is true.");
-      return false;
-    }
 
     TaskEdge thisEdge = boost::edge(fromVertex, toVertex, taskGraph_->getGraph()).first;
 
@@ -504,6 +505,24 @@ bool BoltPlanner::lazyCollisionCheck(std::vector<TaskVertex> &vertexPath, Termin
       {
         BOLT_MAGENTA(indent, vCollisionCheck_, "LAZY CHECK: disabling edge from vertex " << fromVertex << " to "
                      << toVertex);
+
+        // Disable edge
+        //taskGraph_->getGraphNonConst()[thisEdge].collision_state_ = IN_COLLISION;
+
+        // Remove the edge
+        taskGraph_->removeEdge(thisEdge, indent);
+
+        // Remember that this path is no longer valid, but keep checking remainder of path edges
+        hasInvalidEdges = true;
+
+        // Check if our planner is out of time - only do this after the slow checkMotion() action has occured to save time
+        if (ptc || visual_->viz1()->shutdownRequested())
+        {
+          BOLT_DEBUG(indent, verbose_, "Lazy collision check function interrupted because termination condition is true.");
+          return false;
+        }
+
+        // Debug
         if (visualizeLazyCollisionCheck_)
         {
           visual_->waitForUserFeedback("see edge");
@@ -513,9 +532,6 @@ bool BoltPlanner::lazyCollisionCheck(std::vector<TaskVertex> &vertexPath, Termin
 
           visualizeBadEdge(fromVertex, toVertex);
         }
-
-        // Disable edge
-        taskGraph_->getGraphNonConst()[thisEdge].collision_state_ = IN_COLLISION;
       }
       else
       {
@@ -525,27 +541,21 @@ bool BoltPlanner::lazyCollisionCheck(std::vector<TaskVertex> &vertexPath, Termin
     }
     else if (taskGraph_->getGraphNonConst()[thisEdge].collision_state_ == IN_COLLISION)
     {
+      // Remember that this path is no longer valid, but keep checking remainder of path edges
+      hasInvalidEdges = true;
+
       if (visualizeLazyCollisionCheck_)
         visualizeBadEdge(fromVertex, toVertex);
 
       BOLT_ERROR(indent, "Somehow an edge " << thisEdge << " was found that is already in collision before lazy "
                  "collision checking");
-    }
-
-    // Check final result
-    if (taskGraph_->getGraphNonConst()[thisEdge].collision_state_ == IN_COLLISION)
-    {
-      // Remember that this path is no longer valid, but keep checking remainder of path edges
-      hasInvalidEdges = true;
-    }
+    } // if in collision
 
     // switch vertex focus
     fromVertex = toVertex;
-
-    if (visual_->viz1()->shutdownRequested())
-      return false;
-
   }  // for
+
+  BOLT_MAGENTA(indent, true, "Removed edges: " << origNumEdges - taskGraph_->getNumEdges() << " total edges: " << taskGraph_->getNumEdges());
 
   // Only return true if nothing was found invalid
   return !hasInvalidEdges;
@@ -694,8 +704,8 @@ bool BoltPlanner::simplifyNonTaskPath(og::PathGeometricPtr compoundPath, Termina
   BOLT_DEBUG(indent, true, "Interpolation added: " << modelPath->getStateCount() - stateCount << " states");
 
   // Create single path segments
-  modelSolSegments_.clear();
-  modelSolSegments_.push_back(modelPath);
+  smoothedModelSolSegments_.clear();
+  smoothedModelSolSegments_.push_back(modelPath);
 
   // Re-create compoundPath
   compoundPath->clear();
@@ -725,9 +735,9 @@ bool BoltPlanner::simplifyTaskPath(og::PathGeometricPtr compoundPath, Terminatio
   const std::size_t NUM_LEVELS = 3;
 
   // Create three path segments
-  modelSolSegments_.clear();
+  smoothedModelSolSegments_.clear();
   for (int segmentLevel = 0; segmentLevel < int(NUM_LEVELS); ++segmentLevel)
-    modelSolSegments_.push_back(std::make_shared<og::PathGeometric>(modelSI_));
+    smoothedModelSolSegments_.push_back(std::make_shared<og::PathGeometric>(modelSI_));
 
   // Create the solution path
   og::PathGeometricPtr compoundSmoothedPath = std::make_shared<og::PathGeometric>(compoundSI_);
@@ -744,7 +754,7 @@ bool BoltPlanner::simplifyTaskPath(og::PathGeometricPtr compoundPath, Terminatio
     o << level << ", ";
     assert(level < NUM_LEVELS);
 
-    modelSolSegments_[level]->append(taskGraph_->getModelBasedState(compoundState));
+    smoothedModelSolSegments_[level]->append(taskGraph_->getModelBasedState(compoundState));
 
     if (previousLevel > level)  // Error check ordering of input path
     {
@@ -764,32 +774,32 @@ bool BoltPlanner::simplifyTaskPath(og::PathGeometricPtr compoundPath, Terminatio
             << std::endl;
 
   // Add the start and end vertex of the Cartesian path into the respective freespace paths
-  if (modelSolSegments_[1]->getStateCount() >= 2)
+  if (smoothedModelSolSegments_[1]->getStateCount() >= 2)
   {
     // For checking for errors
-    std::size_t seg0Size = modelSolSegments_[0]->getStateCount();
-    std::size_t seg1Size = modelSolSegments_[1]->getStateCount();
-    std::size_t seg2Size = modelSolSegments_[2]->getStateCount();
+    std::size_t seg0Size = smoothedModelSolSegments_[0]->getStateCount();
+    std::size_t seg1Size = smoothedModelSolSegments_[1]->getStateCount();
+    std::size_t seg2Size = smoothedModelSolSegments_[2]->getStateCount();
 
     // Move first state
-    modelSolSegments_[0]->append(modelSolSegments_[1]->getStates().front());
-    modelSolSegments_[1]->getStates().erase(modelSolSegments_[1]->getStates().begin());
+    smoothedModelSolSegments_[0]->append(smoothedModelSolSegments_[1]->getStates().front());
+    smoothedModelSolSegments_[1]->getStates().erase(smoothedModelSolSegments_[1]->getStates().begin());
 
     // Move last state
-    modelSolSegments_[2]->prepend(modelSolSegments_[1]->getStates().back());
-    modelSolSegments_[1]->getStates().pop_back();
+    smoothedModelSolSegments_[2]->prepend(smoothedModelSolSegments_[1]->getStates().back());
+    smoothedModelSolSegments_[1]->getStates().pop_back();
 
     // Check the operations were correct
-    BOLT_ASSERT(seg0Size + 1 == modelSolSegments_[0]->getStateCount(), "Invalid size of pathSegement after "
+    BOLT_ASSERT(seg0Size + 1 == smoothedModelSolSegments_[0]->getStateCount(), "Invalid size of pathSegement after "
                 "rearrangment");
-    BOLT_ASSERT(seg1Size - 2 == modelSolSegments_[1]->getStateCount(), "Invalid size of pathSegement after "
+    BOLT_ASSERT(seg1Size - 2 == smoothedModelSolSegments_[1]->getStateCount(), "Invalid size of pathSegement after "
                 "rearrangment");
-    BOLT_ASSERT(seg2Size + 1 == modelSolSegments_[2]->getStateCount(), "Invalid size of pathSegement after "
+    BOLT_ASSERT(seg2Size + 1 == smoothedModelSolSegments_[2]->getStateCount(), "Invalid size of pathSegement after "
                 "rearrangment");
   }
   else
   {
-    BOLT_WARN(indent, true, "The Cartesian path segement 1 has only " << modelSolSegments_[1]->getStateCount()
+    BOLT_WARN(indent, true, "The Cartesian path segement 1 has only " << smoothedModelSolSegments_[1]->getStateCount()
               << " states");
   }
 
@@ -798,25 +808,25 @@ bool BoltPlanner::simplifyTaskPath(og::PathGeometricPtr compoundPath, Terminatio
   {
     // Smooth the freespace paths
     if (smoothingEnabled_)
-      path_simplifier_->simplifyMax(*modelSolSegments_[i]);
+      path_simplifier_->simplifyMax(*smoothedModelSolSegments_[i]);
     else
       BOLT_WARN(indent, true, "Smoothing not enabled");
 
     // Interpolate the freespace paths but not the cartesian path
-    std::size_t stateCount = modelSolSegments_[i]->getStateCount();
-    modelSolSegments_[i]->interpolate();
+    std::size_t stateCount = smoothedModelSolSegments_[i]->getStateCount();
+    smoothedModelSolSegments_[i]->interpolate();
 
-    BOLT_DEBUG(indent, true, "Interpolation added: " << modelSolSegments_[i]->getStateCount() - stateCount << " state"
+    BOLT_DEBUG(indent, true, "Interpolation added: " << smoothedModelSolSegments_[i]->getStateCount() - stateCount << " state"
                "s");
   }
 
   // Combine the path segments back together
   for (int segmentLevel = 0; segmentLevel < int(NUM_LEVELS); ++segmentLevel)
   {
-    for (std::size_t i = 0; i < modelSolSegments_[segmentLevel]->getStateCount(); ++i)
+    for (std::size_t i = 0; i < smoothedModelSolSegments_[segmentLevel]->getStateCount(); ++i)
     {
       // This state is not compound
-      base::State *modelState = modelSolSegments_[segmentLevel]->getState(i);
+      base::State *modelState = smoothedModelSolSegments_[segmentLevel]->getState(i);
       base::CompoundState *compoundState = taskGraph_->createCompoundState(modelState, segmentLevel, indent);
 
       // Debug
@@ -829,8 +839,8 @@ bool BoltPlanner::simplifyTaskPath(og::PathGeometricPtr compoundPath, Terminatio
       // Check for repeated states
       if (i > 0)
       {
-        if (modelSI_->equalStates(modelSolSegments_[segmentLevel]->getState(i - 1),
-                                  modelSolSegments_[segmentLevel]->getState(i)))
+        if (modelSI_->equalStates(smoothedModelSolSegments_[segmentLevel]->getState(i - 1),
+                                  smoothedModelSolSegments_[segmentLevel]->getState(i)))
         {
           BOLT_ERROR(indent, "Repeated states at " << i << " on level " << segmentLevel);
         }
@@ -970,7 +980,7 @@ void BoltPlanner::addSamples(const base::State* near, std::size_t indent)
   for (std::size_t i = 0; i < numAttempts; ++i)
   {
     // 0.1 is magic num
-    const double magic_fraction = 0.1;
+    const double magic_fraction = 0.05; // TODO
     double distance = i / double(numAttempts) * magic_fraction * taskGraph_->getSparseGraph()->getSparseDelta();
 
     base::State *candidateState = modelSI_->getStateSpace()->allocState();
@@ -1004,7 +1014,7 @@ void BoltPlanner::addSamples(const base::State* near, std::size_t indent)
     // Get neighbors
     std::size_t threadID = 0;
 
-    double kNearestNeighbors = 60; // TODO
+    double kNearestNeighbors = 30; // TODO
 
     std::vector<TaskVertex> graphNeighborhood;
     taskGraph_->getQueryStateNonConst(threadID) = compoundState1;
@@ -1030,7 +1040,7 @@ void BoltPlanner::addSamples(const base::State* near, std::size_t indent)
       }
 
       // Collision check
-      if (false) // let lazy checking work
+      if (true) // let lazy checking work
         if (!taskGraph_->checkMotion(compoundState1, compoundState2))
         {
           invalid++;
