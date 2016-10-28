@@ -1090,24 +1090,34 @@ void SparseGenerator::benchmarkMemoryAllocation(std::size_t indent)
   std::cout << std::endl;
 }
 
-void SparseGenerator::addExperiencePath(geometric::PathGeometric& path, std::size_t indent)
+void SparseGenerator::addExperiencePath(geometric::PathGeometricPtr path, std::size_t indent)
 {
+  BOLT_FUNC(indent, true, "addExperiencePath()");
+  const std::size_t threadID = 0;
+
   // Reset this class
-  clear();
+  //clear();
 
   // Set sparseDelta to be way lower
   sparseCriteria_->sparseDeltaFraction_ = sparseCriteria_->sparseDeltaFractionSecondary_;
   sparseCriteria_->setup(indent);
-  sparseCriteria_->vAddedReason_ = true;
-  sparseCriteria_->vCriteria_ = true;
-  sparseCriteria_->visualizeAttemptedStates_ = true;
 
-  // Turn on visibility
+  // Debug visualizations
+  //sparseCriteria_->vAddedReason_ = true;
+  //sparseCriteria_->vCriteria_ = true;
+  //sparseCriteria_->visualizeAttemptedStates_ = true;
   sg_->visualizeSparseGraph_ = true;
   sg_->vAdd_ = true;
 
+  // Clear visuals if necesary
+  if (sg_->visualizeSparseGraph_)
+  {
+    visual_->viz1()->deleteAllMarkers();
+    visual_->viz1()->trigger();
+  }
+
   std::vector<std::size_t> shuffledIDs;
-  for (std::size_t i = 1; i < path.getStateCount(); ++i)
+  for (std::size_t i = 1; i < path->getStateCount(); ++i)
   {
     shuffledIDs.push_back(i);
   } // for each state in path
@@ -1116,25 +1126,49 @@ void SparseGenerator::addExperiencePath(geometric::PathGeometric& path, std::siz
   // Insert paths at random
   for (std::size_t i = 1; i < shuffledIDs.size(); ++i)
   {
-    std::cout << "shuffledIDs[i]: " << shuffledIDs[i] << std::endl;
-
-    visual_->viz4()->state(path.getState(shuffledIDs[i]), tools::ROBOT, tools::DEFAULT, 0);
-    visual_->viz4()->state(path.getState(shuffledIDs[i]), tools::XLARGE, tools::RED, 0);
-    visual_->viz4()->trigger();
-
-    const std::size_t threadID = 0;
-    bool usedState;
-    if (!addSample(path.getState(shuffledIDs[i]), threadID, usedState, indent))
+    // Visualize attempted input state
+    if (false)
     {
-      BOLT_ERROR(indent, "SparseGraph is completed - this should not happen");
+      visual_->viz4()->state(path->getState(shuffledIDs[i]), tools::ROBOT, tools::DEFAULT, 0);
+      visual_->viz4()->state(path->getState(shuffledIDs[i]), tools::XLARGE, tools::RED, 0);
+      visual_->viz4()->trigger();
     }
-    // SparseGraph requires its visuals to be manually published
-    visual_->viz1()->trigger();
 
-    visual_->waitForUserFeedback("Added segment");
+    // Copy the state so the graph can own it
+    base::State* candidateState = si_->cloneState(path->getState(shuffledIDs[i]));
+
+    // Create datastrucutre
+    CandidateData candidateD(candidateState);
+    findGraphNeighbors(candidateD, threadID, indent);
+
+    // Add to roadmap
+    VertexType addReason;  // returns why the state was added
+    if (sparseCriteria_->addStateToRoadmap(candidateD, addReason, threadID, indent))
+    {
+      // The state was used
+
+      if (sg_->visualizeSparseGraph_) // SparseGraph requires its visuals to be manually published
+      {
+        visual_->viz1()->trigger();
+      }
+    }
+    else
+    {
+      // State was not used, free
+      si_->freeState(candidateState);
+    }
+
+    //visual_->waitForUserFeedback("Added segment");
   }
+  if (sg_->hasUnsavedChanges())
+  {
+    sg_->save(indent);
+    BOLT_MAGENTA(indent, true, "SPARSE GRAPH CHANGED, SAVED -------------------------------------");
+  }
+  else
+    BOLT_MAGENTA(indent, true, "Sparse graph NOT changed  -------------------------------------");
 
-  std::cout << "done " << std::endl;
+  BOLT_INFO(indent, true, "Finished adding experience path to SparseGraph");
   visual_->waitForUserFeedback("Done adding path");
 }
 

@@ -377,7 +377,7 @@ void BoltBaxter::run(std::size_t indent)
     std::cout << std::endl;
     ROS_INFO_STREAM_NAMED(name_, "Displaying disjoint sets ----------- ");
     ot::bolt::SparseDisjointSetsMap disjointSets;
-    bolt_->getSparseGraph()->getDisjointSets(disjointSets);
+    bolt_->getSparseGraph()->getDisjointSets(disjointSets, indent);
     bolt_->getSparseGraph()->printDisjointSets(disjointSets);
     bolt_->getSparseGraph()->visualizeDisjointSets(disjointSets);
     exit(0);
@@ -413,7 +413,7 @@ void BoltBaxter::run(std::size_t indent)
   }
   // testConnectionToGraphOfRandStates();
 
-  bolt_->saveIfChanged();
+  bolt_->saveIfChanged(indent);
 }
 
 bool BoltBaxter::runProblems(std::size_t indent)
@@ -511,7 +511,7 @@ bool BoltBaxter::runProblems(std::size_t indent)
 
   // Finishing up
   ROS_INFO_STREAM_NAMED(name_, "Saving experience db...");
-  bolt_->saveIfChanged();
+  bolt_->saveIfChanged(indent);
 
   // Stats
   if (total_runs_ > 0)
@@ -1193,11 +1193,10 @@ void BoltBaxter::loadScene()
   std::cout << "scene_type_: " << scene_type_ << std::endl;
   switch (scene_type_)
   {
-    case 0:
-      loadOfficeScene();
-      //break;
     case 1:
       loadAmazonScene();
+    case 0:
+      loadOfficeScene();
       break;
   }
 

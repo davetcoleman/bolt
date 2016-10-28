@@ -53,10 +53,8 @@ namespace bolt
 struct SparseFormula
 {
   void calc(base::SpaceInformationPtr si, double stretchFactor, double sparseDeltaFraction,
-            double penetrationOverlapFraction, double nearSamplePointsMultiple, bool useL2Norm)
+            double penetrationOverlapFraction, double nearSamplePointsMultiple, bool useL2Norm, std::size_t indent)
   {
-    std::size_t indent = 0;
-
     // Dimensions / joints
     std::size_t dim = si->getStateDimension();
 

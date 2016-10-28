@@ -26,7 +26,7 @@ bolt_baxter:
   # run type
   run_problems: true # do plans?
   headless: false
-  num_problems: 10
+  num_problems: 100
   problem_type: 2 # 0 - random, 1 - imarkers, 2 - imarker goal list
 
   # scene
@@ -194,23 +194,19 @@ debug_interface:
 bolt_planner:
   smoothing_enabled: false
   verbose:
-    verbose: true
+    verbose: false
     collision_check: false
-    sampling: true
+    sampling: false
   visualize:
-    smoothed_trajectory: false
+    raw_trajectory: true
+    smooth_trajectory: true
+    robot_trajectory: true
+    wait: false
     start_goal: false
     lazy_collision_check: false
     each_solution_step: false
     start_goal_unconnected: false
     sampling: false
-
-# ====================================================
-bolt:
-  visualize:
-    raw_trajectory: true
-    smooth_trajectory: true
-    robot_trajectory: true
 
 # ====================================================
 cart_path_planner:

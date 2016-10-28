@@ -189,8 +189,6 @@ public:
   /** \brief Run the planner for up to a specified amount of time (default is 1 second) */
   virtual base::PlannerStatus solve(double time = 1.0);
 
-  void visualize(std::size_t indent);
-
   bool checkBoltPlannerOptimality(std::size_t indent);
 
   /** \brief Logging  data to file and visualizing*/
@@ -211,10 +209,10 @@ public:
   bool setFilePath(const std::string &filePath);
 
   /** \brief Save the experience database to file */
-  bool save();
+  bool save(std::size_t indent);
 
   /** \brief Save the experience database to file if there has been a change */
-  bool saveIfChanged();
+  bool saveIfChanged(std::size_t indent);
 
   /** \brief Do not clear the experience database */
   void clearForNextPlan();
@@ -302,7 +300,7 @@ protected:
   TaskGraphPtr taskGraph_;
 
   /** \brief Accumulated experiences to be later added to experience database - ModelBasedStateSpace*/
-  std::vector<geometric::PathGeometric> queuedModelSolPaths_;
+  std::vector<geometric::PathGeometricPtr> queuedModelSolPaths_;
 
   /** \brief Location to save logging file for benchmarks */
   std::string benchmarkFilePath_;
@@ -322,12 +320,6 @@ public:
 
   /** \brief Verbose settings */
   bool verbose_ = true;
-
-  /** \brief Visualize original solution from graph before smoothing */
-  bool visualizeRawTrajectory_ = false;
-  /** \brief Visualize solution from graph after smoothing */
-  bool visualizeSmoothTrajectory_ = true;
-  bool visualizeRobotTrajectory_ = true;
 
 };  // end of class Bolt
 

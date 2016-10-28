@@ -200,51 +200,6 @@ base::PlannerStatus Bolt::solve(const base::PlannerTerminationCondition &ptc)
   return lastStatus_;
 }
 
-void Bolt::visualize(std::size_t indent)
-{
-  BOLT_FUNC(indent, true, "visualizing()");
-
-  // Optionally visualize raw trajectory
-  if (visualizeRawTrajectory_)
-  {
-    geometric::PathGeometricPtr origModelSolPath = boltPlanner_->getOrigModelSolPath();
-
-    // Make the chosen path a different color and thickness
-    visual_->viz5()->path(origModelSolPath.get(), tools::MEDIUM, tools::BLUE, tools::BLACK);
-    visual_->viz5()->trigger();
-
-    // Don't show raw trajectory twice in larger dimensions
-    if (si_->getStateSpace()->getDimension() == 3)
-    {
-      visual_->viz6()->path(origModelSolPath.get(), tools::MEDIUM, tools::BLUE, tools::BLACK);
-      visual_->viz6()->trigger();
-    }
-  }
-
-  // Show smoothed & interpolated path
-  if (visualizeSmoothTrajectory_)
-  {
-    std::vector<geometric::PathGeometricPtr> modelSolutionSegments = boltPlanner_->getModelSolSegments();
-    for (std::size_t i = 0; i < modelSolutionSegments.size(); ++i)
-    {
-      geometric::PathGeometricPtr modelSolutionSegment = modelSolutionSegments[i];
-      if (i == 1)
-        visual_->viz6()->path(modelSolutionSegment.get(), tools::LARGE, tools::BLACK, tools::PURPLE);
-      else
-        visual_->viz6()->path(modelSolutionSegment.get(), tools::LARGE, tools::BLACK, tools::BLUE);
-    }
-    visual_->viz6()->trigger();
-  }
-  //visual_->waitForUserFeedback("Bolt: visualize smooth trajectory");
-
-  // Show robot animated
-  if (visualizeRobotTrajectory_)
-  {
-    //BOLT_DEBUG(indent, true, "Blocking while visualizing solution path TODO");
-    //visual_->viz6()->path(&solutionPathCopy, tools::ROBOT, tools::DEFAULT, tools::DEFAULT);
-  }
-}
-
 bool Bolt::checkBoltPlannerOptimality(std::size_t indent)
 {
   geometric::PathGeometric *rawPath = boltPlanner_->getOrigModelSolPath().get();
@@ -303,10 +258,7 @@ void Bolt::processResults(std::size_t indent)
       //og::PathGeometric smoothedModelSolPath = og::SimpleSetup::getSolutionPath();  // copied so that it is non-const
       og::PathGeometricPtr smoothedModelSolPath = boltPlanner_->getSmoothedModelSolPath();
       BOLT_BLUE(indent, true, "Bolt Finished - solution found in " << planTime_ << " seconds with "
-                                                                        << smoothedModelSolPath->getStateCount() << " states");
-
-      // Show in Rviz
-      visualize(indent);
+                << smoothedModelSolPath->getStateCount() << " states");
 
       // Error check for repeated states
       if (!checkRepeatedStates(*smoothedModelSolPath, indent))
@@ -328,7 +280,7 @@ void Bolt::processResults(std::size_t indent)
       else
       {
         // Queue the solution path for future insertion into experience database (post-processing)
-        queuedModelSolPaths_.push_back(*smoothedModelSolPath);
+        queuedModelSolPaths_.push_back(smoothedModelSolPath);
       }
     }
     break;
@@ -342,7 +294,7 @@ bool Bolt::doPostProcessing(std::size_t indent)
 {
     BOLT_FUNC(indent, true, "doPostProcessing()");
 
-    for (geometric::PathGeometric &queuedSolutionPath : queuedModelSolPaths_)
+    for (geometric::PathGeometricPtr queuedSolutionPath : queuedModelSolPaths_)
     {
       sparseGenerator_->addExperiencePath(queuedSolutionPath, indent);
     }
@@ -385,16 +337,16 @@ bool Bolt::setFilePath(const std::string &filePath)
   return true;
 }
 
-bool Bolt::save()
+bool Bolt::save(std::size_t indent)
 {
   // setup(); // ensure the db has been loaded to the Experience DB
-  return sparseGraph_->save();
+  return sparseGraph_->save(indent);
 }
 
-bool Bolt::saveIfChanged()
+bool Bolt::saveIfChanged(std::size_t indent)
 {
   // setup(); // ensure the db has been loaded to the Experience DB
-  return sparseGraph_->saveIfChanged();
+  return sparseGraph_->saveIfChanged(indent);
 }
 
 void Bolt::printResultsInfo(std::ostream &out) const
@@ -418,7 +370,7 @@ bool Bolt::load(std::size_t indent)
     return false;
   }
 
-  if (!sparseGraph_->load())  // load from file
+  if (!sparseGraph_->load(indent))  // load from file
   {
     return false;
   }

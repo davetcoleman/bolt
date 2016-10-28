@@ -100,6 +100,15 @@ void MoveItVizWindow::state(const ob::State* state, ot::VizSizes size, ot::VizCo
       case ompl::tools::LARGE:
         visuals_->publishSphere(pose, visuals_->intToRvizColor(color), rvt::LARGE);
         break;
+      case ompl::tools::XLARGE:
+        visuals_->publishSphere(pose, visuals_->intToRvizColor(color), rvt::XLARGE);
+        break;
+      case ompl::tools::XXLARGE:
+        visuals_->publishSphere(pose, visuals_->intToRvizColor(color), rvt::XXLARGE);
+        break;
+      case ompl::tools::XXXLARGE:
+        visuals_->publishSphere(pose, visuals_->intToRvizColor(color), rvt::XXXLARGE);
+        break;
       case ompl::tools::VARIABLE_SIZE:  // Medium purple, translucent outline
         // Visual tools has a scaling feature that will mess up the exact scaling we desire, so we out-smart it
         extra_data /= visuals_->getGlobalScale();

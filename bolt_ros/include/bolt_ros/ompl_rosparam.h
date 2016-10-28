@@ -84,9 +84,6 @@ void loadOMPLParameters(ros::NodeHandle nh, const std::string &name, ompl::tools
   // Bolt
   {
     ros::NodeHandle rpnh(nh, "bolt");
-    error += !get(name, rpnh, "visualize/raw_trajectory", bolt->visualizeRawTrajectory_);
-    error += !get(name, rpnh, "visualize/smooth_trajectory", bolt->visualizeSmoothTrajectory_);
-    error += !get(name, rpnh, "visualize/robot_trajectory", bolt->visualizeRobotTrajectory_);
   }
 
   // Vertex Discretizer
@@ -203,7 +200,10 @@ void loadOMPLParameters(ros::NodeHandle nh, const std::string &name, ompl::tools
     error += !get(name, rpnh, "verbose/verbose", boltPlanner->verbose_);
     error += !get(name, rpnh, "verbose/collision_check", boltPlanner->vCollisionCheck_);
     error += !get(name, rpnh, "verbose/sampling", boltPlanner->vSampling_);
-    error += !get(name, rpnh, "visualize/smoothed_trajectory", boltPlanner->visualizeSmoothedTrajectory_);
+    error += !get(name, rpnh, "visualize/raw_trajectory", boltPlanner->visualizeRawTrajectory_);
+    error += !get(name, rpnh, "visualize/smooth_trajectory", boltPlanner->visualizeSmoothTrajectory_);
+    error += !get(name, rpnh, "visualize/robot_trajectory", boltPlanner->visualizeRobotTrajectory_);
+    error += !get(name, rpnh, "visualize/wait", boltPlanner->visualizeWait_);
     error += !get(name, rpnh, "visualize/start_goal", boltPlanner->visualizeStartGoal_);
     error += !get(name, rpnh, "visualize/start_goal_unconnected", boltPlanner->visualizeStartGoalUnconnected_);
     error += !get(name, rpnh, "visualize/lazy_collision_check", boltPlanner->visualizeLazyCollisionCheck_);

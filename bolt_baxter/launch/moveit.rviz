@@ -6,63 +6,14 @@ Panels:
       Expanded:
         - /Grid1/Offset1
         - /Viz1to61
-        - /Viz1to61/ompl5 - state1/Links1/base1
-        - /Viz1to61/ompl5 - state1/Links1/collision_head_link_11
-        - /Viz1to61/ompl5 - state1/Links1/collision_head_link_21
-        - /Viz1to61/ompl5 - state1/Links1/display1
-        - /Viz1to61/ompl5 - state1/Links1/dummyhead11
-        - /Viz1to61/ompl5 - state1/Links1/head1
-        - /Viz1to61/ompl5 - state1/Links1/head_camera1
-        - /Viz1to61/ompl5 - state1/Links1/left_arm_itb1
-        - /Viz1to61/ompl5 - state1/Links1/left_arm_mount1
-        - /Viz1to61/ompl5 - state1/Links1/left_gripper1
-        - /Viz1to61/ompl5 - state1/Links1/left_gripper_base1
-        - /Viz1to61/ompl5 - state1/Links1/left_gripper_l_finger1
-        - /Viz1to61/ompl5 - state1/Links1/left_gripper_r_finger1
-        - /Viz1to61/ompl5 - state1/Links1/left_gripper_tip1
-        - /Viz1to61/ompl5 - state1/Links1/left_hand1
-        - /Viz1to61/ompl5 - state1/Links1/left_hand_accelerometer1
-        - /Viz1to61/ompl5 - state1/Links1/left_hand_camera1
-        - /Viz1to61/ompl5 - state1/Links1/left_hand_camera_axis1
-        - /Viz1to61/ompl5 - state1/Links1/left_hand_range1
-        - /Viz1to61/ompl5 - state1/Links1/left_lower_elbow1
-        - /Viz1to61/ompl5 - state1/Links1/left_lower_forearm1
-        - /Viz1to61/ompl5 - state1/Links1/left_lower_shoulder1
-        - /Viz1to61/ompl5 - state1/Links1/left_torso_itb1
-        - /Viz1to61/ompl5 - state1/Links1/left_upper_elbow1
-        - /Viz1to61/ompl5 - state1/Links1/left_upper_elbow_visual1
-        - /Viz1to61/ompl5 - state1/Links1/left_upper_forearm1
-        - /Viz1to61/ompl5 - state1/Links1/left_upper_forearm_visual1
-        - /Viz1to61/ompl5 - state1/Links1/left_upper_shoulder1
-        - /Viz1to61/ompl5 - state1/Links1/left_wrist1
-        - /Viz1to61/ompl5 - state1/Links1/pedestal1
-        - /Viz1to61/ompl5 - state1/Links1/right_arm_itb1
-        - /Viz1to61/ompl5 - state1/Links1/right_arm_mount1
-        - /Viz1to61/ompl5 - state1/Links1/right_gripper1
-        - /Viz1to61/ompl5 - state1/Links1/right_gripper_base1
-        - /Viz1to61/ompl5 - state1/Links1/right_gripper_l_finger1
-        - /Viz1to61/ompl5 - state1/Links1/right_gripper_r_finger1
-        - /Viz1to61/ompl5 - state1/Links1/right_gripper_tip1
-        - /Viz1to61/ompl5 - state1/Links1/right_hand1
-        - /Viz1to61/ompl5 - state1/Links1/right_hand_accelerometer1
-        - /Viz1to61/ompl5 - state1/Links1/right_hand_camera1
-        - /Viz1to61/ompl5 - state1/Links1/right_hand_camera_axis1
-        - /Viz1to61/ompl5 - state1/Links1/right_hand_range1
-        - /Viz1to61/ompl5 - state1/Links1/right_lower_elbow1
-        - /Viz1to61/ompl5 - state1/Links1/right_lower_forearm1
-        - /Viz1to61/ompl5 - state1/Links1/right_lower_shoulder1
-        - /Viz1to61/ompl5 - state1/Links1/right_torso_itb1
-        - /Viz1to61/ompl5 - state1/Links1/right_upper_elbow1
-        - /Viz1to61/ompl5 - state1/Links1/right_upper_elbow_visual1
-        - /Viz1to61/ompl5 - state1/Links1/right_upper_forearm1
-        - /Viz1to61/ompl5 - state1/Links1/right_upper_forearm_visual1
-        - /Viz1to61/ompl5 - state1/Links1/right_upper_shoulder1
-        - /Viz1to61/ompl5 - state1/Links1/right_wrist1
-        - /Viz1to61/ompl5 - state1/Links1/screen1
-        - /Viz1to61/ompl5 - state1/Links1/sonar_ring1
-        - /Viz1to61/ompl5 - state1/Links1/torso1
+        - /Viz1to61/ompl6 - state1
+        - /Trajectory1
+        - /PlanningScene1
         - /PlanningScene1/Scene Robot1
         - /InteractiveMarkers1
+        - /InteractiveMarkers1/Start2
+        - /InteractiveMarkers1/Goal2
+        - /InteractiveMarkers1/Cart2
         - /TF1/Frames1
       Splitter Ratio: 0.554561734
     Tree Height: 712
@@ -383,7 +334,8 @@ Visualization Manager:
           Marker Topic: /baxter/ompl_visual1
           Name: ompl1 - markers
           Namespaces:
-            {}
+            Cylinder: true
+            Sphere: true
           Queue Size: 100
           Value: true
         - Attached Body Color: 150; 50; 150
@@ -675,7 +627,7 @@ Visualization Manager:
         - Attached Body Color: 150; 50; 150
           Class: moveit_rviz_plugin/RobotState
           Collision Enabled: false
-          Enabled: true
+          Enabled: false
           Links:
             All Links Enabled: true
             Expand Joint Details: false
@@ -948,7 +900,7 @@ Visualization Manager:
           Robot State Topic: /baxter/robot_state3
           Show All Links: true
           Show Highlights: true
-          Value: true
+          Value: false
           Visual Enabled: true
         - Class: rviz/MarkerArray
           Enabled: true
@@ -1241,7 +1193,7 @@ Visualization Manager:
           Marker Topic: /baxter/ompl_visual4
           Name: ompl4 - markers
           Namespaces:
-            {}
+            Sphere: true
           Queue Size: 100
           Value: true
         - Attached Body Color: 150; 50; 150
@@ -1527,7 +1479,8 @@ Visualization Manager:
           Marker Topic: /baxter/ompl_visual5
           Name: ompl5 - markers
           Namespaces:
-            {}
+            Cylinder: true
+            path_spheres: true
           Queue Size: 100
           Value: true
         - Attached Body Color: 150; 50; 150
@@ -1813,14 +1766,15 @@ Visualization Manager:
           Marker Topic: /baxter/ompl_visual6
           Name: ompl6 - markers
           Namespaces:
-            {}
+            Cylinder: true
+            path_spheres: true
           Queue Size: 100
           Value: true
       Enabled: true
       Name: Viz1to6
     - Class: moveit_rviz_plugin/Trajectory
       Enabled: true
-      Interrupt Display: false
+      Interrupt Display: true
       Links:
         All Links Enabled: true
         Expand Joint Details: false
@@ -2098,7 +2052,7 @@ Visualization Manager:
       Trajectory Topic: /baxter/display_trajectory
       Value: true
     - Class: moveit_rviz_plugin/PlanningScene
-      Enabled: true
+      Enabled: false
       Move Group Namespace: ""
       Name: PlanningScene
       Planning Scene Topic: /swri/planning_scene
@@ -2381,7 +2335,7 @@ Visualization Manager:
         Robot Alpha: 1
         Show Robot Collision: false
         Show Robot Visual: false
-      Value: true
+      Value: false
     - Class: rviz/Group
       Displays:
         - Class: rviz/InteractiveMarkers
@@ -3306,22 +3260,22 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 5.67568684
+      Distance: 3.75694084
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.509644985
-        Y: -1.62925792
-        Z: 0
+        X: 0.803859353
+        Y: -0.589028656
+        Z: 2.29850411e-06
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.855398536
+      Pitch: -0.0652026087
       Target Frame: robot_table_link
       Value: XYOrbit (rviz)
-      Yaw: 0.805383444
+      Yaw: 0.0985601246
     Saved: ~
 Window Geometry:
   Displays:

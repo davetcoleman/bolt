@@ -301,8 +301,9 @@ public:
 
     // Mimmic bolt method for calculating
     ompl::tools::bolt::SparseFormula formulas;
+    std::size_t indent = 0;
     formulas.calc(si_, stretchFactor_, sparseDeltaFraction_, penetrationOverlapFraction_, nearSamplePointsMultiple_,
-                  useL2Norm_);
+                  useL2Norm_, indent);
 
     sparse_two_->setSparseDeltaFraction(sparseDeltaFraction_);
     sparse_two_->setDenseDeltaFraction(denseDeltaFraction_);
@@ -412,7 +413,7 @@ public:
       std::cout << std::endl;
       ROS_INFO_STREAM_NAMED(name_, "Displaying disjoint sets ----------- ");
       otb::SparseDisjointSetsMap disjointSets;
-      bolt_->getSparseGraph()->getDisjointSets(disjointSets);
+      bolt_->getSparseGraph()->getDisjointSets(disjointSets, indent);
       bolt_->getSparseGraph()->printDisjointSets(disjointSets);
       bolt_->getSparseGraph()->visualizeDisjointSets(disjointSets);
     }
@@ -435,13 +436,13 @@ public:
       ROS_INFO_STREAM("Solving requested to be skipped by config file");
     else
     {
-      runProblems();
+      runProblems(indent);
     }
     // testConnectionToGraphOfRandStates();
 
     if (planner_name_ == BOLT)
     {
-      bolt_->saveIfChanged();
+      bolt_->saveIfChanged(indent);
     }
   }
 
@@ -644,7 +645,7 @@ public:
   }
 
   /** \brief Plan repeatidly */
-  bool runProblems()
+  bool runProblems(std::size_t indent)
   {
     // Logging
     std::string file_path;
@@ -696,7 +697,7 @@ public:
 
     // Finishing up
     ROS_INFO_STREAM_NAMED(name_, "Saving experience db...");
-    bolt_->saveIfChanged();
+    bolt_->saveIfChanged(indent);
 
     // Stats
     if (total_runs_ > 0)
@@ -1049,7 +1050,8 @@ public:
 
   bool save()
   {
-    return bolt_->saveIfChanged();
+    std::size_t indent = 0;
+    return bolt_->saveIfChanged(indent);
   }
 
   void chooseStartGoal(ob::State *start, ob::State *goal, bool verbose = true)

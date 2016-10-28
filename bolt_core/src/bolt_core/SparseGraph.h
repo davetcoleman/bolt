@@ -176,19 +176,19 @@ public:
    * \brief Load database from file
    * \return true if file loaded successfully
    */
-  bool load(std::size_t indent = 0);
+  bool load(std::size_t indent);
 
   /**
    * \brief Save loaded database to file, except skips saving if no paths have been added
    * \return true if file saved successfully
    */
-  bool saveIfChanged(std::size_t indent = 0);
+  bool saveIfChanged(std::size_t indent);
 
   /**
    * \brief Save loaded database to file
    * \return true if file saved successfully
    */
-  bool save(std::size_t indent = 0);
+  bool save(std::size_t indent);
 
   bool hasUnsavedChanges()
   {
@@ -293,7 +293,7 @@ public:
 
   /** \brief Disjoint sets analysis tools */
   std::size_t getDisjointSetsCount(bool verbose = false) const;
-  void getDisjointSets(SparseDisjointSetsMap& disjointSets, std::size_t indent = 0);
+  void getDisjointSets(SparseDisjointSetsMap& disjointSets, std::size_t indent);
   void printDisjointSets(SparseDisjointSetsMap& disjointSets);
   void visualizeDisjointSets(SparseDisjointSetsMap& disjointSets);
   std::size_t checkConnectedComponents();

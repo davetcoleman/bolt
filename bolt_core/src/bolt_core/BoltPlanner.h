@@ -215,6 +215,9 @@ public:
     return smoothedModelSolSegments_;
   }
 
+  void visualizeRaw(std::size_t indent);
+  void visualizeSmoothed(std::size_t indent);
+
 private:
 
   /** \brief This is included in parent class, but mentioned here. Use modelSI_ instead to reduce confusion   */
@@ -261,6 +264,7 @@ protected:
   /** \brief Solution path divided into separate pieces for each discrete mode - ModelBasedStateSpace */
   std::vector<geometric::PathGeometricPtr> smoothedModelSolSegments_;
 
+  std::size_t kNearestNeighbors_ = 60;
 
 public:
   /** \brief Optionally smooth retrieved and repaired paths from database */
@@ -271,7 +275,18 @@ public:
   bool vCollisionCheck_ = false;
   bool vSampling_ = true;
 
-  bool visualizeSmoothedTrajectory_ = false;
+  /** \brief Visualize original solution from graph before smoothing */
+  bool visualizeRawTrajectory_ = true;
+
+  /** \brief Visualize solution from graph after smoothing */
+  bool visualizeSmoothTrajectory_ = true;
+
+  /** \brief Visualize robot solution from graph after smoothing */
+  bool visualizeRobotTrajectory_ = true;
+
+  /** \brief Wait after visualization */
+  bool visualizeWait_ = false;
+
   bool visualizeStartGoal_ = false;
   bool visualizeLazyCollisionCheck_ = true;
   bool visualizeEachSolutionStep_ = false;

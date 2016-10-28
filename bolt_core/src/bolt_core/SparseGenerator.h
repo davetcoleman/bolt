@@ -171,7 +171,7 @@ public:
     return mean;
   }
 
-  void addExperiencePath(geometric::PathGeometric& path, std::size_t indent);
+  void addExperiencePath(geometric::PathGeometricPtr path, std::size_t indent);
 
 protected:
   /** \brief Short name of this class */
