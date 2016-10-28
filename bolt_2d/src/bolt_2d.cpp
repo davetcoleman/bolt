@@ -59,7 +59,7 @@
 
 // Interface for loading rosparam settings into OMPL
 #include <bolt_ros/ompl_rosparam.h>
-#include <moveit_dashboard/remote_control.h>
+#include <rviz_visual_tools/remote_control.h>
 
 namespace ob = ompl::base;
 namespace ot = ompl::tools;
@@ -1516,10 +1516,9 @@ private:
   std::string name_ = "bolt_2d";
 
   // Recieve input from Rviz
-  moveit_dashboard::RemoteControl remote_control_;
+  rviz_visual_tools::RemoteControl remote_control_;
 
   // Save the experience setup until the program ends so that the planner data is not lost
-  // ot::ExperienceSetupPtr bolt_;
   og::SimpleSetupPtr simple_setup_;
   otb::BoltPtr bolt_;
   og::SPARS2Ptr sparse_two_;

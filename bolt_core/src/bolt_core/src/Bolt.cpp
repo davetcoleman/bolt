@@ -180,7 +180,7 @@ void Bolt::setPlannerAllocator(const base::PlannerAllocator &pa)
 void Bolt::logInitialize()
 {
   // Header of CSV file
-  csvDataLogStream_ << "planner, planTime, pathLength"
+  csvDataLogStream_ << "planner, planTime, pathLength, verticesAdded, edgesAdded"
                     << std::endl;
       // Times
     //<< "planningTime,insertion_time,"
@@ -217,6 +217,9 @@ base::PlannerStatus Bolt::solve(const base::PlannerTerminationCondition &ptc)
 
   // Task time
   planTime_ = time::seconds(time::now() - start);
+
+  if (visual_->viz1()->shutdownRequested())
+    return lastStatus_;
 
   // Do logging
   processResults(indent);
@@ -259,6 +262,7 @@ bool Bolt::checkBoltPlannerOptimality(std::size_t indent)
 
 void Bolt::processResults(std::size_t indent)
 {
+  ExperiencePathStats result;
   double pathLength = 0;
 
   // Record overall stats
@@ -308,7 +312,9 @@ void Bolt::processResults(std::size_t indent)
       else
       {
         // Queue the solution path for future insertion into experience database (post-processing)
-        queuedModelSolPaths_.push_back(smoothedModelSolPath);
+        //queuedModelSolPaths_.push_back(smoothedModelSolPath);
+
+        result = sparseGenerator_->addExperiencePath(smoothedModelSolPath, indent);
       }
     }
     break;
@@ -317,7 +323,9 @@ void Bolt::processResults(std::size_t indent)
       stats_.numSolutionsFailed_++;
   } // end switch
 
-  csvDataLogStream_ << "Bolt, " << planTime_ << ", " << pathLength << std::endl;
+  csvDataLogStream_ << "Bolt, " << planTime_ << ", " << pathLength // basic planning stats
+                    << ", " << result.numVerticesAdded_ << ", " << result.numEdgesAdded_
+                    << std::endl;
 }
 
 bool Bolt::doPostProcessing(std::size_t indent)
@@ -369,14 +377,12 @@ bool Bolt::setFilePath(const std::string &filePath)
 
 bool Bolt::save(std::size_t indent)
 {
-  // setup(); // ensure the db has been loaded to the Experience DB
-  return sparseGraph_->save(indent);
+  return sparseGraph_->save(indent).success_;
 }
 
 bool Bolt::saveIfChanged(std::size_t indent)
 {
-  // setup(); // ensure the db has been loaded to the Experience DB
-  return sparseGraph_->saveIfChanged(indent);
+  return sparseGraph_->saveIfChanged(indent).success_;
 }
 
 void Bolt::saveDataLog(std::ostream &out)

@@ -16,7 +16,7 @@ Changelog for package bolt_core
   Improve cartesian discretization
 * Execution working for Baxter
 * Add execution_interface
-  Move remote_control to moveit_dashboard
+  Move remote_control to moveit_visual_tools
   Param for hybrid cartesian dual arm combination factor
   Debug tolerances
 * Cartesian planning working

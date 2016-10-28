@@ -1090,7 +1090,7 @@ void SparseGenerator::benchmarkMemoryAllocation(std::size_t indent)
   std::cout << std::endl;
 }
 
-void SparseGenerator::addExperiencePath(geometric::PathGeometricPtr path, std::size_t indent)
+ExperiencePathStats SparseGenerator::addExperiencePath(geometric::PathGeometricPtr path, std::size_t indent)
 {
   BOLT_FUNC(indent, true, "addExperiencePath()");
   const std::size_t threadID = 0;
@@ -1106,8 +1106,8 @@ void SparseGenerator::addExperiencePath(geometric::PathGeometricPtr path, std::s
   // sparseCriteria_->vAddedReason_ = true;
   // sparseCriteria_->vCriteria_ = true;
   // sparseCriteria_->visualizeAttemptedStates_ = true;
-  //sg_->visualizeSparseGraph_ = true;
-  //sg_->vAdd_ = true;
+  sg_->visualizeSparseGraph_ = true;
+  sg_->vAdd_ = true;
 
   // Clear visuals if necesary
   if (sg_->visualizeSparseGraph_)
@@ -1160,16 +1160,24 @@ void SparseGenerator::addExperiencePath(geometric::PathGeometricPtr path, std::s
 
     // visual_->waitForUserFeedback("Added segment");
   }
+
+  ExperiencePathStats stats;
+
   if (sg_->hasUnsavedChanges())
   {
-    sg_->save(indent);
+    SparseStorage::GraphSizeChange result = sg_->save(indent);
+
+    stats.numVerticesAdded_ = result.numVerticesAdded_;
+    stats.numEdgesAdded_ = result.numEdgesAdded_;
+
     BOLT_MAGENTA(indent, true, "SPARSE GRAPH CHANGED, SAVED -------------------------------------");
   }
   else
     BOLT_MAGENTA(indent, true, "Sparse graph NOT changed  -------------------------------------");
 
   BOLT_INFO(indent, true, "Finished adding experience path to SparseGraph");
-  visual_->waitForUserFeedback("Done adding path");
+
+  return stats;
 }
 
 }  // namespace bolt

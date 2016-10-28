@@ -5,7 +5,7 @@ Changelog for package bolt_2d
 0.1.0 (2016-10-25)
 ------------------
 * Add execution_interface
-  Move remote_control to moveit_dashboard
+  Move remote_control to moveit_visual_tools
   Param for hybrid cartesian dual arm combination factor
   Debug tolerances
 * Fix initialization bug

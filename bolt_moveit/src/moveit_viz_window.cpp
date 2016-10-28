@@ -95,7 +95,7 @@ void MoveItVizWindow::state(const ob::State* state, ot::VizSizes size, ot::VizCo
         visuals_->publishSphere(pose, visuals_->intToRvizColor(color), rvt::SMALL);
         break;
       case ompl::tools::MEDIUM:
-        visuals_->publishSphere(pose, visuals_->intToRvizColor(color), rvt::REGULAR);
+        visuals_->publishSphere(pose, visuals_->intToRvizColor(color), rvt::MEDIUM);
         break;
       case ompl::tools::LARGE:
         visuals_->publishSphere(pose, visuals_->intToRvizColor(color), rvt::LARGE);
@@ -429,9 +429,9 @@ void MoveItVizWindow::publishSampleRegion(const ob::ScopedState<>& state_area, c
   temp_point_.y = state_area[1];
   temp_point_.z = state_area[2];
 
-  visuals_->publishSphere(temp_point_, rvt::BLACK, rvt::REGULAR, "sample_region");  // mid point
+  visuals_->publishSphere(temp_point_, rvt::BLACK, rvt::MEDIUM, "sample_region");  // mid point
   // outer sphere (x2 b/c its a radius, x0.1 to make it look nicer)
-  visuals_->publishSphere(temp_point_, rvt::TRANSLUCENT, rvt::REGULAR, "sample_region");
+  visuals_->publishSphere(temp_point_, rvt::TRANSLUCENT, rvt::MEDIUM, "sample_region");
 }
 
 }  // namespace bolt_moveit

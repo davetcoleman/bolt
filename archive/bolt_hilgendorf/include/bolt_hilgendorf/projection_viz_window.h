@@ -171,12 +171,12 @@ public:
    * \param color
    */
   bool publishState(const ob::State* state, const rviz_visual_tools::colors& color,
-                    const rviz_visual_tools::scales scale = rviz_visual_tools::REGULAR,
+                    const rviz_visual_tools::scales scale = rviz_visual_tools::MEDIUM,
                     const std::string& ns = "state_sphere");
   bool publishState(const ob::State* state, const rviz_visual_tools::colors& color, const double scale = 0.1,
                     const std::string& ns = "state_sphere");
   bool publishState(const ob::ScopedState<> state, const rviz_visual_tools::colors& color,
-                    const rviz_visual_tools::scales scale = rviz_visual_tools::REGULAR,
+                    const rviz_visual_tools::scales scale = rviz_visual_tools::MEDIUM,
                     const std::string& ns = "state_sphere");
   bool publishState(const ob::ScopedState<> state, const rviz_visual_tools::colors& color, double scale = 0.1,
                     const std::string& ns = "state_sphere");

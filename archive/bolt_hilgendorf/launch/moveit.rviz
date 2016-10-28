@@ -21,9 +21,9 @@ Panels:
       - /Current View1
     Name: Views
     Splitter Ratio: 0.5
-  - Class: moveit_dashboard/MoveItDashboard
+  - Class: moveit_visual_tools/MoveItDashboard
     Name: MoveIt
-  - Class: moveit_dashboard/MoveItDashboard
+  - Class: moveit_visual_tools/MoveItDashboard
     Name: MoveItDashboard
 Visualization Manager:
   Class: ""
@@ -2544,7 +2544,7 @@ Visualization Manager:
     Frame Rate: 30
   Name: root
   Tools:
-    - Class: moveit_dashboard/KeyTool
+    - Class: moveit_visual_tools/KeyTool
     - Class: rviz/Interact
       Hide Inactive Objects: true
   Value: true

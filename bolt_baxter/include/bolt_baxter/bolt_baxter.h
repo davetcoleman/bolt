@@ -50,7 +50,6 @@
 
 // bolt_moveit
 #include <bolt_moveit/model_based_state_space.h>
-#include <moveit_dashboard/remote_control.h>
 
 // moveit_boilerplate
 #include <moveit_boilerplate/planning_interface.h>
@@ -114,8 +113,6 @@ public:
 
   void displayWaitingState(bool waiting);
 
-  void waitForNextStep(const std::string& msg);
-
   void testMotionValidator();
 
   std::string getFilePath(const std::string& planning_group_name);
@@ -151,9 +148,6 @@ public:
 
   // The short name of this class
   std::string name_ = "bolt_baxter";
-
-  // Recieve input from Rviz
-  moveit_dashboard::RemoteControlPtr remote_control_;
 
   // File location of this package
   std::string package_path_;

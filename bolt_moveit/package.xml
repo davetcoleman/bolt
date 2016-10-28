@@ -20,7 +20,6 @@
   <depend>moveit_boilerplate</depend>
   <depend>moveit_core</depend>
   <depend>moveit_visual_tools</depend>
-  <depend>moveit_dashboard</depend>
   <depend>rosparam_shortcuts</depend>
   <depend>bolt_core</depend>
   <depend>bolt_ros</depend>

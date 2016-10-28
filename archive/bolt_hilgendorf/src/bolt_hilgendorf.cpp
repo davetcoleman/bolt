@@ -699,7 +699,7 @@ void BoltHilgendorf::displayWaitingState(bool waiting)
 {
   // std::cout << " TODO display waiting state " << std::endl;
   // if (waiting)
-  //   publishViewFinderFrame(rvt::REGULAR);
+  //   publishViewFinderFrame(rvt::MEDIUM);
   // else
   //   publishViewFinderFrame(rvt::XSMALL);
 

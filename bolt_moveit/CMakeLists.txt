@@ -8,7 +8,6 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   roslint
   moveit_boilerplate
-  moveit_dashboard
   moveit_core
   moveit_visual_tools
   rosparam_shortcuts

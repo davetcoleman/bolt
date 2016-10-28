@@ -206,7 +206,7 @@ bolt_planner:
     lazy_collision_check: false
     each_solution_step: false
     start_goal_unconnected: false
-    sampling: false
+    sampling: true
 
 # ====================================================
 cart_path_planner:

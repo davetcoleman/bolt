@@ -63,17 +63,19 @@ SparseStorage::SparseStorage(const base::SpaceInformationPtr &si, SparseGraph *s
   numQueryVertices_ = boost::thread::hardware_concurrency();
 }
 
-void SparseStorage::save(const std::string &filePath, std::size_t indent)
+SparseStorage::GraphSizeChange SparseStorage::save(const std::string &filePath, std::size_t indent)
 {
   indent += 2;
-  std::size_t diffEdges = sparseGraph_->getNumEdges() - prevNumEdges_;
-  std::size_t diffVertices = sparseGraph_->getNumVertices() - prevNumVertices_;
+
+  GraphSizeChange stats;
+  stats.numEdgesAdded_ = sparseGraph_->getNumEdges() - prevNumEdges_;
+  stats.numVerticesAdded_ = sparseGraph_->getNumVertices() - prevNumVertices_;
 
   BOLT_INFO(indent, true, "------------------------------------------------");
   BOLT_INFO(indent, true, "Saving Sparse Graph");
   BOLT_INFO(indent, true, "  Path:     " << filePath.c_str());
-  BOLT_INFO(indent, true, "  Edges:    " << sparseGraph_->getNumEdges() << " (Change: " << diffEdges << ")");
-  BOLT_INFO(indent, true, "  Vertices: " << sparseGraph_->getNumVertices() << " (Change: " << diffVertices << ")");
+  BOLT_INFO(indent, true, "  Edges:    " << sparseGraph_->getNumEdges() << " (Change: " << stats.numEdgesAdded_ << ")");
+  BOLT_INFO(indent, true, "  Vertices: " << sparseGraph_->getNumVertices() << " (Change: " << stats.numVerticesAdded_ << ")");
   BOLT_INFO(indent, true, "------------------------------------------------");
 
   std::ofstream out(filePath.c_str(), std::ios::binary);
@@ -90,6 +92,8 @@ void SparseStorage::save(const std::string &filePath, std::size_t indent)
   loggingFile.open(loggingPath_.c_str(), std::ios::out);  // no append | std::ios::app);
   loggingFile << sparseGraph_->getNumEdges() << ", " << sparseGraph_->getNumVertices() << std::endl;
   loggingFile.close();
+
+  return stats;
 }
 
 void SparseStorage::save(std::ostream &out)

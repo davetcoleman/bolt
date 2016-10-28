@@ -399,6 +399,19 @@ struct CandidateData
   SparseVertex newVertex_;
 };
 
+////////////////////////////////////////////////////////////////////////////////////////
+// Data about how much the SparseGraph was modified
+////////////////////////////////////////////////////////////////////////////////////////
+struct ExperiencePathStats
+{
+  ExperiencePathStats() : numVerticesAdded_(0), numEdgesAdded_(0)
+  {
+  }
+
+  std::size_t numVerticesAdded_;
+  std::size_t numEdgesAdded_;
+};
+
 }  // namespace bolt
 }  // namespace tools
 }  // namespace ompl

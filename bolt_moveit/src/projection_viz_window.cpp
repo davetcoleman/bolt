@@ -383,9 +383,9 @@ bool ProjectionVizWindow::publishSampleRegion(const ob::ScopedState<>& state_are
   temp_point_.y = state_area[1];
   temp_point_.z = state_area[2];
 
-  visuals_->publishSphere(temp_point_, rvt::BLACK, rvt::REGULAR, "sample_region");  // mid point
+  visuals_->publishSphere(temp_point_, rvt::BLACK, rvt::MEDIUM, "sample_region");  // mid point
   // outer sphere (x2 b/c its a radius, x0.1 to make it look nicer)
-  return visuals_->publishSphere(temp_point_, rvt::TRANSLUCENT, rvt::REGULAR, "sample_region");
+  return visuals_->publishSphere(temp_point_, rvt::TRANSLUCENT, rvt::MEDIUM, "sample_region");
 }
 
 Eigen::Vector3d ProjectionVizWindow::stateToPoint(const ob::ScopedState<> state)

@@ -219,15 +219,13 @@ bool BoltPlanner::getPathOffGraph(const base::CompoundState *start, const base::
   BOLT_FUNC(indent, verbose_, "getPathOffGraph()");
 
   // Attempt to connect to graph x times, because if it fails we start adding samples
-  std::size_t maxAttempts = 10;
+  std::size_t maxAttempts = 100;
   std::size_t attempt = 0;
   for (; attempt < maxAttempts; ++attempt)
   {
-    std::cout << "-------------------------------------------------------" << std::endl;
-    std::cout << "-------------------------------------------------------" << std::endl;
+    BOLT_DEBUG(indent, true, "------------------------------------------------------------------------");
     BOLT_DEBUG(indent, true, "Starting getPathOffGraph() attempt " << attempt);
-    std::cout << "-------------------------------------------------------" << std::endl;
-    std::cout << "-------------------------------------------------------" << std::endl;
+    BOLT_DEBUG(indent, true, "------------------------------------------------------------------------");
 
     // Get neighbors near start and goal. Note: potentially they are not *visible* - will test for this later
 
@@ -365,27 +363,31 @@ bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
 
   if (foundValidStart && foundValidGoal)
   {
-    BOLT_ERROR(indent, "getPathOnGraph() Both a valid start and goal were found but still no path found.");
+    BOLT_WARN(indent, true, "getPathOnGraph() Both a valid start and goal were found but still no path found.");
 
     // Re-attempt to connect both
     addSamples(taskGraph_->getModelBasedState(actualGoal), indent);
     addSamples(taskGraph_->getModelBasedState(actualStart), indent);
-    // addSamples(NULL, indent); // do general sampling
-    return false;
+    addSamples(NULL, indent); // do general sampling
   }
-
-  if (foundValidStart && !foundValidGoal)
+  else if (foundValidStart && !foundValidGoal)
   {
     BOLT_WARN(indent, true, "getPathOnGraph() Unable to connect GOAL state to graph");
+
     feedbackStartFailed = false;  // it was the goal state that failed us
     addSamples(taskGraph_->getModelBasedState(actualGoal), indent);
   }
   else
   {
     BOLT_WARN(indent, true, "getPathOnGraph() Unable to connect START state to graph");
+
     feedbackStartFailed = true;  // the start state failed us
     addSamples(taskGraph_->getModelBasedState(actualStart), indent);
   }
+
+  // Feedback on growth of graph
+  BOLT_DEBUG(indent, true, "SparseGraph edges: " << taskGraph_->getSparseGraph()->getNumEdges() << " vertices: " << taskGraph_->getSparseGraph()->getNumVertices());
+  BOLT_DEBUG(indent, true, "TaskGraph   edges: " << taskGraph_->getNumEdges() << " vertices: " << taskGraph_->getNumVertices());
 
   return false;
 }
@@ -454,7 +456,7 @@ bool BoltPlanner::onGraphSearch(const TaskVertex &startVertex, const TaskVertex 
     // time::point startTime0 = time::now(); // Benchmark
     if (!taskGraph_->astarSearch(startVertex, goalVertex, vertexPath, distance, indent))
     {
-      BOLT_WARN(indent, true || verbose_, "Unable to construct solution between start and goal using astar");
+      BOLT_WARN(indent, verbose_, "Unable to construct solution between start and goal using astar");
 
       // no path found what so ever
       return false;
@@ -1048,7 +1050,13 @@ void BoltPlanner::addSamples(const base::State *near, std::size_t indent)
 
     // Visualize
     if (visualizeSampling_)
-      visual_->viz6()->state(candidateState, tools::ROBOT, tools::DEFAULT, 1);
+    {
+      //visual_->viz6()->state(candidateState, tools::ROBOT, tools::DEFAULT, 1);
+      if (near)
+        visual_->viz6()->state(candidateState, tools::MEDIUM, tools::CYAN, 1);
+      else // sampling whole space
+        visual_->viz6()->state(candidateState, tools::MEDIUM, tools::BLUE, 1);
+    }
 
     // Add the vertex
     VertexLevel level = 0;
@@ -1098,7 +1106,7 @@ void BoltPlanner::addSamples(const base::State *near, std::size_t indent)
       // Mark edge as free so we no longer need to check for collision
       // taskGraph_->getGraphNonConst()[e].collision_state_ = FREE;
 
-      if (visualizeSampling_)
+      if (visualizeSampling_ && false)
         visual_->viz6()->edge(taskGraph_->getModelBasedState(v2), candidateState, tools::XXSMALL, tools::ORANGE);
     }  // for each neighbor
 

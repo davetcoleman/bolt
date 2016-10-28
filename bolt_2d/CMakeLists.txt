@@ -7,7 +7,6 @@ add_compile_options(-std=c++11)
 # Load catkin and all dependencies required for this package
 find_package(catkin REQUIRED COMPONENTS
   rviz_visual_tools
-  moveit_dashboard
   roscpp
   rosparam_shortcuts
   bolt_core
@@ -22,7 +21,6 @@ find_package(Boost REQUIRED serialization)
 catkin_package(
   CATKIN_DEPENDS
     rviz_visual_tools
-    moveit_dashboard
     roscpp
     rosparam_shortcuts
     bolt_core

@@ -224,7 +224,7 @@ bool SparseGraph::load(std::size_t indent)
   return true;
 }
 
-bool SparseGraph::saveIfChanged(std::size_t indent)
+SparseStorage::GraphSizeChange SparseGraph::saveIfChanged(std::size_t indent)
 {
   BOLT_FUNC(indent, true, "saveIfChanged()");
 
@@ -237,12 +237,14 @@ bool SparseGraph::saveIfChanged(std::size_t indent)
     BOLT_DEBUG(indent, true, "Not saving because database has not changed. Time: " << time::as_string(time::now()));
   }
 
-  return true;
+  SparseStorage::GraphSizeChange result;
+  return result;
 }
 
-bool SparseGraph::save(std::size_t indent)
+SparseStorage::GraphSizeChange SparseGraph::save(std::size_t indent)
 {
   BOLT_FUNC(indent, verbose_, "save()");
+  SparseStorage::GraphSizeChange result;
 
   if (!hasUnsavedChanges_)
     OMPL_WARN("No need to save because hasUnsavedChanges_ is false, but saving anyway because requested");
@@ -251,14 +253,16 @@ bool SparseGraph::save(std::size_t indent)
   if (!savingEnabled_)
   {
     OMPL_INFORM("Saving is disabled");
-    return false;
+    result.success_ = false;
+    return result;
   }
 
   // Error checking
   if (filePath_.empty())
   {
     OMPL_ERROR("Empty filename passed to save function");
-    return false;
+    result.success_ = false;
+    return result;
   }
 
   // Always must clear out deleted veritices from graph before saving otherwise NULL state will throw exception
@@ -270,7 +274,7 @@ bool SparseGraph::save(std::size_t indent)
   // Save
   {
     // std::lock_guard<std::mutex> guard(modifyGraphMutex_);
-    sparseStorage_->save(filePath_.c_str());
+    result = sparseStorage_->save(filePath_.c_str());
     hasUnsavedChanges_ = false;
   }
 
@@ -278,7 +282,7 @@ bool SparseGraph::save(std::size_t indent)
   double loadTime = time::seconds(time::now() - start);
   BOLT_INFO(indent, true, "Saved database to file in " << loadTime
                                                        << " seconds. Time: " << time::as_string(time::now()));
-  return true;
+  return result;
 }
 
 bool SparseGraph::astarSearch(const SparseVertex start, const SparseVertex goal, std::vector<SparseVertex> &vertexPath,

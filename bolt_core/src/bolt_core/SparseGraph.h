@@ -182,13 +182,13 @@ public:
    * \brief Save loaded database to file, except skips saving if no paths have been added
    * \return true if file saved successfully
    */
-  bool saveIfChanged(std::size_t indent);
+  SparseStorage::GraphSizeChange saveIfChanged(std::size_t indent);
 
   /**
    * \brief Save loaded database to file
    * \return true if file saved successfully
    */
-  bool save(std::size_t indent);
+  SparseStorage::GraphSizeChange save(std::size_t indent);
 
   bool hasUnsavedChanges()
   {

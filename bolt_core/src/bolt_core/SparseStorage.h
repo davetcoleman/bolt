@@ -131,10 +131,20 @@ public:
     float weight_;
   };
 
+  /** \brief Stats on how many edges/vertices added */
+  struct GraphSizeChange
+  {
+    GraphSizeChange() : numEdgesAdded_(0), numVerticesAdded_(0), success_(true) {}
+
+    int numEdgesAdded_;
+    int numVerticesAdded_;
+    bool success_; // return false if failed to save correctly
+  };
+
   /** \brief Constructor */
   SparseStorage(const base::SpaceInformationPtr &si, SparseGraph *sparseGraph);
 
-  void save(const std::string &filePath, std::size_t indent = 0);
+  GraphSizeChange save(const std::string &filePath, std::size_t indent = 0);
 
   void save(std::ostream &out);
 

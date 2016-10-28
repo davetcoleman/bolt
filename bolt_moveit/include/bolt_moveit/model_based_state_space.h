@@ -78,7 +78,6 @@ struct ModelBasedStateSpaceSpecification
   const robot_model::JointModelGroup *joint_model_group_;
   robot_model::JointBoundsVector joint_bounds_;
 
-  // For visualizing things in rviz
   moveit_visual_tools::MoveItVisualToolsPtr visual_tools_;
 };
 
@@ -194,8 +193,8 @@ public:
    * cache this index)
    *        e.g. ompl_state_joint_index = joint_model_group_->getVariableGroupIndex("virtual_joint");
    */
-  virtual void copyJointToOMPLState(ompl::base::State *state, const robot_state::RobotState &robot_state,
-                                    const moveit::core::JointModel *joint_model, int ompl_state_joint_index) const;
+  // virtual void copyJointToOMPLState(ompl::base::State *state, const robot_state::RobotState &robot_state,
+  //                                   const moveit::core::JointModel *joint_model, int ompl_state_joint_index) const;
 
   /** \brief Convert from ompl path to moveit path */
   bool convertPathToRobotState(const ompl::geometric::PathGeometric &path, const robot_model::JointModelGroup *jmg,
