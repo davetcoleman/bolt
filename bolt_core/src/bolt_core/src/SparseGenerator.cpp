@@ -1106,8 +1106,8 @@ void SparseGenerator::addExperiencePath(geometric::PathGeometricPtr path, std::s
   // sparseCriteria_->vAddedReason_ = true;
   // sparseCriteria_->vCriteria_ = true;
   // sparseCriteria_->visualizeAttemptedStates_ = true;
-  sg_->visualizeSparseGraph_ = true;
-  sg_->vAdd_ = true;
+  //sg_->visualizeSparseGraph_ = true;
+  //sg_->vAdd_ = true;
 
   // Clear visuals if necesary
   if (sg_->visualizeSparseGraph_)

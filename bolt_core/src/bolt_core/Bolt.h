@@ -87,13 +87,9 @@ OMPL_CLASS_FORWARD(SparseMirror);
 struct ExperienceStats
 {
   ExperienceStats()
-    : numSolutionsFromRecall_(0)
-    , numSolutionsFromRecallSaved_(0)
-    , numSolutionsFromScratch_(0)
+    : numSolutionsSuccess_(0)
     , numSolutionsFailed_(0)
     , numSolutionsTimedout_(0)
-    , numSolutionsApproximate_(0)
-    , numSolutionsTooShort_(0)
     , numProblems_(0)
     , totalPlanningTime_(0.0)
     , totalInsertionTime_(0.0)
@@ -121,13 +117,9 @@ struct ExperienceStats
       return totalInsertionTime_ / numProblems_;
   }
 
-  double numSolutionsFromRecall_;
-  double numSolutionsFromRecallSaved_;
-  double numSolutionsFromScratch_;
+  double numSolutionsSuccess_;
   double numSolutionsFailed_;
   double numSolutionsTimedout_;
-  double numSolutionsApproximate_;
-  double numSolutionsTooShort_;  // less than 3 states
   double numProblems_;           // input requests
   double totalPlanningTime_;     // of all input requests, used for averaging
   double totalInsertionTime_;    // of all input requests, used for averaging
@@ -150,6 +142,11 @@ private:
   void initialize(std::size_t indent = 0);
 
 public:
+
+  void logInitialize();
+
+  void convertLogToString();
+
   /** \brief Display debug data about potential available solutions */
   void printResultsInfo(std::ostream &out = std::cout) const;
 
@@ -212,6 +209,9 @@ public:
 
   /** \brief Save the experience database to file if there has been a change */
   bool saveIfChanged(std::size_t indent);
+
+  /** \brief Save debug data about overall results since being loaded */
+  void saveDataLog(std::ostream &out = std::cout);
 
   /** \brief Do not clear the experience database */
   void clearForNextPlan();
@@ -311,6 +311,9 @@ protected:
 
   /** \brief States data for display to console  */
   ExperienceStats stats_;
+
+  // output data to file to analyze performance externally
+  std::stringstream csvDataLogStream_;
 
 public:
   const std::string name_ = "Bolt";

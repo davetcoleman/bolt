@@ -37,7 +37,7 @@ add_definitions(-DENABLE_DEBUG_MACRO)
 
 # If uncommented, astar is in debug mode
 # This will slow down processing
-add_definitions(-DENABLE_ASTAR_DEBUG)
+#add_definitions(-DENABLE_ASTAR_DEBUG)
 
 # Note: NDEBUG is uncommented when the CMake build type is Debug
 

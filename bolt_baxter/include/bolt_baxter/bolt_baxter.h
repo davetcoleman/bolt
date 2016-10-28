@@ -126,11 +126,11 @@ public:
 
   void benchmarkMemoryAllocation(std::size_t indent);
 
-  void loadScene();
+  void loadScene(std::size_t indent);
 
-  void loadOfficeScene();
+  void loadOfficeScene(std::size_t indent);
 
-  void loadAmazonScene();
+  void loadAmazonScene(std::size_t indent);
 
   void saveIMarkersToFile();
 

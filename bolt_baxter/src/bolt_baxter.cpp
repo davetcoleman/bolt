@@ -201,7 +201,7 @@ BoltBaxter::BoltBaxter(const std::string &hostname, const std::string &package_p
   loadVisualTools();
 
   // Add a collision objects
-  loadScene();
+  loadScene(indent);
 
   // Create start/goal state imarker
   if (!headless_)
@@ -420,13 +420,13 @@ void BoltBaxter::run(std::size_t indent)
 bool BoltBaxter::runProblems(std::size_t indent)
 {
   // Logging
-  // std::ofstream logging_file;  // open to append
-  // if (use_logging_)
-  // {
-  //   std::string file_path;
-  //   bolt_moveit::getFilePath(file_path, "bolt_2d_world_logging.csv", "ros/ompl_storage");
-  //   logging_file.open(file_path.c_str(), std::ios::out);  // no append | std::ios::app);
-  // }
+  std::ofstream logging_file;  // open to append
+  if (use_logging_)
+  {
+    std::string file_path;
+    bolt_moveit::getFilePath(file_path, "bolt_baxter_logging.csv", "ros/ompl_storage");
+    logging_file.open(file_path.c_str(), std::ios::out | std::ios::app);
+  }
 
   // Run the demo the desired number of times
   for (std::size_t run_id = 0; run_id < num_problems_; ++run_id)
@@ -480,11 +480,11 @@ bool BoltBaxter::runProblems(std::size_t indent)
     bolt_->printLogs();
 
     // Logging
-    // if (use_logging_)
-    // {
-    //   bolt_->saveDataLog(logging_file);
-    //   logging_file.flush();
-    // }
+    if (use_logging_)
+    {
+      bolt_->saveDataLog(logging_file);
+      logging_file.flush();
+    }
 
     // Regenerate Sparse Graph
     // if (post_processing_ && run_id % post_processing_interval_ == 0 && run_id > 0)  // every x runs
@@ -517,6 +517,8 @@ bool BoltBaxter::runProblems(std::size_t indent)
   // Stats
   if (total_runs_ > 0)
     ROS_INFO_STREAM_NAMED(name_, "Average solving time: " << total_duration_ / total_runs_);
+
+  logging_file.close();
 
   return true;
 }
@@ -604,7 +606,7 @@ void BoltBaxter::loadCollisionChecker()
 
   // The interval in which obstacles are checked for between states
   // seems that it default to 0.01 but doesn't do a good job at that level
-  // si_->setStateValidityCheckingResolution(0.005);
+  si_->setStateValidityCheckingResolution(0.005);
 }
 
 void BoltBaxter::deleteAllMarkers(bool clearDatabase)
@@ -1190,21 +1192,23 @@ void BoltBaxter::benchmarkMemoryAllocation(std::size_t indent)
   std::cout << std::endl;
 }
 
-void BoltBaxter::loadScene()
+void BoltBaxter::loadScene(std::size_t indent)
 {
-  std::cout << "scene_type_: " << scene_type_ << std::endl;
   switch (scene_type_)
   {
     case 1:
-      loadAmazonScene();
+      loadAmazonScene(indent);
     case 0:
-      loadOfficeScene();
+      loadOfficeScene(indent);
       break;
   }
+  ros::Duration(3).sleep();
 
+  std::cout << "update before " << std::endl;
   visual_moveit_start_->triggerPlanningSceneUpdate();
   ros::spinOnce();
-
+  ros::Duration(3).sleep();
+  std::cout << "update after " << std::endl;
   // Append to allowed collision matrix
   {
     planning_scene_monitor::LockedPlanningSceneRW scene(psm_);  // Lock planning
@@ -1213,8 +1217,11 @@ void BoltBaxter::loadScene()
   }
 }
 
-void BoltBaxter::loadOfficeScene()
+void BoltBaxter::loadOfficeScene(std::size_t indent)
 {
+  BOLT_FUNC(indent, true, "loadOfficeScene()");
+  psm_->updateFrameTransforms();
+
   // const double table_height = -0.77 * baxter_torso_height_;
   const double table_height = -0.75 * baxter_torso_height_;
   visual_moveit_start_->publishCollisionFloor(baxter_torso_height_ + 0.001, "floor", rvt::TRANSLUCENT_DARK);
@@ -1229,8 +1236,10 @@ void BoltBaxter::loadOfficeScene()
                                               rvt::DARK_GREY);
 }
 
-void BoltBaxter::loadAmazonScene()
+void BoltBaxter::loadAmazonScene(std::size_t indent)
 {
+  BOLT_FUNC(indent, true, "loadAmazonScene()");
+
   // Load mesh file name
   std::string collision_mesh_path = "file://" + package_path_ + "/meshes/kiva_pod/meshes/pod_lowres.stl";
 

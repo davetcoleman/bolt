@@ -71,7 +71,7 @@ BoltPlanner::BoltPlanner(const base::SpaceInformationPtr modelSI, const base::Sp
   specs_.directed = false;
 
   // Note that the path simplifier operates in the model_based_state_space, not the compound space
-  path_simplifier_.reset(new geometric::PathSimplifier(modelSI_));
+  path_simplifier_.reset(new geometric::PathSimplifier(modelSI_, base::GoalPtr(), visual_));
 
   base::CompoundStateSpacePtr compoundSpace =
       std::dynamic_pointer_cast<base::CompoundStateSpace>(compoundSI_->getStateSpace());
@@ -316,7 +316,7 @@ bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
 
     for (TaskVertex goalVertex : candidateGoals)
     {
-      BOLT_DEBUG(indent, true || verbose_, "getPathOnGraph() Planning from candidate start/goal pair "
+      BOLT_DEBUG(indent, verbose_, "getPathOnGraph() Planning from candidate start/goal pair "
                                                << actualGoal << " to " << taskGraph_->getCompoundState(goalVertex));
 
       if (ptc)  // Check if our planner is out of time
@@ -564,7 +564,7 @@ bool BoltPlanner::lazyCollisionCheck(std::vector<TaskVertex> &vertexPath, Termin
     fromVertex = toVertex;
   }  // for
 
-  BOLT_MAGENTA(indent, true, "Removed edges: " << origNumEdges - taskGraph_->getNumEdges()
+  BOLT_MAGENTA(indent, verbose_, "Removed edges: " << origNumEdges - taskGraph_->getNumEdges()
                                                << " total edges: " << taskGraph_->getNumEdges());
 
   // Only return true if nothing was found invalid
@@ -702,26 +702,43 @@ bool BoltPlanner::simplifyNonTaskPath(og::PathGeometricPtr compoundPath, Termina
     modelPath = taskGraph_->convertPathToNonCompound(compoundPath);
     double origLength = modelPath->length();
 
+    // Debug
+    // visual_->viz5()->deleteAllMarkers();
+    // visual_->viz5()->path(modelPath.get(), tools::LARGE, tools::BLACK, tools::BLUE);
+    // visual_->viz5()->trigger();
+    // visual_->waitForUserFeedback("raw");
+
     // Smooth
-    path_simplifier_->simplifyMax(*modelPath);
+    if (smoothingEnabled_)
+      path_simplifier_->simplifyMax(*modelPath);
+    else
+      BOLT_WARN(indent, true, "Smoothing not enabled");
     double simplifyTime = time::seconds(time::now() - simplifyStart);
 
     // Feedback
     int statesDiff = origNumStates - modelPath->getStateCount();
-    double lengthDiff = origLength - modelPath->length();
+    double length = modelPath->length();
+    double lengthDiff = origLength - length;
     BOLT_DEBUG(indent, true, "Path simplification took " << simplifyTime << " seconds and removed " << statesDiff
-                                                         << " states. Path length was decreased by " << lengthDiff);
+               << " states. Path length (" << length << ") was decreased by " << lengthDiff);
 
     if (lengthDiff < 0)
     {
       BOLT_ERROR(indent, "Path simplification increased path length!!");
+      visual_->viz6()->deleteAllMarkers();
+      visual_->viz6()->path(modelPath.get(), tools::LARGE, tools::RED, tools::BLUE);
+      visual_->viz6()->trigger();
+      visual_->waitForUserFeedback("bad");
+    }
+    else
+    {
       // visual_->viz6()->deleteAllMarkers();
       // visual_->viz6()->path(modelPath.get(), tools::LARGE, tools::BLACK, tools::BLUE);
       // visual_->viz6()->trigger();
-      // visual_->waitForUserFeedback("error");
-    }
-    else
+      // visual_->waitForUserFeedback("good");
+
       break;  // stop looping
+    }
   }
 
   // Interpolate

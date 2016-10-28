@@ -68,6 +68,9 @@ void Bolt::initialize(std::size_t indent)
 {
   BOLT_INFO(indent, true, "Initializing Bolt Framework");
 
+  // Headers for log
+  logInitialize();
+
   // Initalize visualizer class
   BOLT_INFO(indent, verbose_, "Loading visualizer");
   visual_.reset(new Visualizer());
@@ -174,6 +177,27 @@ void Bolt::setPlannerAllocator(const base::PlannerAllocator &pa)
   configured_ = false;
 }
 
+void Bolt::logInitialize()
+{
+  // Header of CSV file
+  csvDataLogStream_ << "planner, planTime, pathLength"
+                    << std::endl;
+      // Times
+    //<< "planningTime,insertion_time,"
+      // Solution properties
+      //<< "planner,result,is_saved,"
+      // Failure booleans
+    //<< "approximate,too_short,insertionFailed,"
+      // Lightning properties
+    //<< "score,"
+      // Thunder (SPARS) properties
+      //<< "numVertices,numEdges,numConnectedComponents,"
+      // Hack for using python cause im lazy right now
+    //<< "total_experiences,total_scratch,total_recall,total_failed,total_approximate,"
+    //<< "total_too_short,total_insertionFailed,"
+    //<< "avg_planningTime,avg_insertion_time" << std::endl;
+}
+
 base::PlannerStatus Bolt::solve(const base::PlannerTerminationCondition &ptc)
 {
   std::size_t indent = 0;
@@ -235,7 +259,9 @@ bool Bolt::checkBoltPlannerOptimality(std::size_t indent)
 
 void Bolt::processResults(std::size_t indent)
 {
-  // Record stats
+  double pathLength = 0;
+
+  // Record overall stats
   stats_.totalPlanningTime_ += planTime_;  // used for averaging
   stats_.numProblems_++;                   // used for averaging
 
@@ -246,7 +272,7 @@ void Bolt::processResults(std::size_t indent)
       BOLT_ERROR(indent, "Bolt::solve(): TIMEOUT - No solution found after " << planTime_);
       break;
     case base::PlannerStatus::ABORT:
-      stats_.numSolutionsTimedout_++;
+      stats_.numSolutionsFailed_++;
       BOLT_ERROR(indent, "Bolt::solve(): ABORT - No solution found after " << planTime_);
       break;
     case base::PlannerStatus::APPROXIMATE_SOLUTION:
@@ -257,6 +283,7 @@ void Bolt::processResults(std::size_t indent)
     {
       // og::PathGeometric smoothedModelSolPath = og::SimpleSetup::getSolutionPath();  // copied so that it is non-const
       og::PathGeometricPtr smoothedModelSolPath = boltPlanner_->getSmoothedModelSolPath();
+      pathLength = smoothedModelSolPath->length();
       BOLT_BLUE(indent, true, "Bolt Finished - solution found in " << planTime_ << " seconds with "
                                                                    << smoothedModelSolPath->getStateCount()
                                                                    << " states");
@@ -270,13 +297,13 @@ void Bolt::processResults(std::size_t indent)
       // exit(-1);
 
       // Stats
-      stats_.numSolutionsFromRecall_++;
+      stats_.numSolutionsSuccess_++;
 
       // Make sure solution has at least 2 states
       if (smoothedModelSolPath->getStateCount() < 2)
       {
-        OMPL_INFORM("NOT saving to database because solution is less than 2 states long");
-        stats_.numSolutionsTooShort_++;
+        OMPL_ERROR("NOT saving to database because solution is less than 2 states long");
+        exit(-1);
       }
       else
       {
@@ -288,7 +315,9 @@ void Bolt::processResults(std::size_t indent)
     default:
       BOLT_ERROR(indent, "Unknown status type: " << lastStatus_);
       stats_.numSolutionsFailed_++;
-  }
+  } // end switch
+
+  csvDataLogStream_ << "Bolt, " << planTime_ << ", " << pathLength << std::endl;
 }
 
 bool Bolt::doPostProcessing(std::size_t indent)
@@ -350,6 +379,13 @@ bool Bolt::saveIfChanged(std::size_t indent)
   return sparseGraph_->saveIfChanged(indent);
 }
 
+void Bolt::saveDataLog(std::ostream &out)
+{
+  // Export to file and clear the stream
+  out << csvDataLogStream_.str();
+  csvDataLogStream_.str("");
+}
+
 void Bolt::printResultsInfo(std::ostream &out) const
 {
   for (std::size_t i = 0; i < pdef_->getSolutionCount(); ++i)
@@ -399,13 +435,12 @@ void Bolt::printLogs(std::ostream &out) const
 {
   double vertPercent = sparseGraph_->getNumVertices() / double(sparseGraph_->getNumVertices()) * 100.0;
   double edgePercent = sparseGraph_->getNumEdges() / double(sparseGraph_->getNumEdges()) * 100.0;
-  double solvedPercent = stats_.numSolutionsFromRecall_ / static_cast<double>(stats_.numProblems_) * 100.0;
+  double solvedPercent = stats_.numSolutionsSuccess_ / static_cast<double>(stats_.numProblems_) * 100.0;
   out << "Bolt Framework Logging Results" << std::endl;
   out << "  Solutions Attempted:           " << stats_.numProblems_ << std::endl;
-  out << "    Solved:                      " << stats_.numSolutionsFromRecall_ << " (" << solvedPercent << "%)\n";
+  out << "    Solved:                      " << stats_.numSolutionsSuccess_ << " (" << solvedPercent << "%)\n";
   out << "    Failed:                      " << stats_.numSolutionsFailed_ << std::endl;
   out << "    Timedout:                    " << stats_.numSolutionsTimedout_ << std::endl;
-  out << "    Approximate:                 " << stats_.numSolutionsApproximate_ << std::endl;
   out << "  SparseGraph                       " << std::endl;
   out << "    Vertices:                    " << sparseGraph_->getNumVertices() << " (" << vertPercent << "%)"
       << std::endl;

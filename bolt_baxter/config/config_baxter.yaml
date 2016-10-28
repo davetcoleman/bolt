@@ -52,7 +52,7 @@ bolt_baxter:
   post_processing: false
   post_processing_interval: 20 # how often (in runs) to adjust the graphs
   seed_random: true
-  use_logging: false # write to file log info
+  use_logging: true # write to file log info
   collision_checking_enabled: true
 
   # debugging
@@ -172,7 +172,7 @@ task_graph:
   verbose:
     verbose: false
     add: false # debug when addVertex() and addEdge() are called
-    search: true
+    search: false
     visualize: false
     heuristic: false
     clear: false
@@ -192,7 +192,7 @@ debug_interface:
 
 # ====================================================
 bolt_planner:
-  smoothing_enabled: false
+  smoothing_enabled: true
   verbose:
     verbose: false
     collision_check: false
