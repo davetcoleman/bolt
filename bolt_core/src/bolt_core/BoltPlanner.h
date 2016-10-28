@@ -98,7 +98,8 @@ public:
   virtual base::PlannerStatus solve(Termination &ptc);
 
   /** \brief Solving after converting states to compound state space */
-  base::PlannerStatus solve(base::CompoundState *startState, base::CompoundState *goalState, Termination &ptc, std::size_t indent);
+  base::PlannerStatus solve(base::CompoundState *startState, base::CompoundState *goalState, Termination &ptc,
+                            std::size_t indent);
 
   /** \brief Clear memory */
   virtual void clear(void);
@@ -124,8 +125,8 @@ public:
    * \param compoundSolution - the resulting path
    * \return
    */
-  bool getPathOffGraph(const base::CompoundState *start, const base::CompoundState *goal, geometric::PathGeometricPtr compoundSolution,
-                       Termination &ptc, std::size_t indent);
+  bool getPathOffGraph(const base::CompoundState *start, const base::CompoundState *goal,
+                       geometric::PathGeometricPtr compoundSolution, Termination &ptc, std::size_t indent);
 
   /** \brief Clear verticies not on the specified level */
   bool removeVerticesNotOnLevel(std::vector<bolt::TaskVertex> &neighbors, int level);
@@ -149,8 +150,8 @@ public:
    * \param requiredLevel - if -1, allows states from all levels, otherwise only returns states from a certain level
    * \return false is no neighbors found
    */
-  bool findGraphNeighbors(const base::CompoundState *state, std::vector<bolt::TaskVertex> &neighbors, int requiredLevel = -1,
-                          std::size_t indent = 0);
+  bool findGraphNeighbors(const base::CompoundState *state, std::vector<bolt::TaskVertex> &neighbors,
+                          int requiredLevel = -1, std::size_t indent = 0);
 
   /** \brief Check if there exists a solution, i.e., there exists a pair of milestones such that the
    *   first is in \e start and the second is in \e goal, and the two milestones are in the same
@@ -161,16 +162,16 @@ public:
    */
   bool getPathOnGraph(const std::vector<bolt::TaskVertex> &candidateStarts,
                       const std::vector<bolt::TaskVertex> &candidateGoals, const base::CompoundState *actualStart,
-                      const base::CompoundState *actualGoal, geometric::PathGeometricPtr compoundSolution, Termination &ptc,
-                      bool debug, bool &feedbackStartFailed, std::size_t indent);
+                      const base::CompoundState *actualGoal, geometric::PathGeometricPtr compoundSolution,
+                      Termination &ptc, bool debug, bool &feedbackStartFailed, std::size_t indent);
 
   /**
    * \brief Repeatidly search through graph for connection then check for collisions then repeat
    * \return true if a valid path is found
    */
-  bool onGraphSearch(const bolt::TaskVertex &start, const bolt::TaskVertex &goal, const base::CompoundState *actualStart,
-                     const base::CompoundState *actualGoal, geometric::PathGeometricPtr compoundSolution, Termination &ptc,
-                     std::size_t indent);
+  bool onGraphSearch(const bolt::TaskVertex &start, const bolt::TaskVertex &goal,
+                     const base::CompoundState *actualStart, const base::CompoundState *actualGoal,
+                     geometric::PathGeometricPtr compoundSolution, Termination &ptc, std::size_t indent);
 
   /** \brief Check recalled path for collision and disable as needed */
   bool lazyCollisionCheck(std::vector<bolt::TaskVertex> &vertexPath, Termination &ptc, std::size_t indent);
@@ -182,7 +183,7 @@ public:
   void visualizeBadEdge(TaskVertex fromVertex, TaskVertex toVertex);
   void visualizeBadEdge(const base::State *from, const base::State *to);
 
-  void addSamples(const base::State* near, std::size_t indent);
+  void addSamples(const base::State *near, std::size_t indent);
 
   TaskGraphPtr getTaskGraph()
   {
@@ -219,12 +220,10 @@ public:
   void visualizeSmoothed(std::size_t indent);
 
 private:
-
   /** \brief This is included in parent class, but mentioned here. Use modelSI_ instead to reduce confusion   */
-  //using Planner::si_;
+  // using Planner::si_;
 
 protected:
-
   /** \brief Short name of class */
   const std::string name_ = "BoltPlanner";
 

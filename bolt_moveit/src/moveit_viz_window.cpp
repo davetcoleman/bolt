@@ -319,7 +319,7 @@ void MoveItVizWindow::publishTrajectoryPath(const og::PathGeometric& path, const
 
   // Get correct type of space
   bolt_moveit::ModelBasedStateSpacePtr mb_state_space =
-    std::static_pointer_cast<bolt_moveit::ModelBasedStateSpace>(si_->getStateSpace());
+      std::static_pointer_cast<bolt_moveit::ModelBasedStateSpace>(si_->getStateSpace());
 
   if (!mb_state_space->convertPathToRobotState(path, jmg, traj, speed))
   {

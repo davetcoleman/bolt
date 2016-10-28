@@ -279,10 +279,12 @@ bool TaskGraph::astarSearch(const TaskVertex start, const TaskVertex goal, std::
 #ifdef ENABLE_ASTAR_DEBUG
   BOLT_ASSERT(vertexPath.size(), "Vertex path is empty! " << vertexPath.size());
   // Ensure start and goal states are included in path
-  BOLT_ASSERT(compoundSI_->getStateSpace()->equalStates(getCompoundState(vertexPath.back()), getCompoundState(start)), "Start states are "
-                                                                                               "not the same");
-  BOLT_ASSERT(compoundSI_->getStateSpace()->equalStates(getCompoundState(vertexPath.front()), getCompoundState(goal)), "Goal states are "
-                                                                                               "not the same");
+  BOLT_ASSERT(compoundSI_->getStateSpace()->equalStates(getCompoundState(vertexPath.back()), getCompoundState(start)),
+              "Start states are "
+              "not the same");
+  BOLT_ASSERT(compoundSI_->getStateSpace()->equalStates(getCompoundState(vertexPath.front()), getCompoundState(goal)),
+              "Goal states are "
+              "not the same");
   BOLT_ASSERT(vertexPath.size() >= 2, "Vertex path size is too small");
 
   // Show all predecessors
@@ -309,7 +311,7 @@ bool TaskGraph::astarSearch(const TaskVertex start, const TaskVertex goal, std::
     }
 
     visual_->viz4()->trigger();
-    //visual_->waitForUserFeedback("predecessors and solution");
+    // visual_->waitForUserFeedback("predecessors and solution");
   }
 #endif
 
@@ -508,7 +510,7 @@ void TaskGraph::generateMonoLevelTaskSpace(std::size_t indent)
     const SparseVertex sparseE_v0 = boost::source(sparseE, sg_->getGraph());
     const SparseVertex sparseE_v2 = boost::target(sparseE, sg_->getGraph());
 
-    // Error check
+// Error check
 #ifndef NDEBUG
     BOLT_ASSERT(sparseE_v0 >= sg_->getNumQueryVertices(), "Found query vertex in sparse graph that has an edge!");
     BOLT_ASSERT(sparseE_v2 >= sg_->getNumQueryVertices(), "Found query vertex in sparse graph that has an edge!");
@@ -772,7 +774,7 @@ bool TaskGraph::checkTaskPathSolution(og::PathGeometric &path, base::CompoundSta
   // TODO: this assumes the path has task data, which it no longer does
   BOLT_ERROR(0, "checkTaskPathSolution() - broken");
 
-  bool error = true; // false
+  bool error = true;  // false
   /*
   VertexLevel current_level = 0;
 
@@ -941,7 +943,8 @@ bool TaskGraph::smoothQualityPath(geometric::PathGeometric *path, double clearan
  *  \param level - the discrete step of a level
  *  \return new state that is compound
 */
-base::CompoundState *TaskGraph::createCompoundState(base::State *jointState, const VertexLevel level, std::size_t indent)
+base::CompoundState *TaskGraph::createCompoundState(base::State *jointState, const VertexLevel level,
+                                                    std::size_t indent)
 {
   base::CompoundState *state = new base::CompoundState();
   state->components = new base::State *[compoundSpace_->getSubspaceCount()];
@@ -1075,8 +1078,9 @@ TaskEdge TaskGraph::addEdge(TaskVertex v1, TaskVertex v2, std::size_t indent)
     BOLT_ASSERT(hasEdge(v1, v2) == hasEdge(v2, v1), "There already exists an edge between two vertices requested, "
                                                     "other direction");
     BOLT_ASSERT(getCompoundState(v1) != getCompoundState(v2), "States on both sides of an edge are the same");
-    BOLT_ASSERT(!compoundSI_->getStateSpace()->equalStates(getCompoundState(v1), getCompoundState(v2)), "Vertex IDs are different but "
-                                                                                        "states are the equal");
+    BOLT_ASSERT(!compoundSI_->getStateSpace()->equalStates(getCompoundState(v1), getCompoundState(v2)),
+                "Vertex IDs are different but "
+                "states are the equal");
   }
 
   // Create the new edge
@@ -1328,11 +1332,11 @@ bool TaskGraph::checkMotion(const base::CompoundState *a, const base::CompoundSt
 geometric::PathGeometricPtr TaskGraph::convertPathToNonCompound(const geometric::PathGeometricPtr compoundPathGeometric)
 {
   // Convert input path
-  //og::PathGeometric &compoundPathGeometric = static_cast<og::PathGeometric &>(*compoundPath);
+  // og::PathGeometric &compoundPathGeometric = static_cast<og::PathGeometric &>(*compoundPath);
 
   // Create new path
   geometric::PathGeometricPtr modelPath(new og::PathGeometric(modelSI_));
-  //og::PathGeometric &modelPath = static_cast<og::PathGeometric &>(*modelPathBase);
+  // og::PathGeometric &modelPath = static_cast<og::PathGeometric &>(*modelPathBase);
 
   for (std::size_t i = 0; i < compoundPathGeometric->getStateCount(); ++i)
   {

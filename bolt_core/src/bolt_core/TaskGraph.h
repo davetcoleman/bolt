@@ -92,7 +92,7 @@ class TaskGraph
 public:
   /** \brief Constructor needs the state space used for planning.
    */
-  TaskGraph(const base::SpaceInformationPtr &modelSI, const base::SpaceInformationPtr& compoundSI, SparseGraphPtr sg);
+  TaskGraph(const base::SpaceInformationPtr& modelSI, const base::SpaceInformationPtr& compoundSI, SparseGraphPtr sg);
 
   /** \brief Deconstructor */
   virtual ~TaskGraph(void);

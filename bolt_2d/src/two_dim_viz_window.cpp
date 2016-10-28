@@ -465,7 +465,7 @@ Eigen::Vector3d TwoDimVizWindow::stateToPoint(const ob::State* state)
   // if (si_->getStateSpace()->getDimension() == 2)
   //   temp_eigen_point_.z() = level_scale_ * si_->getStateSpace()->getLevel(state);
   // else
-    temp_eigen_point_.z() = real_state->values[2];
+  temp_eigen_point_.z() = real_state->values[2];
 
   return temp_eigen_point_;
 }

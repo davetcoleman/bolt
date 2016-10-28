@@ -1008,7 +1008,7 @@ SparseEdge SparseGraph::addEdge(SparseVertex v1, SparseVertex v2, double weight,
   if (visualizeSparseGraph_)
   {
     visualizeEdge(e, type, /*windowID*/ 1);
-    //visualizeEdge(e, type, /*windowID*/ 7);  // projection to 2D space
+    // visualizeEdge(e, type, /*windowID*/ 7);  // projection to 2D space
 
     if (visualizeSparseGraphSpeed_ > std::numeric_limits<double>::epsilon())
     {

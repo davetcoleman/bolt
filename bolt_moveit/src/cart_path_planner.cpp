@@ -52,8 +52,9 @@
 namespace bolt_moveit
 {
 CartPathPlanner::CartPathPlanner(std::vector<mvt::ArmData>& arm_datas, mvt::MoveItVisualToolsPtr visual_tools,
-                                 moveit::core::RobotStatePtr moveit_start, psm::PlanningSceneMonitorPtr planning_scene_monitor,
-                                 const std::string& package_path, bolt_moveit::ModelBasedStateSpacePtr mbs_space,
+                                 moveit::core::RobotStatePtr moveit_start,
+                                 psm::PlanningSceneMonitorPtr planning_scene_monitor, const std::string& package_path,
+                                 bolt_moveit::ModelBasedStateSpacePtr mbs_space,
                                  moveit::core::JointModelGroup* planning_jmg)
   : nh_("~")
   , arm_datas_(arm_datas)
@@ -97,8 +98,8 @@ CartPathPlanner::CartPathPlanner(std::vector<mvt::ArmData>& arm_datas, mvt::Move
   shared_robot_state1_.reset(new moveit::core::RobotState(*moveit_start));
 
   // Create cartesian start pose interactive marker
-  imarker_cartesian_.reset(new mvt::IMarkerRobotState(planning_scene_monitor_, "cart", arm_datas_, rvt::BLUE,
-                                                      package_path_));
+  imarker_cartesian_.reset(
+      new mvt::IMarkerRobotState(planning_scene_monitor_, "cart", arm_datas_, rvt::BLUE, package_path_));
   imarker_cartesian_->setIMarkerCallback(
       std::bind(&CartPathPlanner::processIMarkerPose, this, std::placeholders::_1, std::placeholders::_2));
 
@@ -178,7 +179,7 @@ void CartPathPlanner::generateExactPoses(const Eigen::Affine3d& start_pose, std:
   }
 
   BOLT_DEBUG(indent, verbose_, "Generated exact Cartesian traj with " << exact_poses_.front().size() << " points for "
-                                                                  << arm_datas_.size() << " dimensions");
+                                                                      << arm_datas_.size() << " dimensions");
 
   // Publish trajectory poses for visualization
   visual_tools_->deleteAllMarkers();
@@ -296,7 +297,7 @@ bool CartPathPlanner::computeRedunPosesForCartPoint(const Eigen::Affine3d& pose,
         // visual_tools_->publishZArrow(candidate_pose, rvt::BLUE, rvt::SMALL);
         visual_tools_->trigger();
         ROS_ERROR_STREAM_NAMED(name_, "TODO: implement wait");
-        //parent_->waitForNextStep("next pose");
+        // parent_->waitForNextStep("next pose");
       }
       else
       {
@@ -746,9 +747,9 @@ bool CartPathPlanner::addCartPointToBoltGraph(const CombinedPoints& combined_poi
 
   // Lock planning scene
   std::shared_ptr<planning_scene_monitor::LockedPlanningSceneRO> ls =
-    std::make_shared<planning_scene_monitor::LockedPlanningSceneRO>(planning_scene_monitor_);
+      std::make_shared<planning_scene_monitor::LockedPlanningSceneRO>(planning_scene_monitor_);
   const planning_scene::PlanningScene* planning_scene =
-    static_cast<const planning_scene::PlanningSceneConstPtr&>(*ls).get();
+      static_cast<const planning_scene::PlanningSceneConstPtr&>(*ls).get();
 
   for (std::size_t i = 0; i < combined_points.size(); ++i)
   {
@@ -771,7 +772,7 @@ bool CartPathPlanner::addCartPointToBoltGraph(const CombinedPoints& combined_poi
       {
         visual_tools_->publishRobotState(moveit_robot_state, rvt::BROWN);
         ROS_ERROR_STREAM_NAMED(name_, "TODO: implement wait");
-        //parent_->waitForNextStep("invalid");
+        // parent_->waitForNextStep("invalid");
       }
 
       states_rejected++;
@@ -794,14 +795,14 @@ bool CartPathPlanner::addCartPointToBoltGraph(const CombinedPoints& combined_poi
       if (combined_solutions_sleep_ < std::numeric_limits<double>::epsilon())
       {
         ROS_ERROR_STREAM_NAMED(name_, "TODO: implement wait");
-        //parent_->waitForNextStep("added vertex");
+        // parent_->waitForNextStep("added vertex");
       }
       else
         ros::Duration(combined_solutions_sleep_).sleep();
     }
 
     new_vertex_count++;
-  } // end for
+  }  // end for
 
   const double percent = states_rejected / double(combined_points.size()) * 100.0;
   BOLT_DEBUG(indent, verbose_, "Added " << new_vertex_count << " new vertices to TaskGraph, rejected by collision: "
@@ -864,7 +865,7 @@ bool CartPathPlanner::addEdgesToBoltGraph(const TaskVertexMatrix& point_vertices
             usleep(1 * 1000000);
             visual_tools_->publishRobotState(shared_robot_state1_, rvt::LIME_GREEN);
             ROS_ERROR_STREAM_NAMED(name_, "TODO: implement wait");
-            //parent_->waitForNextStep("showing rejected edge due to timing");
+            // parent_->waitForNextStep("showing rejected edge due to timing");
           }
 
           // BOLT_DEBUG(indent, true, "Skipping edge, total skipped: " << edges_skipped_count);
@@ -1064,9 +1065,9 @@ bool CartPathPlanner::getRedunJointPosesForCartPoint(const Eigen::Affine3d& pose
 
     // Lock planning scene
     std::shared_ptr<planning_scene_monitor::LockedPlanningSceneRO> ls =
-      std::make_shared<planning_scene_monitor::LockedPlanningSceneRO>(planning_scene_monitor_);
+        std::make_shared<planning_scene_monitor::LockedPlanningSceneRO>(planning_scene_monitor_);
     const planning_scene::PlanningScene* planning_scene =
-      static_cast<const planning_scene::PlanningSceneConstPtr&>(*ls).get();
+        static_cast<const planning_scene::PlanningSceneConstPtr&>(*ls).get();
 
     // Collision check each potential solution
     std::size_t states_rejected = 0;
@@ -1088,7 +1089,7 @@ bool CartPathPlanner::getRedunJointPosesForCartPoint(const Eigen::Affine3d& pose
         {
           visual_tools_->publishRobotState(shared_robot_state1_, rvt::RED);
           ROS_ERROR_STREAM_NAMED(name_, "TODO: implement wait");
-          //parent_->waitForNextStep("invalid");
+          // parent_->waitForNextStep("invalid");
         }
 
         states_rejected++;

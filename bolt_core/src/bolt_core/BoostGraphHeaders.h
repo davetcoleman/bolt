@@ -60,7 +60,6 @@
 
 namespace ompl
 {
-
 namespace geometric
 {
 typedef std::shared_ptr<geometric::PathGeometric> PathGeometricPtr;
@@ -158,7 +157,7 @@ struct SparseVertexStruct
 // Edge Properties
 struct SparseEdgeStruct
 {
-  float weight_;          // cost/distance between two vertices
+  float weight_;         // cost/distance between two vertices
   int collision_state_;  // used for lazy collision checking, determines if an edge has been checked
   // already for collision. 0 = not checked/unknown, 1 = in collision, 2 = free
 };
@@ -258,8 +257,7 @@ public:
    * Construct map for certain constraints.
    * \param g - Graph to use
    */
-  TaskEdgeWeightMap(const TaskAdjList& g)
-    : g_(g)
+  TaskEdgeWeightMap(const TaskAdjList& g) : g_(g)
   {
   }
 

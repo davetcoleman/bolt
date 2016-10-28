@@ -137,7 +137,6 @@ struct ExperienceStats
 class Bolt : public geometric::SimpleSetup
 {
 public:
-
   /** \brief Constructor needs the state space used for planning. */
   explicit Bolt(const base::SpaceInformationPtr &si);
 
@@ -274,9 +273,8 @@ public:
   // bool doPostProcessing();
 
 protected:
-
   // This is included in parent class, but mentioned here in contrast to modelSI_
-  //base::SpaceInformationPtr si_;
+  // base::SpaceInformationPtr si_;
 
   /** \brief The space information for combined states */
   base::SpaceInformationPtr compoundSI_;
@@ -315,7 +313,6 @@ protected:
   ExperienceStats stats_;
 
 public:
-
   const std::string name_ = "Bolt";
 
   /** \brief Verbose settings */

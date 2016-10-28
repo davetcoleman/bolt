@@ -102,17 +102,16 @@ bool MoveItBase::loadPlanningSceneMonitor(const std::string& joint_state_topic)
   // Allows us to sycronize to Rviz and also publish collision objects to ourselves
   ROS_DEBUG_STREAM_NAMED(name_, "Loading Planning Scene Monitor");
   static const std::string PLANNING_SCENE_MONITOR_NAME = "MoveItBasePlanningScene";
-  psm_.reset(
-      new psm::PlanningSceneMonitor(planning_scene_, robot_model_loader_, tf_, PLANNING_SCENE_MONITOR_NAME));
+  psm_.reset(new psm::PlanningSceneMonitor(planning_scene_, robot_model_loader_, tf_, PLANNING_SCENE_MONITOR_NAME));
   ros::spinOnce();
 
   psm::PlanningSceneMonitor::SceneUpdateType event = psm::PlanningSceneMonitor::UPDATE_NONE;
   // publish_geometry_updates
-  event = (psm::PlanningSceneMonitor::SceneUpdateType) ((int)event | (int)psm::PlanningSceneMonitor::UPDATE_GEOMETRY);
+  event = (psm::PlanningSceneMonitor::SceneUpdateType)((int)event | (int)psm::PlanningSceneMonitor::UPDATE_GEOMETRY);
   // publish_state_updates
-  event = (psm::PlanningSceneMonitor::SceneUpdateType) ((int)event | (int)psm::PlanningSceneMonitor::UPDATE_STATE);
+  event = (psm::PlanningSceneMonitor::SceneUpdateType)((int)event | (int)psm::PlanningSceneMonitor::UPDATE_STATE);
   // publish_transforms_updates
-  event = (psm::PlanningSceneMonitor::SceneUpdateType) ((int)event | (int)psm::PlanningSceneMonitor::UPDATE_TRANSFORMS);
+  event = (psm::PlanningSceneMonitor::SceneUpdateType)((int)event | (int)psm::PlanningSceneMonitor::UPDATE_TRANSFORMS);
 
   if (psm_->getPlanningScene())
   {
@@ -120,7 +119,6 @@ bool MoveItBase::loadPlanningSceneMonitor(const std::string& joint_state_topic)
     psm_->startStateMonitor(joint_state_topic, "");
     psm_->getPlanningScene()->setName("bolt_scene");
     psm_->startPublishingPlanningScene(event, planning_scene_topic_);
-
   }
   else
   {

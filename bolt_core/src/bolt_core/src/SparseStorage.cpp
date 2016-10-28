@@ -158,7 +158,7 @@ void SparseStorage::saveVertices(boost::archive::binary_oarchive &oa)
       std::cout << static_cast<int>(count / double(sparseGraph_->getNumVertices()) * 100.0) << "% " << std::flush;
   }
   BOLT_ASSERT(errorCheckNumQueryVertices == numQueryVertices_, "There should be the same number of query vertex "
-              "as threads that were skipped while saving");
+                                                               "as threads that were skipped while saving");
 
   std::cout << std::endl;
 }
@@ -297,7 +297,7 @@ void SparseStorage::loadVertices(std::size_t numVertices, boost::archive::binary
 
   // Create thread to populate nearest neighbor structure, because that is the slowest component
   loadVerticesFinished_ = false;
-  SparseVertex startingVertex = sparseGraph_->getNumVertices(); // should be number of threads
+  SparseVertex startingVertex = sparseGraph_->getNumVertices();  // should be number of threads
   boost::thread nnThread(boost::bind(&SparseStorage::populateNNThread, this, startingVertex, numVertices));
 
   const base::StateSpacePtr &space = si_->getStateSpace();
@@ -359,7 +359,7 @@ void SparseStorage::populateNNThread(std::size_t startingVertex, std::size_t num
   // There should be one vertex left
   BOLT_ASSERT(vertexID == sparseGraph_->getNumVertices() - 1,
               "There should only be one vertex left. sparseGraph_->getNumVertices(): " << sparseGraph_->getNumVertices()
-              << " vertexID: " << vertexID);
+                                                                                       << " vertexID: " << vertexID);
 
   // Add the last vertex
   sparseGraph_->getNN()->add(vertexID);

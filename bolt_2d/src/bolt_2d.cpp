@@ -755,7 +755,7 @@ public:
     if (use_task_planning_)
     {
       BOLT_ERROR(0, "bolt_2d: not implemented");
-      //bolt_->getTaskGraph()->checkTaskPathSolution(path, ompl_start_, ompl_goal_);
+      // bolt_->getTaskGraph()->checkTaskPathSolution(path, ompl_start_, ompl_goal_);
     }
 
     // Visualize the doneness
@@ -1145,7 +1145,7 @@ public:
     if (use_task_planning_)
     {
       BOLT_ERROR(0, "TODO set level");
-      //space_->setLevel(goal, 2);  // set goal on 3rd (last) level
+      // space_->setLevel(goal, 2);  // set goal on 3rd (last) level
     }
   }
 
@@ -1519,7 +1519,7 @@ private:
   moveit_dashboard::RemoteControl remote_control_;
 
   // Save the experience setup until the program ends so that the planner data is not lost
-  //ot::ExperienceSetupPtr bolt_;
+  // ot::ExperienceSetupPtr bolt_;
   og::SimpleSetupPtr simple_setup_;
   otb::BoltPtr bolt_;
   og::SPARS2Ptr sparse_two_;

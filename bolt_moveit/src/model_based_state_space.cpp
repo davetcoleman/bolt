@@ -43,7 +43,6 @@ namespace og = ompl::geometric;
 
 namespace bolt_moveit
 {
-
 ModelBasedStateSpace::ModelBasedStateSpace(const ModelBasedStateSpaceSpecification &spec)
   : ob::StateSpace(), spec_(spec)
 {
@@ -202,7 +201,7 @@ bool ModelBasedStateSpace::satisfiesBounds(const ob::State *state) const
 }
 
 void ModelBasedStateSpace::interpolate(const ob::State *from, const ob::State *to, const double t,
-                                           ob::State *state) const
+                                       ob::State *state) const
 {
   // clear any cached info (such as validity known or not)
   // state->as<StateType>()->clearKnownInformation();
@@ -223,7 +222,7 @@ double *ModelBasedStateSpace::getValueAddressAtIndex(ob::State *state, const uns
 }
 
 void ModelBasedStateSpace::setPlanningVolume(double minX, double maxX, double minY, double maxY, double minZ,
-                                                 double maxZ)
+                                             double maxZ)
 {
   for (std::size_t i = 0; i < joint_model_vector_.size(); ++i)
     if (joint_model_vector_[i]->getType() == robot_model::JointModel::PLANAR)
@@ -281,8 +280,8 @@ void ModelBasedStateSpace::copyToOMPLState(ob::State *state, const robot_state::
 }
 
 void ModelBasedStateSpace::copyJointToOMPLState(ob::State *state, const robot_state::RobotState &robot_state,
-                                                    const moveit::core::JointModel *joint_model,
-                                                    int ompl_state_joint_index) const
+                                                const moveit::core::JointModel *joint_model,
+                                                int ompl_state_joint_index) const
 {
   // Copy one joint (multiple variables possibly)
   memcpy(getValueAddressAtIndex(state, ompl_state_joint_index),
@@ -290,8 +289,9 @@ void ModelBasedStateSpace::copyJointToOMPLState(ob::State *state, const robot_st
          joint_model->getVariableCount() * sizeof(double));
 }
 
-bool ModelBasedStateSpace::convertPathToRobotState(const og::PathGeometric& path, const robot_model::JointModelGroup* jmg,
-                                                   robot_trajectory::RobotTrajectoryPtr& traj, double speed)
+bool ModelBasedStateSpace::convertPathToRobotState(const og::PathGeometric &path,
+                                                   const robot_model::JointModelGroup *jmg,
+                                                   robot_trajectory::RobotTrajectoryPtr &traj, double speed)
 {
   // Error check
   if (path.getStateCount() <= 0)
@@ -318,4 +318,4 @@ bool ModelBasedStateSpace::convertPathToRobotState(const og::PathGeometric& path
   return true;
 }
 
-} // namespace bolt_moveit
+}  // namespace bolt_moveit

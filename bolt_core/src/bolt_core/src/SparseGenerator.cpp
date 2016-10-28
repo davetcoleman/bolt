@@ -1096,16 +1096,16 @@ void SparseGenerator::addExperiencePath(geometric::PathGeometricPtr path, std::s
   const std::size_t threadID = 0;
 
   // Reset this class
-  //clear();
+  // clear();
 
   // Set sparseDelta to be way lower
   sparseCriteria_->sparseDeltaFraction_ = sparseCriteria_->sparseDeltaFractionSecondary_;
   sparseCriteria_->setup(indent);
 
   // Debug visualizations
-  //sparseCriteria_->vAddedReason_ = true;
-  //sparseCriteria_->vCriteria_ = true;
-  //sparseCriteria_->visualizeAttemptedStates_ = true;
+  // sparseCriteria_->vAddedReason_ = true;
+  // sparseCriteria_->vCriteria_ = true;
+  // sparseCriteria_->visualizeAttemptedStates_ = true;
   sg_->visualizeSparseGraph_ = true;
   sg_->vAdd_ = true;
 
@@ -1120,7 +1120,7 @@ void SparseGenerator::addExperiencePath(geometric::PathGeometricPtr path, std::s
   for (std::size_t i = 1; i < path->getStateCount(); ++i)
   {
     shuffledIDs.push_back(i);
-  } // for each state in path
+  }                                                             // for each state in path
   std::random_shuffle(shuffledIDs.begin(), shuffledIDs.end());  // using built-in random generator
 
   // Insert paths at random
@@ -1135,7 +1135,7 @@ void SparseGenerator::addExperiencePath(geometric::PathGeometricPtr path, std::s
     }
 
     // Copy the state so the graph can own it
-    base::State* candidateState = si_->cloneState(path->getState(shuffledIDs[i]));
+    base::State *candidateState = si_->cloneState(path->getState(shuffledIDs[i]));
 
     // Create datastrucutre
     CandidateData candidateD(candidateState);
@@ -1147,7 +1147,7 @@ void SparseGenerator::addExperiencePath(geometric::PathGeometricPtr path, std::s
     {
       // The state was used
 
-      if (sg_->visualizeSparseGraph_) // SparseGraph requires its visuals to be manually published
+      if (sg_->visualizeSparseGraph_)  // SparseGraph requires its visuals to be manually published
       {
         visual_->viz1()->trigger();
       }
@@ -1158,7 +1158,7 @@ void SparseGenerator::addExperiencePath(geometric::PathGeometricPtr path, std::s
       si_->freeState(candidateState);
     }
 
-    //visual_->waitForUserFeedback("Added segment");
+    // visual_->waitForUserFeedback("Added segment");
   }
   if (sg_->hasUnsavedChanges())
   {

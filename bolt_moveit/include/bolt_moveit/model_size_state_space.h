@@ -147,7 +147,8 @@ public:
   bool satisfiesBounds(const ob::State *state) const
   {
     // TODO: this is too large an epsilon
-    return spec_.joint_model_group_->satisfiesPositionBounds(state->as<StateType>()->values, spec_.joint_bounds_, 0.00001);
+    return spec_.joint_model_group_->satisfiesPositionBounds(state->as<StateType>()->values, spec_.joint_bounds_,
+                                                             0.00001);
     // std::numeric_limits<double>::epsilon());
   }
 

@@ -177,7 +177,7 @@ BoltBaxter::BoltBaxter(const std::string &hostname, const std::string &package_p
   for (std::size_t i = 0; i < arm_jmgs.size(); ++i)
   {
     arm_datas_.push_back(
-                         mvt::ArmData(robot_model_->getJointModelGroup(arm_jmgs[i]), robot_model_->getLinkModel(ee_tip_links[i])));
+        mvt::ArmData(robot_model_->getJointModelGroup(arm_jmgs[i]), robot_model_->getLinkModel(ee_tip_links[i])));
     if (!arm_datas_.back().jmg_)
     {
       BOLT_ERROR(indent, "No joint model group found for jmg name " << arm_jmgs[i]);
@@ -214,9 +214,10 @@ BoltBaxter::BoltBaxter(const std::string &hostname, const std::string &package_p
   if (connect_to_hardware_)
   {
     execution_interface_ =
-      std::make_shared<moveit_boilerplate::ExecutionInterface>(remote_control_, psm_, viz6_->getVisualTools());
+        std::make_shared<moveit_boilerplate::ExecutionInterface>(remote_control_, psm_, viz6_->getVisualTools());
   }
-  planning_interface_ = std::make_shared<moveit_boilerplate::PlanningInterface>(psm_, viz6_->getVisualTools(), planning_jmg_, execution_interface_);
+  planning_interface_ = std::make_shared<moveit_boilerplate::PlanningInterface>(psm_, viz6_->getVisualTools(),
+                                                                                planning_jmg_, execution_interface_);
 
   // Wait until user does something
   if (!auto_run_)
@@ -293,7 +294,7 @@ std::string BoltBaxter::getFilePath(const std::string &planning_group_name)
   if (is_bolt_)
   {
     file_name = file_name + "bolt_" + planning_group_name + "_" +
-      std::to_string(bolt_->getSparseCriteria()->sparseDeltaFraction_) + "_database";
+                std::to_string(bolt_->getSparseCriteria()->sparseDeltaFraction_) + "_database";
   }
   else
   {
@@ -541,7 +542,7 @@ bool BoltBaxter::plan(std::size_t indent)
   // Solve -----------------------------------------------------------
 
   // Create the termination condition
-  double seconds = 60 * 60; // 1 hour
+  double seconds = 60 * 60;  // 1 hour
   ob::PlannerTerminationCondition ptc = ob::timedPlannerTerminationCondition(seconds, 0.1);
 
   // Benchmark runtime
@@ -574,7 +575,7 @@ bool BoltBaxter::plan(std::size_t indent)
       waitForNextStep("execute again");
     }
   }
-  else // Simulation
+  else  // Simulation
   {
     // viz6_->getVisualTools()->deleteAllMarkers();
     // viz6_->getVisualTools()->publishTrajectoryLine(execution_traj, planning_jmg_, rvt::LIME_GREEN);
@@ -595,7 +596,7 @@ void BoltBaxter::loadCollisionChecker()
 {
   // Create state validity checking for this space
   validity_checker_ =
-    new bolt_moveit::StateValidityChecker(planning_group_name_, si_, *current_state_, planning_scene_, space_);
+      new bolt_moveit::StateValidityChecker(planning_group_name_, si_, *current_state_, planning_scene_, space_);
   validity_checker_->setCheckingEnabled(collision_checking_enabled_);
 
   // Set checker
@@ -644,7 +645,7 @@ void BoltBaxter::loadVisualTools()
   for (std::size_t i = 1; i <= NUM_VISUALS; ++i)
   {
     MoveItVisualToolsPtr moveit_visual = MoveItVisualToolsPtr(new MoveItVisualTools(
-                                                                                    "/world_visual" + std::to_string(i), namesp + "/ompl_visual" + std::to_string(i), robot_model_));
+        "/world_visual" + std::to_string(i), namesp + "/ompl_visual" + std::to_string(i), robot_model_));
     moveit_visual->loadMarkerPub(false);
     moveit_visual->setPlanningSceneMonitor(psm_);
     moveit_visual->setManualSceneUpdating(true);
@@ -814,7 +815,7 @@ void BoltBaxter::testConnectionToGraphOfRandStates()
     std::size_t indent = 0;
 
     BOLT_ERROR(indent, "bolt_baxter: not implemented");
-    //bool result = bolt_->getBoltPlanner()->canConnect(random_state, ptc, indent);
+    // bool result = bolt_->getBoltPlanner()->canConnect(random_state, ptc, indent);
     // if (result)
     //   successful_connections++;
 
@@ -883,9 +884,9 @@ bool BoltBaxter::checkMoveItPathSolution(robot_trajectory::RobotTrajectoryPtr tr
     std::stringstream ss;
     for (std::size_t i = 0; i < index.size(); ++i)
       ss << index[i] << " ";
-    ROS_ERROR_STREAM_NAMED(
-                           name_, "checkMoveItPathSolution: Computed path is not valid. Invalid states at index locations: [ "
-                           << ss.str() << "] out of " << state_count << ". Explanations follow in command line.");
+    ROS_ERROR_STREAM_NAMED(name_,
+                           "checkMoveItPathSolution: Computed path is not valid. Invalid states at index locations: [ "
+                               << ss.str() << "] out of " << state_count << ". Explanations follow in command line.");
 
     // Call validity checks in verbose mode for the problematic states
     visualization_msgs::MarkerArray combined_array;
@@ -910,10 +911,11 @@ bool BoltBaxter::checkMoveItPathSolution(robot_trajectory::RobotTrajectoryPtr tr
         visualization_msgs::MarkerArray single_array;
         collision_detection::getCollisionMarkersFromContacts(single_array, planning_scene_->getPlanningFrame(),
                                                              c_res.contacts);
-        combined_array.markers.insert(combined_array.markers.end(), single_array.markers.begin(), single_array.markers.end());
+        combined_array.markers.insert(combined_array.markers.end(), single_array.markers.begin(),
+                                      single_array.markers.end());
       }
-    } // end for
-      // publish marker array
+    }  // end for
+    // publish marker array
     viz6_->getVisualTools()->publishMarkers(combined_array);
 
     ROS_ERROR_STREAM_NAMED(name_, "checkMoveItPathSolution: Completed listing of explanations for invalid states.");
@@ -1005,13 +1007,13 @@ void BoltBaxter::mirrorGraph(std::size_t indent)
   // Create state validity checking for both arms
   bolt_moveit::StateValidityChecker *both_arms_validity_checker;
   both_arms_validity_checker = new bolt_moveit::StateValidityChecker(
-                                                                     both_arms_group_name_, both_arms_space_info, *current_state_, planning_scene_, both_arms_state_space_);
+      both_arms_group_name_, both_arms_space_info, *current_state_, planning_scene_, both_arms_state_space_);
   both_arms_space_info->setStateValidityChecker(ob::StateValidityCheckerPtr(both_arms_validity_checker));
 
   // Create state validity checking for left arm
   bolt_moveit::StateValidityChecker *left_arm_validity_checker;
   left_arm_validity_checker = new bolt_moveit::StateValidityChecker(
-                                                                    opposite_arm_name_, left_arm_space_info, *current_state_, planning_scene_, left_arm_state_space_);
+      opposite_arm_name_, left_arm_space_info, *current_state_, planning_scene_, left_arm_state_space_);
   left_arm_space_info->setStateValidityChecker(ob::StateValidityCheckerPtr(left_arm_validity_checker));
 
   // Set the database file location
@@ -1238,8 +1240,8 @@ void BoltBaxter::loadAmazonScene()
 
   // Calculate offset
   mesh_centroid = Eigen::AngleAxisd(M_PI / 2.0, Eigen::Vector3d::UnitX()) *
-    Eigen::AngleAxisd(M_PI / 2.0, Eigen::Vector3d::UnitY()) *
-    Eigen::AngleAxisd(0, Eigen::Vector3d::UnitZ());
+                  Eigen::AngleAxisd(M_PI / 2.0, Eigen::Vector3d::UnitY()) *
+                  Eigen::AngleAxisd(0, Eigen::Vector3d::UnitZ());
   mesh_centroid.translation().x() = distance_to_shelf_;
   mesh_centroid.translation().y() = 0;
   mesh_centroid.translation().z() = baxter_torso_height_;
@@ -1251,7 +1253,7 @@ void BoltBaxter::loadAmazonScene()
   if (!mesh || !shapes::constructMsgFromShape(mesh, shape_msg))
   {
     ROS_ERROR_STREAM_NAMED("collision_object", "Unable to create mesh shape message from resource "
-                           << collision_mesh_path);
+                                                   << collision_mesh_path);
     return;
   }
 
@@ -1370,7 +1372,7 @@ robot_trajectory::RobotTrajectoryPtr BoltBaxter::processSegments(std::size_t ind
   // Get solution segments
   std::vector<og::PathGeometricPtr> model_sol_segments = bolt_->getBoltPlanner()->getModelSolSegments();
   robot_trajectory::RobotTrajectoryPtr combined_traj =
-    std::make_shared<robot_trajectory::RobotTrajectory>(robot_model_, planning_jmg_);
+      std::make_shared<robot_trajectory::RobotTrajectory>(robot_model_, planning_jmg_);
 
   // For each segment of trajectory
   for (std::size_t i = 0; i < model_sol_segments.size(); ++i)
@@ -1392,7 +1394,6 @@ robot_trajectory::RobotTrajectoryPtr BoltBaxter::processSegments(std::size_t ind
     //   BOLT_WARN(indent, true, "Invalid path");
     // }
 
-
     // Loop through each state in subtrajectory
     if (false)
       for (std::size_t i = 0; i < traj_segment->getWayPointCount(); ++i)
@@ -1400,7 +1401,7 @@ robot_trajectory::RobotTrajectoryPtr BoltBaxter::processSegments(std::size_t ind
         std::cout << "i: " << i << std::endl;
         viz6_->getVisualTools()->publishRobotState(traj_segment->getWayPoint(i), rvt::BLUE);
 
-        //traj_segment->getWayPoint(i).printStateInfo();
+        // traj_segment->getWayPoint(i).printStateInfo();
         waitForNextStep("next step");
       }
 
@@ -1428,32 +1429,33 @@ void BoltBaxter::chooseStartGoal(std::size_t run_id, std::size_t indent)
 
   switch (problem_type_)
   {
-    case 0: // random
+    case 0:                       // random
       if (!connect_to_hardware_)  // if running on hardware, these markers are not needed
         imarker_start_->setToRandomState();
       imarker_goal_->setToRandomState();
       break;
-    case 1: // imarkers
+    case 1:  // imarkers
       // do nothing
       break;
-    case 2: // imarker goal list
-      {
-        // start is always the same
-        imarker_start_->getRobotState()->setToDefaultValues(planning_jmg_, "both_ready");
-        imarker_start_->publishState();
+    case 2:  // imarker goal list
+    {
+      // start is always the same
+      imarker_start_->getRobotState()->setToDefaultValues(planning_jmg_, "both_ready");
+      imarker_start_->publishState();
 
-        // load goals
-        std::vector<moveit::core::RobotStatePtr> robot_states;
-        loadIMarkersFromFile(robot_states, indent);
+      // load goals
+      std::vector<moveit::core::RobotStatePtr> robot_states;
+      loadIMarkersFromFile(robot_states, indent);
 
-        // choose goal
-        std::size_t state_id = run_id % robot_states.size();
-        std::cout << "total states: " << robot_states.size() << " run_id: " << run_id << " state_id: " << state_id << std::endl;
+      // choose goal
+      std::size_t state_id = run_id % robot_states.size();
+      std::cout << "total states: " << robot_states.size() << " run_id: " << run_id << " state_id: " << state_id
+                << std::endl;
 
-        imarker_goal_->getRobotState() = robot_states[state_id];
-        imarker_goal_->publishState();
-      }
-      break;
+      imarker_goal_->getRobotState() = robot_states[state_id];
+      imarker_goal_->publishState();
+    }
+    break;
     default:
       ROS_ERROR_STREAM_NAMED(name_, "Unknown problem type");
   }

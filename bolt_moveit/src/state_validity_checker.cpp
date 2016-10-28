@@ -78,12 +78,12 @@ void bolt_moveit::StateValidityChecker::setVerbose(bool flag)
 
 bool bolt_moveit::StateValidityChecker::isValid(const ompl::base::State *state, bool verbose) const
 {
-  verbose = false; // hack
+  verbose = false;  // hack
 
   // check bounds
   if (!si_->satisfiesBounds(state))
   {
-    //if (verbose)
+    // if (verbose)
     ROS_INFO("State outside bounds 2");
     return false;
   }
@@ -132,11 +132,11 @@ bool bolt_moveit::StateValidityChecker::isValid(const ompl::base::State *state, 
 
 bool bolt_moveit::StateValidityChecker::isValid(const ompl::base::State *state, double &dist, bool verbose) const
 {
-  verbose = false; // hack
+  verbose = false;  // hack
 
   if (!si_->satisfiesBounds(state))
   {
-    //if (verbose)
+    // if (verbose)
     ROS_INFO("State outside bounds");
     return false;
   }

@@ -200,7 +200,6 @@ public:
   // Execute trajectories
   moveit_boilerplate::ExecutionInterfacePtr execution_interface_;
 
-
   // Interpolate and parameterize trajectories
   moveit_boilerplate::PlanningInterfacePtr planning_interface_;
 

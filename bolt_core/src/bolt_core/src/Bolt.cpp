@@ -255,10 +255,11 @@ void Bolt::processResults(std::size_t indent)
       break;
     case base::PlannerStatus::EXACT_SOLUTION:
     {
-      //og::PathGeometric smoothedModelSolPath = og::SimpleSetup::getSolutionPath();  // copied so that it is non-const
+      // og::PathGeometric smoothedModelSolPath = og::SimpleSetup::getSolutionPath();  // copied so that it is non-const
       og::PathGeometricPtr smoothedModelSolPath = boltPlanner_->getSmoothedModelSolPath();
       BOLT_BLUE(indent, true, "Bolt Finished - solution found in " << planTime_ << " seconds with "
-                << smoothedModelSolPath->getStateCount() << " states");
+                                                                   << smoothedModelSolPath->getStateCount()
+                                                                   << " states");
 
       // Error check for repeated states
       if (!checkRepeatedStates(*smoothedModelSolPath, indent))
@@ -292,17 +293,17 @@ void Bolt::processResults(std::size_t indent)
 
 bool Bolt::doPostProcessing(std::size_t indent)
 {
-    BOLT_FUNC(indent, true, "doPostProcessing()");
+  BOLT_FUNC(indent, true, "doPostProcessing()");
 
-    for (geometric::PathGeometricPtr queuedSolutionPath : queuedModelSolPaths_)
-    {
-      sparseGenerator_->addExperiencePath(queuedSolutionPath, indent);
-    }
+  for (geometric::PathGeometricPtr queuedSolutionPath : queuedModelSolPaths_)
+  {
+    sparseGenerator_->addExperiencePath(queuedSolutionPath, indent);
+  }
 
-    // Remove all inserted paths from the queue
-    queuedModelSolPaths_.clear();
+  // Remove all inserted paths from the queue
+  queuedModelSolPaths_.clear();
 
-    return true;
+  return true;
 }
 
 bool Bolt::checkRepeatedStates(const og::PathGeometric &path, std::size_t indent)
