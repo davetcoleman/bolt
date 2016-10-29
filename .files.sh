@@ -59,7 +59,7 @@
 /home/dave/ros/current/ws_swri/src/bolt/bolt_moveit/src/model_based_state_space.cpp
 /home/dave/ros/current/ws_swri/src/bolt/bolt_moveit/include/bolt_moveit/model_based_state_space.h
 /home/dave/ros/current/ws_swri/src/bolt/bolt_moveit/include/bolt_moveit/model_size_state_space.h
-/home/dave/ros/current/ws_swri/src/bolt/bolt_moveit/include/bolt_moveit/ompl_rosparam.h
+/home/dave/ros/current/ws_swri/src/bolt/bolt_ros/include/bolt_ros/ompl_rosparam.h
 
 /home/dave/ros/current/ws_swri/src/bolt/bolt_2d/src/bolt_2d.cpp
 /home/dave/ros/current/ws_swri/src/bolt/bolt_2d/src/two_dim_viz_window.cpp

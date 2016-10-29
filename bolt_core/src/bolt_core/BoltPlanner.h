@@ -242,6 +242,8 @@ protected:
   /** \brief The instance of the path simplifier */
   geometric::PathSimplifierPtr path_simplifier_;
 
+  base::ValidStateSamplerPtr sampler_;
+
   /** \brief Used by getPathOffGraph */
   std::vector<bolt::TaskVertex> startVertexCandidateNeighbors_;
   std::vector<bolt::TaskVertex> goalVertexCandidateNeighbors_;
@@ -273,7 +275,7 @@ public:
   bool verbose_ = false;
   bool vCollisionCheck_ = false;
   bool vSampling_ = true;
-
+  bool vNearestNeighbor_ = false;
   /** \brief Visualize original solution from graph before smoothing */
   bool visualizeRawTrajectory_ = true;
 

@@ -18,6 +18,7 @@
 
   <depend>ompl</depend>
   <depend>valgrind</depend>
+  <depend>moveit_ros_visualization</depend>
 
   <export>
   </export>

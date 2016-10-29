@@ -272,7 +272,6 @@ public:
     visual->setVizWindow(7, viz6_);  // TODO: this is really hacky
 
     // Set other hooks
-    visual->setWaitForUserFeedback(boost::bind(&Bolt2D::waitForNextStep, this, _1));
     visual->setVizVoronoiDiagram(boost::bind(&Bolt2D::voronoiDiagram, this));
 
     return true;
@@ -513,9 +512,6 @@ public:
         else
           viz1_->deleteAllMarkers();  // delete them, but do not trigger
 
-        // if (trial_id > 0 || map_id > 0)
-        //   waitForNextStep("cleared data - memory should be low");
-
         // Load the map
         std::string image_path = package_path_ + "/resources/trial_set/";
         image_path.append(trial_maps[map_id] + ".ppm");
@@ -573,7 +569,6 @@ public:
         bolt_->getSparseGenerator()->dumpLog();
       else
         sparse_two_->dumpLog();
-      // waitForNextStep("copy data");
 
       // Create high level log entry
       std::stringstream line;
@@ -686,7 +681,7 @@ public:
       // logging_file.flush();
 
       if (visualize_wait_between_plans_)
-        waitForNextStep("run next problem");
+        viz1_->prompt("run next problem");
       else  // Main pause between planning instances - allows user to analyze
         ros::Duration(visualize_time_between_plans_).sleep();
 
@@ -968,11 +963,6 @@ public:
       publishViewFinderFrame(rvt::MEDIUM);
 
     viz_bg_->trigger();
-  }
-
-  void waitForNextStep(const std::string &msg)
-  {
-    remote_control_.waitForNextStep(msg);
   }
 
   /** \brief Show 2d world image */

@@ -106,6 +106,7 @@ public:
   void deleteAllMarkers(bool clearDatabase = true);
 
   void loadVisualTools();
+  void loadOMPLVisualTools();
 
   void visualizeStartGoal();
 
@@ -168,6 +169,7 @@ public:
   moveit::core::RobotStatePtr mirror_state_;
 
   // The visual tools for interfacing with Rviz
+  std::vector<moveit_visual_tools::MoveItVisualToolsPtr> visual_tools_;
   std::vector<bolt_moveit::MoveItVizWindowPtr> vizs_;
   bolt_moveit::MoveItVizWindowPtr viz1_;
   bolt_moveit::MoveItVizWindowPtr viz2_;

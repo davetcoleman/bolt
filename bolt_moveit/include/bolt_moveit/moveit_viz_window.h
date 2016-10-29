@@ -243,6 +243,11 @@ public:
     eef_link_models_ = links;
   }
 
+  void prompt(const std::string &msg)
+  {
+    visuals_->prompt(msg);
+  }
+
 private:
   /** \brief Short name of class */
   std::string name_;

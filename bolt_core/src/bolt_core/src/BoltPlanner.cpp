@@ -106,6 +106,10 @@ void BoltPlanner::setExperienceDB(const TaskGraphPtr &taskGraph)
 void BoltPlanner::setup(void)
 {
   Planner::setup();
+
+  // Choose sampler based on clearance
+  std::size_t indent = 0;
+  sampler_ = taskGraph_->getSparseGraph()->getSampler(modelSI_, taskGraph_->getSparseGraph()->getObstacleClearance(), indent);
 }
 
 base::PlannerStatus BoltPlanner::solve(Termination &ptc)
@@ -219,7 +223,7 @@ bool BoltPlanner::getPathOffGraph(const base::CompoundState *start, const base::
   BOLT_FUNC(indent, verbose_, "getPathOffGraph()");
 
   // Attempt to connect to graph x times, because if it fails we start adding samples
-  std::size_t maxAttempts = 100;
+  std::size_t maxAttempts = 1000;
   std::size_t attempt = 0;
   for (; attempt < maxAttempts; ++attempt)
   {
@@ -241,13 +245,13 @@ bool BoltPlanner::getPathOffGraph(const base::CompoundState *start, const base::
 
     // Goal
     level = taskGraph_->getTaskLevel(goal);
-    BOLT_DEBUG(indent, verbose_, "Looking for a node near the problem goal on level " << level);
+    BOLT_DEBUG(indent, vNearestNeighbor_, "Looking for a node near the problem goal on level " << level);
     if (!findGraphNeighbors(goal, goalVertexCandidateNeighbors_, level, indent))
     {
-      BOLT_DEBUG(indent, verbose_, "No graph neighbors found for goal");
+      BOLT_DEBUG(indent, vNearestNeighbor_, "No graph neighbors found for goal");
       return false;
     }
-    BOLT_DEBUG(indent, verbose_, "Found " << goalVertexCandidateNeighbors_.size() << " nodes near goal");
+    BOLT_DEBUG(indent, vNearestNeighbor_, "Found " << goalVertexCandidateNeighbors_.size() << " nodes near goal");
 
     // Get paths between start and goal
     bool feedbackStartFailed;
@@ -322,6 +326,9 @@ bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
         BOLT_DEBUG(indent + 2, verbose_, "getPathOnGraph() interrupted because termination condition is true.");
         return false;
       }
+
+      //visual_->viz6()->state(taskGraph_->getModelBasedState(goalVertex), tools::ROBOT, tools::GREEN, 1);
+      //visual_->prompt("nearby goal");
 
       // Check if this goal is visible from the actual goal
       if (!taskGraph_->checkMotion(actualGoal, taskGraph_->getCompoundState(goalVertex)))
@@ -576,17 +583,15 @@ bool BoltPlanner::lazyCollisionCheck(std::vector<TaskVertex> &vertexPath, Termin
 bool BoltPlanner::findGraphNeighbors(const base::CompoundState *state, std::vector<TaskVertex> &neighbors,
                                      int requiredLevel, std::size_t indent)
 {
-  BOLT_FUNC(indent, verbose_, "findGraphNeighbors()");
+  double sparseDeltaFractionSecondary = 0.1;
+  double radius = sparseDeltaFractionSecondary * modelSI_->getMaximumExtent();
+
+  BOLT_FUNC(indent, vNearestNeighbor_, "findGraphNeighbors() search radius " << radius);
 
   BOLT_ASSERT(requiredLevel == 0 || requiredLevel == 2, "Wrong required level");
 
   // Reset
   neighbors.clear();
-
-  // Search within double the radius of the sparse delta
-  // Technically you should only need to search within 1x, but collisions etc could possibly require looking in
-  // a larger region
-  // double radius = taskGraph_->getSparseGraph()->getSparseDelta() * 2.0;
 
   // Setup search by getting a non-const version of the focused state
   const std::size_t threadID = 0;
@@ -597,14 +602,14 @@ bool BoltPlanner::findGraphNeighbors(const base::CompoundState *state, std::vect
 
   // Search
   taskGraph_->getCompoundQueryStateNonConst(taskGraph_->getQueryVertices()[threadID]) = stateCopy;
-  // taskGraph_->nn_->nearestR(taskGraph_->getQueryVertices()[threadID], radius, neighbors);
-  taskGraph_->getNN()->nearestK(taskGraph_->getQueryVertices()[threadID], kNearestNeighbors_, neighbors);
+  //taskGraph_->getNN()->nearestR(taskGraph_->getQueryVertices()[threadID], radius, neighbors);
+  taskGraph_->getNN()->nearestK(taskGraph_->getQueryVertices()[threadID], 120, neighbors);
   taskGraph_->getCompoundQueryStateNonConst(taskGraph_->getQueryVertices()[threadID]) = nullptr;
 
   // Convert our list of neighbors to the proper level
   if (requiredLevel == 2)
   {
-    BOLT_DEBUG(indent, verbose_, "Converting vector of level 0 neighbors to level 2 neighbors");
+    BOLT_DEBUG(indent, vNearestNeighbor_, "Converting vector of level 0 neighbors to level 2 neighbors");
 
     for (std::size_t i = 0; i < neighbors.size(); ++i)
     {
@@ -1023,35 +1028,37 @@ void BoltPlanner::addSamples(const base::State *near, std::size_t indent)
 {
   BOLT_FUNC(indent, true, "addSamples()");
 
-  // Choose sampler based on clearance
-  base::ValidStateSamplerPtr sampler =
-      taskGraph_->getSparseGraph()->getSampler(modelSI_, taskGraph_->getSparseGraph()->getObstacleClearance(), indent);
-  sampler->setNrAttempts(1000);
+  sampler_->setNrAttempts(1000);
 
   std::size_t numAttempts = 100;
+  //std::size_t numAttempts = 10;
   for (std::size_t i = 0; i < numAttempts; ++i)
   {
     // 0.1 is magic num
     const double magic_fraction = 0.05;  // TODO
     double distance = i / double(numAttempts) * magic_fraction * taskGraph_->getSparseGraph()->getSparseDelta();
 
+    //double fraction = std::max(0.5, i / double(numAttempts));
+    //double distance = magic_fraction * taskGraph_->getSparseGraph()->getSparseDelta();
+    //std::cout << "distance: " << distance << std::endl;
+
     base::State *candidateState = modelSI_->getStateSpace()->allocState();
 
     if (near)
     {
-      if (!sampler->sampleNear(candidateState, near, distance))
+      if (!sampler_->sampleNear(candidateState, near, distance))
         throw Exception(name_, "Unable to find valid sample near state");
     }
     else
     {
-      if (!sampler->sample(candidateState))
+      if (!sampler_->sample(candidateState))
         throw Exception(name_, "Unable to find valid sample");
     }
 
     // Visualize
     if (visualizeSampling_)
     {
-      //visual_->viz6()->state(candidateState, tools::ROBOT, tools::DEFAULT, 1);
+      visual_->viz6()->state(candidateState, tools::ROBOT, tools::DEFAULT, 1);
       if (near)
         visual_->viz6()->state(candidateState, tools::MEDIUM, tools::CYAN, 1);
       else // sampling whole space
@@ -1110,13 +1117,13 @@ void BoltPlanner::addSamples(const base::State *near, std::size_t indent)
         visual_->viz6()->edge(taskGraph_->getModelBasedState(v2), candidateState, tools::XXSMALL, tools::ORANGE);
     }  // for each neighbor
 
-    BOLT_INFO(indent, vSampling_, "Sampling " << i << " at distance " << distance << ", removed " << invalid
+    BOLT_INFO(indent, vSampling_, "Found sample " << i << " at distance " << distance << ", removed " << invalid
                                               << " edges out of " << graphNeighborhood.size() << " neighbors");
 
     if (visualizeSampling_)
     {
       visual_->viz6()->trigger();
-      visual_->waitForUserFeedback("next sample");
+      //visual_->waitForUserFeedback("next sample");
     }
 
     if (visual_->viz3()->shutdownRequested())

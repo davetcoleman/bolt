@@ -199,36 +199,7 @@ BoltBaxter::BoltBaxter(const std::string &hostname, const std::string &package_p
     exit(-1);
   }
 
-  // Set Rviz visuals in OMPL planner
-  ot::VisualizerPtr visual = bolt_->getVisual();
-
-  visual->setVizWindow(1, viz1_);
-  visual->setVizWindow(2, viz2_);
-  visual->setVizWindow(3, viz3_);
-  visual->setVizWindow(4, viz4_);
-  visual->setVizWindow(5, viz5_);
-  visual->setVizWindow(6, viz6_);
-
-  // Projection viewer - mirrors MoveItVisualTools 6
-  {
-    viz6_->getVisualTools()->setGlobalScale(1.0);
-
-    using namespace bolt_moveit;
-    ProjectionVizWindowPtr viz = ProjectionVizWindowPtr(new ProjectionVizWindow(viz2_->getVisualTools(), si_));
-    // Calibrate the color scale for visualization
-    const bool invert_colors = true;
-    viz->setMinMaxEdgeCost(0, 110, invert_colors);
-    viz->setMinMaxEdgeRadius(0.001, 0.004);
-    viz->setMinMaxStateRadius(1, 4);
-
-    visual->setVizWindow(7, viz);
-  }
-
-  // Allow collision checker to visualize
-  validity_checker_->setVisual(visual);
-
-  // Set other hooks
-  //visual->setWaitForUserFeedback(boost::bind(&BoltBaxter::waitForNextStep, this, _1));
+  loadOMPLVisualTools();
 
   // Add a collision objects
   loadScene(indent);
@@ -248,7 +219,7 @@ BoltBaxter::BoltBaxter(const std::string &hostname, const std::string &package_p
 
   // Wait until user does something
   if (!auto_run_)
-    viz1_->getVisualTools()->prompt("run first problem");
+    viz1_->prompt("run first problem");
 
   // Run application
   run(indent);
@@ -267,7 +238,8 @@ BoltBaxter::~BoltBaxter()
 
 bool BoltBaxter::loadOMPL()
 {
-  bolt_moveit::ModelBasedStateSpaceSpecification mbss_spec(robot_model_, planning_jmg_, viz6_->getVisualTools());
+  std::size_t visual_id = 6; // use 6th for sampler
+  bolt_moveit::ModelBasedStateSpaceSpecification mbss_spec(robot_model_, planning_jmg_, visual_tools_[visual_id]);
 
   // Construct the state space we are planning in
   space_ = bolt_moveit::chooseModelSizeStateSpace(mbss_spec);
@@ -521,7 +493,7 @@ bool BoltBaxter::runProblems(std::size_t indent)
     // }
 
     if (visualize_wait_between_plans_ && run_id < num_problems_ - 1)
-      viz1_->getVisualTools()->prompt("run next problem");
+      viz1_->prompt("run next problem");
     else  // Main pause between planning instances - allows user to analyze
       ros::Duration(visualize_time_between_plans_).sleep();
 
@@ -601,7 +573,7 @@ bool BoltBaxter::plan(std::size_t indent)
     {
       bool wait_for_execution = true;
       execution_interface_->executeTrajectory(execution_traj, planning_jmg_, wait_for_execution);
-      viz1_->getVisualTools()->prompt("execute again");
+      viz1_->prompt("execute again");
     }
   }
   else  // Simulation
@@ -663,14 +635,13 @@ void BoltBaxter::deleteAllMarkers(bool clearDatabase)
 
 void BoltBaxter::loadVisualTools()
 {
-  using namespace bolt_moveit;
+  // Load the ROS part, but not the OMPL part until loadOMPL has occured
   using namespace moveit_visual_tools;
 
-  Eigen::Affine3d offset;
   std::string namesp = nh_.getNamespace();
-  moveit_start_->setToDefaultValues();
 
   const std::size_t NUM_VISUALS = 6;
+  visual_tools_.resize(NUM_VISUALS + 1);
   for (std::size_t i = 1; i <= NUM_VISUALS; ++i)
   {
     MoveItVisualToolsPtr moveit_visual = MoveItVisualToolsPtr(new MoveItVisualTools(
@@ -680,8 +651,21 @@ void BoltBaxter::loadVisualTools()
     moveit_visual->setManualSceneUpdating(true);
     moveit_visual->setGlobalScale(0.8);
     moveit_visual->enableBatchPublishing();
+    visual_tools_[i] = moveit_visual;
+  }
+}
 
-    MoveItVizWindowPtr viz = MoveItVizWindowPtr(new MoveItVizWindow(moveit_visual, si_));
+void BoltBaxter::loadOMPLVisualTools()
+{
+  using namespace bolt_moveit;
+
+  Eigen::Affine3d offset;
+  std::string namesp = nh_.getNamespace();
+  moveit_start_->setToDefaultValues();
+  const std::size_t NUM_VISUALS = 6;
+  for (std::size_t i = 1; i <= NUM_VISUALS; ++i)
+  {
+    MoveItVizWindowPtr viz = MoveItVizWindowPtr(new MoveItVizWindow(visual_tools_[i], si_));
     viz->setJointModelGroup(planning_jmg_);
     for (std::size_t i = 0; i < arm_datas_.size(); ++i)
     {
@@ -692,11 +676,11 @@ void BoltBaxter::loadVisualTools()
     if (!headless_)
     {
       // Load publishers
-      moveit_visual->loadRobotStatePub(namesp + "/robot_state" + std::to_string(i), blocking);
+      visual_tools_[i]->loadRobotStatePub(namesp + "/robot_state" + std::to_string(i), blocking);
 
       // Load trajectory publisher - ONLY for viz6
       if (i == 6)
-        moveit_visual->loadTrajectoryPub("/baxter/display_trajectory", blocking);
+        visual_tools_[i]->loadTrajectoryPub("/baxter/display_trajectory", blocking);
     }
 
     // Calibrate the color scale for visualization
@@ -729,7 +713,7 @@ void BoltBaxter::loadVisualTools()
   {
     for (std::size_t i = 1; i <= NUM_VISUALS; ++i)
     {
-      MoveItVisualToolsPtr moveit_visual = vizs_[i - 1]->getVisualTools();
+      moveit_visual_tools::MoveItVisualToolsPtr moveit_visual = vizs_[i - 1]->getVisualTools();
       // Get TF
       getTFTransform("world", "world_visual" + std::to_string(i), offset);
       moveit_visual->enableRobotStateRootOffet(offset);
@@ -752,11 +736,39 @@ void BoltBaxter::loadVisualTools()
       vizs_[i - 1]->getVisualTools()->waitForMarkerPub(wait_time);
 
       // Show the initial robot state
-      MoveItVisualToolsPtr moveit_visual = vizs_[i - 1]->getVisualTools();
+      moveit_visual_tools::MoveItVisualToolsPtr moveit_visual = vizs_[i - 1]->getVisualTools();
       usleep(0.001 * 1000000);
       moveit_visual->publishRobotState(moveit_start_);
     }
   }
+
+  // Set Rviz visuals in OMPL planner
+  ot::VisualizerPtr visual = bolt_->getVisual();
+
+  visual->setVizWindow(1, viz1_);
+  visual->setVizWindow(2, viz2_);
+  visual->setVizWindow(3, viz3_);
+  visual->setVizWindow(4, viz4_);
+  visual->setVizWindow(5, viz5_);
+  visual->setVizWindow(6, viz6_);
+
+  // Projection viewer - mirrors MoveItVisualTools 6
+  {
+    viz6_->getVisualTools()->setGlobalScale(1.0);
+
+    using namespace bolt_moveit;
+    ProjectionVizWindowPtr viz = ProjectionVizWindowPtr(new ProjectionVizWindow(viz2_->getVisualTools(), si_));
+    // Calibrate the color scale for visualization
+    const bool invert_colors = true;
+    viz->setMinMaxEdgeCost(0, 110, invert_colors);
+    viz->setMinMaxEdgeRadius(0.001, 0.004);
+    viz->setMinMaxStateRadius(1, 4);
+
+    visual->setVizWindow(7, viz);
+  }
+
+  // Allow collision checker to visualize
+  validity_checker_->setVisual(visual);
 
   deleteAllMarkers();
 }
@@ -842,7 +854,7 @@ bool BoltBaxter::generateCartGraph()
     if (!cart_path_planner_->populateBoltGraph(bolt_->getTaskGraph(), indent))
     {
       ROS_INFO_STREAM_NAMED(name_, "Unable to populate Bolt graph - try moving the start location");
-      viz1_->getVisualTools()->prompt("attempt Bolt graph generation again");
+      viz1_->prompt("attempt Bolt graph generation again");
       if (!ros::ok())
         exit(0);
     }
@@ -1073,7 +1085,7 @@ ob::State *BoltBaxter::combineStates(const ob::State *state1, const ob::State *s
     std::cout << "-------------------------------------------------------" << std::endl;
     both_arms_state_space_->printState(both_arms_state);
 
-    viz1_->getVisualTools()->prompt("compare combination");
+    viz1_->prompt("compare combination");
   }
 
   return both_arms_state;
@@ -1178,7 +1190,7 @@ void BoltBaxter::benchmarkMemoryAllocation(std::size_t indent)
     }
     ROS_INFO_STREAM_NAMED(name_, "Array Total time: " << (ros::Time::now() - start_time0).toSec() << " seconds");
   */
-  viz1_->getVisualTools()->prompt("finished running");
+  viz1_->prompt("finished running");
 
   std::cout << "-------------------------------------------------------" << std::endl;
   std::cout << std::endl;
@@ -1273,7 +1285,7 @@ void BoltBaxter::saveIMarkersToFile()
 
   while (ros::ok())
   {
-    viz1_->getVisualTools()->prompt("save state to file");
+    viz1_->prompt("save state to file");
 
     if (!imarker_goal_->isStateValid())
     {
@@ -1403,7 +1415,7 @@ robot_trajectory::RobotTrajectoryPtr BoltBaxter::processSegments(std::size_t ind
         viz6_->getVisualTools()->publishRobotState(traj_segment->getWayPoint(i), rvt::BLUE);
 
         // traj_segment->getWayPoint(i).printStateInfo();
-        viz1_->getVisualTools()->prompt("next step");
+        viz1_->prompt("next step");
       }
 
     // For the cartesian path, go real slow

@@ -247,7 +247,7 @@ ob::StateSamplerPtr ModelBasedStateSpace::allocDefaultStateSampler() const
 {
   return ompl::base::StateSamplerPtr(
       static_cast<ob::StateSampler *>(new DefaultStateSampler<ModelBasedStateSpace::StateType>(
-          this, spec_)));
+          this, &spec_)));
 }
 
 void ModelBasedStateSpace::printSettings(std::ostream &out) const

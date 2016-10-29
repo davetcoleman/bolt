@@ -45,13 +45,13 @@ template <typename T>
 class DefaultStateSampler : public ompl::base::StateSampler
 {
 public:
-  DefaultStateSampler(const ompl::base::StateSpace *space, ModelBasedStateSpaceSpecification spec)
+  DefaultStateSampler(const ompl::base::StateSpace *space, const ModelBasedStateSpaceSpecification* spec)
     : ompl::base::StateSampler(space)
-    , joint_model_group_(spec.joint_model_group_)
-    , joint_bounds_(&spec.joint_bounds_)
-    , robot_state_(spec.robot_model_)
-    , near_robot_state_(spec.robot_model_)
-    , visual_tools_(spec.visual_tools_)
+    , joint_model_group_(spec->joint_model_group_)
+    , joint_bounds_(&spec->joint_bounds_)
+    , robot_state_(spec->robot_model_)
+    , near_robot_state_(spec->robot_model_)
+    , visual_tools_(spec->visual_tools_)
   {
   }
 
@@ -62,10 +62,18 @@ public:
 
   virtual void sampleUniformNear(ompl::base::State *state, const ompl::base::State *near, const double distance)
   {
-    ROS_INFO_STREAM("sampleUniformNear()");
+    //ROS_INFO_STREAM("sampleUniformNear()");
     // Original method:
-    // joint_model_group_->getVariableRandomPositionsNearBy(moveit_rng_, state->as<T>()->values, *joint_bounds_,
-    //                                                      near->as<T>()->values, distance);
+
+    // if (visual_tools_->iRand(0,1))
+    // {
+    //   std::cout << "1 " << std::endl;
+      joint_model_group_->getVariableRandomPositionsNearBy(moveit_rng_, state->as<T>()->values, *joint_bounds_,
+                                                           near->as<T>()->values, distance);
+      return;
+    // }
+    // else
+    //   std::cout << "2 " << std::endl;
 
     // New method: use FK
 
@@ -84,43 +92,43 @@ public:
 
     // For each end effector save the pose
     for (const moveit::core::LinkModel *ee_parent_link : tips)
+    {
       near_poses.push_back(near_robot_state_.getGlobalLinkTransform(ee_parent_link));
+    }
 
     // Sample randomly until within desired distance
     std::size_t count = 0;
     while (ros::ok())
     {
-      std::cout << "while loop " << count++ << std::endl;
+      count++;
 
       // Sample a random state
       robot_state_.setToRandomPositions(joint_model_group_, moveit_rng_);
 
-      // Get the poses
-      EigenSTL::vector_Affine3d state_poses;
-
-      // For each end effector save the pose
-      for (const moveit::core::LinkModel *ee_parent_link : tips)
-        state_poses.push_back(near_robot_state_.getGlobalLinkTransform(ee_parent_link));
-
       // Get the total distance between poses of arms
-      double dist = 0;
+      double this_dist = 0;
       for (std::size_t i = 0; i < tips.size(); ++i)
       {
-        dist += getPoseDistance(state_poses[i], near_poses[i]);
-        std::cout << "dist: " << dist << std::endl;
+        // std::cout << "state " << std::endl;
+        // visual_tools_->printTransform(state_poses[i]);
+        // std::cout << "near " << std::endl;
+        // visual_tools_->printTransform(near_poses[i]);
+
+        this_dist += getPoseDistance(robot_state_.getGlobalLinkTransform(tips[i]), near_poses[i]);
+        //std::cout << "   this_dist: " << this_dist << " desired: " << distance << std::endl;
       }
+      //std::cout << count << "   this_dist: " << this_dist << " desired: " << distance << std::endl;
 
-      if (dist < distance)
+      if (this_dist < distance)
         break;
+
+      //visual_tools_->publishRobotState(robot_state_);
+      //visual_tools_->prompt("generate next random pose");
     }
+    //ROS_DEBUG_STREAM_NAMED(name_, "Found nearby (" << distance << ") sample after " << count << " iterations");
 
-    std::cout << "found nearby pose " << std::endl;
-    visual_tools_->publishRobotState(robot_state_);
-    visual_tools_->prompt("found nearby pose");
-
-    std::cout << "should prompt " << std::endl;
-ros::Duration(10).sleep();
-
+    //visual_tools_->publishRobotState(robot_state_);
+    // visual_tools_->prompt("found utilized pose");
 
 
     // Convert to ompl robot state
@@ -135,18 +143,14 @@ ros::Duration(10).sleep();
   double getPoseDistance(const Eigen::Affine3d &from_pose, const Eigen::Affine3d &to_pose)
   {
     const double translation_dist = (from_pose.translation() - to_pose.translation()).norm();
-    // const double distance_wrist_to_finger = 0.25; // meter
 
     const Eigen::Quaterniond from(from_pose.rotation());
     const Eigen::Quaterniond to(to_pose.rotation());
 
-    // std::cout << "From: " << from.x() << ", " << from.y() << ", " << from.z() << ", " << from.w() << std::endl;
-    // std::cout << "To: " << to.x() << ", " << to.y() << ", " << to.z() << ", " << to.w() << std::endl;
+    const double rotational_dist = arcLength(from, to);
 
-    double rotational_dist = arcLength(from, to);  // * distance_wrist_to_finger;
-
-    std::cout << "  Translation_Dist: " << std::fixed << std::setprecision(4) << translation_dist
-              << " rotational_dist: " << rotational_dist << std::endl;
+    // std::cout << "  Translation_Dist: " << std::fixed << std::setprecision(4) << translation_dist
+    //           << " rotational_dist: " << rotational_dist << std::endl;
 
     return rotational_dist + translation_dist;
   }

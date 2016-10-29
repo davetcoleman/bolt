@@ -195,8 +195,9 @@ bolt_planner:
   smoothing_enabled: true
   verbose:
     verbose: false
+    nearest_neighbor: true
     collision_check: false
-    sampling: false
+    sampling: true
   visualize:
     raw_trajectory: true
     smooth_trajectory: true
