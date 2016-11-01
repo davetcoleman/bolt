@@ -445,6 +445,9 @@ bool BoltBaxter::runProblems(std::size_t indent)
     std::string file_path;
     bolt_moveit::getFilePath(file_path, "bolt_baxter_logging.csv", "ros/ompl_storage");
     logging_file.open(file_path.c_str(), std::ios::out | std::ios::app);
+
+    // Header of CSV file
+    logging_file << "planner, planTime, pathLength, verticesAdded, edgesAdded" << std::endl;
   }
 
   // Run the demo the desired number of times
@@ -648,7 +651,8 @@ void BoltBaxter::loadCollisionChecker()
 
   // The interval in which obstacles are checked for between states
   // seems that it default to 0.01 but doesn't do a good job at that level
-  si_->setStateValidityCheckingResolution(0.005);
+  //si_->setStateValidityCheckingResolution(0.005);
+  si_->setStateValidityCheckingResolution(0.001);
 }
 
 void BoltBaxter::deleteAllMarkers(bool clearDatabase)
@@ -1455,6 +1459,14 @@ robot_trajectory::RobotTrajectoryPtr BoltBaxter::processSimpleSolution(std::size
 robot_trajectory::RobotTrajectoryPtr BoltBaxter::processSegments(std::size_t indent)
 {
   BOLT_FUNC(indent, true, "processSegments()");
+
+  visual_->waitForUserFeedback("before processSegments");
+
+  // Visualize if not already done so within BoltPlanner
+  if (!bolt_->getBoltPlanner()->visualizeRawTrajectory_)
+    bolt_->getBoltPlanner()->visualizeRaw(indnet);
+  if (!bolt_->getBoltPlanner()->visualizeSmoothTrajectory_)
+    bolt_->getBoltPlanner()->visualizeSmoothed(indent);
 
   // Get solution segments
   std::vector<og::PathGeometricPtr> model_sol_segments = bolt_->getBoltPlanner()->getModelSolSegments();

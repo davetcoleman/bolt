@@ -1092,7 +1092,7 @@ void SparseGenerator::benchmarkMemoryAllocation(std::size_t indent)
 
 ExperiencePathStats SparseGenerator::addExperiencePath(geometric::PathGeometricPtr path, std::size_t indent)
 {
-  BOLT_FUNC(indent, true, "addExperiencePath()");
+  BOLT_FUNC(indent, true, "addExperiencePath() with " << path->getStateCount() << " states");
   const std::size_t threadID = 0;
 
   // Reset this class

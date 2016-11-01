@@ -143,8 +143,6 @@ private:
 
 public:
 
-  void logInitialize();
-
   void convertLogToString();
 
   /** \brief Display debug data about potential available solutions */

@@ -189,7 +189,8 @@ base::PlannerStatus BoltPlanner::solve(base::CompoundState *startState, base::Co
   origModelSolPath_ = taskGraph_->convertPathToNonCompound(origCompoundSolPath_);
 
   // Visualize
-  visualizeRaw(indent);
+  if (visualizeRawTrajectory_)
+    visualizeRaw(indent);
 
   // Create new PathGeometric that we can modify by smoothing
   smoothedCompoundSolPath_.reset(new geometric::PathGeometric(*origCompoundSolPath_));
@@ -205,7 +206,8 @@ base::PlannerStatus BoltPlanner::solve(base::CompoundState *startState, base::Co
   smoothedModelSolPath_ = taskGraph_->convertPathToNonCompound(smoothedCompoundSolPath_);
 
   // Visualize
-  visualizeSmoothed(indent);
+  if (visualizeSmoothTrajectory_)
+    visualizeSmoothed(indent);
 
   // Save solution
   // double approximateDifference = -1;
@@ -1030,8 +1032,7 @@ void BoltPlanner::addSamples(const base::State *near, std::size_t indent)
 
   sampler_->setNrAttempts(1000);
 
-  std::size_t numAttempts = 100;
-  //std::size_t numAttempts = 10;
+  std::size_t numAttempts = 10;
   for (std::size_t i = 0; i < numAttempts; ++i)
   {
     // 0.1 is magic num
@@ -1133,44 +1134,31 @@ void BoltPlanner::addSamples(const base::State *near, std::size_t indent)
 
 void BoltPlanner::visualizeRaw(std::size_t indent)
 {
-  // Show raw trajectory
-  if (visualizeRawTrajectory_)
-  {
-    // Make the chosen path a different color and thickness
-    visual_->viz5()->path(origModelSolPath_.get(), tools::MEDIUM, tools::BLUE, tools::BLACK);
-    visual_->viz5()->trigger();
+  // Make the chosen path a different color and thickness
+  visual_->viz5()->path(origModelSolPath_.get(), tools::MEDIUM, tools::BLUE, tools::BLACK);
+  visual_->viz5()->trigger();
 
-    // Don't show raw trajectory twice in larger dimensions
-    if (si_->getStateSpace()->getDimension() == 3)
-    {
-      visual_->viz6()->path(origModelSolPath_.get(), tools::MEDIUM, tools::BLUE, tools::BLACK);
-      visual_->viz6()->trigger();
-    }
+  // Don't show raw trajectory twice in larger dimensions
+  if (si_->getStateSpace()->getDimension() == 3)
+  {
+    visual_->viz6()->path(origModelSolPath_.get(), tools::MEDIUM, tools::BLUE, tools::BLACK);
+    visual_->viz6()->trigger();
   }
 }
 
 void BoltPlanner::visualizeSmoothed(std::size_t indent)
 {
   // Show smoothed trajectory
-  if (visualizeSmoothTrajectory_)
+  visual_->viz6()->deleteAllMarkers();
+  for (std::size_t i = 0; i < smoothedModelSolSegments_.size(); ++i)
   {
-    visual_->viz6()->deleteAllMarkers();
-    for (std::size_t i = 0; i < smoothedModelSolSegments_.size(); ++i)
-    {
-      geometric::PathGeometricPtr modelSolutionSegment = smoothedModelSolSegments_[i];
-      if (i == 1)
-        visual_->viz6()->path(modelSolutionSegment.get(), tools::LARGE, tools::BLACK, tools::PURPLE);
-      else
-        visual_->viz6()->path(modelSolutionSegment.get(), tools::LARGE, tools::BLACK, tools::BLUE);
-    }
-    visual_->viz6()->trigger();
+    geometric::PathGeometricPtr modelSolutionSegment = smoothedModelSolSegments_[i];
+    if (i == 1)
+      visual_->viz6()->path(modelSolutionSegment.get(), tools::LARGE, tools::BLACK, tools::PURPLE);
+    else
+      visual_->viz6()->path(modelSolutionSegment.get(), tools::LARGE, tools::BLACK, tools::BLUE);
   }
-
-  // Show robot trajectory
-  if (visualizeRobotTrajectory_)
-  {
-    visual_->viz6()->path(smoothedModelSolPath_.get(), tools::ROBOT, tools::DEFAULT, tools::DEFAULT);
-  }
+  visual_->viz6()->trigger();
 
   if (visualizeWait_)
     visual_->waitForUserFeedback("after visualization");

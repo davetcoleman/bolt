@@ -38,9 +38,9 @@ bolt_baxter:
   velocity_scaling_factor: 1.0
 
   # solver type
-  #planner: bolt
+  planner: bolt
   #planner: spars2
-  planner: RRTConnect
+  #planner: RRTConnect
 
   # robot setup
   #planning_group_name: right_arm_minus_one
@@ -200,15 +200,15 @@ bolt_planner:
     collision_check: false
     sampling: true
   visualize:
-    raw_trajectory: true
-    smooth_trajectory: true
-    robot_trajectory: true
+    raw_trajectory: false
+    smooth_trajectory: false
+    robot_trajectory: false
     wait: false
     start_goal: false
     lazy_collision_check: false
     each_solution_step: false
     start_goal_unconnected: false
-    sampling: true
+    sampling: false
 
 # ====================================================
 cart_path_planner:

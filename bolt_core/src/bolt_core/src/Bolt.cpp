@@ -68,9 +68,6 @@ void Bolt::initialize(std::size_t indent)
 {
   BOLT_INFO(indent, true, "Initializing Bolt Framework");
 
-  // Headers for log
-  logInitialize();
-
   // Initalize visualizer class
   BOLT_INFO(indent, verbose_, "Loading visualizer");
   visual_.reset(new Visualizer());
@@ -177,27 +174,6 @@ void Bolt::setPlannerAllocator(const base::PlannerAllocator &pa)
   configured_ = false;
 }
 
-void Bolt::logInitialize()
-{
-  // Header of CSV file
-  csvDataLogStream_ << "planner, planTime, pathLength, verticesAdded, edgesAdded"
-                    << std::endl;
-      // Times
-    //<< "planningTime,insertion_time,"
-      // Solution properties
-      //<< "planner,result,is_saved,"
-      // Failure booleans
-    //<< "approximate,too_short,insertionFailed,"
-      // Lightning properties
-    //<< "score,"
-      // Thunder (SPARS) properties
-      //<< "numVertices,numEdges,numConnectedComponents,"
-      // Hack for using python cause im lazy right now
-    //<< "total_experiences,total_scratch,total_recall,total_failed,total_approximate,"
-    //<< "total_too_short,total_insertionFailed,"
-    //<< "avg_planningTime,avg_insertion_time" << std::endl;
-}
-
 base::PlannerStatus Bolt::solve(const base::PlannerTerminationCondition &ptc)
 {
   std::size_t indent = 0;
@@ -288,9 +264,8 @@ void Bolt::processResults(std::size_t indent)
       // og::PathGeometric smoothedModelSolPath = og::SimpleSetup::getSolutionPath();  // copied so that it is non-const
       og::PathGeometricPtr smoothedModelSolPath = boltPlanner_->getSmoothedModelSolPath();
       pathLength = smoothedModelSolPath->length();
-      BOLT_BLUE(indent, true, "Bolt Finished - solution found in " << planTime_ << " seconds with "
-                                                                   << smoothedModelSolPath->getStateCount()
-                                                                   << " states");
+      BOLT_BLUE(indent, true, "Bolt: solution found in " << planTime_ << " seconds with "
+                                                         << smoothedModelSolPath->getStateCount() << " states");
 
       // Error check for repeated states
       if (!checkRepeatedStates(*smoothedModelSolPath, indent))
@@ -303,29 +278,21 @@ void Bolt::processResults(std::size_t indent)
       // Stats
       stats_.numSolutionsSuccess_++;
 
-      // Make sure solution has at least 2 states
-      if (smoothedModelSolPath->getStateCount() < 2)
-      {
-        OMPL_ERROR("NOT saving to database because solution is less than 2 states long");
-        exit(-1);
-      }
-      else
-      {
-        // Queue the solution path for future insertion into experience database (post-processing)
-        //queuedModelSolPaths_.push_back(smoothedModelSolPath);
+      BOLT_ASSERT(smoothedModelSolPath->getStateCount() >= 2, "Solution is less than 2 states long");
 
-        result = sparseGenerator_->addExperiencePath(smoothedModelSolPath, indent);
-      }
+      // Queue the solution path for future insertion into experience database (post-processing)
+      // queuedModelSolPaths_.push_back(smoothedModelSolPath);
+
+      result = sparseGenerator_->addExperiencePath(smoothedModelSolPath, indent);
     }
     break;
     default:
       BOLT_ERROR(indent, "Unknown status type: " << lastStatus_);
       stats_.numSolutionsFailed_++;
-  } // end switch
+  }  // end switch
 
-  csvDataLogStream_ << "Bolt, " << planTime_ << ", " << pathLength // basic planning stats
-                    << ", " << result.numVerticesAdded_ << ", " << result.numEdgesAdded_
-                    << std::endl;
+  csvDataLogStream_ << "Bolt, " << planTime_ << ", " << pathLength  // basic planning stats
+                    << ", " << result.numVerticesAdded_ << ", " << result.numEdgesAdded_ << std::endl;
 }
 
 bool Bolt::doPostProcessing(std::size_t indent)

@@ -57,7 +57,6 @@ public:
 
   virtual void sampleUniform(ompl::base::State *state)
   {
-    std::cout << "samplerUniform " << std::endl;
     joint_model_group_->getVariableRandomPositions(moveit_rng_, state->as<T>()->values, *joint_bounds_);
   }
 
