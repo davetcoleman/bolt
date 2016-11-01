@@ -56,6 +56,7 @@
 
 // OMPL
 #include <ompl/tools/thunder/Thunder.h>
+#include <ompl/geometric/SimpleSetup.h>
 #include <bolt_core/Bolt.h>
 #include <bolt_moveit/moveit_viz_window.h>
 
@@ -138,6 +139,8 @@ public:
 
   void loadIMarkers();
 
+  robot_trajectory::RobotTrajectoryPtr processSimpleSolution(std::size_t indent);
+
   robot_trajectory::RobotTrajectoryPtr processSegments(std::size_t indent);
 
   void chooseStartGoal(std::size_t run_id, std::size_t indent);
@@ -154,7 +157,7 @@ public:
   std::string package_path_;
 
   // Save the experience setup until the program ends so that the planner data is not lost
-  ompl::tools::ExperienceSetupPtr experience_setup_;
+  ompl::geometric::SimpleSetupPtr simple_setup_;
   ompl::tools::bolt::BoltPtr bolt_;
 
   // Configuration space
@@ -171,12 +174,9 @@ public:
   // The visual tools for interfacing with Rviz
   std::vector<moveit_visual_tools::MoveItVisualToolsPtr> visual_tools_;
   std::vector<bolt_moveit::MoveItVizWindowPtr> vizs_;
-  bolt_moveit::MoveItVizWindowPtr viz1_;
-  bolt_moveit::MoveItVizWindowPtr viz2_;
-  bolt_moveit::MoveItVizWindowPtr viz3_;
-  bolt_moveit::MoveItVizWindowPtr viz4_;
-  bolt_moveit::MoveItVizWindowPtr viz5_;
-  bolt_moveit::MoveItVizWindowPtr viz6_;
+  ompl::tools::VisualizerPtr visual_;
+
+  // TODO: remove these?
   moveit_visual_tools::MoveItVisualToolsPtr visual_moveit_start_;  // Clone of ompl1
   moveit_visual_tools::MoveItVisualToolsPtr visual_moveit_goal_;   // Clone of ompl2
 
@@ -214,9 +214,10 @@ public:
   int post_processing_interval_;
 
   // Type of planner
-  std::string experience_planner_;
+  std::string planner_;
   bool is_bolt_ = false;
   bool is_thunder_ = false;
+  bool is_simple_setup_ = false;
 
   // Mirroring
   bool mirror_graph_;
