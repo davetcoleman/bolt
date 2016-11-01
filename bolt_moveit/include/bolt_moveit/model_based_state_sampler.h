@@ -32,20 +32,20 @@
 *  POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************/
 
-/* Author: Ioan Sucan, Dave Coleman */
+/* Author: Dave Coleman, Ioan Sucan */
 
-#ifndef BOLT_MOVEIT_DETAILS_DEFAULT_STATE_SAMPLER_
-#define BOLT_MOVEIT_DETAILS_DEFAULT_STATE_SAMPLER_
+#ifndef BOLT_MOVEIT_MODEL_BASED_STATE_SAMPLER_
+#define BOLT_MOVEIT_MODEL_BASED_STATE_SAMPLER_
 
 #include <bolt_moveit/model_based_state_space.h>
 
 namespace bolt_moveit
 {
 template <typename T>
-class DefaultStateSampler : public ompl::base::StateSampler
+class ModelBasedStateSampler : public ompl::base::StateSampler
 {
 public:
-  DefaultStateSampler(const ompl::base::StateSpace *space, const ModelBasedStateSpaceSpecification* spec)
+  ModelBasedStateSampler(const ompl::base::StateSpace *space, const ModelBasedStateSpaceSpecification* spec)
     : ompl::base::StateSampler(space)
     , joint_model_group_(spec->joint_model_group_)
     , joint_bounds_(&spec->joint_bounds_)
@@ -57,6 +57,7 @@ public:
 
   virtual void sampleUniform(ompl::base::State *state)
   {
+    std::cout << "samplerUniform " << std::endl;
     joint_model_group_->getVariableRandomPositions(moveit_rng_, state->as<T>()->values, *joint_bounds_);
   }
 
@@ -166,7 +167,7 @@ public:
   }
 
 protected:
-  const std::string name_ = "default_state_sampler";
+  const std::string name_ = "model_based_state_sampler";
 
   random_numbers::RandomNumberGenerator moveit_rng_;
   const robot_model::JointModelGroup *joint_model_group_;
@@ -178,4 +179,4 @@ protected:
   moveit_visual_tools::MoveItVisualToolsPtr visual_tools_;
 };
 }
-#endif
+#endif // BOLT_MOVEIT_MODEL_BASED_STATE_SAMPLER_

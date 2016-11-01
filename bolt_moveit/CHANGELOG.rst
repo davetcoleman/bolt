@@ -42,7 +42,7 @@ Changelog for package bolt_moveit
 * Made BOLT_ERROR not have flag
 * Improve BoltPlanner for compound states
   New distance() functions
-  Make DefaultStateSampler a template
+  Make ModelBasedStateSampler a template
 * Use CompoundStates with DiscreteState to save memory
   New createCompoundState() function
   Improve tests

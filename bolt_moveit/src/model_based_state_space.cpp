@@ -35,7 +35,7 @@
 /* Author: Ioan Sucan */
 
 #include <bolt_moveit/model_based_state_space.h>
-#include <bolt_moveit/default_state_sampler.h>
+#include <bolt_moveit/model_based_state_sampler.h>
 #include <ompl/base/StateSampler.h>
 
 namespace ob = ompl::base;
@@ -246,7 +246,7 @@ void ModelBasedStateSpace::setPlanningVolume(double minX, double maxX, double mi
 ob::StateSamplerPtr ModelBasedStateSpace::allocDefaultStateSampler() const
 {
   return ompl::base::StateSamplerPtr(
-      static_cast<ob::StateSampler *>(new DefaultStateSampler<ModelBasedStateSpace::StateType>(
+      static_cast<ob::StateSampler *>(new ModelBasedStateSampler<ModelBasedStateSpace::StateType>(
           this, &spec_)));
 }
 

@@ -40,7 +40,7 @@
 #define BOLT_MOVEIT_MODEL_SIZE_STATE_SPACE_
 
 #include <bolt_moveit/model_based_state_space.h>
-#include <bolt_moveit/default_state_sampler.h>
+#include <bolt_moveit/model_based_state_sampler.h>
 
 namespace bolt_moveit
 {
@@ -172,7 +172,7 @@ public:
   ob::StateSamplerPtr allocDefaultStateSampler() const
   {
     return ob::StateSamplerPtr(
-        static_cast<ob::StateSampler *>(new DefaultStateSampler<ModelSizeStateSpace<N>::StateType>(
+        static_cast<ob::StateSampler *>(new ModelBasedStateSampler<ModelSizeStateSpace<N>::StateType>(
             this, &spec_)));
   }
 
