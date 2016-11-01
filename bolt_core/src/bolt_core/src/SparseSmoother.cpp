@@ -95,7 +95,7 @@ bool SparseSmoother::smoothQualityPath(geometric::PathGeometric *path, double cl
   BOLT_DEBUG(indent, visualizeQualityPathSmoothing_, "Original quality path has " << minStatesFound << " states");
 
   // if (vSmooth_)
-  //   visual_->waitForUserFeedback("path simplification");
+  //   visual_->prompt("path simplification");
 
   // Set the motion validator to use clearance, this way isValid() checks clearance before confirming valid
   base::DiscreteMotionValidator *dmv = dynamic_cast<base::DiscreteMotionValidator *>(si_->getMotionValidator().get());
@@ -116,7 +116,7 @@ bool SparseSmoother::smoothQualityPath(geometric::PathGeometric *path, double cl
       visual_->viz3()->trigger();
       usleep(0.1 * 1000000);
 
-      // visual_->waitForUserFeedback("optimizing path");
+      // visual_->prompt("optimizing path");
     }
 
     pathSimplifier_->reduceVertices(*path, 1000, path->getStateCount() * 4);  // /*rangeRatio*/ 0.33, indent);
@@ -128,7 +128,7 @@ bool SparseSmoother::smoothQualityPath(geometric::PathGeometric *path, double cl
       visual_->viz4()->trigger();
       usleep(0.1 * 1000000);
 
-      // visual_->waitForUserFeedback("optimizing path");
+      // visual_->prompt("optimizing path");
     }
   }
 
@@ -145,7 +145,7 @@ bool SparseSmoother::smoothQualityPath(geometric::PathGeometric *path, double cl
     visual_->viz6()->deleteAllMarkers();
     visual_->viz6()->path(path, tools::SMALL, tools::BLACK, tools::GREEN);
     visual_->viz6()->trigger();
-    // visual_->waitForUserFeedback("finished quality path");
+    // visual_->prompt("finished quality path");
   }
 
   // TODO: very rarely a path is created that is out of bounds and can't be repaired - I don't know why but its super
@@ -234,7 +234,7 @@ bool SparseSmoother::smoothMax(geometric::PathGeometric *path, std::size_t inden
         visual_->viz3()->trigger();
         usleep(0.1 * 1000000);
         // BOLT_DEBUG(indent, true, "path->length() " << path->length() << " states: " << path->getStateCount());
-        // visual_->waitForUserFeedback("interpolate");
+        // visual_->prompt("interpolate");
       }
     }
 
@@ -255,7 +255,7 @@ bool SparseSmoother::smoothMax(geometric::PathGeometric *path, std::size_t inden
         visual_->viz4()->path(path, tools::MEDIUM, tools::BLACK, tools::ORANGE);
         visual_->viz4()->trigger();
         usleep(0.01 * 1000000);
-        // visual_->waitForUserFeedback("reduce vertices");
+        // visual_->prompt("reduce vertices");
       }
       // BOLT_DEBUG(indent, true, "reduce vert: length: " << path->length() << " states: " << path->getStateCount());
 
@@ -274,7 +274,7 @@ bool SparseSmoother::smoothMax(geometric::PathGeometric *path, std::size_t inden
     //   visual_->viz4()->trigger();
     //   usleep(0.01 * 1000000);
     //   BOLT_DEBUG(indent, true, "length: " << path->length() << " states: " << path->getStateCount());
-    //   //visual_->waitForUserFeedback("collapseCloseVertices");
+    //   //visual_->prompt("collapseCloseVertices");
     // }
 
     // if (path->getStateCount() < 3) // Can't smooth if only two points
@@ -291,7 +291,7 @@ bool SparseSmoother::smoothMax(geometric::PathGeometric *path, std::size_t inden
     //   visual_->viz5()->trigger();
     //   usleep(0.01 * 1000000);
     //   BOLT_DEBUG(indent, true, "length: " << path->length() << " states: " << path->getStateCount());
-    //   //visual_->waitForUserFeedback("shortcutPath");
+    //   //visual_->prompt("shortcutPath");
     // }
 
     // ------------------------------------------------------------------
@@ -305,7 +305,7 @@ bool SparseSmoother::smoothMax(geometric::PathGeometric *path, std::size_t inden
       visual_->viz5()->trigger();
       usleep(0.01 * 1000000);
 
-      // visual_->waitForUserFeedback("smoothBSpline");
+      // visual_->prompt("smoothBSpline");
     }
     // BOLT_DEBUG(indent, true, "smoothBSpline length: " << path->length() << " states: " << path->getStateCount());
 
@@ -325,7 +325,7 @@ bool SparseSmoother::smoothMax(geometric::PathGeometric *path, std::size_t inden
         visual_->viz3()->trigger();
         usleep(0.01 * 1000000);
 
-        // visual_->waitForUserFeedback("reduce vertices");
+        // visual_->prompt("reduce vertices");
       }
       // BOLT_DEBUG(indent, true, "reduce vert length: " << path->length() << " states: " << path->getStateCount());
 

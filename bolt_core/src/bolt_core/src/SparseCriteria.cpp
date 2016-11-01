@@ -754,7 +754,7 @@ bool SparseCriteria::addQualityPath(SparseVertex v, SparseVertex vp, SparseVerte
 
     BOLT_ASSERT(!sg_->hasEdge(vp, vpp), "Edge already exists, cannot add quality");
     sg_->addEdge(vp, vpp, eQUALITY, indent + 2);
-    // visual_->waitForUserFeedback("addQualityPath");
+    // visual_->prompt("addQualityPath");
 
     return true;
   }
@@ -906,7 +906,7 @@ double SparseCriteria::qualityEdgeAstarTest(SparseVertex vp, SparseVertex vpp, I
     if (!sg_->astarSearch(vp, vpp, vertexPath, pathLength, indent))
     {
       BOLT_ERROR(indent, vQuality_, "No path found");
-      visual_->waitForUserFeedback("No path found");
+      visual_->prompt("No path found");
       return std::numeric_limits<double>::infinity();
     }
 
@@ -925,7 +925,7 @@ double SparseCriteria::qualityEdgeAstarTest(SparseVertex vp, SparseVertex vpp, I
     if (!sg_->astarSearchLength(vp, vpp, pathLength, indent))
     {
       BOLT_ERROR(indent, vQuality_, "No path found");
-      visual_->waitForUserFeedback("No path found");
+      visual_->prompt("No path found");
       return std::numeric_limits<double>::infinity();
     }
   }

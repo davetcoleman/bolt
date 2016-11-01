@@ -136,7 +136,7 @@ bool SparseCriteria::spannerTestAStar(SparseVertex v, SparseVertex vp, SparseVer
   if (!sg_->astarSearch(vp, vpp, vertexPath, pathLength, indent))
   {
     BOLT_ERROR(indent, vQuality_, "No path found");
-    visual_->waitForUserFeedback("No path found");
+    visual_->prompt("No path found");
   }
   else
   {
@@ -189,13 +189,13 @@ bool SparseCriteria::spannerTestAStar(SparseVertex v, SparseVertex vp, SparseVer
     if (visualizeQualityCriteria_)                           // TEMP
       visualizeCheckAddPath(v, vp, vpp, iData, indent + 4);  // TEMP
 
-    visual_->waitForUserFeedback("astar rule");
+    visual_->prompt("astar rule");
 
     return true;  // spannerPropertyWasViolated = true
   }
 
   BOLT_DEBUG(indent, vQuality_, "Astar says we do not need to add an edge");
-  visual_->waitForUserFeedback("astar rule");
+  visual_->prompt("astar rule");
 
   return false;  // spannerPropertyWasViolated = false
 }

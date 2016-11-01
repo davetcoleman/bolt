@@ -1460,7 +1460,7 @@ robot_trajectory::RobotTrajectoryPtr BoltBaxter::processSegments(std::size_t ind
 {
   BOLT_FUNC(indent, true, "processSegments()");
 
-  visual_->waitForUserFeedback("before processSegments");
+  visual_->prompt("before processSegments");
 
   // Visualize if not already done so within BoltPlanner
   if (!bolt_->getBoltPlanner()->visualizeRawTrajectory_)

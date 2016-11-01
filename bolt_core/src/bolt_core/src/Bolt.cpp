@@ -231,7 +231,7 @@ bool Bolt::checkBoltPlannerOptimality(std::size_t indent)
   BOLT_WARN(indent + 2, 1, "Percent of max allowed:  " << percentOfMaxAllows << " %");
   BOLT_DEBUG(indent, 1, "-----------------------------------------");
 
-  // visual_->waitForUserFeedback("review results");
+  // visual_->prompt("review results");
 
   return true;
 }
@@ -320,7 +320,7 @@ bool Bolt::checkRepeatedStates(const og::PathGeometric &path, std::size_t indent
                                                           << path.getStateCount());
 
       visual_->viz6()->state(path.getState(i), tools::ROBOT, tools::RED, 0);
-      visual_->waitForUserFeedback("duplicate");
+      visual_->prompt("duplicate");
 
       return false;
     }

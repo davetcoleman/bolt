@@ -203,7 +203,6 @@ void loadOMPLParameters(ros::NodeHandle nh, const std::string &name, ompl::tools
     error += !get(name, rpnh, "verbose/nearest_neighbor", boltPlanner->vNearestNeighbor_);
     error += !get(name, rpnh, "visualize/raw_trajectory", boltPlanner->visualizeRawTrajectory_);
     error += !get(name, rpnh, "visualize/smooth_trajectory", boltPlanner->visualizeSmoothTrajectory_);
-    error += !get(name, rpnh, "visualize/robot_trajectory", boltPlanner->visualizeRobotTrajectory_);
     error += !get(name, rpnh, "visualize/wait", boltPlanner->visualizeWait_);
     error += !get(name, rpnh, "visualize/start_goal", boltPlanner->visualizeStartGoal_);
     error += !get(name, rpnh, "visualize/start_goal_unconnected", boltPlanner->visualizeStartGoalUnconnected_);

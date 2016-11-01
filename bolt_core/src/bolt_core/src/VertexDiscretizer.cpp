@@ -396,7 +396,7 @@ void VertexDiscretizer::createState(std::size_t threadID, std::vector<double> &v
       visual_->viz1()->trigger(20);
 
       // if (visualizeGridGenerationWait_)
-      //   visual_->waitForUserFeedback("rejected");
+      //   visual_->prompt("rejected");
       // else
       // usleep(0.001 * 1000000);
     }
@@ -426,7 +426,7 @@ void VertexDiscretizer::createState(std::size_t threadID, std::vector<double> &v
         visual_->viz1()->trigger();
 
         if (visualizeGridGenerationWait_)
-          visual_->waitForUserFeedback("clearance");
+          visual_->prompt("clearance");
         // else
         //   usleep(0.001 * 1000000);
       }
@@ -453,7 +453,7 @@ void VertexDiscretizer::createState(std::size_t threadID, std::vector<double> &v
     visual_->viz1()->trigger();
 
     // if (visualizeGridGenerationWait_)
-    //   visual_->waitForUserFeedback("accepted");
+    //   visual_->prompt("accepted");
     // else
     //   usleep(0.01 * 1000000);
   }

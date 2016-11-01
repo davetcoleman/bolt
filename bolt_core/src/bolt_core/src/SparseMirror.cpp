@@ -177,7 +177,7 @@ void SparseMirror::mirrorGraphDualArm(base::SpaceInformationPtr dualSpaceInfo,
         {
           visual_->viz3()->state(stateCombined, tools::ROBOT, tools::RED, /*extraData*/ 0, dualSpaceInfo);
 
-          visual_->waitForUserFeedback("found invalid combined state");
+          visual_->prompt("found invalid combined state");
         }
 
         skippedStates++;
@@ -198,7 +198,7 @@ void SparseMirror::mirrorGraphDualArm(base::SpaceInformationPtr dualSpaceInfo,
     BOLT_DEBUG(indent + 2, vMirrorStatus_,
                "Total states skipped: " << (double(skippedStates) / monoSG_->getNumVertices() * 100) << "%. Skipped "
                                         << skippedStates << " states out of total " << monoSG_->getNumVertices());
-    // visual_->waitForUserFeedback("before adding edges");
+    // visual_->prompt("before adding edges");
 
     // Copy the short term mapping into the long term mapping
     vertexMapMatrix[sparseV1] = sparseV2ToDualVertex;
@@ -206,7 +206,7 @@ void SparseMirror::mirrorGraphDualArm(base::SpaceInformationPtr dualSpaceInfo,
     // Loop through every edge in sparse graph and connect this subgraph
     addEdgesForDim(sparseV2ToDualVertex, dualSG, dualSpaceInfo, indent + 2);
 
-    // visual_->waitForUserFeedback("Done copying edges for inner loop");
+    // visual_->prompt("Done copying edges for inner loop");
 
     if (visual_->viz1()->shutdownRequested())
       break;
@@ -256,7 +256,7 @@ void SparseMirror::addEdgesForDim(std::vector<SparseVertex> &sparseV2ToDualVerte
     if (newEdgeDist > 2 * sparseDelta_)
     {
       BOLT_WARN(indent, true, "Edge is longer than 2*sparseDelta=" << 2 * sparseDelta_ << ", value=" << newEdgeDist);
-      visual_->waitForUserFeedback("edge is too long");
+      visual_->prompt("edge is too long");
       skippedTooLongEdges++;
       continue;
     }
@@ -271,7 +271,7 @@ void SparseMirror::addEdgesForDim(std::vector<SparseVertex> &sparseV2ToDualVerte
       {
         visual_->viz3()->state(dualSG->getState(sparseE_v0), tools::ROBOT, tools::RED, /*extraData*/ 0, dualSpaceInfo);
         usleep(0.001 * 1000000);
-        visual_->waitForUserFeedback("found collision combined state");
+        visual_->prompt("found collision combined state");
       }
 
       skippedCollisionEdges++;
@@ -537,7 +537,7 @@ void SparseMirror::checkValidityOfArmMirror(base::SpaceInformationPtr dualSpaceI
       BOLT_DEBUG(indent, true, "found invalid left state");
       visual_->viz2()->state(state2Mirrored, tools::ROBOT, tools::RED, /*extraData*/ 0, leftArmSpaceInfo);
 
-      visual_->waitForUserFeedback("found invalid left state");
+      visual_->prompt("found invalid left state");
 
       skippedStates++;
       continue;
@@ -546,7 +546,7 @@ void SparseMirror::checkValidityOfArmMirror(base::SpaceInformationPtr dualSpaceI
     {
       visual_->viz2()->state(state2Mirrored, tools::ROBOT, tools::DEFAULT, /*extraData*/ 0, leftArmSpaceInfo);
       // usleep(0.001*1000000);
-      visual_->waitForUserFeedback("found valid state");
+      visual_->prompt("found valid state");
     }
 
     if (visual_->viz1()->shutdownRequested())

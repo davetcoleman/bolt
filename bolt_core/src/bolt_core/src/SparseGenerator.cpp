@@ -758,7 +758,7 @@ bool SparseGenerator::checkGraphOptimality(std::size_t indent)
     BOLT_WARN(indent + 2, show, "Percent of max allowed:  " << percentOfMaxAllows << " %");
     BOLT_DEBUG(indent, show, "-----------------------------------------");
 
-    // visual_->waitForUserFeedback("next problem");
+    // visual_->prompt("next problem");
   }
 
   // Summary
@@ -1050,7 +1050,7 @@ void SparseGenerator::benchmarkMemoryAllocation(std::size_t indent)
       space.freeState(states[i]);
   }
   OMPL_INFORM("naive took  %f seconds", time::seconds(time::now() - startTime0));  // Benchmark
-  // visual_->waitForUserFeedback("test2");
+  // visual_->prompt("test2");
 
   // METHOD 2
   time::point startTime1 = time::now();  // Benchmark
@@ -1084,7 +1084,7 @@ void SparseGenerator::benchmarkMemoryAllocation(std::size_t indent)
   OMPL_INFORM("vector took %f seconds", time::seconds(time::now() - startTime1));  // Benchmark
 
   // usleep(4*1000000);
-  visual_->waitForUserFeedback("test2");
+  visual_->prompt("test2");
 
   std::cout << "-------------------------------------------------------" << std::endl;
   std::cout << std::endl;
@@ -1158,7 +1158,7 @@ ExperiencePathStats SparseGenerator::addExperiencePath(geometric::PathGeometricP
       si_->freeState(candidateState);
     }
 
-    // visual_->waitForUserFeedback("Added segment");
+    // visual_->prompt("Added segment");
   }
 
   ExperiencePathStats stats;

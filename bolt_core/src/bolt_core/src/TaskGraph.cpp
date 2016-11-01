@@ -311,7 +311,7 @@ bool TaskGraph::astarSearch(const TaskVertex start, const TaskVertex goal, std::
     }
 
     visual_->viz4()->trigger();
-    // visual_->waitForUserFeedback("predecessors and solution");
+    // visual_->prompt("predecessors and solution");
   }
 #endif
 
@@ -885,7 +885,7 @@ bool TaskGraph::smoothQualityPath(geometric::PathGeometric *path, double clearan
   BOLT_DEBUG(indent, visualizeQualityPathSmoothing_, "Created 'quality path' candidate with " << path->getStateCount()
                                                                                               << " states");
   if (visualizeQualityPathSmoothing_)
-    visual_->waitForUserFeedback("path simplification");
+    visual_->prompt("path simplification");
 
   // Set the motion validator to use clearance, this way isValid() checks clearance before confirming valid
   base::DiscreteMotionValidator *dmv =
@@ -902,7 +902,7 @@ bool TaskGraph::smoothQualityPath(geometric::PathGeometric *path, double clearan
       visual_->viz2()->path(path, tools::SMALL, tools::BLACK, tools::ORANGE);
       visual_->viz2()->trigger();
       usleep(0.1 * 1000000);
-      // visual_->waitForUserFeedback("optimizing path");
+      // visual_->prompt("optimizing path");
     }
 
     pathSimplifier_->reduceVertices(*path, 1000, path->getStateCount() * 4);
@@ -913,7 +913,7 @@ bool TaskGraph::smoothQualityPath(geometric::PathGeometric *path, double clearan
       visual_->viz2()->path(path, tools::SMALL, tools::BLACK, tools::BLUE);
       visual_->viz2()->trigger();
       usleep(0.1 * 1000000);
-      // visual_->waitForUserFeedback("optimizing path");
+      // visual_->prompt("optimizing path");
     }
   }
   // Turn off the clearance requirement
@@ -926,7 +926,7 @@ bool TaskGraph::smoothQualityPath(geometric::PathGeometric *path, double clearan
     visual_->viz2()->deleteAllMarkers();
     visual_->viz2()->path(path, tools::SMALL, tools::BLACK, tools::GREEN);
     visual_->viz2()->trigger();
-    visual_->waitForUserFeedback("finished quality path");
+    visual_->prompt("finished quality path");
   }
 
   std::pair<bool, bool> repairResult = path->checkAndRepair(100);
@@ -1400,7 +1400,7 @@ void otb::TaskAstarVisitor::examine_vertex(TaskVertex v, const TaskAdjList &) co
 
     parent_->getVisual()->viz4()->trigger();
     // usleep(parent_->visualizeAstarSpeed_ * 1000000);
-    parent_->getVisual()->waitForUserFeedback("astar");
+    parent_->getVisual()->prompt("astar");
   }
 #endif
 

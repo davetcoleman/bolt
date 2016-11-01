@@ -46,7 +46,7 @@ bool SparseCriteria::checkRemoveCloseVertices(SparseVertex v1, std::size_t inden
     if (visualizeRemoveCloseVertices_)
     {
       visualizeRemoveCloseVertices(v1, v2);
-      visual_->waitForUserFeedback("Skipping this vertex because is QUALITY");
+      visual_->prompt("Skipping this vertex because is QUALITY");
     }
     return false;
   }
@@ -96,7 +96,7 @@ bool SparseCriteria::checkRemoveCloseVertices(SparseVertex v1, std::size_t inden
   if (visualizeRemoveCloseVertices_)
   {
     visualizeRemoveCloseVertices(v1, v2);
-    visual_->waitForUserFeedback("found qualified node to replace with nearby");
+    visual_->prompt("found qualified node to replace with nearby");
   }
 
   // Remove all interface data for old state
@@ -122,7 +122,7 @@ bool SparseCriteria::checkRemoveCloseVertices(SparseVertex v1, std::size_t inden
     sg_->displayDatabase(true, true, 1, indent);
 
   // if (visualizeRemoveCloseVertices_)
-  // visual_->waitForUserFeedback("finished moving vertex");
+  // visual_->prompt("finished moving vertex");
 
   if (visualizeRemoveCloseVertices_)
   {

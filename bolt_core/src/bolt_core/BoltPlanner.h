@@ -282,9 +282,6 @@ public:
   /** \brief Visualize solution from graph after smoothing */
   bool visualizeSmoothTrajectory_ = true;
 
-  /** \brief Visualize robot solution from graph after smoothing */
-  bool visualizeRobotTrajectory_ = true;
-
   /** \brief Wait after visualization */
   bool visualizeWait_ = false;
 

@@ -707,7 +707,7 @@ void SparseGraph::visualizeDisjointSets(SparseDisjointSetsMap &disjointSets)
       visual_->viz4()->state(getState(v1), tools::LARGE, tools::RED, 0);
       visual_->viz4()->state(getState(v1), tools::ROBOT, tools::DEFAULT, 0);
       visual_->viz4()->trigger();
-      visual_->waitForUserFeedback("showing disjoint set");
+      visual_->prompt("showing disjoint set");
       continue;
     }
 
@@ -743,7 +743,7 @@ void SparseGraph::visualizeDisjointSets(SparseDisjointSetsMap &disjointSets)
         }  // if
       }    // for
       visual_->viz4()->trigger();
-      visual_->waitForUserFeedback("showing large disjoint set");
+      visual_->prompt("showing large disjoint set");
     }  // if
   }
 }
@@ -849,7 +849,7 @@ SparseVertex SparseGraph::addVertex(base::State *state, const VertexType &type, 
   // Debugging
   // if (!sparseCriteria_->getDiscretizedSamplesInsertion())
   // throw Exception(name_, "Added vertex randomly");
-  // visual_->waitForUserFeedback("Added vertex randomly");
+  // visual_->prompt("Added vertex randomly");
 
   return v;
 }
@@ -1152,9 +1152,9 @@ void SparseGraph::clearEdgesNearVertex(SparseVertex vertex, std::size_t indent)
   // Only display database if enabled
   if (visualizeSparseGraph_ && visualizeSparseGraphSpeed_ > std::numeric_limits<double>::epsilon())
   {
-    // visual_->waitForUserFeedback("before clear edge near vertex");
+    // visual_->prompt("before clear edge near vertex");
     displayDatabase(true, true, 1, indent);
-    // visual_->waitForUserFeedback("after clear edge near vertex");
+    // visual_->prompt("after clear edge near vertex");
   }
 #endif
 }
@@ -1432,7 +1432,7 @@ bool SparseGraph::verifyGraph(std::size_t indent)
     if (!getState(v))
     {
       BOLT_ERROR(indent, "Null vertex found: " << v);
-      visual_->waitForUserFeedback("Found invalid");
+      visual_->prompt("Found invalid");
       errors++;
       continue;
     }
@@ -1442,7 +1442,7 @@ bool SparseGraph::verifyGraph(std::size_t indent)
     {
       BOLT_ERROR(indent, "Found invalid vertex " << v);
       visual_->viz4()->state(getState(v), tools::ROBOT, tools::DEFAULT, 0);
-      visual_->waitForUserFeedback("Found invalid");
+      visual_->prompt("Found invalid");
       errors++;
       continue;
     }

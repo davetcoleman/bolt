@@ -1222,7 +1222,7 @@ bool ompl::geometric::SPARS2::checkGraphOptimality()
     BOLT_WARN(indent + 2, show, "Percent of max allowed:  " << percentOfMaxAllows << " %");
     BOLT_DEBUG(indent, show, "-----------------------------------------");
 
-    // visual_->waitForUserFeedback("next problem");
+    // visual_->prompt("next problem");
   }
 
   // Summary

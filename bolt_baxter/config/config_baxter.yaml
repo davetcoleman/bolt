@@ -202,7 +202,6 @@ bolt_planner:
   visualize:
     raw_trajectory: false
     smooth_trajectory: false
-    robot_trajectory: false
     wait: false
     start_goal: false
     lazy_collision_check: false

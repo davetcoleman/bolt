@@ -312,7 +312,7 @@ bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
                               tools::MEDIUM, tools::BLACK);
         visual_->viz4()->trigger();
         // usleep(0.1 * 1000000);
-        visual_->waitForUserFeedback("not visible");
+        visual_->prompt("not visible");
       }
       continue;  // this is actually not visible
     }
@@ -415,7 +415,7 @@ bool BoltPlanner::onGraphSearch(const TaskVertex &startVertex, const TaskVertex 
   if (startVertex == goalVertex)
   {
     BOLT_DEBUG(indent, verbose_, "    Start equals goal, creating simple solution ");
-    visual_->waitForUserFeedback("    Start equals goal, creating simple solution ");
+    visual_->prompt("    Start equals goal, creating simple solution ");
 
     // There are only three verticies in this path - start, middle, goal
     vertexPath.push_back(startVertex);
@@ -438,7 +438,7 @@ bool BoltPlanner::onGraphSearch(const TaskVertex &startVertex, const TaskVertex 
     visual_->viz4()->state(taskGraph_->getModelBasedState(startVertex), tools::ROBOT, tools::ORANGE);
     // visual_->viz5()->edge(actualStart, taskGraph_->getModelBasedState(startVertex), tools::MEDIUM, tools::BLACK);
     // visual_->viz5()->trigger();
-    // visual_->waitForUserFeedback("start viz");
+    // visual_->prompt("start viz");
 
     // Visualize goal vertex
     BOLT_DEBUG(indent, verbose_, "viz goal ------------------------------");
@@ -446,7 +446,7 @@ bool BoltPlanner::onGraphSearch(const TaskVertex &startVertex, const TaskVertex 
     visual_->viz5()->state(taskGraph_->getModelBasedState(goalVertex), tools::ROBOT, tools::GREEN);
     // visual_->viz5()->edge(actualGoal, taskGraph_->getModelBasedState(goalVertex), tools::MEDIUM, tools::BLACK);
     // visual_->viz5()->trigger();
-    // visual_->waitForUserFeedback("goal viz");
+    // visual_->prompt("goal viz");
   }
 
   // Keep looking for paths between chosen start and goal until one is found that is valid,
@@ -545,7 +545,7 @@ bool BoltPlanner::lazyCollisionCheck(std::vector<TaskVertex> &vertexPath, Termin
         // Debug
         if (visualizeLazyCollisionCheck_)
         {
-          visual_->waitForUserFeedback("see edge");
+          visual_->prompt("see edge");
 
           // Path between (from, to) states not valid, disable the edge
           modelSI_->getMotionValidator()->checkMotion(fromState, toState, visual_);
@@ -715,7 +715,7 @@ bool BoltPlanner::simplifyNonTaskPath(og::PathGeometricPtr compoundPath, Termina
     // visual_->viz5()->deleteAllMarkers();
     // visual_->viz5()->path(modelPath.get(), tools::LARGE, tools::BLACK, tools::BLUE);
     // visual_->viz5()->trigger();
-    // visual_->waitForUserFeedback("raw");
+    // visual_->prompt("raw");
 
     // Smooth
     if (smoothingEnabled_)
@@ -737,14 +737,14 @@ bool BoltPlanner::simplifyNonTaskPath(og::PathGeometricPtr compoundPath, Termina
       visual_->viz6()->deleteAllMarkers();
       visual_->viz6()->path(modelPath.get(), tools::LARGE, tools::RED, tools::BLUE);
       visual_->viz6()->trigger();
-      visual_->waitForUserFeedback("bad");
+      visual_->prompt("bad");
     }
     else
     {
       // visual_->viz6()->deleteAllMarkers();
       // visual_->viz6()->path(modelPath.get(), tools::LARGE, tools::BLACK, tools::BLUE);
       // visual_->viz6()->trigger();
-      // visual_->waitForUserFeedback("good");
+      // visual_->prompt("good");
 
       break;  // stop looping
     }
@@ -815,7 +815,7 @@ bool BoltPlanner::simplifyTaskPath(og::PathGeometricPtr compoundPath, Terminatio
                                   << ". Path levels: " << o.str());
 
       visual_->viz6()->state(taskGraph_->getModelBasedState(compoundState), tools::ROBOT, tools::RED, 0);
-      visual_->waitForUserFeedback("prev level");
+      visual_->prompt("prev level");
       base::CompoundState *compoundState2 = compoundPath->getState(i - 1)->as<base::CompoundState>();
       visual_->viz6()->state(taskGraph_->getModelBasedState(compoundState2), tools::ROBOT, tools::RED, 0);
 
@@ -887,7 +887,7 @@ bool BoltPlanner::simplifyTaskPath(og::PathGeometricPtr compoundPath, Terminatio
       if (visualizeEachSolutionStep_)
       {
         visual_->viz6()->state(modelState, tools::ROBOT, tools::DEFAULT, 0);
-        visual_->waitForUserFeedback("next solution step");
+        visual_->prompt("next solution step");
       }
 
       // Check for repeated states
@@ -1023,7 +1023,7 @@ void BoltPlanner::visualizeBadEdge(const base::State *modelFrom, const base::Sta
   visual_->viz4()->state(modelFrom, tools::ROBOT, tools::RED, 0);
   visual_->viz5()->state(modelTo, tools::ROBOT, tools::RED, 0);
 
-  visual_->waitForUserFeedback("collision on edge from viz4 to viz5");
+  visual_->prompt("collision on edge from viz4 to viz5");
 }
 
 void BoltPlanner::addSamples(const base::State *near, std::size_t indent)
@@ -1124,7 +1124,7 @@ void BoltPlanner::addSamples(const base::State *near, std::size_t indent)
     if (visualizeSampling_)
     {
       visual_->viz6()->trigger();
-      //visual_->waitForUserFeedback("next sample");
+      //visual_->prompt("next sample");
     }
 
     if (visual_->viz3()->shutdownRequested())
@@ -1161,7 +1161,7 @@ void BoltPlanner::visualizeSmoothed(std::size_t indent)
   visual_->viz6()->trigger();
 
   if (visualizeWait_)
-    visual_->waitForUserFeedback("after visualization");
+    visual_->prompt("after visualization");
 }
 
 }  // namespace bolt
