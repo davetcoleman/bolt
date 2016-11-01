@@ -492,8 +492,11 @@ bool BoltBaxter::runProblems(std::size_t indent)
       ROS_INFO_STREAM_NAMED(name_, "RAM usage diff (VM, RSS) MB:\n" << vm2 - vm1 << ", " << rss2 - rss1);
     }
 
-    // Do one plan
+    // -----------------------------------------------------
+    // -----------------------------------------------------
     plan(indent);
+    // -----------------------------------------------------
+    // -----------------------------------------------------
 
     // Console display
     if (is_bolt_)
@@ -502,9 +505,22 @@ bool BoltBaxter::runProblems(std::size_t indent)
     }
 
     // Logging
-    if (use_logging_ && is_bolt_)
+    if (use_logging_)
     {
-      bolt_->saveDataLog(logging_file);
+      if (is_bolt_)
+      {
+        bolt_->saveDataLog(logging_file);
+      }
+      else
+      {
+        const double planTime = simple_setup_->getLastSimplificationTime() + simple_setup_->getLastPlanComputationTime();
+        logging_file << planner_ << ", " // bolt, etc
+                     << planTime << ", " // smoothing + planning
+                     << last_plan_path_length_ << ", " // basic planning stats
+                     << 0 << ", " // numVerticesAdded
+                     << 0 // numEdgesAdded
+                     << std::endl;
+      }
       logging_file.flush();
     }
 
@@ -540,10 +556,6 @@ bool BoltBaxter::runProblems(std::size_t indent)
     bolt_->saveIfChanged(indent);
   }
 
-  // Stats
-  if (total_runs_ > 0)
-    ROS_INFO_STREAM_NAMED(name_, "Average solving time: " << total_duration_ / total_runs_);
-
   logging_file.close();
 
   return true;
@@ -573,21 +585,17 @@ bool BoltBaxter::plan(std::size_t indent)
   double seconds = 60 * 60;  // 1 hour
   ob::PlannerTerminationCondition ptc = ob::timedPlannerTerminationCondition(seconds, 0.1);
 
-  // Benchmark runtime
-  ros::Time start_time = ros::Time::now();
-
   // Attempt to solve the problem within x seconds of planning time
-  ob::PlannerStatus solved = simple_setup_->solve(ptc);
-
-  // Benchmark runtime
-  total_duration_ = (ros::Time::now() - start_time).toSec();
-
-  // Check for error
-  if (!solved)
+  if (!simple_setup_->solve(ptc))
   {
     ROS_ERROR_STREAM_NAMED(name_, "No solution found");
     exit(0);
-    return false;
+  }
+
+  // Simplify
+  if (!is_bolt_)
+  {
+    simple_setup_->simplifySolution();
   }
 
   // Interpolate and parameterize
@@ -596,7 +604,7 @@ bool BoltBaxter::plan(std::size_t indent)
   {
     execution_traj = processSegments(indent);
   }
-  else
+  else // RRTConnect, etc
   {
     execution_traj = processSimpleSolution(indent);
   }
@@ -699,6 +707,8 @@ void BoltBaxter::loadOMPLVisualTools()
   std::string namesp = nh_.getNamespace();
   moveit_start_->setToDefaultValues();
   const std::size_t NUM_VISUALS = 6;
+  std::vector<bolt_moveit::MoveItVizWindowPtr> ompl_vizs;
+  ompl_vizs.resize(NUM_VISUALS+1);
   for (std::size_t i = 1; i <= NUM_VISUALS; ++i)
   {
     MoveItVizWindowPtr viz = MoveItVizWindowPtr(new MoveItVizWindow(visual_tools_[i], si_));
@@ -726,7 +736,7 @@ void BoltBaxter::loadOMPLVisualTools()
     viz->setMinMaxStateRadius(0.5, 5);
 
     // Index the visualizers
-    vizs_.push_back(viz);
+    ompl_vizs[i] = viz;
   }  // for reach visualizer
 
   ros::spinOnce();
@@ -736,7 +746,7 @@ void BoltBaxter::loadOMPLVisualTools()
   {
     for (std::size_t i = 1; i <= NUM_VISUALS; ++i)
     {
-      moveit_visual_tools::MoveItVisualToolsPtr moveit_visual = vizs_[i - 1]->getVisualTools();
+      moveit_visual_tools::MoveItVisualToolsPtr moveit_visual = ompl_vizs[i]->getVisualTools();
       // Get TF
       getTFTransform("world", "world_visual" + std::to_string(i), offset);
       moveit_visual->enableRobotStateRootOffet(offset);
@@ -756,10 +766,10 @@ void BoltBaxter::loadOMPLVisualTools()
     const double wait_time = 0.2;
     for (std::size_t i = 1; i <= NUM_VISUALS; ++i)
     {
-      vizs_[i - 1]->getVisualTools()->waitForMarkerPub(wait_time);
+      ompl_vizs[i]->getVisualTools()->waitForMarkerPub(wait_time);
 
       // Show the initial robot state
-      moveit_visual_tools::MoveItVisualToolsPtr moveit_visual = vizs_[i - 1]->getVisualTools();
+      moveit_visual_tools::MoveItVisualToolsPtr moveit_visual = ompl_vizs[i]->getVisualTools();
       usleep(0.001 * 1000000);
       moveit_visual->publishRobotState(moveit_start_);
     }
@@ -775,12 +785,12 @@ void BoltBaxter::loadOMPLVisualTools()
     visual_ = std::make_shared<ot::Visualizer>();
   }
 
-  visual_->setVizWindow(1, vizs_[1]);
-  visual_->setVizWindow(2, vizs_[2]);
-  visual_->setVizWindow(3, vizs_[3]);
-  visual_->setVizWindow(4, vizs_[4]);
-  visual_->setVizWindow(5, vizs_[5]);
-  visual_->setVizWindow(6, vizs_[6]);
+  visual_->setVizWindow(1, ompl_vizs[1]);
+  visual_->setVizWindow(2, ompl_vizs[2]);
+  visual_->setVizWindow(3, ompl_vizs[3]);
+  visual_->setVizWindow(4, ompl_vizs[4]);
+  visual_->setVizWindow(5, ompl_vizs[5]);
+  visual_->setVizWindow(6, ompl_vizs[6]);
 
   // Projection viewer - mirrors MoveItVisualTools 6
   {
@@ -1233,7 +1243,7 @@ void BoltBaxter::loadScene(std::size_t indent)
   {
     case 1:
       loadAmazonScene(indent);
-      break;
+      //break;
     case 0:
       loadOfficeScene(indent);
       break;
@@ -1306,7 +1316,7 @@ void BoltBaxter::loadAmazonScene(std::size_t indent)
 
 void BoltBaxter::saveIMarkersToFile()
 {
-  const std::string file_name = "bolt_" + planning_group_name_ + "_goals.moveit";
+  const std::string file_name = "goals.moveit";
   std::string file_path;
   bolt_moveit::getFilePath(file_path, file_name, "ros/ompl_storage");
   ROS_INFO_STREAM_NAMED(name_, "Saving goal states to " << file_path);
@@ -1353,7 +1363,7 @@ void BoltBaxter::loadIMarkersFromFile(std::vector<moveit::core::RobotStatePtr> &
 {
   BOLT_FUNC(indent, true, "loadIMarkersFromFile()");
 
-  const std::string file_name = "bolt_" + planning_group_name_ + "_goals.moveit";
+  const std::string file_name = "goals.moveit";
   std::string file_path;
   bolt_moveit::getFilePath(file_path, file_name, "ros/ompl_storage");
   ROS_INFO_STREAM_NAMED(name_, "Loading goal states from " << file_path);
@@ -1415,6 +1425,8 @@ robot_trajectory::RobotTrajectoryPtr BoltBaxter::processSimpleSolution(std::size
 
   og::PathGeometric &path
     = static_cast<og::PathGeometric &>(*simple_setup_->getProblemDefinition()->getSolutionPath());
+
+  last_plan_path_length_ = path.length();
 
   // Have additional visualizations that mimmic those in BoltPlanner
   visual_->viz6()->deleteAllMarkers();

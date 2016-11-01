@@ -26,7 +26,7 @@ bolt_baxter:
   # run type
   run_problems: true # do plans?
   headless: false
-  num_problems: 1
+  num_problems: 100
   problem_type: 2 # 0 - random, 1 - imarkers, 2 - imarker goal list
 
   # scene

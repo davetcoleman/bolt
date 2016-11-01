@@ -173,7 +173,6 @@ public:
 
   // The visual tools for interfacing with Rviz
   std::vector<moveit_visual_tools::MoveItVisualToolsPtr> visual_tools_;
-  std::vector<bolt_moveit::MoveItVizWindowPtr> vizs_;
   ompl::tools::VisualizerPtr visual_;
 
   // TODO: remove these?
@@ -255,10 +254,13 @@ public:
   double visualize_time_between_plans_;
   bool visualize_database_every_plan_;
 
+  // Used for non-Bolt planning
+  double last_plan_path_length_;
+
   // Average planning time
-  double total_duration_ = 0;
-  std::size_t total_runs_ = 0;
-  std::size_t total_failures_ = 0;
+  // double total_duration_ = 0;
+  // std::size_t total_runs_ = 0;
+  // std::size_t total_failures_ = 0;
 
   // Create constrained paths
   bolt_moveit::CartPathPlannerPtr cart_path_planner_;
