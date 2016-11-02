@@ -106,7 +106,7 @@ public:
    * \return true if sparse graph is still accepting states, false if the sparse graph has completed
    */
   bool addSample(base::State *state, std::size_t threadID, bool &usedState, std::size_t indent);
-  bool addSample(CandidateData &candidateD, std::size_t threadID, bool &usedState, std::size_t indent);
+  bool addSample(SparseCandidateData &candidateD, std::size_t threadID, bool &usedState, std::size_t indent);
 
   void showStatus(std::size_t indent);
   void showNoQualityStatus(std::size_t indent);
@@ -115,8 +115,8 @@ public:
    * \brief Get neighbors within sparseDelta radius
    * \param indent - debugging tool
    */
-  void findGraphNeighbors(CandidateData &candidateD, std::size_t threadID, std::size_t indent);
-  void findGraphNeighbors(CandidateData &candidateD, double distance, std::size_t threadID, std::size_t indent);
+  void findGraphNeighbors(SparseCandidateData &candidateD, std::size_t threadID, std::size_t indent);
+  void findGraphNeighbors(SparseCandidateData &candidateD, double distance, std::size_t threadID, std::size_t indent);
 
   /**
    * \brief Tests for ensuring the generated roadmap obeys the theoretical guarantees
@@ -124,7 +124,7 @@ public:
   bool checkGraphOptimality(std::size_t indent);
 
   /** \brief Helper for debugging specific issue */
-  void debugNoNeighbors(CandidateData &point, std::size_t indent);
+  void debugNoNeighbors(SparseCandidateData &point, std::size_t indent);
 
   bool convertVertexPathToStatePath(std::vector<SparseVertex> &vertexPath, const base::State *actualStart,
                                     const base::State *actualGoal, geometric::PathGeometric &geometricSolution);

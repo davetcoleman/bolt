@@ -371,35 +371,6 @@ class FoundGoalException
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////
-// CANDIDATE STATE STRUCT
-////////////////////////////////////////////////////////////////////////////////////////
-struct CandidateData
-{
-  CandidateData(base::State* state) : state_(state)
-  {
-  }
-
-  CandidateData()
-  {
-  }
-
-  // Graph version number - allow to determine if candidate was expired by time candidate was generated
-  std::size_t graphVersion_;
-
-  // The sampled state to be added to the graph
-  base::State* state_;
-
-  // Nodes near our input state
-  std::vector<SparseVertex> graphNeighborhood_;
-
-  // Visible nodes near our input state
-  std::vector<SparseVertex> visibleNeighborhood_;
-
-  // The generated state
-  SparseVertex newVertex_;
-};
-
-////////////////////////////////////////////////////////////////////////////////////////
 // Data about how much the SparseGraph was modified
 ////////////////////////////////////////////////////////////////////////////////////////
 struct ExperiencePathStats

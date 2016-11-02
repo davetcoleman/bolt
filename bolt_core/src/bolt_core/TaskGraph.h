@@ -86,6 +86,35 @@ enum CompoundTypes
 /** \class ompl::tools::bolt::::TaskGraphPtr
     \brief A boost shared pointer wrapper for ompl::tools::TaskGraph */
 
+////////////////////////////////////////////////////////////////////////////////////////
+// CANDIDATE STATE STRUCT
+////////////////////////////////////////////////////////////////////////////////////////
+struct TaskCandidateData
+{
+  TaskCandidateData(base::CompoundState* state) : state_(state)
+  {
+  }
+
+  TaskCandidateData()
+  {
+  }
+
+  // Graph version number - allow to determine if candidate was expired by time candidate was generated
+  //std::size_t graphVersion_;
+
+  // The sampled state to be added to the graph
+  base::CompoundState* state_;
+
+  // Nodes near our input state
+  std::vector<TaskVertex> graphNeighborhood_;
+
+  // Visible nodes near our input state
+  std::vector<TaskVertex> visibleNeighborhood_;
+
+  // The generated state
+  TaskVertex newVertex_;
+};
+
 /** \brief Near-asypmotically optimal roadmap datastructure */
 class TaskGraph
 {
@@ -158,6 +187,10 @@ public:
    */
   bool astarSearch(const TaskVertex start, const TaskVertex goal, std::vector<TaskVertex>& vertexPath, double& distance,
                    std::size_t indent);
+  bool astarSearchLength(TaskVertex start, TaskVertex goal, double &distance, std::size_t indent);
+
+  bool checkPathLength(TaskVertex v1, TaskVertex v2, std::size_t indent);
+  bool checkPathLength(TaskVertex v1, SparseVertex v2, double distance, std::size_t indent);
 
   /** \brief Compute distance between two states ignoreing task level */
   double distanceVertex(const TaskVertex a, const TaskVertex b) const;

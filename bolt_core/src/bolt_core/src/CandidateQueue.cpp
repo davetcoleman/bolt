@@ -247,7 +247,7 @@ void CandidateQueue::generatingThread(std::size_t threadID, base::SpaceInformati
     }
 
     // Find nearby nodes
-    CandidateData candidateD(candidateState);
+    SparseCandidateData candidateD(candidateState);
 
     // time::point startTime = time::now(); // Benchmark
 
@@ -280,7 +280,7 @@ void CandidateQueue::generatingThread(std::size_t threadID, base::SpaceInformati
   }
 }
 
-CandidateData &CandidateQueue::getNextCandidate(std::size_t indent)
+SparseCandidateData &CandidateQueue::getNextCandidate(std::size_t indent)
 {
   BOLT_CYAN(indent, verbose_, "CandidateQueue.getNextCanidate(): queue size: "
                                   << queue_.size()
@@ -359,7 +359,7 @@ void CandidateQueue::waitForQueueNotEmpty(std::size_t indent)
   {
     if (oneTimeFlag)
     {
-      BOLT_WARN(indent, vQueueEmpty_, "CandidateQueue: Queue is empty, waiting for next generated CandidateData");
+      BOLT_WARN(indent, vQueueEmpty_, "CandidateQueue: Queue is empty, waiting for next generated SparseCandidateData");
       oneTimeFlag = false;
     }
     usleep(100);
@@ -368,7 +368,7 @@ void CandidateQueue::waitForQueueNotEmpty(std::size_t indent)
     BOLT_DEBUG(indent, vQueueEmpty_ && false, "CandidateQueue: No longer waiting on queue");
 }
 
-bool CandidateQueue::findGraphNeighbors(CandidateData &candidateD, std::size_t threadID, std::size_t indent)
+bool CandidateQueue::findGraphNeighbors(SparseCandidateData &candidateD, std::size_t threadID, std::size_t indent)
 {
   BOLT_FUNC(indent, vNeighbor_, "findGraphNeighbors() within sparse delta " << sparseCriteria_->getSparseDelta()
                                                                             << " state: " << candidateD.state_);

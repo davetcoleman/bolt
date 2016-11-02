@@ -125,7 +125,7 @@ void SparseCriteria::resetStats()
   // TODO: move addVertex stats in SparseGraph here
 }
 
-bool SparseCriteria::addStateToRoadmap(CandidateData &candidateD, VertexType &addReason, std::size_t threadID,
+bool SparseCriteria::addStateToRoadmap(SparseCandidateData &candidateD, VertexType &addReason, std::size_t threadID,
                                        std::size_t indent)
 {
   BOLT_FUNC(indent, vCriteria_, "addStateToRoadmap() Adding candidate state ID " << candidateD.state_);
@@ -187,7 +187,7 @@ bool SparseCriteria::addStateToRoadmap(CandidateData &candidateD, VertexType &ad
   return stateAdded;
 }
 
-bool SparseCriteria::checkAddCoverage(CandidateData &candidateD, std::size_t indent)
+bool SparseCriteria::checkAddCoverage(SparseCandidateData &candidateD, std::size_t indent)
 {
   BOLT_FUNC(indent, vCriteria_, "checkAddCoverage() Are other nodes around it visible?");
 
@@ -209,7 +209,7 @@ bool SparseCriteria::checkAddCoverage(CandidateData &candidateD, std::size_t ind
   return true;
 }
 
-bool SparseCriteria::checkAddConnectivity(CandidateData &candidateD, std::size_t indent)
+bool SparseCriteria::checkAddConnectivity(SparseCandidateData &candidateD, std::size_t indent)
 {
   BOLT_FUNC(indent, vCriteria_, "checkAddConnectivity() Does this node connect two disconnected components?");
 
@@ -337,7 +337,7 @@ bool SparseCriteria::checkAddConnectivity(CandidateData &candidateD, std::size_t
   return true;
 }
 
-bool SparseCriteria::checkAddInterface(CandidateData &candidateD, std::size_t indent)
+bool SparseCriteria::checkAddInterface(SparseCandidateData &candidateD, std::size_t indent)
 {
   BOLT_FUNC(indent, vCriteria_, "checkAddInterface() Does this node's neighbor's need it to better connect them?");
 
@@ -437,7 +437,7 @@ bool SparseCriteria::checkAddInterface(CandidateData &candidateD, std::size_t in
 }
 
 #ifdef ENABLE_QUALITY
-bool SparseCriteria::checkAddQuality(CandidateData &candidateD, std::size_t threadID, std::size_t indent)
+bool SparseCriteria::checkAddQuality(SparseCandidateData &candidateD, std::size_t threadID, std::size_t indent)
 {
   if (!useFourthCriteria_)
     return false;

@@ -61,7 +61,6 @@ namespace tools
 namespace bolt
 {
 OMPL_CLASS_FORWARD(CandidateQueue);
-// OMPL_CLASS_FORWARD(SparseGraph);
 OMPL_CLASS_FORWARD(SparseCriteria);
 OMPL_CLASS_FORWARD(SparseGenerator);
 
@@ -81,7 +80,7 @@ public:
   void stopGenerating(std::size_t indent);
 
   /** \brief This function is called from the parent thread */
-  CandidateData &getNextCandidate(std::size_t indent);
+  SparseCandidateData &getNextCandidate(std::size_t indent);
 
   /** \brief This function is called from the parent thread */
   void setCandidateUsed(bool wasUsed, std::size_t indent);
@@ -99,7 +98,7 @@ private:
   void waitForQueueNotFull(std::size_t indent);
   void waitForQueueNotEmpty(std::size_t indent);
 
-  bool findGraphNeighbors(CandidateData &candidateD, std::size_t threadID, std::size_t indent);
+  bool findGraphNeighbors(SparseCandidateData &candidateD, std::size_t threadID, std::size_t indent);
 
   /** \brief Short name of this class */
   const std::string name_ = "CandidateQueue";
@@ -114,7 +113,7 @@ private:
   /** \brief Class for managing various visualization features */
   VisualizerPtr visual_;
 
-  std::queue<CandidateData> queue_;
+  std::queue<SparseCandidateData> queue_;
 
   std::size_t targetQueueSize_ = 20;
 

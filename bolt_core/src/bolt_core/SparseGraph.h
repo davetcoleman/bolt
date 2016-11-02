@@ -81,6 +81,35 @@ OMPL_CLASS_FORWARD(SparseCriteria);
 /** \class ompl::tools::bolt::::SparseGraphPtr
     \brief A boost shared pointer wrapper for ompl::tools::SparseGraph */
 
+////////////////////////////////////////////////////////////////////////////////////////
+// CANDIDATE STATE STRUCT
+////////////////////////////////////////////////////////////////////////////////////////
+struct SparseCandidateData
+{
+  SparseCandidateData(base::State* state) : state_(state)
+  {
+  }
+
+  SparseCandidateData()
+  {
+  }
+
+  // Graph version number - allow to determine if candidate was expired by time candidate was generated
+  std::size_t graphVersion_;
+
+  // The sampled state to be added to the graph
+  base::State* state_;
+
+  // Nodes near our input state
+  std::vector<SparseVertex> graphNeighborhood_;
+
+  // Visible nodes near our input state
+  std::vector<SparseVertex> visibleNeighborhood_;
+
+  // The generated state
+  SparseVertex newVertex_;
+};
+
 /** \brief Near-asypmotically optimal roadmap datastructure */
 class SparseGraph
 {

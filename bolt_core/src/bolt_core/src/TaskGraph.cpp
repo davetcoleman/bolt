@@ -221,7 +221,6 @@ bool TaskGraph::astarSearch(const TaskVertex start, const TaskVertex goal, std::
                         },
                         // ability to disable edges (set cost to inifinity):
                         boost::weight_map(TaskEdgeWeightMap(g_))
-                            // boost::weight_map(boost::get(&TaskEdgeStruct::weight_, g_))
                             .predecessor_map(vertexPredecessors)
                             .distance_map(&vertexDistances[0])
                             .visitor(TaskAstarVisitor(goal, this)));
@@ -323,6 +322,92 @@ bool TaskGraph::astarSearch(const TaskVertex start, const TaskVertex goal, std::
 
   // No solution found from start to goal
   return foundGoal;
+}
+
+bool TaskGraph::astarSearchLength(TaskVertex start, TaskVertex goal, double &distance, std::size_t indent)
+{
+  BOLT_FUNC(indent, vSearch_, "astarSearchLength()");
+
+  bool foundGoal = false;
+
+  // Hold a list of the shortest path parent to each vertex
+  // TODO: reuse this initialized memory!
+  TaskVertex *vertexPredecessors = new TaskVertex[getNumVertices()];
+  double *vertexDistances = new double[getNumVertices()];
+
+  distance = std::numeric_limits<double>::infinity();
+
+#ifdef ENABLE_ASTAR_DEBUG
+  // Reset statistics
+  numNodesOpened_ = 0;
+  numNodesClosed_ = 0;
+
+  if (visualizeAstar_)
+  {
+    visual_->viz4()->deleteAllMarkers();
+  }
+#endif
+
+  try
+  {
+    boost::astar_search(g_, start,  // graph, start state
+                        [this, goal](TaskVertex v)
+                        {
+                          return astarTaskHeuristic(v, goal);  // the heuristic
+                        },
+                        // ability to disable edges (set cost to inifinity):
+                        boost::weight_map(TaskEdgeWeightMap(g_))
+                            .predecessor_map(vertexPredecessors)
+                            .distance_map(&vertexDistances[0])
+                            .visitor(TaskAstarVisitor(goal, this)));
+  }
+  catch (FoundGoalException &)
+  {
+    if (std::isinf(vertexDistances[goal]))
+    {
+      BOLT_WARN(indent, true, "Distance is inifinity");
+    }
+    else if (vertexDistances[goal] > 1e300)
+    {
+      BOLT_WARN(indent, true, "Distance is close to inifinity");
+    }
+    else
+      foundGoal = true;
+  }
+
+  distance = vertexDistances[goal];
+
+  // Unload
+  delete[] vertexPredecessors;
+  delete[] vertexDistances;
+
+  // No solution found from start to goal
+  return foundGoal;
+}
+
+bool TaskGraph::checkPathLength(TaskVertex v1, TaskVertex v2, std::size_t indent)
+{
+  return checkPathLength(v1, v2, distanceVertex(v1, v2), indent);
+}
+
+bool TaskGraph::checkPathLength(TaskVertex v1, SparseVertex v2, double distance, std::size_t indent)
+{
+  static const double SMALL_EPSILON = 0.0001;
+
+  double pathLength;
+  if (!astarSearchLength(v1, v2, pathLength, indent))
+    return true;
+
+  if (pathLength < distance + SMALL_EPSILON)
+  {
+    BOLT_ERROR(indent, "New interface edge does not help enough, edge length: " << distance << ", astar: " << pathLength
+                                                                                << ", difference between distances: "
+                                                                                << fabs(distance - pathLength));
+    return false;
+  }
+
+  BOLT_WARN(indent, false, "Interface edge qualifies - diff: " << (distance + SMALL_EPSILON - pathLength));
+  return true;
 }
 
 double TaskGraph::distanceVertex(const TaskVertex a, const TaskVertex b) const

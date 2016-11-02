@@ -366,7 +366,7 @@ bool SparseGenerator::addRandomSamplesThreaded(std::size_t indent)
     // time::point startTime2 = time::now(); // Benchmark
 
     // Get next state and its corresponding neighbors
-    CandidateData &candidateD = candidateQueue_->getNextCandidate(indent);
+    SparseCandidateData &candidateD = candidateQueue_->getNextCandidate(indent);
 
     bool usedState = false;
 
@@ -395,13 +395,13 @@ bool SparseGenerator::addRandomSamplesThreaded(std::size_t indent)
 bool SparseGenerator::addSample(ob::State *state, std::size_t threadID, bool &usedState, std::size_t indent)
 {
   // Find nearby nodes
-  CandidateData candidateD(state);
+  SparseCandidateData candidateD(state);
   findGraphNeighbors(candidateD, threadID, indent);
 
   return addSample(candidateD, threadID, usedState, indent);
 }
 
-bool SparseGenerator::addSample(CandidateData &candidateD, std::size_t threadID, bool &usedState, std::size_t indent)
+bool SparseGenerator::addSample(SparseCandidateData &candidateD, std::size_t threadID, bool &usedState, std::size_t indent)
 {
   BOLT_FUNC(indent, verbose_, "addSample() threadID: " << threadID);
 
@@ -555,12 +555,12 @@ void SparseGenerator::showNoQualityStatus(std::size_t indent)
   }
 }
 
-void SparseGenerator::findGraphNeighbors(CandidateData &candidateD, std::size_t threadID, std::size_t indent)
+void SparseGenerator::findGraphNeighbors(SparseCandidateData &candidateD, std::size_t threadID, std::size_t indent)
 {
   findGraphNeighbors(candidateD, sparseCriteria_->getSparseDelta(), threadID, indent);
 }
 
-void SparseGenerator::findGraphNeighbors(CandidateData &candidateD, double distance, std::size_t threadID,
+void SparseGenerator::findGraphNeighbors(SparseCandidateData &candidateD, double distance, std::size_t threadID,
                                          std::size_t indent)
 {
   BOLT_FUNC(indent, vFindGraphNeighbors_, "findGraphNeighbors() within sparse delta "
@@ -616,9 +616,9 @@ bool SparseGenerator::checkGraphOptimality(std::size_t indent)
     time::point startTime = time::now();  // Benchmark
 
     // Choose random start and goal state that has a nearest neighbor
-    std::vector<CandidateData> endPoints(2);
+    std::vector<SparseCandidateData> endPoints(2);
 
-    for (CandidateData &point : endPoints)
+    for (SparseCandidateData &point : endPoints)
     {
       // Allocate
       point.state_ = si_->getStateSpace()->allocState();
@@ -771,7 +771,7 @@ bool SparseGenerator::checkGraphOptimality(std::size_t indent)
   return true;
 }
 
-void SparseGenerator::debugNoNeighbors(CandidateData &point, std::size_t indent)
+void SparseGenerator::debugNoNeighbors(SparseCandidateData &point, std::size_t indent)
 {
   BOLT_FUNC(indent, true, "Found sampled vertex with no neighbors");
 
@@ -1138,7 +1138,7 @@ ExperiencePathStats SparseGenerator::addExperiencePath(geometric::PathGeometricP
     base::State *candidateState = si_->cloneState(path->getState(shuffledIDs[i]));
 
     // Create datastrucutre
-    CandidateData candidateD(candidateState);
+    SparseCandidateData candidateD(candidateState);
     findGraphNeighbors(candidateD, threadID, indent);
 
     // Add to roadmap
