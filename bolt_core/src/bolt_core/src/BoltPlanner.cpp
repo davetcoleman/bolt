@@ -121,16 +121,14 @@ base::PlannerStatus BoltPlanner::solve(Termination &ptc)
   if (taskGraph_->isEmpty())
   {
     BOLT_DEBUG(indent, verbose_, "Task experience database is empty so unable to run BoltPlanner algorithm.");
-
     return base::PlannerStatus::ABORT;
   }
-
-  taskGraph_->clearEdgeCollisionStates();
 
   // Restart the Planner Input States so that the first start and goal state can be fetched
   pis_.restart();  // PlannerInputStates
 
   // Get a single start and goal state
+  // TODO: allocate this memory once for entire class
   base::State *startState = modelSI_->getStateSpace()->cloneState(pis_.nextStart());  // PlannerInputStates
   base::State *goalState = modelSI_->getStateSpace()->cloneState(pis_.nextGoal(ptc));
 
@@ -348,8 +346,7 @@ bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
       // Repeatidly search through graph for connection then check for collisions then repeat
       if (onGraphSearch(startVertex, goalVertex, actualStart, actualGoal, compoundSolution, ptc, indent + 2))
       {
-        // All save trajectories should be at least 1 state long, then we append the start and goal states, for
-        // min of 3
+        // Shoule be at least 1 state long, then we append the start and goal states, for min of 3 states
         assert(compoundSolution->getStateCount() >= 3);
 
         // Found a path
@@ -358,12 +355,8 @@ bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
       else
       {
         // Did not find a path
-        BOLT_DEBUG(indent, verbose_, "getPathOnGraph() Did not find a path, looking for other start/goal "
-                                     "combinations ");
+        BOLT_DEBUG(indent, verbose_, "getPathOnGraph() Did not find a path, looking for other start/goal combinations");
       }
-
-      if (visual_->viz1()->shutdownRequested())
-        break;
     }  // foreach
 
     if (visual_->viz1()->shutdownRequested())
@@ -424,6 +417,7 @@ bool BoltPlanner::onGraphSearch(const TaskVertex &startVertex, const TaskVertex 
     return true;
   }
 
+#ifndef NDEBUG
   // Error check all states are non-nullptr
   assert(actualStart);
   assert(actualGoal);
@@ -448,19 +442,13 @@ bool BoltPlanner::onGraphSearch(const TaskVertex &startVertex, const TaskVertex 
     // visual_->viz5()->trigger();
     // visual_->prompt("goal viz");
   }
+#endif
 
   // Keep looking for paths between chosen start and goal until one is found that is valid,
   // or no further paths can be found between them because of disabled edges
   // this is necessary for lazy collision checking i.e. rerun after marking invalid edges we found
-  while (!visual_->viz1()->shutdownRequested())
+  while (true)
   {
-    // Check if our planner is out of time
-    if (ptc)
-    {
-      BOLT_DEBUG(indent, verbose_, "Function interrupted because termination condition is true");
-      return false;
-    }
-
     // Attempt to find a solution from start to goal
     // time::point startTime0 = time::now(); // Benchmark
     if (!taskGraph_->astarSearch(startVertex, goalVertex, vertexPath, distance, indent))
@@ -533,13 +521,14 @@ bool BoltPlanner::lazyCollisionCheck(std::vector<TaskVertex> &vertexPath, Termin
         // Remember that this path is no longer valid, but keep checking remainder of path edges
         hasInvalidEdges = true;
 
+#ifndef NDEBUG
         // Check if our planner is out of time - only do this after the slow checkMotion() action has occured to save
         // time
         if (ptc || visual_->viz1()->shutdownRequested())
         {
           BOLT_DEBUG(indent, verbose_, "Lazy collision check function interrupted because termination condition is "
                                        "true.");
-          return false;
+          exit(0);
         }
 
         // Debug
@@ -552,6 +541,7 @@ bool BoltPlanner::lazyCollisionCheck(std::vector<TaskVertex> &vertexPath, Termin
 
           visualizeBadEdge(fromVertex, toVertex);
         }
+#endif
       }
       else
       {
@@ -585,8 +575,8 @@ bool BoltPlanner::lazyCollisionCheck(std::vector<TaskVertex> &vertexPath, Termin
 bool BoltPlanner::findGraphNeighbors(const base::CompoundState *state, std::vector<TaskVertex> &neighbors,
                                      int requiredLevel, std::size_t indent)
 {
-  double sparseDeltaFractionSecondary = 0.1;
-  double radius = sparseDeltaFractionSecondary * modelSI_->getMaximumExtent();
+  const double sparseDeltaFractionSecondary = 0.1;
+  const double radius = sparseDeltaFractionSecondary * modelSI_->getMaximumExtent();
 
   BOLT_FUNC(indent, vNearestNeighbor_, "findGraphNeighbors() search radius " << radius);
 

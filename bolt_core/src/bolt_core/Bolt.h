@@ -38,25 +38,29 @@
 #ifndef OMPL_TOOLS_BOLT_BOLT_
 #define OMPL_TOOLS_BOLT_BOLT_
 
+// OMPL
 #include <ompl/geometric/SimpleSetup.h>  // the parent class
-
-#include <bolt_core/SparseGraph.h>
-#include <bolt_core/TaskGraph.h>
 #include <ompl/tools/debug/Visualizer.h>
-#include <bolt_core/BoltPlanner.h>
+//#include <ompl/base/Planner.h>
+//#include <ompl/base/PlannerData.h>
+//#include <ompl/base/ProblemDefinition.h>
+//#include <ompl/base/SpaceInformation.h>
+//#include <ompl/base/ProblemDefinition.h>
+//#include <ompl/base/StateSpace.h>  // for storing to file
 
-#include <ompl/base/Planner.h>
-#include <ompl/base/PlannerData.h>
-#include <ompl/base/ProblemDefinition.h>
-#include <ompl/base/SpaceInformation.h>
-#include <ompl/base/ProblemDefinition.h>
-#include <ompl/base/StateSpace.h>  // for storing to file
-
-#include <ompl/geometric/PathGeometric.h>
+//#include <ompl/geometric/PathGeometric.h>
 #include <ompl/geometric/PathSimplifier.h>
 
 #include <ompl/util/Console.h>
 #include <ompl/util/Exception.h>
+
+// Bolt
+#include <bolt_core/SparseGraph.h>
+#include <bolt_core/TaskGraph.h>
+#include <bolt_core/BoltPlanner.h>
+
+// C++
+#include <thread>
 
 namespace ompl
 {
@@ -197,6 +201,12 @@ public:
   /** \brief Insert experiences into database */
   bool doPostProcessing(std::size_t indent);
 
+  /** \brief Block until post processing thread is complete */
+  void waitForPostProcessing(std::size_t indent);
+
+  /** \brief Insert experiences into database in thread */
+  void postProcessingThread(std::vector<geometric::PathGeometricPtr> queuedModelSolPaths, std::size_t indent);
+
   /** \brief Set the database file to load. Actual loading occurs when setup() is called
    *  \param filePath - full absolute path to a experience database to load
    */
@@ -271,6 +281,9 @@ public:
   // bool doPostProcessing();
 
 protected:
+
+  const std::string name_ = "Bolt";
+
   // This is included in parent class, but mentioned here in contrast to modelSI_
   // base::SpaceInformationPtr si_;
 
@@ -313,8 +326,9 @@ protected:
   // output data to file to analyze performance externally
   std::stringstream csvDataLogStream_;
 
+  std::thread ppThread_;
+
 public:
-  const std::string name_ = "Bolt";
 
   /** \brief Verbose settings */
   bool verbose_ = true;

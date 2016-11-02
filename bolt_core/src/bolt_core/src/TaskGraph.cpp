@@ -116,6 +116,8 @@ void TaskGraph::clear()
 
   graphUnsaved_ = false;
   taskPlanningEnabled_ = false;
+
+  clearEdgeCollisionStates();
 }
 
 void TaskGraph::freeMemory()

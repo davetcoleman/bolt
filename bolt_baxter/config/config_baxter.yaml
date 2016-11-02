@@ -26,8 +26,10 @@ bolt_baxter:
   # run type
   run_problems: true # do plans?
   headless: false
-  num_problems: 100
+  num_problems: 50
   problem_type: 2 # 0 - random, 1 - imarkers, 2 - imarker goal list
+  imarker_goal_list: easy1.moveit
+  #imarker_goal_list: hard1.moveit
 
   # scene
   scene_type: 1 # 0 - office, 1 - amazon
@@ -50,8 +52,8 @@ bolt_baxter:
 
   # other
   use_task_planning: false  # cartesian hybrid planning
-  post_processing: false
-  post_processing_interval: 20 # how often (in runs) to adjust the graphs
+  post_processing: true
+  post_processing_interval: 1 # how often (in runs) to adjust the graphs
   seed_random: true
   use_logging: true # write to file log info
   collision_checking_enabled: true

@@ -114,6 +114,7 @@ BoltBaxter::BoltBaxter(const std::string &hostname, const std::string &package_p
   error += !rosparam_shortcuts::get(name_, rpnh, "num_problems", num_problems_);
   error += !rosparam_shortcuts::get(name_, rpnh, "headless", headless_);
   error += !rosparam_shortcuts::get(name_, rpnh, "problem_type", problem_type_);
+  error += !rosparam_shortcuts::get(name_, rpnh, "imarker_goal_list", imarker_goal_list_);
   error += !rosparam_shortcuts::get(name_, rpnh, "use_task_planning", use_task_planning_);
   error += !rosparam_shortcuts::get(name_, rpnh, "planning_group_name", planning_group_name_);
   error += !rosparam_shortcuts::get(name_, rpnh, "arm_jmgs", arm_jmgs);
@@ -460,13 +461,15 @@ bool BoltBaxter::runProblems(std::size_t indent)
     // Generate start/goal pair
     chooseStartGoal(run_id, indent);
 
-    // Optionally create cartesian path, if this is a task plan
+    // Track memory usage
     double vm1, rss1;
-    if (track_memory_consumption_)  // Track memory usage
+    if (track_memory_consumption_)
       processMemUsage(vm1, rss1);
 
+    // Populate TaskGraph, even for non-task planning
     if (is_bolt_)
     {
+      bolt_->waitForPostProcessing(indent);
       if (use_task_planning_)
       {
         if (!generateCartGraph())
@@ -477,11 +480,14 @@ bool BoltBaxter::runProblems(std::size_t indent)
       }
       else
       {
+        ompl::time::point startTime0 = ompl::time::now(); // Benchmark
         bolt_->getTaskGraph()->generateMonoLevelTaskSpace(indent);
+        OMPL_WARN("generateMonoLevelTaskSpace took %f seconds", ompl::time::seconds(ompl::time::now() - startTime0)); // Benchmark
       }
     }
 
-    if (track_memory_consumption_)  // Track memory usage
+    // Track memory usage
+    if (track_memory_consumption_)
     {
       double vm2, rss2;
       processMemUsage(vm2, rss2);
@@ -505,6 +511,8 @@ bool BoltBaxter::runProblems(std::size_t indent)
     {
       if (is_bolt_)
       {
+        BOLT_WARN(indent, true, "TODO: enable processResutls in bolt_baxter");
+        //bolt_->processResults(indent);
         bolt_->saveDataLog(logging_file);
       }
       else
@@ -521,11 +529,11 @@ bool BoltBaxter::runProblems(std::size_t indent)
     }
 
     // Regenerate Sparse Graph
-    // if (post_processing_ && run_id % post_processing_interval_ == 0 && run_id > 0)  // every x runs
-    // {
-    //   ROS_INFO_STREAM_NAMED(name_, "Performing post processing every " << post_processing_interval_ << " intervals");
-    //   bolt_->doPostProcessing();
-    // }
+    if (is_bolt_ && post_processing_ && run_id % post_processing_interval_ == 0)  // every x runs
+    {
+      ROS_INFO_STREAM_NAMED(name_, "Performing post processing every " << post_processing_interval_ << " plans");
+      bolt_->doPostProcessing(indent);
+    }
 
     if (visualize_wait_between_plans_ && run_id < num_problems_ - 1)
       visual_->viz1()->prompt("run next problem");
@@ -541,8 +549,8 @@ bool BoltBaxter::runProblems(std::size_t indent)
   }  // for each run
 
   // Save experience
-  // if (post_processing_)
-  //   bolt_->doPostProcessing();
+  if (post_processing_ && is_bolt_)
+    bolt_->doPostProcessing(indent);
 
   // Finishing up
   if (is_bolt_)
@@ -630,9 +638,6 @@ bool BoltBaxter::plan(std::size_t indent)
     bool blocking = false;
     visual_tools_[6]->publishTrajectoryPath(execution_traj, blocking);
   }
-
-  if (is_bolt_)
-    bolt_->doPostProcessing(indent);
 
   // Visualize the doneness
   std::cout << std::endl;
@@ -1321,9 +1326,8 @@ void BoltBaxter::loadAmazonScene(std::size_t indent)
 
 void BoltBaxter::saveIMarkersToFile()
 {
-  const std::string file_name = "goals.moveit";
   std::string file_path;
-  bolt_moveit::getFilePath(file_path, file_name, "ros/ompl_storage");
+  bolt_moveit::getFilePath(file_path, imarker_goal_list_, "ros/ompl_storage");
   ROS_INFO_STREAM_NAMED(name_, "Saving goal states to " << file_path);
 
   std::ofstream output_file;
@@ -1368,9 +1372,8 @@ void BoltBaxter::loadIMarkersFromFile(std::vector<moveit::core::RobotStatePtr> &
 {
   BOLT_FUNC(indent, true, "loadIMarkersFromFile()");
 
-  const std::string file_name = "goals.moveit";
   std::string file_path;
-  bolt_moveit::getFilePath(file_path, file_name, "ros/ompl_storage");
+  bolt_moveit::getFilePath(file_path, imarker_goal_list_, "ros/ompl_storage");
   ROS_INFO_STREAM_NAMED(name_, "Loading goal states from " << file_path);
 
   // Error check

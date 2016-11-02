@@ -89,8 +89,8 @@ SparseStorage::GraphSizeChange SparseStorage::save(const std::string &filePath, 
 
   // Log the graph size
   std::ofstream loggingFile;                              // open to append
-  loggingFile.open(loggingPath_.c_str(), std::ios::out);  // no append | std::ios::app);
-  loggingFile << sparseGraph_->getNumEdges() << ", " << sparseGraph_->getNumVertices() << std::endl;
+  loggingFile.open(loggingPath_.c_str(), std::ios::out | std::ios::app);
+  loggingFile << time::as_string(time::now()) << ", " << sparseGraph_->getNumEdges() << ", " << sparseGraph_->getNumVertices() << std::endl;
   loggingFile.close();
 
   return stats;

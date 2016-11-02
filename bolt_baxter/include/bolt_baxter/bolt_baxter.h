@@ -230,6 +230,7 @@ public:
   // Operation settings
   std::size_t num_problems_;
   int problem_type_;
+  std::string imarker_goal_list_;
   bool use_task_planning_;
   bool headless_;
   bool auto_run_;
