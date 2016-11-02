@@ -577,15 +577,15 @@ void SparseGenerator::findGraphNeighbors(CandidateData &candidateD, double dista
     const SparseVertex &v2 = candidateD.graphNeighborhood_[i];
 
     // Don't collision check if they are the same state
-    if (candidateD.state_ != sg_->getState(v2))
+    if (candidateD.state_ != sg_->getState(v2)) // TODO: remove this check
     {
       if (!si_->checkMotion(candidateD.state_, sg_->getState(v2)))
       {
         continue;
       }
     }
-    else if (vFindGraphNeighbors_)
-      std::cout << " ---- Skipping collision checking because same vertex " << std::endl;
+    else  // if (vFindGraphNeighbors_)
+      throw Exception(name_, "Skipping collision checking because same vertex "); // TODO remove check
 
     // The two are visible to each other!
     candidateD.visibleNeighborhood_.push_back(candidateD.graphNeighborhood_[i]);
