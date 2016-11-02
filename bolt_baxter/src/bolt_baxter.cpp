@@ -80,9 +80,6 @@ BoltBaxter::BoltBaxter(const std::string &hostname, const std::string &package_p
 {
   std::size_t indent = 0;
 
-  // Profiler
-  CALLGRIND_TOGGLE_COLLECT;
-
   std::vector<std::string> ee_tip_links;
   std::vector<std::string> arm_jmgs;
 
@@ -226,10 +223,6 @@ BoltBaxter::BoltBaxter(const std::string &hostname, const std::string &package_p
 
   // Run application
   run(indent);
-
-  // Profiler
-  CALLGRIND_TOGGLE_COLLECT;
-  CALLGRIND_DUMP_STATS;
 }
 
 BoltBaxter::~BoltBaxter()
@@ -588,12 +581,19 @@ bool BoltBaxter::plan(std::size_t indent)
   double seconds = 60 * 60;  // 1 hour
   ob::PlannerTerminationCondition ptc = ob::timedPlannerTerminationCondition(seconds, 0.1);
 
+  // Profiler
+  CALLGRIND_TOGGLE_COLLECT;
+
   // Attempt to solve the problem within x seconds of planning time
   if (!simple_setup_->solve(ptc))
   {
     ROS_ERROR_STREAM_NAMED(name_, "No solution found");
     exit(0);
   }
+
+  // Profiler
+  CALLGRIND_TOGGLE_COLLECT;
+  CALLGRIND_DUMP_STATS;
 
   // Simplify
   if (!is_bolt_)
@@ -631,7 +631,8 @@ bool BoltBaxter::plan(std::size_t indent)
     visual_tools_[6]->publishTrajectoryPath(execution_traj, blocking);
   }
 
-  //bolt_->doPostProcessing(indent);
+  if (is_bolt_)
+    bolt_->doPostProcessing(indent);
 
   // Visualize the doneness
   std::cout << std::endl;
@@ -1460,11 +1461,9 @@ robot_trajectory::RobotTrajectoryPtr BoltBaxter::processSegments(std::size_t ind
 {
   BOLT_FUNC(indent, true, "processSegments()");
 
-  visual_->prompt("before processSegments");
-
   // Visualize if not already done so within BoltPlanner
   if (!bolt_->getBoltPlanner()->visualizeRawTrajectory_)
-    bolt_->getBoltPlanner()->visualizeRaw(indnet);
+    bolt_->getBoltPlanner()->visualizeRaw(indent);
   if (!bolt_->getBoltPlanner()->visualizeSmoothTrajectory_)
     bolt_->getBoltPlanner()->visualizeSmoothed(indent);
 

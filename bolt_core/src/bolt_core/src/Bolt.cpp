@@ -281,9 +281,7 @@ void Bolt::processResults(std::size_t indent)
       BOLT_ASSERT(smoothedModelSolPath->getStateCount() >= 2, "Solution is less than 2 states long");
 
       // Queue the solution path for future insertion into experience database (post-processing)
-      // queuedModelSolPaths_.push_back(smoothedModelSolPath);
-
-      result = sparseGenerator_->addExperiencePath(smoothedModelSolPath, indent);
+      queuedModelSolPaths_.push_back(smoothedModelSolPath);
     }
     break;
     default:

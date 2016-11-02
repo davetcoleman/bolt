@@ -1158,7 +1158,8 @@ ExperiencePathStats SparseGenerator::addExperiencePath(geometric::PathGeometricP
       si_->freeState(candidateState);
     }
 
-    // visual_->prompt("Added segment");
+    if (visual_->viz1()->shutdownRequested())
+      break;
   }
 
   ExperiencePathStats stats;
