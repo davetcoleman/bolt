@@ -469,7 +469,6 @@ bool BoltBaxter::runProblems(std::size_t indent)
     // Populate TaskGraph, even for non-task planning
     if (is_bolt_)
     {
-      bolt_->waitForPostProcessing(indent);
       if (use_task_planning_)
       {
         if (!generateCartGraph())
@@ -500,9 +499,10 @@ bool BoltBaxter::runProblems(std::size_t indent)
     // -----------------------------------------------------
     // -----------------------------------------------------
 
-    // Console display
+    // Show results
     if (is_bolt_)
     {
+      bolt_->processResults(indent);
       bolt_->printLogs();
     }
 
@@ -511,8 +511,6 @@ bool BoltBaxter::runProblems(std::size_t indent)
     {
       if (is_bolt_)
       {
-        BOLT_WARN(indent, true, "TODO: enable processResutls in bolt_baxter");
-        //bolt_->processResults(indent);
         bolt_->saveDataLog(logging_file);
       }
       else

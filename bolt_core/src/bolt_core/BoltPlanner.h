@@ -157,13 +157,12 @@ public:
    *   first is in \e start and the second is in \e goal, and the two milestones are in the same
    *   connected component. If a solution is found, the path is saved.
    * \param debug - whether to show the failure points
-   * \param feedbackStartFailed - if getPathOnGraph returns false, this flag determines if the start or goal node failed
    * to conenct
    */
   bool getPathOnGraph(const std::vector<bolt::TaskVertex> &candidateStarts,
                       const std::vector<bolt::TaskVertex> &candidateGoals, const base::CompoundState *actualStart,
                       const base::CompoundState *actualGoal, geometric::PathGeometricPtr compoundSolution,
-                      Termination &ptc, bool debug, bool &feedbackStartFailed, std::size_t indent);
+                      Termination &ptc, bool debug, std::size_t indent);
 
   /**
    * \brief Repeatidly search through graph for connection then check for collisions then repeat

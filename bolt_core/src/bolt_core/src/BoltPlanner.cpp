@@ -115,7 +115,7 @@ void BoltPlanner::setup(void)
 base::PlannerStatus BoltPlanner::solve(Termination &ptc)
 {
   std::size_t indent = 0;
-  BOLT_FUNC(indent, verbose_, "solve()");
+  BOLT_FUNC(indent, verbose_ || true, "solve()");
 
   // Check if the database is empty
   if (taskGraph_->isEmpty())
@@ -254,10 +254,9 @@ bool BoltPlanner::getPathOffGraph(const base::CompoundState *start, const base::
     BOLT_DEBUG(indent, vNearestNeighbor_, "Found " << goalVertexCandidateNeighbors_.size() << " nodes near goal");
 
     // Get paths between start and goal
-    bool feedbackStartFailed;
     const bool debug = false;
     bool result = getPathOnGraph(startVertexCandidateNeighbors_, goalVertexCandidateNeighbors_, start, goal,
-                                 compoundSolution, ptc, debug, feedbackStartFailed, indent);
+                                 compoundSolution, ptc, debug, indent);
 
     // Error check
     if (result)
@@ -284,7 +283,7 @@ bool BoltPlanner::getPathOffGraph(const base::CompoundState *start, const base::
 bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
                                  const std::vector<TaskVertex> &candidateGoals, const base::CompoundState *actualStart,
                                  const base::CompoundState *actualGoal, og::PathGeometricPtr compoundSolution,
-                                 Termination &ptc, bool debug, bool &feedbackStartFailed, std::size_t indent)
+                                 Termination &ptc, bool debug, std::size_t indent)
 {
   BOLT_FUNC(indent, verbose_, "getPathOnGraph()");
 
@@ -368,24 +367,24 @@ bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
     BOLT_WARN(indent, true, "getPathOnGraph() Both a valid start and goal were found but still no path found.");
 
     // Re-attempt to connect both
-    addSamples(taskGraph_->getModelBasedState(actualGoal), indent);
-    addSamples(taskGraph_->getModelBasedState(actualStart), indent);
-    addSamples(NULL, indent); // do general sampling
+    // addSamples(taskGraph_->getModelBasedState(actualGoal), indent);
+    // addSamples(taskGraph_->getModelBasedState(actualStart), indent);
+    // addSamples(NULL, indent); // do general sampling
   }
   else if (foundValidStart && !foundValidGoal)
   {
     BOLT_WARN(indent, true, "getPathOnGraph() Unable to connect GOAL state to graph");
 
-    feedbackStartFailed = false;  // it was the goal state that failed us
-    addSamples(taskGraph_->getModelBasedState(actualGoal), indent);
+    //addSamples(taskGraph_->getModelBasedState(actualGoal), indent);
   }
   else
   {
     BOLT_WARN(indent, true, "getPathOnGraph() Unable to connect START state to graph");
 
-    feedbackStartFailed = true;  // the start state failed us
-    addSamples(taskGraph_->getModelBasedState(actualStart), indent);
+    //addSamples(taskGraph_->getModelBasedState(actualStart), indent);
   }
+
+  addSamples(NULL, indent); // do general sampling
 
   // Feedback on growth of graph
   BOLT_DEBUG(indent, true, "SparseGraph edges: " << taskGraph_->getSparseGraph()->getNumEdges() << " vertices: " << taskGraph_->getSparseGraph()->getNumVertices());
@@ -1025,15 +1024,14 @@ void BoltPlanner::addSamples(const base::State *near, std::size_t indent)
   std::size_t numAttempts = 10;
   for (std::size_t i = 0; i < numAttempts; ++i)
   {
+    base::State *candidateState = modelSI_->getStateSpace()->allocState();
+
     // 0.1 is magic num
     const double magic_fraction = 0.05;  // TODO
     double distance = i / double(numAttempts) * magic_fraction * taskGraph_->getSparseGraph()->getSparseDelta();
-
     //double fraction = std::max(0.5, i / double(numAttempts));
     //double distance = magic_fraction * taskGraph_->getSparseGraph()->getSparseDelta();
     //std::cout << "distance: " << distance << std::endl;
-
-    base::State *candidateState = modelSI_->getStateSpace()->allocState();
 
     if (near)
     {

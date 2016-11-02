@@ -196,12 +196,6 @@ base::PlannerStatus Bolt::solve(const base::PlannerTerminationCondition &ptc)
   // Task time
   planTime_ = time::seconds(time::now() - start);
 
-  // Do logging
-
-  time::point startTime0 = time::now(); // Benchmark
-  processResults(indent);
-  OMPL_INFORM("process results %f seconds", time::seconds(time::now() - startTime0)); // Benchmark
-
   return lastStatus_;
 }
 
@@ -304,9 +298,8 @@ bool Bolt::doPostProcessing(std::size_t indent)
 
   if (ppThread_.joinable())
   {
-    std::cout << "waiting for previous thread to join " << std::endl;
+    BOLT_INFO(indent, true, "Waiting for previous post-processing thread to join");
     ppThread_.join();
-    std::cout << "joined " << std::endl;
   }
 
   // Copy queues paths into thread-safe vector
@@ -316,12 +309,7 @@ bool Bolt::doPostProcessing(std::size_t indent)
   queuedModelSolPaths_.clear();
 
   // Start thread
-  std::cout << "starting new thread " << std::endl;
   ppThread_ = std::thread(std::bind(&Bolt::postProcessingThread, this, threadQueuedModelSolPaths, indent));
-  std::cout << "started " << std::endl;
-
-  std::cout << "main thread sleeping 30 sec " << std::endl;
-  usleep(30*1000000);
 
   return true;
 }
@@ -337,16 +325,15 @@ void Bolt::waitForPostProcessing(std::size_t indent)
 
 void Bolt::postProcessingThread(std::vector<geometric::PathGeometricPtr> queuedModelSolPaths, std::size_t indent)
 {
+  BOLT_FUNC(indent, true, "postProcessingThread()");
+
   for (geometric::PathGeometricPtr queuedSolutionPath : queuedModelSolPaths)
   {
-    std::cout << "processing path 1 " << std::endl;
     sparseGenerator_->addExperiencePath(queuedSolutionPath, indent);
   }
 
   // Remove all inserted paths from the queue
   queuedModelSolPaths.clear();
-
-  std::cout << "THREAD COMPLETE " << std::endl;
 }
 
 bool Bolt::checkRepeatedStates(const og::PathGeometric &path, std::size_t indent)

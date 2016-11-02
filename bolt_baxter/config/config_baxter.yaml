@@ -26,10 +26,10 @@ bolt_baxter:
   # run type
   run_problems: true # do plans?
   headless: false
-  num_problems: 50
+  num_problems: 20
   problem_type: 2 # 0 - random, 1 - imarkers, 2 - imarker goal list
-  imarker_goal_list: easy1.moveit
-  #imarker_goal_list: hard1.moveit
+  #imarker_goal_list: easy1.moveit
+  imarker_goal_list: hard1.moveit
 
   # scene
   scene_type: 1 # 0 - office, 1 - amazon
