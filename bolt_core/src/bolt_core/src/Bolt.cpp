@@ -42,7 +42,11 @@
 #include <bolt_core/Bolt.h>
 #include <bolt_core/SparseGenerator.h>
 #include <bolt_core/SparseCriteria.h>
+#include <bolt_core/TaskCriteria.h>
 #include <bolt_core/SparseMirror.h>
+#include <bolt_core/BoltPlanner.h>
+#include <bolt_core/SparseGraph.h>
+#include <bolt_core/TaskGraph.h>
 
 namespace og = ompl::geometric;
 namespace ob = ompl::base;
@@ -115,6 +119,9 @@ void Bolt::initialize(std::size_t indent)
   BOLT_INFO(indent, verbose_, "Loading TaskGraph");
   taskGraph_.reset(new TaskGraph(si_, compoundSI_, sparseGraph_));
 
+  // Task Criteria
+  taskCriteria_.reset(new TaskCriteria(taskGraph_));
+
   // Load the Retrieve repair database. We do it here so that setRepairPlanner() works
   BOLT_INFO(indent, verbose_, "Loading BoltPlanner");
   boltPlanner_ = BoltPlannerPtr(new BoltPlanner(si_, compoundSI_, taskGraph_, visual_));
@@ -146,10 +153,15 @@ void Bolt::setup()
     sparseCriteria_->setup(indent);
     sparseGenerator_->setup(indent);
     taskGraph_->setup();
-
+    taskCriteria_->setup(indent);
     // Set the configured flag
     configured_ = true;
   }
+}
+
+std::size_t Bolt::getExperiencesCount() const
+{
+  return sparseGraph_->getNumVertices();
 }
 
 void Bolt::clearForNextPlan()
@@ -164,6 +176,7 @@ void Bolt::clear()
   sparseGraph_->clear();
   taskGraph_->clear();
   sparseCriteria_->clear();
+  taskCriteria_->clear();
   sparseGenerator_->clear();
   boltPlanner_->clear();
   pdef_->clearSolutionPaths();

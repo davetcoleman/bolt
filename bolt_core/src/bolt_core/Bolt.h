@@ -41,23 +41,6 @@
 // OMPL
 #include <ompl/geometric/SimpleSetup.h>  // the parent class
 #include <ompl/tools/debug/Visualizer.h>
-//#include <ompl/base/Planner.h>
-//#include <ompl/base/PlannerData.h>
-//#include <ompl/base/ProblemDefinition.h>
-//#include <ompl/base/SpaceInformation.h>
-//#include <ompl/base/ProblemDefinition.h>
-//#include <ompl/base/StateSpace.h>  // for storing to file
-
-//#include <ompl/geometric/PathGeometric.h>
-#include <ompl/geometric/PathSimplifier.h>
-
-#include <ompl/util/Console.h>
-#include <ompl/util/Exception.h>
-
-// Bolt
-#include <bolt_core/SparseGraph.h>
-#include <bolt_core/TaskGraph.h>
-#include <bolt_core/BoltPlanner.h>
 
 // C++
 #include <thread>
@@ -77,9 +60,13 @@ namespace bolt
 
 /// @cond IGNORE
 OMPL_CLASS_FORWARD(Bolt);
+OMPL_CLASS_FORWARD(BoltPlanner);
+OMPL_CLASS_FORWARD(SparseGraph);
 OMPL_CLASS_FORWARD(SparseGenerator);
 OMPL_CLASS_FORWARD(SparseCriteria);
 OMPL_CLASS_FORWARD(SparseMirror);
+OMPL_CLASS_FORWARD(TaskGraph);
+OMPL_CLASS_FORWARD(TaskCriteria);
 /// @endcond
 
 /** \class BoltPtr
@@ -240,10 +227,8 @@ public:
   void getAllPlannerDatas(std::vector<base::PlannerDataPtr> &plannerDatas) const {};
 
   /** \brief Get the total number of paths stored in the database */
-  std::size_t getExperiencesCount() const
-  {
-    return sparseGraph_->getNumVertices();
-  }
+
+  std::size_t getExperiencesCount() const;
 
   /** \brief Hook for getting access to common functions */
   SparseGraphPtr getSparseGraph()
@@ -259,6 +244,11 @@ public:
   SparseCriteriaPtr getSparseCriteria()
   {
     return sparseCriteria_;
+  }
+
+  TaskCriteriaPtr getTaskCriteria()
+  {
+    return taskCriteria_;
   }
 
   SparseMirrorPtr getSparseMirror()
@@ -307,6 +297,9 @@ protected:
 
   /** \brief Graph used for combining multiple layers of sparse graph */
   TaskGraphPtr taskGraph_;
+
+  /** \brief Various tests to determine if a vertex/edge should be added to the graph, based on SPARS */
+  TaskCriteriaPtr taskCriteria_;
 
   /** \brief Accumulated experiences to be later added to experience database - ModelBasedStateSpace*/
   std::vector<geometric::PathGeometricPtr> queuedModelSolPaths_;

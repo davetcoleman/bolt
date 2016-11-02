@@ -50,16 +50,26 @@
 // OMPL
 #include <ompl/tools/lightning/Lightning.h>
 #include <ompl/tools/thunder/Thunder.h>
+
+// Bolt
 #include <bolt_core/Bolt.h>
+#include <bolt_core/BoostGraphHeaders.h>
+#include <bolt_core/SPARS2.h>
+#include <bolt_core/SparseFormula.h>
+#include <bolt_core/SparseCriteria.h>
+#include <bolt_core/SparseGraph.h>
+#include <bolt_core/SparseGenerator.h>
+
 #include <ompl/geometric/SimpleSetup.h>
 #include <ompl/base/PlannerTerminationCondition.h>
-#include <bolt_core/SPARS2.h>
+
 #include <ompl/util/PPM.h>  // For reading image files
-#include <bolt_core/SparseFormula.h>
+
 
 // Interface for loading rosparam settings into OMPL
 #include <bolt_ros/ompl_rosparam.h>
 #include <rviz_visual_tools/remote_control.h>
+#include <rosparam_shortcuts/rosparam_shortcuts.h>
 
 namespace ob = ompl::base;
 namespace ot = ompl::tools;

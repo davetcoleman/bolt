@@ -8,9 +8,9 @@
 
   <license>BSD</license>
 
-  <url type="website">https://github.com/davetcoleman/bolt_ros</url>
-  <url type="butracker">https://github.com/davetcoleman/bolt_ros/issues</url>
-  <url type="repository">https://github.com/davetcoleman/bolt_ros/</url>
+  <url type="website">https://github.com/davetcoleman/bolt</url>
+  <url type="butracker">https://github.com/davetcoleman/bolt/issues</url>
+  <url type="repository">https://github.com/davetcoleman/bolt/</url>
 
   <author email="davetcoleman@gmail.com">Dave Coleman</author>
 
@@ -20,9 +20,7 @@
   <depend>roslib</depend>
   <depend>roslint</depend>
   <depend>rosparam_shortcuts</depend>
-  <depend>eigen</depend>
-  <depend>cmake_modules</depend>
-  <depend>rviz_visual_tools</depend>
+  <depend>bolt_core</depend>
 
   <export>
   </export>

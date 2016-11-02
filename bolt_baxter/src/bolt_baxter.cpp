@@ -39,8 +39,12 @@
 // ROS parameter loading
 #include <rosparam_shortcuts/rosparam_shortcuts.h>
 
-// Bolt
+// bolt_core
 #include <bolt_core/SparseMirror.h>
+#include <bolt_core/SparseCriteria.h>
+#include <bolt_core/BoltPlanner.h>
+
+// bolt_moveit
 #include <bolt_moveit/process_mem_usage.h>
 #include <bolt_moveit/projection_viz_window.h>
 #include <bolt_moveit/model_size_state_space.h>
