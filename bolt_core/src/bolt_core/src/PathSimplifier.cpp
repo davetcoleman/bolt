@@ -112,17 +112,17 @@ void PathSimplifier::smoothBSpline(geometric::PathGeometric &path, unsigned int 
 bool PathSimplifier::reduceVertices(geometric::PathGeometric &path, unsigned int maxSteps, unsigned int maxEmptySteps,
                                     double rangeRatio, std::size_t indent)
 {
-  BOLT_FUNC(indent, true, "reduceVerticies()");
+  BOLT_FUNC(true, "reduceVerticies()");
   if (path.getStateCount() < 3)
   {
-    BOLT_DEBUG(indent, true, "Returned early because state count < 3");
+    BOLT_DEBUG(true, "Returned early because state count < 3");
     return false;
   }
 
   // TODO: only for testing
   base::State *startCopy = si_->cloneState(path.getState(0));
   base::State *goalCopy = si_->cloneState(path.getState(path.getStateCount() - 1));
-  BOLT_WARN(indent, true, "Orignal goal state:");
+  BOLT_WARN(true, "Orignal goal state:");
   si_->printState(goalCopy);
 
   if (maxSteps == 0)
@@ -144,7 +144,7 @@ bool PathSimplifier::reduceVertices(geometric::PathGeometric &path, unsigned int
     std::vector<base::State *> newStates(2);
     newStates[0] = states.front();
     newStates[1] = states.back();
-    BOLT_DEBUG(indent + 2, true, "Swapping states");
+    BOLT_DEBUG(true, "Swapping states");
     states.swap(newStates);
 
     BOLT_ASSERT(si_->equalStates(path.getState(0), startCopy), "Start state is no longer the same");
@@ -180,7 +180,7 @@ bool PathSimplifier::reduceVertices(geometric::PathGeometric &path, unsigned int
       if (freeStates_)
         for (int j = p1 + 1; j < p2; ++j)
           si->freeState(states[j]);
-      BOLT_DEBUG(indent + 2, true, "Erasing states p1: " << p1 << " p2: " << p2 << " total states: " << states.size());
+      BOLT_DEBUG(true, "Erasing states p1: " << p1 << " p2: " << p2 << " total states: " << states.size());
       states.erase(states.begin() + p1 + 1, states.begin() + p2);
       nochange = 0;
 
@@ -199,7 +199,7 @@ bool PathSimplifier::reduceVertices(geometric::PathGeometric &path, unsigned int
 bool PathSimplifier::shortcutPath(geometric::PathGeometric &path, unsigned int maxSteps, unsigned int maxEmptySteps,
                                   double rangeRatio, double snapToVertex, std::size_t indent)
 {
-  BOLT_FUNC(indent, true, "shortcutPath()");
+  BOLT_FUNC(true, "shortcutPath()");
 
   if (path.getStateCount() < 3)
     return false;
@@ -368,7 +368,7 @@ bool PathSimplifier::shortcutPath(geometric::PathGeometric &path, unsigned int m
 bool PathSimplifier::collapseCloseVertices(geometric::PathGeometric &path, unsigned int maxSteps,
                                            unsigned int maxEmptySteps, std::size_t indent)
 {
-  BOLT_FUNC(indent, true, "collapseCloseVertices");
+  BOLT_FUNC(true, "collapseCloseVertices");
 
   if (path.getStateCount() < 3)
     return false;
@@ -430,7 +430,7 @@ bool PathSimplifier::collapseCloseVertices(geometric::PathGeometric &path, unsig
 
 void PathSimplifier::simplifyMax(geometric::PathGeometric &path, std::size_t indent)
 {
-  BOLT_FUNC(indent, true, "simplifyMax()");
+  BOLT_FUNC(true, "simplifyMax()");
   ompl::base::PlannerTerminationCondition neverTerminate = base::plannerNonTerminatingCondition();
   simplify(path, neverTerminate, indent);
 }
@@ -443,7 +443,7 @@ void PathSimplifier::simplify(geometric::PathGeometric &path, double maxTime, st
 void PathSimplifier::simplify(geometric::PathGeometric &path, const base::PlannerTerminationCondition &ptc,
                               std::size_t indent)
 {
-  BOLT_FUNC(indent, true, "simplify()");
+  BOLT_FUNC(true, "simplify()");
 
   if (path.getStateCount() < 3)
     return;
@@ -488,10 +488,10 @@ void PathSimplifier::simplify(geometric::PathGeometric &path, const base::Planne
     unsigned int times = 0;
     do
     {
-      BOLT_DEBUG(indent, true, "while loop " << times << " ------------------------------");
+      BOLT_DEBUG(true, "while loop " << times << " ------------------------------");
       bool shortcut = shortcutPath(path, 0, 0, 0.33, 0.005, indent);  // split path segments, not just vertices
 
-      BOLT_DEBUG(indent, true, "New (bad) goal state:");
+      BOLT_DEBUG(true, "New (bad) goal state:");
       base::State *tempState = path.getState(path.getStateCount() - 1);
       si_->printState(tempState);
 
@@ -526,7 +526,7 @@ void PathSimplifier::simplify(geometric::PathGeometric &path, const base::Planne
     BOLT_ASSERT(si_->equalStates(path.getState(path.getStateCount() - 1), goalCopy), "Goal state is no longer the "
                                                                                      "same");
 
-    BOLT_DEBUG(indent, true, "checkAndRepair()");
+    BOLT_DEBUG(true, "checkAndRepair()");
     // we always run this if the metric-space algorithms were run.  In non-metric spaces this does not work.
     const std::pair<bool, bool> &p = path.checkAndRepair(magic::MAX_VALID_SAMPLE_ATTEMPTS);
     if (!p.first)
@@ -534,7 +534,7 @@ void PathSimplifier::simplify(geometric::PathGeometric &path, const base::Planne
     if (!p.second)
       OMPL_WARN("Solution path may slightly touch on an invalid region of the state space");
 
-    BOLT_DEBUG(indent, true, "New (bad) goal state:");
+    BOLT_DEBUG(true, "New (bad) goal state:");
     base::State *tempState = path.getState(path.getStateCount() - 1);
     si_->printState(tempState);
 
@@ -542,7 +542,7 @@ void PathSimplifier::simplify(geometric::PathGeometric &path, const base::Planne
     BOLT_ASSERT(si_->equalStates(path.getState(path.getStateCount() - 1), goalCopy), "Goal state is no longer the "
                                                                                      "same");
   }
-  BOLT_DEBUG(indent, true, "done simplify");
+  BOLT_DEBUG(true, "done simplify");
 }
 
 }  // namespace

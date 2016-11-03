@@ -100,15 +100,16 @@ SparseGraph::SparseGraph(base::SpaceInformationPtr si, VisualizerPtr visual)
   nn_.reset(new NearestNeighborsGNAT<SparseVertex>());
   nn_->setDistanceFunction(boost::bind(&otb::SparseGraph::distanceFunction, this, _1, _2));
 
+  std::size_t indent = 0;
   if (superDebug_)
   {
-    BOLT_WARN(0, true, "--------------------------------------------");
-    BOLT_WARN(0, true, "Superdebug mode is enabled - will run slower");
-    BOLT_WARN(0, true, "--------------------------------------------");
+    BOLT_WARN(true, "--------------------------------------------");
+    BOLT_WARN(true, "Superdebug mode is enabled - will run slower");
+    BOLT_WARN(true, "--------------------------------------------");
   }
 
 #ifdef ENABLE_QUALITY
-  BOLT_INFO(0, true, "Using Quality Criteria datastructures");
+  BOLT_INFO(true, "Using Quality Criteria datastructures");
 #endif
 }
 
@@ -203,13 +204,13 @@ bool SparseGraph::load(std::size_t indent)
 
   // Benchmark
   double duration = time::seconds(time::now() - start);
-  BOLT_INFO(indent, true, "Graph total loading time: " << duration);
+  BOLT_INFO(true, "Graph total loading time: " << duration);
 
   // Error check
   if (!getNumVertices())
-    BOLT_WARN(indent, true, "SparseGraph loaded with 0 vertices");
+    BOLT_WARN(true, "SparseGraph loaded with 0 vertices");
   if (!getNumEdges())
-    BOLT_WARN(indent, true, "SparseGraph loaded with 0 edges");
+    BOLT_WARN(true, "SparseGraph loaded with 0 edges");
 
   // Show more data
   printGraphStats();
@@ -225,7 +226,7 @@ bool SparseGraph::load(std::size_t indent)
 
 SparseStorage::GraphSizeChange SparseGraph::saveIfChanged(std::size_t indent)
 {
-  BOLT_FUNC(indent, true, "saveIfChanged()");
+  BOLT_FUNC(true, "saveIfChanged()");
 
   if (hasUnsavedChanges_)
   {
@@ -233,7 +234,7 @@ SparseStorage::GraphSizeChange SparseGraph::saveIfChanged(std::size_t indent)
   }
   else
   {
-    BOLT_DEBUG(indent, true, "Not saving because database has not changed. Time: " << time::as_string(time::now()));
+    BOLT_DEBUG(true, "Not saving because database has not changed. Time: " << time::as_string(time::now()));
   }
 
   SparseStorage::GraphSizeChange result;
@@ -242,7 +243,7 @@ SparseStorage::GraphSizeChange SparseGraph::saveIfChanged(std::size_t indent)
 
 SparseStorage::GraphSizeChange SparseGraph::save(std::size_t indent)
 {
-  BOLT_FUNC(indent, verbose_, "save()");
+  BOLT_FUNC(verbose_, "save()");
   SparseStorage::GraphSizeChange result;
 
   if (!hasUnsavedChanges_)
@@ -280,7 +281,7 @@ SparseStorage::GraphSizeChange SparseGraph::save(std::size_t indent)
 
   // Benchmark
   double loadTime = time::seconds(time::now() - start);
-  BOLT_INFO(indent, true, "Saved database to file in " << loadTime
+  BOLT_INFO(true, "Saved database to file in " << loadTime
                                                        << " seconds. Time: " << time::as_string(time::now()));
   return result;
 }
@@ -288,12 +289,12 @@ SparseStorage::GraphSizeChange SparseGraph::save(std::size_t indent)
 bool SparseGraph::astarSearch(const SparseVertex start, const SparseVertex goal, std::vector<SparseVertex> &vertexPath,
                               double &distance, std::size_t indent)
 {
-  BOLT_FUNC(indent, vSearch_, "astarSearch()");
+  BOLT_FUNC(vSearch_, "astarSearch()");
 
   // Check if start and goal are the same
   if (si_->getStateSpace()->equalStates(getState(start), getState(goal)))
   {
-    BOLT_DEBUG(indent, vSearch_, "astarSearch: start and goal states are the same");
+    BOLT_DEBUG(vSearch_, "astarSearch: start and goal states are the same");
 
     // Just add one vertex - this is the whole path
     vertexPath.push_back(start);
@@ -343,7 +344,7 @@ bool SparseGraph::astarSearch(const SparseVertex start, const SparseVertex goal,
   // Search failed
   if (!foundGoal)
   {
-    BOLT_WARN(indent, vSearch_, "Did not find goal");
+    BOLT_WARN(vSearch_, "Did not find goal");
 
     // Unload
     delete[] vertexPredecessors;
@@ -357,9 +358,9 @@ bool SparseGraph::astarSearch(const SparseVertex start, const SparseVertex goal,
 
 #ifdef ENABLE_ASTAR_DEBUG
   // the custom exception from SparseAstarVisitor
-  BOLT_DEBUG(indent, vSearch_, "AStar found solution. Distance to goal: " << vertexDistances[goal]);
+  BOLT_DEBUG(vSearch_, "AStar found solution. Distance to goal: " << vertexDistances[goal]);
 
-  BOLT_DEBUG(indent, vSearch_, "Number nodes opened: " << numNodesOpened_
+  BOLT_DEBUG(vSearch_, "Number nodes opened: " << numNodesOpened_
                                                        << ", Number nodes closed: " << numNodesClosed_);
 #endif
 
@@ -390,7 +391,7 @@ bool SparseGraph::astarSearch(const SparseVertex start, const SparseVertex goal,
   // Show all predecessors
   if (visualizeAstar_)
   {
-    BOLT_DEBUG(indent, vSearch_, "Show all predecessors");
+    BOLT_DEBUG(vSearch_, "Show all predecessors");
     for (std::size_t i = getNumQueryVertices(); i < getNumVertices(); ++i)  // skip query vertices
     {
       const SparseVertex v1 = i;
@@ -414,7 +415,7 @@ bool SparseGraph::astarSearch(const SparseVertex start, const SparseVertex goal,
 
 bool SparseGraph::astarSearchLength(SparseVertex start, SparseVertex goal, double &distance, std::size_t indent)
 {
-  BOLT_FUNC(indent, vSearch_, "astarSearchLength()");
+  BOLT_FUNC(vSearch_, "astarSearchLength()");
 
   bool foundGoal = false;
 
@@ -484,13 +485,13 @@ bool SparseGraph::checkPathLength(SparseVertex v1, SparseVertex v2, double dista
 
   if (pathLength < distance + SMALL_EPSILON)
   {
-    BOLT_ERROR(indent, "New interface edge does not help enough, edge length: " << distance << ", astar: " << pathLength
+    BOLT_ERROR("New interface edge does not help enough, edge length: " << distance << ", astar: " << pathLength
                                                                                 << ", difference between distances: "
                                                                                 << fabs(distance - pathLength));
     return false;
   }
 
-  BOLT_WARN(indent, false, "Interface edge qualifies - diff: " << (distance + SMALL_EPSILON - pathLength));
+  BOLT_WARN(false, "Interface edge qualifies - diff: " << (distance + SMALL_EPSILON - pathLength));
   return true;
 }
 
@@ -578,7 +579,7 @@ bool SparseGraph::isEmpty() const
 
 void SparseGraph::errorCheckDuplicateStates(std::size_t indent)
 {
-  BOLT_ERROR(indent, "errorCheckDuplicateStates() - part of super debug - NOT IMPLEMENTED");
+  BOLT_ERROR("errorCheckDuplicateStates() - part of super debug - NOT IMPLEMENTED");
 
   // bool found = false;
   // // Error checking: check for any duplicate states
@@ -588,7 +589,7 @@ void SparseGraph::errorCheckDuplicateStates(std::size_t indent)
   //   {
   //     if (si_->getStateSpace()->equalStates(getState(i), getState(j)))
   //     {
-  //       BOLT_ERROR(indent, 1, "Found equal state: " << i << ", " << j);
+  //       BOLT_ERROR(1, "Found equal state: " << i << ", " << j);
   //       debugState(getState(i));
   //       found = true;
   //     }
@@ -621,14 +622,14 @@ void SparseGraph::getDisjointSets(SparseDisjointSetsMap &disjointSets, std::size
 {
   if (!sparseCriteria_->useConnectivityCriteria_)
   {
-    BOLT_WARN(0, true, "Disjoint Sets disabled");
+    BOLT_WARN(true, "Disjoint Sets disabled");
     return;
   }
 
   disjointSets.clear();
 
   // Flatten the parents tree so that the parent of every element is its representative.
-  BOLT_DEBUG(indent, true, "Compress disjoint sets");
+  BOLT_DEBUG(true, "Compress disjoint sets");
   disjointSets_.compress_sets(boost::vertices(g_).first + getNumQueryVertices(), boost::vertices(g_).second);
 
   // Count size of each disjoint set and group its containing vertices
@@ -641,11 +642,12 @@ void SparseGraph::getDisjointSets(SparseDisjointSetsMap &disjointSets, std::size
 
 void SparseGraph::printDisjointSets(SparseDisjointSetsMap &disjointSets)
 {
+  std::size_t indent = 0;
   OMPL_INFORM("Print disjoint sets");
 
   if (!sparseCriteria_->useConnectivityCriteria_)
   {
-    BOLT_WARN(0, true, "Disjoint Sets disabled");
+    BOLT_WARN(true, "Disjoint Sets disabled");
     return;
   }
 
@@ -660,11 +662,12 @@ void SparseGraph::printDisjointSets(SparseDisjointSetsMap &disjointSets)
 
 void SparseGraph::visualizeDisjointSets(SparseDisjointSetsMap &disjointSets)
 {
+  std::size_t indent = 0;
   OMPL_INFORM("Visualizing disjoint sets");
 
   if (!sparseCriteria_->useConnectivityCriteria_)
   {
-    BOLT_WARN(0, true, "Disjoint Sets disabled");
+    BOLT_WARN(true, "Disjoint Sets disabled");
     return;
   }
 
@@ -698,7 +701,7 @@ void SparseGraph::visualizeDisjointSets(SparseDisjointSetsMap &disjointSets)
     if (freq == maxDisjointSetSize)  // any subgraph that is smaller than the full graph
       continue;                      // the main disjoint set is not considered a disjoint set
 
-    BOLT_INFO(0, true, "Showing disjoint set of size " << freq);
+    BOLT_INFO(true, "Showing disjoint set of size " << freq);
 
     // Visualize sets of size one
     if (freq == 1)
@@ -755,7 +758,7 @@ std::size_t SparseGraph::checkConnectedComponents()
   if (numSets > 1)
   {
     std::size_t indent = 0;
-    BOLT_WARN(indent, true, "More than 1 connected component is in the sparse graph: " << numSets);
+    BOLT_WARN(true, "More than 1 connected component is in the sparse graph: " << numSets);
   }
 
   return numSets;
@@ -785,7 +788,7 @@ SparseVertex SparseGraph::addVertex(base::State *state, const VertexType &type, 
     return v;
 
   // Feedback
-  BOLT_FUNC(indent, vAdd_, "addVertex(): new_vertex: " << v << ", type " << type);
+  BOLT_FUNC(vAdd_, "addVertex(): new_vertex: " << v << ", type " << type);
 
 // Clear all nearby interface data whenever a new vertex is added
 #ifdef ENABLE_QUALITY
@@ -871,7 +874,7 @@ SparseVertex SparseGraph::addVertexFromFile(base::State *state, std::size_t inde
 
 void SparseGraph::removeVertex(SparseVertex v, std::size_t indent)
 {
-  BOLT_FUNC(indent, verbose_, "removeVertex = " << v);
+  BOLT_FUNC(verbose_, "removeVertex = " << v);
 
   // Remove from nearest neighbor
   {
@@ -904,7 +907,7 @@ void SparseGraph::removeVertex(SparseVertex v, std::size_t indent)
 void SparseGraph::removeDeletedVertices(std::size_t indent)
 {
   bool verbose = true;
-  BOLT_FUNC(indent, verbose, "removeDeletedVertices()");
+  BOLT_FUNC(verbose, "removeDeletedVertices()");
 
   // Remove all vertices that are set to 0
   std::size_t numRemoved = 0;
@@ -921,22 +924,22 @@ void SparseGraph::removeDeletedVertices(std::size_t indent)
 
     if (stateDeleted(*v))  // Found vertex to delete
     {
-      BOLT_DEBUG(indent, verbose, "Removing SparseVertex " << *v << " state: " << getState(*v));
+      BOLT_DEBUG(verbose, "Removing SparseVertex " << *v << " state: " << getState(*v));
 
       boost::remove_vertex(*v, g_);
       numRemoved++;
     }
     else  // only proceed if no deletion happened
     {
-      // BOLT_DEBUG(indent, verbose, "Checking SparseVertex " << *v << " state: " << getState(*v));
+      // BOLT_DEBUG(verbose, "Checking SparseVertex " << *v << " state: " << getState(*v));
       v++;
     }
   }
-  BOLT_DEBUG(indent, verbose, "Removed " << numRemoved << " vertices from graph that were abandoned");
+  BOLT_DEBUG(verbose, "Removed " << numRemoved << " vertices from graph that were abandoned");
 
   if (numRemoved == 0)
   {
-    BOLT_DEBUG(indent, verbose, "No verticies deleted, skipping resetting NN and disjointSets");
+    BOLT_DEBUG(verbose, "No verticies deleted, skipping resetting NN and disjointSets");
     return;
   }
 
@@ -968,7 +971,7 @@ void SparseGraph::removeDeletedVertices(std::size_t indent)
       disjointSets_.union_set(v1, v2);
     }
 
-  BOLT_DEBUG(indent, verbose, "Finished removing deleted vertices");
+  BOLT_DEBUG(verbose, "Finished removing deleted vertices");
 }
 
 SparseEdge SparseGraph::addEdge(SparseVertex v1, SparseVertex v2, EdgeType type, std::size_t indent)
@@ -1002,7 +1005,7 @@ SparseEdge SparseGraph::addEdge(SparseVertex v1, SparseVertex v2, double weight,
   if (fastMirrorMode_)
     return e;
 
-  BOLT_FUNC(indent, vAdd_, "addEdge(): from vertex " << v1 << " to " << v2 << " type " << type);
+  BOLT_FUNC(vAdd_, "addEdge(): from vertex " << v1 << " to " << v2 << " type " << type);
 
   // Add the edge to the incrementeal connected components datastructure
   if (sparseCriteria_ && sparseCriteria_->useConnectivityCriteria_)
@@ -1122,7 +1125,7 @@ SparseVertex SparseGraph::getSparseRepresentative(base::State *state)
 
 void SparseGraph::clearEdgesNearVertex(SparseVertex vertex, std::size_t indent)
 {
-  BOLT_FUNC(indent, false, "clearEdgesNearVertex()");
+  BOLT_FUNC(false, "clearEdgesNearVertex()");
 
   // Optionally disable this feature
   if (sparseCriteria_ && !sparseCriteria_->useClearEdgesNearVertex_)
@@ -1147,7 +1150,7 @@ void SparseGraph::clearEdgesNearVertex(SparseVertex vertex, std::size_t indent)
   }
 
 #ifndef NDEBUG
-  BOLT_DEBUG(indent, false, "clearEdgesNearVertex() removed " << origNumEdges - getNumEdges());
+  BOLT_DEBUG(false, "clearEdgesNearVertex() removed " << origNumEdges - getNumEdges());
 
   // Only display database if enabled
   if (visualizeSparseGraph_ && visualizeSparseGraphSpeed_ > std::numeric_limits<double>::epsilon())
@@ -1161,7 +1164,7 @@ void SparseGraph::clearEdgesNearVertex(SparseVertex vertex, std::size_t indent)
 
 void SparseGraph::displayDatabase(bool showVertices, bool showEdges, std::size_t windowID, std::size_t indent)
 {
-  BOLT_FUNC(indent, vVisualize_, "displayDatabase() - Display Sparse Database");
+  BOLT_FUNC(vVisualize_, "displayDatabase() - Display Sparse Database");
 
   // Error check
   if (getNumVertices() == 0 && getNumEdges() == 0)
@@ -1205,7 +1208,7 @@ void SparseGraph::displayDatabase(bool showVertices, bool showEdges, std::size_t
       // Check for null states
       if (!getState(v))
       {
-        BOLT_ERROR(indent, "Null vertex found: " << v);
+        BOLT_ERROR("Null vertex found: " << v);
         continue;
       }
 
@@ -1338,7 +1341,7 @@ VertexPair SparseGraph::interfaceDataIndex(SparseVertex vp, SparseVertex vpp)
 
 InterfaceData &SparseGraph::getInterfaceData(SparseVertex v, SparseVertex vp, SparseVertex vpp, std::size_t indent)
 {
-  // BOLT_FUNC(indent, sparseCriteria_->vQuality_, "getInterfaceData() " << v << ", " << vp << ", " << vpp);
+  // BOLT_FUNC(sparseCriteria_->vQuality_, "getInterfaceData() " << v << ", " << vp << ", " << vpp);
   return vertexInterfaceProperty_[v][interfaceDataIndex(vp, vpp)];
 }
 
@@ -1392,28 +1395,28 @@ void SparseGraph::printGraphStats()
   double averageEdgeLength = getNumEdges() ? totalEdgeLength / getNumEdges() : 0;
 
   std::size_t indent = 0;
-  BOLT_INFO(indent, 1, "------------------------------------------------------");
-  BOLT_INFO(indent, 1, "SparseGraph stats:");
-  BOLT_INFO(indent, 1, "   Total vertices:         " << getNumRealVertices());
-  BOLT_INFO(indent, 1, "   Total edges:            " << getNumEdges());
-  BOLT_INFO(indent, 1, "   Average degree:         " << averageDegree);
-  BOLT_INFO(indent, 1, "   Connected Components:   " << numSets);
-  BOLT_INFO(indent, 1, "   Edge Lengths:           ");
-  BOLT_INFO(indent, 1, "      Max:                 " << maxEdgeLength);
-  BOLT_INFO(indent, 1, "      Min:                 " << minEdgeLength);
-  BOLT_INFO(indent, 1, "      Average:             " << averageEdgeLength);
+  BOLT_INFO(1, "------------------------------------------------------");
+  BOLT_INFO(1, "SparseGraph stats:");
+  BOLT_INFO(1, "   Total vertices:         " << getNumRealVertices());
+  BOLT_INFO(1, "   Total edges:            " << getNumEdges());
+  BOLT_INFO(1, "   Average degree:         " << averageDegree);
+  BOLT_INFO(1, "   Connected Components:   " << numSets);
+  BOLT_INFO(1, "   Edge Lengths:           ");
+  BOLT_INFO(1, "      Max:                 " << maxEdgeLength);
+  BOLT_INFO(1, "      Min:                 " << minEdgeLength);
+  BOLT_INFO(1, "      Average:             " << averageEdgeLength);
   if (sparseCriteria_)
   {
-    BOLT_INFO(indent, 1, "      SparseDelta:         " << sparseCriteria_->getSparseDelta());
-    BOLT_INFO(indent, 1, "      Difference:          " << averageEdgeLength - sparseCriteria_->getSparseDelta());
-    BOLT_INFO(indent, 1, "      Penetration:         " << sparseCriteria_->getDiscretizePenetrationDist());
+    BOLT_INFO(1, "      SparseDelta:         " << sparseCriteria_->getSparseDelta());
+    BOLT_INFO(1, "      Difference:          " << averageEdgeLength - sparseCriteria_->getSparseDelta());
+    BOLT_INFO(1, "      Penetration:         " << sparseCriteria_->getDiscretizePenetrationDist());
   }
-  BOLT_INFO(indent, 1, "------------------------------------------------------");
+  BOLT_INFO(1, "------------------------------------------------------");
 }
 
 bool SparseGraph::verifyGraph(std::size_t indent)
 {
-  BOLT_FUNC(indent, true, "verifyGraph()");
+  BOLT_FUNC(true, "verifyGraph()");
   std::size_t errors = 0;
 
   foreach (const SparseVertex v, boost::vertices(g_))
@@ -1424,14 +1427,14 @@ bool SparseGraph::verifyGraph(std::size_t indent)
     // Skip deleted vertices
     if (g_[v].state_ == 0)
     {
-      BOLT_WARN(indent, true, "Skipped deleted vertex");
+      BOLT_WARN(true, "Skipped deleted vertex");
       continue;
     }
 
     // Check for null states
     if (!getState(v))
     {
-      BOLT_ERROR(indent, "Null vertex found: " << v);
+      BOLT_ERROR("Null vertex found: " << v);
       visual_->prompt("Found invalid");
       errors++;
       continue;
@@ -1440,7 +1443,7 @@ bool SparseGraph::verifyGraph(std::size_t indent)
     // Collision check
     if (!si_->isValid(g_[v].state_))
     {
-      BOLT_ERROR(indent, "Found invalid vertex " << v);
+      BOLT_ERROR("Found invalid vertex " << v);
       visual_->viz4()->state(getState(v), tools::ROBOT, tools::DEFAULT, 0);
       visual_->prompt("Found invalid");
       errors++;
@@ -1449,12 +1452,12 @@ bool SparseGraph::verifyGraph(std::size_t indent)
   }
   if (errors)
   {
-    BOLT_ERROR(indent, "Vertices are not all valid: " << errors);
+    BOLT_ERROR("Vertices are not all valid: " << errors);
     return false;
   }
 
-  BOLT_DEBUG(indent, true, "All vertices verified.");
-  BOLT_DEBUG(indent, true, "Now testing edges...");
+  BOLT_DEBUG(true, "All vertices verified.");
+  BOLT_DEBUG(true, "Now testing edges...");
 
   foreach (const SparseEdge e, boost::edges(g_))
   {
@@ -1464,12 +1467,12 @@ bool SparseGraph::verifyGraph(std::size_t indent)
     // Collision check
     if (!si_->checkMotion(g_[v1].state_, g_[v2].state_))
     {
-      BOLT_ERROR(indent, "Invalid edge found: " << v1 << " to " << v2);
+      BOLT_ERROR("Invalid edge found: " << v1 << " to " << v2);
       return false;
     }
   }
 
-  BOLT_DEBUG(indent, true, "All edges verified");
+  BOLT_DEBUG(true, "All edges verified");
 
   return true;
 }
@@ -1479,7 +1482,7 @@ base::ValidStateSamplerPtr SparseGraph::getSampler(base::SpaceInformationPtr si,
   base::ValidStateSamplerPtr sampler;
   if (clearance > std::numeric_limits<double>::epsilon())
   {
-    // BOLT_INFO(indent, true, "Sampling with clearance " << clearance);
+    // BOLT_INFO(true, "Sampling with clearance " << clearance);
     // Load minimum clearance state sampler
     sampler.reset(new base::MinimumClearanceValidStateSampler(si.get()));
     // Set the clearance
@@ -1490,7 +1493,7 @@ base::ValidStateSamplerPtr SparseGraph::getSampler(base::SpaceInformationPtr si,
   }
   else  // regular sampler
   {
-    // BOLT_INFO(indent, true, "Sampling without clearance");
+    // BOLT_INFO(true, "Sampling without clearance");
     sampler.reset(new base::UniformValidStateSampler(si.get()));
   }
   return sampler;

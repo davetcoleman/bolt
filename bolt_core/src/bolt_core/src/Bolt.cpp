@@ -70,32 +70,32 @@ Bolt::Bolt(const base::StateSpacePtr &space) : geometric::SimpleSetup(space)
 
 void Bolt::initialize(std::size_t indent)
 {
-  BOLT_INFO(indent, true, "Initializing Bolt Framework");
+  BOLT_INFO(true, "Initializing Bolt Framework");
 
   // Initalize visualizer class
-  BOLT_INFO(indent, verbose_, "Loading visualizer");
+  BOLT_INFO(verbose_, "Loading visualizer");
   visual_.reset(new Visualizer());
 
   filePath_ = std::move("unloaded");
 
   // Load the sparse graph datastructure
-  BOLT_INFO(indent, verbose_, "Loading SparseGraph");
+  BOLT_INFO(verbose_, "Loading SparseGraph");
   sparseGraph_.reset(new SparseGraph(si_, visual_));
 
   // Load criteria used to determine if samples are saved or rejected
-  BOLT_INFO(indent, verbose_, "Loading SparseCriteria");
+  BOLT_INFO(verbose_, "Loading SparseCriteria");
   sparseCriteria_.reset(new SparseCriteria(sparseGraph_));
 
   // Give the sparse graph reference to the criteria, because sometimes it needs data from there
   sparseGraph_->setSparseCriteria(sparseCriteria_);
 
   // Load the generator of sparse vertices and edges, and give it reference to the criteria
-  BOLT_INFO(indent, verbose_, "Loading SparseGenerator");
+  BOLT_INFO(verbose_, "Loading SparseGenerator");
   sparseGenerator_.reset(new SparseGenerator(sparseGraph_));
   sparseGenerator_->setSparseCriteria(sparseCriteria_);
 
   // Load mirror for duplicating arm
-  BOLT_INFO(indent, verbose_, "Loading SparseMirror");
+  BOLT_INFO(verbose_, "Loading SparseMirror");
   sparseMirror_.reset(new SparseMirror(sparseGraph_));
 
   // ----------------------------------------------------------------------------
@@ -116,7 +116,7 @@ void Bolt::initialize(std::size_t indent)
   compoundSI_ = std::make_shared<base::SpaceInformation>(compoundSpace);
 
   // Load the task graph used for combining multiple layers of sparse graph
-  BOLT_INFO(indent, verbose_, "Loading TaskGraph");
+  BOLT_INFO(verbose_, "Loading TaskGraph");
   taskGraph_.reset(new TaskGraph(si_, compoundSI_, sparseGraph_));
 
   // Task Criteria
@@ -126,7 +126,7 @@ void Bolt::initialize(std::size_t indent)
   //taskGraph_->setTaskCriteria(taskCriteria_);
 
   // Load the Retrieve repair database. We do it here so that setRepairPlanner() works
-  BOLT_INFO(indent, verbose_, "Loading BoltPlanner");
+  BOLT_INFO(verbose_, "Loading BoltPlanner");
   boltPlanner_ = BoltPlannerPtr(new BoltPlanner(si_, compoundSI_, taskGraph_, visual_));
 
   std::size_t numThreads = boost::thread::hardware_concurrency();
@@ -225,23 +225,23 @@ bool Bolt::checkBoltPlannerOptimality(std::size_t indent)
   double theoryLength = sparseCriteria_->getStretchFactor() * optimalLength + 4 * sparseCriteria_->getSparseDelta();
   double percentOfMaxAllows = sparseLength / theoryLength * 100.0;
 
-  BOLT_DEBUG(indent, 1, "-----------------------------------------");
-  BOLT_DEBUG(indent, 1, "Checking Asymptotic Optimality Guarantees");
-  BOLT_DEBUG(indent + 2, 1, "Raw Path Length:         " << sparseLength);
-  BOLT_DEBUG(indent + 2, 1, "Smoothed Path Length:    " << optimalLength);
-  BOLT_DEBUG(indent + 2, 1, "Theoretical Path Length: " << theoryLength);
-  BOLT_DEBUG(indent + 2, 1, "Stretch Factor t:        " << sparseCriteria_->getStretchFactor());
-  BOLT_DEBUG(indent + 2, 1, "Sparse Delta:            " << sparseCriteria_->getSparseDelta());
+  BOLT_DEBUG(1, "-----------------------------------------");
+  BOLT_DEBUG(1, "Checking Asymptotic Optimality Guarantees");
+  BOLT_DEBUG(1, "Raw Path Length:         " << sparseLength);
+  BOLT_DEBUG(1, "Smoothed Path Length:    " << optimalLength);
+  BOLT_DEBUG(1, "Theoretical Path Length: " << theoryLength);
+  BOLT_DEBUG(1, "Stretch Factor t:        " << sparseCriteria_->getStretchFactor());
+  BOLT_DEBUG(1, "Sparse Delta:            " << sparseCriteria_->getSparseDelta());
 
   if (sparseLength >= theoryLength)
   {
-    BOLT_ERROR(indent + 2, "Asymptotic optimality guarantee VIOLATED");
+    BOLT_ERROR("Asymptotic optimality guarantee VIOLATED");
     return false;
   }
   else
-    BOLT_GREEN(indent + 2, 1, "Asymptotic optimality guarantee maintained");
-  BOLT_WARN(indent + 2, 1, "Percent of max allowed:  " << percentOfMaxAllows << " %");
-  BOLT_DEBUG(indent, 1, "-----------------------------------------");
+    BOLT_GREEN(1, "Asymptotic optimality guarantee maintained");
+  BOLT_WARN(1, "Percent of max allowed:  " << percentOfMaxAllows << " %");
+  BOLT_DEBUG(1, "-----------------------------------------");
 
   // visual_->prompt("review results");
 
@@ -264,14 +264,14 @@ void Bolt::processResults(std::size_t indent)
   {
     case base::PlannerStatus::TIMEOUT:
       stats_.numSolutionsTimedout_++;
-      BOLT_ERROR(indent, "Bolt::solve(): TIMEOUT - No solution found after " << planTime_);
+      BOLT_ERROR("Bolt::solve(): TIMEOUT - No solution found after " << planTime_);
       break;
     case base::PlannerStatus::ABORT:
       stats_.numSolutionsFailed_++;
-      BOLT_ERROR(indent, "Bolt::solve(): ABORT - No solution found after " << planTime_);
+      BOLT_ERROR("Bolt::solve(): ABORT - No solution found after " << planTime_);
       break;
     case base::PlannerStatus::APPROXIMATE_SOLUTION:
-      BOLT_ERROR(indent, "Bolt::solve(): Approximate - should not happen!");
+      BOLT_ERROR("Bolt::solve(): Approximate - should not happen!");
       exit(-1);
       break;
     case base::PlannerStatus::EXACT_SOLUTION:
@@ -279,7 +279,7 @@ void Bolt::processResults(std::size_t indent)
       // og::PathGeometric smoothedModelSolPath = og::SimpleSetup::getSolutionPath();  // copied so that it is non-const
       og::PathGeometricPtr smoothedModelSolPath = boltPlanner_->getSmoothedModelSolPath();
       pathLength = smoothedModelSolPath->length();
-      BOLT_BLUE(indent, true, "Bolt: solution found in " << planTime_ << " seconds with "
+      BOLT_BLUE(true, "Bolt: solution found in " << planTime_ << " seconds with "
                                                          << smoothedModelSolPath->getStateCount() << " states");
 
       // Error check for repeated states
@@ -300,7 +300,7 @@ void Bolt::processResults(std::size_t indent)
     }
     break;
     default:
-      BOLT_ERROR(indent, "Unknown status type: " << lastStatus_);
+      BOLT_ERROR("Unknown status type: " << lastStatus_);
       stats_.numSolutionsFailed_++;
   }  // end switch
 
@@ -310,11 +310,11 @@ void Bolt::processResults(std::size_t indent)
 
 bool Bolt::doPostProcessing(std::size_t indent)
 {
-  BOLT_FUNC(indent, true, "doPostProcessing()");
+  BOLT_FUNC(true, "doPostProcessing()");
 
   if (ppThread_.joinable())
   {
-    BOLT_INFO(indent, true, "Waiting for previous post-processing thread to join");
+    BOLT_INFO(true, "Waiting for previous post-processing thread to join");
     ppThread_.join();
   }
 
@@ -334,14 +334,14 @@ void Bolt::waitForPostProcessing(std::size_t indent)
 {
   if (ppThread_.joinable())
   {
-    BOLT_FUNC(indent, true, "waitForPostProcessing()");
+    BOLT_FUNC(true, "waitForPostProcessing()");
     ppThread_.join();
   }
 }
 
 void Bolt::postProcessingThread(std::vector<geometric::PathGeometricPtr> queuedModelSolPaths, std::size_t indent)
 {
-  BOLT_FUNC(indent, true, "postProcessingThread()");
+  BOLT_FUNC(true, "postProcessingThread()");
 
   for (geometric::PathGeometricPtr queuedSolutionPath : queuedModelSolPaths)
   {
@@ -358,7 +358,7 @@ bool Bolt::checkRepeatedStates(const og::PathGeometric &path, std::size_t indent
   {
     if (si_->getStateSpace()->equalStates(path.getState(i - 1), path.getState(i)))
     {
-      BOLT_ERROR(indent, "Duplicate state found between " << i - 1 << " and " << i << " on trajectory, out of "
+      BOLT_ERROR("Duplicate state found between " << i - 1 << " and " << i << " on trajectory, out of "
                                                           << path.getStateCount());
 
       visual_->viz6()->state(path.getState(i), tools::ROBOT, tools::RED, 0);
@@ -416,7 +416,7 @@ bool Bolt::load(std::size_t indent)
   // Load from file
   if (!sparseGraph_->isEmpty())
   {
-    BOLT_WARN(indent, 1, "Database already loaded, vertices: " << sparseGraph_->getNumVertices()
+    BOLT_WARN(1, "Database already loaded, vertices: " << sparseGraph_->getNumVertices()
                                                                << ", edges: " << sparseGraph_->getNumEdges()
                                                                << ", queryV: " << sparseGraph_->getNumQueryVertices());
     return false;

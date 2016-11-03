@@ -71,12 +71,12 @@ SparseStorage::GraphSizeChange SparseStorage::save(const std::string &filePath, 
   stats.numEdgesAdded_ = sparseGraph_->getNumEdges() - prevNumEdges_;
   stats.numVerticesAdded_ = sparseGraph_->getNumVertices() - prevNumVertices_;
 
-  BOLT_INFO(indent, true, "------------------------------------------------");
-  BOLT_INFO(indent, true, "Saving Sparse Graph");
-  BOLT_INFO(indent, true, "  Path:     " << filePath.c_str());
-  BOLT_INFO(indent, true, "  Edges:    " << sparseGraph_->getNumEdges() << " (Change: " << stats.numEdgesAdded_ << ")");
-  BOLT_INFO(indent, true, "  Vertices: " << sparseGraph_->getNumVertices() << " (Change: " << stats.numVerticesAdded_ << ")");
-  BOLT_INFO(indent, true, "------------------------------------------------");
+  BOLT_INFO(true, "------------------------------------------------");
+  BOLT_INFO(true, "Saving Sparse Graph");
+  BOLT_INFO(true, "  Path:     " << filePath.c_str());
+  BOLT_INFO(true, "  Edges:    " << sparseGraph_->getNumEdges() << " (Change: " << stats.numEdgesAdded_ << ")");
+  BOLT_INFO(true, "  Vertices: " << sparseGraph_->getNumVertices() << " (Change: " << stats.numVerticesAdded_ << ")");
+  BOLT_INFO(true, "------------------------------------------------");
 
   std::ofstream out(filePath.c_str(), std::ios::binary);
 
@@ -200,16 +200,16 @@ void SparseStorage::saveEdges(boost::archive::binary_oarchive &oa)
 
 bool SparseStorage::load(const std::string &filePath, std::size_t indent)
 {
-  BOLT_INFO(indent, true, "------------------------------------------------");
-  BOLT_INFO(indent, true, "SparseStorage: Loading Sparse Graph");
+  BOLT_INFO(true, "------------------------------------------------");
+  BOLT_INFO(true, "SparseStorage: Loading Sparse Graph");
   indent += 2;
-  BOLT_INFO(indent, true, "Path: " << filePath.c_str());
+  BOLT_INFO(true, "Path: " << filePath.c_str());
 
   // Error checking
   if (sparseGraph_->getNumEdges() > numQueryVertices_ ||
       sparseGraph_->getNumVertices() > numQueryVertices_)  // the search verticie may already be there
   {
-    BOLT_INFO(indent, true, "Database is not empty, unable to load from file");
+    BOLT_INFO(true, "Database is not empty, unable to load from file");
     return false;
   }
   if (filePath.empty())
@@ -219,7 +219,7 @@ bool SparseStorage::load(const std::string &filePath, std::size_t indent)
   }
   if (!boost::filesystem::exists(filePath))
   {
-    BOLT_INFO(indent, true, "Database file does not exist: " << filePath.c_str());
+    BOLT_INFO(true, "Database file does not exist: " << filePath.c_str());
     return false;
   }
 
@@ -294,7 +294,7 @@ bool SparseStorage::load(std::istream &in, std::size_t indent)
 
 void SparseStorage::loadVertices(std::size_t numVertices, boost::archive::binary_iarchive &ia, std::size_t indent)
 {
-  BOLT_FUNC(indent, true, "Loading vertices from file: " << numVertices);
+  BOLT_FUNC(true, "Loading vertices from file: " << numVertices);
 
   // Reserve memory
   sparseGraph_->getGraphNonConst().m_vertices.reserve(numVertices);
@@ -371,7 +371,7 @@ void SparseStorage::populateNNThread(std::size_t startingVertex, std::size_t num
 
 void SparseStorage::loadEdges(std::size_t numEdges, boost::archive::binary_iarchive &ia, std::size_t indent)
 {
-  BOLT_FUNC(indent, true, "Loading edges from file: " << numEdges);
+  BOLT_FUNC(true, "Loading edges from file: " << numEdges);
 
   std::size_t feedbackFrequency = std::max(10.0, numEdges / 10.0);
   BoltEdgeData edgeData;

@@ -89,7 +89,7 @@ void SparseCriteria::createSPARSOuterLoop()
 bool SparseCriteria::spannerTestOuter(SparseVertex v, SparseVertex vp, SparseVertex vpp, InterfaceData& iData,
                                       std::size_t indent)
 {
-  BOLT_FUNC(indent, vCriteria_, "spannerTestOuter()");
+  BOLT_FUNC(vCriteria_, "spannerTestOuter()");
   // Computes all nodes which qualify as a candidate x for v, v', and v"
   double midpointPathLength = maxSpannerPath(v, vp, vpp, indent + 2);
 
@@ -105,16 +105,16 @@ bool SparseCriteria::spannerTestOuter(SparseVertex v, SparseVertex vp, SparseVer
 
   if (stretchFactor_ * newDistance < midpointPathLength)
   {
-    BOLT_WARN(indent + 2, vQuality_, "Spanner property violated");
-    BOLT_DEBUG(indent + 4, vQuality_, "Sparse Graph Midpoint Length  = " << midpointPathLength);
-    BOLT_DEBUG(indent + 4, vQuality_, "Spanner Path Length * Stretch = " << (stretchFactor_ * newDistance));
-    BOLT_DEBUG(indent + 6, vQuality_, "new distance = " << newDistance);
-    BOLT_DEBUG(indent + 6, vQuality_, "stretch factor = " << stretchFactor_);
+    BOLT_WARN(vQuality_, "Spanner property violated");
+    BOLT_DEBUG(vQuality_, "Sparse Graph Midpoint Length  = " << midpointPathLength);
+    BOLT_DEBUG(vQuality_, "Spanner Path Length * Stretch = " << (stretchFactor_ * newDistance));
+    BOLT_DEBUG(vQuality_, "new distance = " << newDistance);
+    BOLT_DEBUG(vQuality_, "stretch factor = " << stretchFactor_);
 
     return true;  // spannerPropertyWasViolated
   }
   else
-    BOLT_DEBUG(indent + 4, vQuality_, "Spanner property not violated");
+    BOLT_DEBUG(vQuality_, "Spanner property not violated");
 
   return false;  // spannerPropertyWasViolated = false
 }
@@ -122,11 +122,11 @@ bool SparseCriteria::spannerTestOuter(SparseVertex v, SparseVertex vp, SparseVer
 bool SparseCriteria::spannerTestAStar(SparseVertex v, SparseVertex vp, SparseVertex vpp, InterfaceData& iData,
                                       std::size_t indent)
 {
-  BOLT_FUNC(indent, vQuality_, "spannerTestAStar()");
+  BOLT_FUNC(vQuality_, "spannerTestAStar()");
 
   if (!iData.hasInterface1() || !iData.hasInterface2())
   {
-    BOLT_ERROR(indent, vQuality_ || true, "No interface between points");
+    BOLT_ERROR(vQuality_ || true, "No interface between points");
     return false;
   }
 
@@ -135,7 +135,7 @@ bool SparseCriteria::spannerTestAStar(SparseVertex v, SparseVertex vp, SparseVer
   std::vector<SparseVertex> vertexPath;
   if (!sg_->astarSearch(vp, vpp, vertexPath, pathLength, indent))
   {
-    BOLT_ERROR(indent, vQuality_, "No path found");
+    BOLT_ERROR(vQuality_, "No path found");
     visual_->prompt("No path found");
   }
   else
@@ -155,7 +155,7 @@ bool SparseCriteria::spannerTestAStar(SparseVertex v, SparseVertex vp, SparseVer
     double connector1 = si_->distance(sg_->getState(vp), iData.getOutsideInterfaceOfV1(vp, vpp));
     // TODO(davetcoleman): may want to include the dist from inside to outside
     // of interface
-    BOLT_DEBUG(indent, vQuality_, "connector1 " << connector1);
+    BOLT_DEBUG(vQuality_, "connector1 " << connector1);
     if (visualizeQualityCriteriaAstar_)
     {
       visual_->viz6()->edge(sg_->getState(vp), iData.getOutsideInterfaceOfV1(vp, vpp), tools::MEDIUM, tools::ORANGE);
@@ -164,14 +164,14 @@ bool SparseCriteria::spannerTestAStar(SparseVertex v, SparseVertex vp, SparseVer
     double connector2 = si_->distance(sg_->getState(vpp), iData.getOutsideInterfaceOfV2(vp, vpp));
     // TODO(davetcoleman): may want to include the dist from inside to outside
     // of interface
-    BOLT_DEBUG(indent, vQuality_, "connector2 " << connector2);
+    BOLT_DEBUG(vQuality_, "connector2 " << connector2);
     if (visualizeQualityCriteriaAstar_)
     {
       visual_->viz6()->edge(sg_->getState(vpp), iData.getOutsideInterfaceOfV2(vp, vpp), tools::MEDIUM, tools::YELLOW);
     }
 
     pathLength += connector1 + connector2;
-    BOLT_DEBUG(indent, vQuality_, "Full Path Length: " << pathLength);
+    BOLT_DEBUG(vQuality_, "Full Path Length: " << pathLength);
 
     visual_->viz6()->trigger();
   }
@@ -180,9 +180,9 @@ bool SparseCriteria::spannerTestAStar(SparseVertex v, SparseVertex vp, SparseVer
   // double theoreticalMaxLength = iData.getLastDistance() + 2 * sparseDelta_;
   // TODO is this right?
   double theoreticalMaxLength = iData.getLastDistance() + sparseDelta_;
-  BOLT_DEBUG(indent, vQuality_, "Max allowable length: " << theoreticalMaxLength);
+  BOLT_DEBUG(vQuality_, "Max allowable length: " << theoreticalMaxLength);
   theoreticalMaxLength *= stretchFactor_;
-  BOLT_DEBUG(indent, vQuality_, "Max allowable length with stretch: " << theoreticalMaxLength);
+  BOLT_DEBUG(vQuality_, "Max allowable length with stretch: " << theoreticalMaxLength);
 
   if (pathLength >= theoreticalMaxLength)
   {
@@ -194,7 +194,7 @@ bool SparseCriteria::spannerTestAStar(SparseVertex v, SparseVertex vp, SparseVer
     return true;  // spannerPropertyWasViolated = true
   }
 
-  BOLT_DEBUG(indent, vQuality_, "Astar says we do not need to add an edge");
+  BOLT_DEBUG(vQuality_, "Astar says we do not need to add an edge");
   visual_->prompt("astar rule");
 
   return false;  // spannerPropertyWasViolated = false

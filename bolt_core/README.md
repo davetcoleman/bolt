@@ -72,7 +72,7 @@ There are 6 visualization windows that are each used for multiple different thin
 Code can be added that only runs when compiled with the debug flag:
 
     #ifdef NDEBUG
-      BOLT_ERROR(indent, "NOT IN DEBUG MODE");
+      BOLT_ERROR("NOT IN DEBUG MODE");
     #else
-      BOLT_ERROR(indent, "IN DEBUG MODE");
+      BOLT_ERROR("IN DEBUG MODE");
     #endif

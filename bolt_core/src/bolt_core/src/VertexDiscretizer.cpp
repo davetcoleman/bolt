@@ -77,7 +77,7 @@ VertexDiscretizer::~VertexDiscretizer()
 
 bool VertexDiscretizer::generateGrid(std::size_t indent)
 {
-  BOLT_FUNC(indent, verbose_ || true, "VertexDiscretizer::generateGrid()");
+  BOLT_FUNC(verbose_ || true, "VertexDiscretizer::generateGrid()");
 
   // Benchmark runtime
   time::point totalStartTime = time::now();
@@ -107,16 +107,16 @@ bool VertexDiscretizer::generateGrid(std::size_t indent)
   double leftOver = range - jointIncrements * discretization_;
   startingValueOffset_ = leftOver / 2;
 
-  BOLT_INFO(indent, verbose_, "------------------------------------------");
-  BOLT_INFO(indent, verbose_, "Discretization");
-  BOLT_INFO(indent, verbose_, "  Discretization:       " << discretization_);
-  BOLT_INFO(indent, verbose_, "  High Bound:           " << bounds.high[jointID]);
-  BOLT_INFO(indent, verbose_, "  Low Bound:            " << bounds.low[jointID]);
-  BOLT_INFO(indent, verbose_, "  Range:                " << range);
-  BOLT_INFO(indent, verbose_, "  Joint Increments:     " << jointIncrements);
-  BOLT_INFO(indent, verbose_, "  Left Over:            " << leftOver);
-  BOLT_INFO(indent, verbose_, "  Start Offset:         " << startingValueOffset_);
-  BOLT_INFO(indent, verbose_, "------------------------------------------");
+  BOLT_INFO(verbose_, "------------------------------------------");
+  BOLT_INFO(verbose_, "Discretization");
+  BOLT_INFO(verbose_, "  Discretization:       " << discretization_);
+  BOLT_INFO(verbose_, "  High Bound:           " << bounds.high[jointID]);
+  BOLT_INFO(verbose_, "  Low Bound:            " << bounds.low[jointID]);
+  BOLT_INFO(verbose_, "  Range:                " << range);
+  BOLT_INFO(verbose_, "  Joint Increments:     " << jointIncrements);
+  BOLT_INFO(verbose_, "  Left Over:            " << leftOver);
+  BOLT_INFO(verbose_, "  Start Offset:         " << startingValueOffset_);
+  BOLT_INFO(verbose_, "------------------------------------------");
 
   // Reset stats
   verticesAdded_ = 0;
@@ -132,7 +132,7 @@ bool VertexDiscretizer::generateGrid(std::size_t indent)
     // Benchmark runtime
     vertexDuration = time::seconds(time::now() - startTime);
   }
-  BOLT_INFO(indent, verbose_, "Generated " << verticesAdded_ << " vertices in " << vertexDuration << " sec");
+  BOLT_INFO(verbose_, "Generated " << verticesAdded_ << " vertices in " << vertexDuration << " sec");
 
   // Error check
   if (verticesAdded_ < 2)
@@ -144,19 +144,19 @@ bool VertexDiscretizer::generateGrid(std::size_t indent)
   // Total benchmark runtime
   double totalDuration = time::seconds(time::now() - totalStartTime);
 
-  BOLT_INFO(indent, vThread_, "------------------------------------------------------");
-  BOLT_INFO(indent, vThread_, "Vertex Discretization stats:");
-  BOLT_INFO(indent, vThread_, "   Total valid vertices:   " << verticesAdded_);
-  BOLT_INFO(indent, vThread_, "   Vertex generation time: " << vertexDuration);
-  BOLT_INFO(indent, vThread_, "   Total grid gen. time:   " << totalDuration);
-  BOLT_INFO(indent, vThread_, "------------------------------------------------------");
+  BOLT_INFO(vThread_, "------------------------------------------------------");
+  BOLT_INFO(vThread_, "Vertex Discretization stats:");
+  BOLT_INFO(vThread_, "   Total valid vertices:   " << verticesAdded_);
+  BOLT_INFO(vThread_, "   Vertex generation time: " << vertexDuration);
+  BOLT_INFO(vThread_, "   Total grid gen. time:   " << totalDuration);
+  BOLT_INFO(vThread_, "------------------------------------------------------");
 
   return true;
 }
 
 void VertexDiscretizer::generateVertices(std::size_t indent)
 {
-  BOLT_FUNC(indent, verbose_, "VertexDiscretizer::generateVertices()");
+  BOLT_FUNC(verbose_, "VertexDiscretizer::generateVertices()");
 
   std::size_t dim = si_->getStateSpace()->getDimension();
 
@@ -175,26 +175,26 @@ void VertexDiscretizer::generateVertices(std::size_t indent)
   // Check that we have enough jointIncrements for all the threads
   if (jointIncrements < numThreads_)
   {
-    BOLT_DEBUG(indent, verbose_, "There are fewer joint_0 increments ("
+    BOLT_DEBUG(verbose_, "There are fewer joint_0 increments ("
                                      << jointIncrements << ") at current discretization (" << discretization_
                                      << ") than available threads (" << numThreads_ << "), underutilizing threading");
-    BOLT_DEBUG(indent, verbose_, "Optimal discretization for thread count: " << range / double(numThreads_));
+    BOLT_DEBUG(verbose_, "Optimal discretization for thread count: " << range / double(numThreads_));
     numThreads_ = jointIncrements;
   }
   std::size_t jointIncrementsPerThread = jointIncrements / numThreads_;
 
-  BOLT_DEBUG(indent, verbose_, "-------------------------------------------------------");
-  BOLT_DEBUG(indent, verbose_, "Single-Pass Discretization: ");
-  BOLT_DEBUG(indent, verbose_, "  Dimensions:             " << dim);
-  BOLT_DEBUG(indent, verbose_, "  Discretization:         " << discretization_);
-  BOLT_DEBUG(indent, verbose_, "  J0 Low:                 " << bounds.low[jointID]);
-  BOLT_DEBUG(indent, verbose_, "  J0 High:                " << bounds.high[jointID]);
-  BOLT_DEBUG(indent, verbose_, "  J0 Range:               " << range);
-  BOLT_DEBUG(indent, verbose_, "  J0 Increments:          " << jointIncrements);
-  BOLT_DEBUG(indent, verbose_, "  J0 IncrementsPerThread: " << jointIncrementsPerThread);
-  BOLT_DEBUG(indent, verbose_, "  Total states:           " << pow(jointIncrements, dim));
-  BOLT_DEBUG(indent, verbose_, "  Num Threads:            " << numThreads_);
-  BOLT_DEBUG(indent, verbose_, "-------------------------------------------------------");
+  BOLT_DEBUG(verbose_, "-------------------------------------------------------");
+  BOLT_DEBUG(verbose_, "Single-Pass Discretization: ");
+  BOLT_DEBUG(verbose_, "  Dimensions:             " << dim);
+  BOLT_DEBUG(verbose_, "  Discretization:         " << discretization_);
+  BOLT_DEBUG(verbose_, "  J0 Low:                 " << bounds.low[jointID]);
+  BOLT_DEBUG(verbose_, "  J0 High:                " << bounds.high[jointID]);
+  BOLT_DEBUG(verbose_, "  J0 Range:               " << range);
+  BOLT_DEBUG(verbose_, "  J0 Increments:          " << jointIncrements);
+  BOLT_DEBUG(verbose_, "  J0 IncrementsPerThread: " << jointIncrementsPerThread);
+  BOLT_DEBUG(verbose_, "  Total states:           " << pow(jointIncrements, dim));
+  BOLT_DEBUG(verbose_, "  Num Threads:            " << numThreads_);
+  BOLT_DEBUG(verbose_, "-------------------------------------------------------");
 
   // Setup threading
   std::vector<boost::thread *> threads(numThreads_);
@@ -214,7 +214,7 @@ void VertexDiscretizer::generateVertices(std::size_t indent)
       endJointValue = bounds.high[jointID];
     }
 
-    BOLT_DEBUG(indent, vThread_, "Thread " << i << " will process Joint 0 values from " << startJointValue << " to "
+    BOLT_DEBUG(vThread_, "Thread " << i << " will process Joint 0 values from " << startJointValue << " to "
                                            << endJointValue);
 
     base::SpaceInformationPtr si(new base::SpaceInformation(si_->getStateSpace()));
@@ -246,7 +246,7 @@ void VertexDiscretizer::generateVertices(std::size_t indent)
 void VertexDiscretizer::generateVerticesThread(std::size_t threadID, double startJointValue, double endJointValue,
                                                base::SpaceInformationPtr si, std::size_t indent)
 {
-  BOLT_FUNC(indent, vThread_, "generateVerticesThread()");
+  BOLT_FUNC(vThread_, "generateVerticesThread()");
 
   std::size_t jointID = 0;
   ob::RealVectorBounds bounds = si->getStateSpace()->getBounds();
@@ -278,7 +278,7 @@ void VertexDiscretizer::generateVerticesThread(std::size_t threadID, double star
     if (threadID == numThreads_ - 1)
     {
       const double percent = (value - startJointValue) / (endJointValue - startJointValue) * 100.0;
-      BOLT_DEBUG(indent, vThread_, "Vertex generation progress: " << std::setprecision(1) << percent
+      BOLT_DEBUG(vThread_, "Vertex generation progress: " << std::setprecision(1) << percent
                                                                   << " % Total vertices: "
                                                                   << (verticesAdded_ > 0 ? verticesAdded_ - 1 : 0));
     }
@@ -298,7 +298,7 @@ void VertexDiscretizer::recursiveDiscretization(std::size_t threadID, std::vecto
                                                 base::SpaceInformationPtr si, base::State *candidateState,
                                                 std::size_t maxDiscretizationLevel, std::size_t indent)
 {
-  BOLT_FUNC(indent, vThread_, "recursiveDiscretization()");
+  BOLT_FUNC(vThread_, "recursiveDiscretization()");
 
   ob::RealVectorBounds bounds = si->getStateSpace()->getBounds();
 
@@ -315,7 +315,7 @@ void VertexDiscretizer::recursiveDiscretization(std::size_t threadID, std::vecto
     {
       const double percent = (value - bounds.low[jointID]) / (bounds.high[jointID] - bounds.low[jointID]) * 100.0;
 
-      BOLT_DEBUG(indent, vThread_, "Level 1 vertex generation progress: "
+      BOLT_DEBUG(vThread_, "Level 1 vertex generation progress: "
                                        << std::setprecision(1) << percent
                                        << " % Total vertices: " << (verticesAdded_ > 0 ? verticesAdded_ - 1 : 0));
     }
@@ -324,9 +324,9 @@ void VertexDiscretizer::recursiveDiscretization(std::size_t threadID, std::vecto
     values[jointID] = value;
 
     // Check if we are at the end of the recursion
-    BOLT_DEBUG(indent, vThread_, "threadID " << threadID << " jointID " << jointID << " of " << maxDiscretizationLevel
+    BOLT_DEBUG(vThread_, "threadID " << threadID << " jointID " << jointID << " of " << maxDiscretizationLevel
                                              << " --- ");
-    BOLT_DEBUG(indent, vThread_, "value: " << value << " high: " << bounds.high[jointID]
+    BOLT_DEBUG(vThread_, "value: " << value << " high: " << bounds.high[jointID]
                                            << " low: " << bounds.low[jointID] << " disc: " << discretization_
                                            << " values.size() " << values.size());
     if (vThread_)
@@ -364,7 +364,7 @@ void VertexDiscretizer::recursiveDiscretization(std::size_t threadID, std::vecto
 void VertexDiscretizer::createState(std::size_t threadID, std::vector<double> &values, base::SpaceInformationPtr si,
                                     base::State *candidateState, std::size_t indent)
 {
-  BOLT_FUNC(indent, vThread_, "createState()");
+  BOLT_FUNC(vThread_, "createState()");
 
   // Fill the state with current values
   si->getStateSpace()->copyFromReals(candidateState, values);
@@ -385,7 +385,7 @@ void VertexDiscretizer::createState(std::size_t threadID, std::vector<double> &v
 
   if (!valid)
   {
-    BOLT_ERROR(indent, "Rejected because of validity");
+    BOLT_ERROR("Rejected because of validity");
 
     // Visualize
     if (visualizeGridGeneration_ && false)
@@ -414,7 +414,7 @@ void VertexDiscretizer::createState(std::size_t threadID, std::vector<double> &v
   {
     if (dist < clearance_)
     {
-      BOLT_WARN(indent, vThread_, "Rejected because of clearance " << std::fixed << dist
+      BOLT_WARN(vThread_, "Rejected because of clearance " << std::fixed << dist
                                                                    << " required: " << clearance_);
 
       // Visualize
@@ -434,7 +434,7 @@ void VertexDiscretizer::createState(std::size_t threadID, std::vector<double> &v
       return;
     }
     else
-      BOLT_GREEN(indent, vThread_, "Accepted, actual distance to obstacle: " << dist);
+      BOLT_GREEN(vThread_, "Accepted, actual distance to obstacle: " << dist);
   }
 
   // Add to graph

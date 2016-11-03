@@ -560,7 +560,7 @@ double DenseCache::getPercentCachedCollisionChecks()
 void DenseCache::print()
 {
   std::size_t indent = 0;
-  BOLT_DEBUG(indent, 1, "Contents of DenseCache States:");
+  BOLT_DEBUG(1, "Contents of DenseCache States:");
   for (base::State *state : stateCache_)
   {
     si_->printState(state, std::cout);

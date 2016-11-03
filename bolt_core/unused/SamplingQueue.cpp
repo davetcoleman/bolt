@@ -68,7 +68,7 @@ void SamplingQueue::clear(std::size_t indent)
   // Clear all left over states that weren't used
   while (!statesQueue_.empty())
   {
-    BOLT_DEBUG(indent, verbose_, "SAMPLING_QUEUE freeing " << statesQueue_.front());
+    BOLT_DEBUG(verbose_, "SAMPLING_QUEUE freeing " << statesQueue_.front());
     si_->freeState(statesQueue_.front());
     statesQueue_.pop();
   }
@@ -76,10 +76,10 @@ void SamplingQueue::clear(std::size_t indent)
 
 void SamplingQueue::startSampling(std::size_t indent)
 {
-  BOLT_FUNC(indent, true, "startSampling() Starting sampling thread");
+  BOLT_FUNC(true, "startSampling() Starting sampling thread");
   if (threadRunning_)
   {
-    BOLT_ERROR(indent, "SamplingQueue already running");
+    BOLT_ERROR("SamplingQueue already running");
     return;
   }
   threadRunning_ = true;
@@ -98,7 +98,7 @@ void SamplingQueue::startSampling(std::size_t indent)
   samplingThread_ = new boost::thread(boost::bind(&SamplingQueue::samplingThread, this, si, clearanceSampler, indent));
 
   // Wait for first sample to be found
-  BOLT_DEBUG(indent, verbose_, "SamplingQueue: Waiting for first sample to be found");
+  BOLT_DEBUG(verbose_, "SamplingQueue: Waiting for first sample to be found");
   while (statesQueue_.empty())
   {
     usleep(0.001 * 1000000);
@@ -107,12 +107,12 @@ void SamplingQueue::startSampling(std::size_t indent)
 
 void SamplingQueue::stopSampling(std::size_t indent)
 {
-  BOLT_FUNC(indent, verbose_, "SamplingQueue.stopSampling() Stopping sampling thread");
+  BOLT_FUNC(verbose_, "SamplingQueue.stopSampling() Stopping sampling thread");
   threadRunning_ = false;
 
   // End thread
   samplingThread_->join();
-  BOLT_DEBUG(indent, verbose_, "SamplingQueue.stopSampling() Sampling threads have stopped");
+  BOLT_DEBUG(verbose_, "SamplingQueue.stopSampling() Sampling threads have stopped");
 }
 
 /** \brief This function is called from the parent thread */
@@ -134,15 +134,15 @@ bool SamplingQueue::getNextState(base::State *&state, std::size_t indent)
     // Something changed before we got the mutex
     if (statesQueue_.empty())
     {
-      BOLT_WARN(indent, false, "SamplingQueue became empty while getting mutex");
+      BOLT_WARN(false, "SamplingQueue became empty while getting mutex");
       return false;
     }
-    BOLT_DEBUG(indent, false, "SamplingQueue size: " << statesQueue_.size());
+    BOLT_DEBUG(false, "SamplingQueue size: " << statesQueue_.size());
 
     state = statesQueue_.front();
     statesQueue_.pop();
     // totalProvided++;
-    // BOLT_DEBUG(indent, true, "SamplingQueue percent provided: " << (totalProvided/double(totalAttempted)*100.0) <<
+    // BOLT_DEBUG(true, "SamplingQueue percent provided: " << (totalProvided/double(totalAttempted)*100.0) <<
     // "%");
     return true;
   }
@@ -151,7 +151,7 @@ bool SamplingQueue::getNextState(base::State *&state, std::size_t indent)
 void SamplingQueue::samplingThread(base::SpaceInformationPtr si, ClearanceSamplerPtr clearanceSampler,
                                    std::size_t indent)
 {
-  BOLT_FUNC(indent, verbose_, "samplingThread()");
+  BOLT_FUNC(verbose_, "samplingThread()");
 
   while (threadRunning_ && !visual_->viz1()->shutdownRequested())
   {
@@ -187,13 +187,13 @@ void SamplingQueue::waitForQueueNotFull(std::size_t indent)
   {
     if (oneTimeFlag)
     {
-      BOLT_DEBUG(indent, vQueueFull_, "SamplingQueue: Queue is full, sampler is waiting");
+      BOLT_DEBUG(vQueueFull_, "SamplingQueue: Queue is full, sampler is waiting");
       oneTimeFlag = false;
     }
     usleep(0.001 * 1000000);
   }
   if (!oneTimeFlag)
-    BOLT_DEBUG(indent, vQueueFull_ && false, "SamplingQueue: No longer waiting on full queue");
+    BOLT_DEBUG(vQueueFull_ && false, "SamplingQueue: No longer waiting on full queue");
 }
 
 /** \brief Wait until there is at least one state ready */
@@ -204,13 +204,13 @@ void SamplingQueue::waitForQueueNotEmpty(std::size_t indent)
   {
     if (oneTimeFlag)
     {
-      BOLT_WARN(indent, vQueueEmpty_, "SamplingQueue: Queue is empty, waiting to provide a new sampled state");
+      BOLT_WARN(vQueueEmpty_, "SamplingQueue: Queue is empty, waiting to provide a new sampled state");
       oneTimeFlag = false;
     }
     usleep(100);
   }
   if (!oneTimeFlag)
-    BOLT_DEBUG(indent, vQueueEmpty_ && false, "SamplingQueue: No longer waiting on queue");
+    BOLT_DEBUG(vQueueEmpty_ && false, "SamplingQueue: No longer waiting on queue");
 }
 
 }  // namespace bolt

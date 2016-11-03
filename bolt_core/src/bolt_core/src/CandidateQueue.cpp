@@ -92,10 +92,10 @@ void CandidateQueue::clear()
 
 void CandidateQueue::startGenerating(std::size_t indent)
 {
-  BOLT_FUNC(indent, true, "startGenerating() Starting candidate queue thread");
+  BOLT_FUNC(true, "startGenerating() Starting candidate queue thread");
   if (threadsRunning_)
   {
-    BOLT_ERROR(indent, "CandidateQueue already running");
+    BOLT_ERROR("CandidateQueue already running");
     return;
   }
   threadsRunning_ = true;
@@ -108,7 +108,7 @@ void CandidateQueue::startGenerating(std::size_t indent)
   }
   if (totalResets_ > 0)
   {
-    BOLT_INFO(indent, true, "Average CandidateQueue misses: " << totalMissesOverAllResets_ / totalResets_);
+    BOLT_INFO(true, "Average CandidateQueue misses: " << totalMissesOverAllResets_ / totalResets_);
   }
 
   // Stats
@@ -134,12 +134,12 @@ void CandidateQueue::startGenerating(std::size_t indent)
      so we choose 5.
   */
   numThreads_ = 5;
-  BOLT_DEBUG(indent, true, "Running CandidateQueue with " << numThreads_ << " threads");
+  BOLT_DEBUG(true, "Running CandidateQueue with " << numThreads_ << " threads");
   if (numThreads_ < 2)
-    BOLT_WARN(indent, true, "Only running CandidateQueue with 1 thread");
+    BOLT_WARN(true, "Only running CandidateQueue with 1 thread");
   if (numThreads_ >= sg_->getNumQueryVertices())
   {
-    BOLT_ERROR(indent, "Too many threads requested for candidate queue");
+    BOLT_ERROR("Too many threads requested for candidate queue");
     exit(-1);
   }
 
@@ -162,7 +162,7 @@ void CandidateQueue::startGenerating(std::size_t indent)
   }
 
   // Wait for first sample to be found
-  // BOLT_DEBUG(indent, true, "Waiting for first candidate to be found");
+  // BOLT_DEBUG(true, "Waiting for first candidate to be found");
   while (queue_.empty())
   {
     usleep(0.001 * 1000000);
@@ -171,7 +171,7 @@ void CandidateQueue::startGenerating(std::size_t indent)
 
 void CandidateQueue::stopGenerating(std::size_t indent)
 {
-  BOLT_FUNC(indent, true, "CandidateQueue.stopGenerating() Stopping generating thread");
+  BOLT_FUNC(true, "CandidateQueue.stopGenerating() Stopping generating thread");
   threadsRunning_ = false;
 
   // Join threads
@@ -181,7 +181,7 @@ void CandidateQueue::stopGenerating(std::size_t indent)
     delete generatorThreads_[i];
   }
 
-  BOLT_DEBUG(indent, true, "CandidateQueue.stopGenerating() joined");
+  BOLT_DEBUG(true, "CandidateQueue.stopGenerating() joined");
 
   // Clear the first state in the queue without freeing the memory
   // TODO: this is a memory leak, but sometimes it segfaults because perhaps that state was already
@@ -200,7 +200,7 @@ void CandidateQueue::stopGenerating(std::size_t indent)
     if (queue_.front().state_ == nullptr)
     {
       std::cout << std::endl;
-      BOLT_WARN(indent, true, "Found state in queue that is null!");
+      BOLT_WARN(true, "Found state in queue that is null!");
     }
     else
     {
@@ -212,19 +212,19 @@ void CandidateQueue::stopGenerating(std::size_t indent)
     queue_.pop();
   }
 
-  BOLT_DEBUG(indent, true, "CandidateQueue.stopGenerating() finished");
+  BOLT_DEBUG(true, "CandidateQueue.stopGenerating() finished");
 }
 
 void CandidateQueue::generatingThread(std::size_t threadID, base::SpaceInformationPtr si,
                                       base::ValidStateSamplerPtr sampler, std::size_t indent)
 {
-  BOLT_FUNC(indent, verbose_, "generatingThread() " << threadID);
+  BOLT_FUNC(verbose_, "generatingThread() " << threadID);
 
   base::State *candidateState;
 
   while (threadsRunning_ && !visual_->viz1()->shutdownRequested())
   {
-    BOLT_DEBUG(indent + 2, vThread_, "generatingThread: Running while loop on thread " << threadID);
+    BOLT_DEBUG(vThread_, "generatingThread: Running while loop on thread " << threadID);
 
     // Do not add more states if queue is full
     if (queue_.size() > targetQueueSize_)
@@ -237,11 +237,11 @@ void CandidateQueue::generatingThread(std::size_t threadID, base::SpaceInformati
     if (!sampler->sample(candidateState))
       throw Exception(name_, "Unable to find valid sample");
 
-    BOLT_DEBUG(indent + 2, vThread_, "New candidateState: " << candidateState << " on thread " << threadID);
+    BOLT_DEBUG(vThread_, "New candidateState: " << candidateState << " on thread " << threadID);
 
     if (!threadsRunning_)  // Check for thread ending
     {
-      BOLT_DEBUG(indent + 2, vThread_, "Thread ended, freeing memory");
+      BOLT_DEBUG(vThread_, "Thread ended, freeing memory");
       si_->freeState(candidateState);
       return;
     }
@@ -282,7 +282,7 @@ void CandidateQueue::generatingThread(std::size_t threadID, base::SpaceInformati
 
 SparseCandidateData &CandidateQueue::getNextCandidate(std::size_t indent)
 {
-  BOLT_CYAN(indent, verbose_, "CandidateQueue.getNextCanidate(): queue size: "
+  BOLT_CYAN(verbose_, "CandidateQueue.getNextCanidate(): queue size: "
                                   << queue_.size()
                                   << " num samples added: " << sparseGenerator_->getNumRandSamplesAdded());
   // This function is run in the parent thread
@@ -294,18 +294,18 @@ SparseCandidateData &CandidateQueue::getNextCandidate(std::size_t indent)
     {
       boost::lock_guard<boost::shared_mutex> lock(candidateQueueMutex_);
       std::size_t numCleared = 0;
-      BOLT_DEBUG(indent, verbose_, "Current graph version: " << sparseGenerator_->getNumRandSamplesAdded());
+      BOLT_DEBUG(verbose_, "Current graph version: " << sparseGenerator_->getNumRandSamplesAdded());
       while (!queue_.empty() && queue_.front().graphVersion_ != sparseGenerator_->getNumRandSamplesAdded() &&
              threadsRunning_)
       {
-        BOLT_DEBUG(indent, verbose_, "Expired candidate state with graph version: " << queue_.front().graphVersion_);
+        BOLT_DEBUG(verbose_, "Expired candidate state with graph version: " << queue_.front().graphVersion_);
 
         // Next Candidate state is expired, delete
         si_->freeState(queue_.front().state_);
         queue_.pop();
         numCleared++;
       }
-      BOLT_DEBUG(indent, vClear_ && numCleared > 0, "Cleared " << numCleared << " states from CandidateQueue");
+      BOLT_DEBUG(vClear_ && numCleared > 0, "Cleared " << numCleared << " states from CandidateQueue");
 
       // Stop seaching for expired states after we find the first one that is not expired
       if (!queue_.empty() && queue_.front().graphVersion_ == sparseGenerator_->getNumRandSamplesAdded())
@@ -341,13 +341,13 @@ void CandidateQueue::waitForQueueNotFull(std::size_t indent)
   {
     if (oneTimeFlag)
     {
-      BOLT_DEBUG(indent, vQueueFull_, "CandidateQueue: Queue is full, generator is waiting");
+      BOLT_DEBUG(vQueueFull_, "CandidateQueue: Queue is full, generator is waiting");
       oneTimeFlag = false;
     }
     usleep(0.001 * 1000000);
   }
   if (!oneTimeFlag)
-    BOLT_DEBUG(indent, vQueueFull_, "CandidateQueue: No longer waiting on full queue");
+    BOLT_DEBUG(vQueueFull_, "CandidateQueue: No longer waiting on full queue");
 }
 
 void CandidateQueue::waitForQueueNotEmpty(std::size_t indent)
@@ -359,18 +359,18 @@ void CandidateQueue::waitForQueueNotEmpty(std::size_t indent)
   {
     if (oneTimeFlag)
     {
-      BOLT_WARN(indent, vQueueEmpty_, "CandidateQueue: Queue is empty, waiting for next generated SparseCandidateData");
+      BOLT_WARN(vQueueEmpty_, "CandidateQueue: Queue is empty, waiting for next generated SparseCandidateData");
       oneTimeFlag = false;
     }
     usleep(100);
   }
   if (!oneTimeFlag)
-    BOLT_DEBUG(indent, vQueueEmpty_ && false, "CandidateQueue: No longer waiting on queue");
+    BOLT_DEBUG(vQueueEmpty_ && false, "CandidateQueue: No longer waiting on queue");
 }
 
 bool CandidateQueue::findGraphNeighbors(SparseCandidateData &candidateD, std::size_t threadID, std::size_t indent)
 {
-  BOLT_FUNC(indent, vNeighbor_, "findGraphNeighbors() within sparse delta " << sparseCriteria_->getSparseDelta()
+  BOLT_FUNC(vNeighbor_, "findGraphNeighbors() within sparse delta " << sparseCriteria_->getSparseDelta()
                                                                             << " state: " << candidateD.state_);
 
   // Get the version number of the graph, which is simply the number of states that have thus far been added
@@ -396,7 +396,7 @@ bool CandidateQueue::findGraphNeighbors(SparseCandidateData &candidateD, std::si
     // Check for expired graph or termination condition
     if (candidateD.graphVersion_ != sparseGenerator_->getNumRandSamplesAdded() || !threadsRunning_)
     {
-      BOLT_WARN(indent, vNeighbor_, "findGraphNeighbors aborted b/c expired graph or term cond");
+      BOLT_WARN(vNeighbor_, "findGraphNeighbors aborted b/c expired graph or term cond");
       return false;
     }
 
@@ -412,7 +412,7 @@ bool CandidateQueue::findGraphNeighbors(SparseCandidateData &candidateD, std::si
     // Check for expired graph or termination condition
     if (candidateD.graphVersion_ != sparseGenerator_->getNumRandSamplesAdded() || !threadsRunning_)
     {
-      BOLT_WARN(indent, vNeighbor_, "findGraphNeighbors aborted b/c expired graph or term cond");
+      BOLT_WARN(vNeighbor_, "findGraphNeighbors aborted b/c expired graph or term cond");
       return false;
     }
 
@@ -420,7 +420,7 @@ bool CandidateQueue::findGraphNeighbors(SparseCandidateData &candidateD, std::si
     candidateD.visibleNeighborhood_.push_back(candidateD.graphNeighborhood_[i]);
   }
 
-  BOLT_DEBUG(indent, vNeighbor_,
+  BOLT_DEBUG(vNeighbor_,
              "Graph neighborhood: " << candidateD.graphNeighborhood_.size()
                                     << " | Visible neighborhood: " << candidateD.visibleNeighborhood_.size());
 

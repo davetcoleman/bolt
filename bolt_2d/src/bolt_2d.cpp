@@ -468,7 +468,7 @@ public:
   /** \brief Create spars graph repeatidly */
   void createBoltSweepMaps(std::size_t indent)
   {
-    BOLT_FUNC(indent, true, "createBoltSweepMaps()");
+    BOLT_FUNC(true, "createBoltSweepMaps()");
 
     std::vector<std::string> trial_maps;
     trial_maps.push_back(std::move("level1"));
@@ -508,10 +508,10 @@ public:
       for (std::size_t trial_id = 0; trial_id < TRIALS_PER_MAP; ++trial_id)
       {
         // Debug
-        BOLT_DEBUG(indent + 2, true, "----------------------------------------------------------------------------");
-        BOLT_DEBUG(indent + 2, true, "Creating spars graph, trial " << trial_id + 1 << " out of " << TRIALS_PER_MAP
+        BOLT_DEBUG(true, "----------------------------------------------------------------------------");
+        BOLT_DEBUG(true, "Creating spars graph, trial " << trial_id + 1 << " out of " << TRIALS_PER_MAP
                                                                     << " for map " << trial_maps[map_id] << ".ppm");
-        BOLT_DEBUG(indent + 2, true, "----------------------------------------------------------------------------");
+        BOLT_DEBUG(true, "----------------------------------------------------------------------------");
 
         // Clear spars graph
         viz_bg_->deleteAllMarkers();
@@ -612,16 +612,16 @@ public:
       high_level_log.push_back(line.str());
 
       // Output to console
-      BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
-      BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
-      BOLT_CYAN(0, true, "High Level Log:");
-      BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
-      BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
+      BOLT_CYAN(true, "----------------------------------------------------------------------------");
+      BOLT_CYAN(true, "----------------------------------------------------------------------------");
+      BOLT_CYAN(true, "High Level Log:");
+      BOLT_CYAN(true, "----------------------------------------------------------------------------");
+      BOLT_CYAN(true, "----------------------------------------------------------------------------");
       std::cout << high_level_log.back() << std::endl;
-      BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
-      BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
-      BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
-      BOLT_CYAN(0, true, "----------------------------------------------------------------------------");
+      BOLT_CYAN(true, "----------------------------------------------------------------------------");
+      BOLT_CYAN(true, "----------------------------------------------------------------------------");
+      BOLT_CYAN(true, "----------------------------------------------------------------------------");
+      BOLT_CYAN(true, "----------------------------------------------------------------------------");
 
       if (!ros::ok())
         break;
@@ -672,14 +672,15 @@ public:
       std::cout << "------------------------------------------------------------------------" << std::endl;
 
       // Create start and goal space
-      chooseStartGoal(ompl_start_, ompl_goal_);
+      bool verbose = true;
+      chooseStartGoal(ompl_start_, ompl_goal_, verbose, indent);
 
       // Visualize
       if (visualize_start_goal_states_)
         visualizeStartGoal();
 
       // Do one plan
-      plan();
+      plan(indent);
 
       // Console display
       if (bolt_)
@@ -711,7 +712,7 @@ public:
     return true;
   }
 
-  bool plan()
+  bool plan(std::size_t indent)
   {
     // Setup -----------------------------------------------------------
 
@@ -759,7 +760,7 @@ public:
     // Check/test the solution for errors
     if (use_task_planning_)
     {
-      BOLT_ERROR(0, "bolt_2d: not implemented");
+      BOLT_ERROR("bolt_2d: not implemented");
       // bolt_->getTaskGraph()->checkTaskPathSolution(path, ompl_start_, ompl_goal_);
     }
 
@@ -1054,7 +1055,7 @@ public:
     return bolt_->saveIfChanged(indent);
   }
 
-  void chooseStartGoal(ob::State *start, ob::State *goal, bool verbose = true)
+  void chooseStartGoal(ob::State *start, ob::State *goal, bool verbose, std::size_t indent)
   {
     switch (problem_type_)
     {
@@ -1144,7 +1145,7 @@ public:
     // Set task dimension if necessary
     if (use_task_planning_)
     {
-      BOLT_ERROR(0, "TODO set level");
+      BOLT_ERROR("TODO set level");
       // space_->setLevel(goal, 2);  // set goal on 3rd (last) level
     }
   }
@@ -1295,7 +1296,7 @@ public:
     // Insert into graph
     std::cout << "adding path --------------------- " << std::endl;
     std::size_t indent = 0;
-    BOLT_ERROR(indent, "bolt_2d: not implemented");
+    BOLT_ERROR("bolt_2d: not implemented");
     // if (!bolt_->getTaskGraph()->addCartPath(ompl_path, indent))
     // {
     //   ROS_ERROR_STREAM_NAMED(name_, "Unable to add cartesian path");

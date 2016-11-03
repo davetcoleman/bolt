@@ -107,7 +107,7 @@ CartPathPlanner::CartPathPlanner(std::vector<mvt::ArmData>& arm_datas, mvt::Move
   visual_tools_ = imarker_cartesian_->getVisualTools();
 
   if (!visual_tools_)
-    BOLT_ERROR(indent, "Not loaded!");
+    BOLT_ERROR("Not loaded!");
 
   visual_tools_->setMarkerTopic(nh_.getNamespace() + "/cartesian_trajectory");
   visual_tools_->loadMarkerPub(true);
@@ -133,7 +133,7 @@ CartPathPlanner::CartPathPlanner(std::vector<mvt::ArmData>& arm_datas, mvt::Move
   // Trigger the first path viz
   generateExactPoses(indent);
 
-  BOLT_INFO(indent, true, "CartPathPlanner Ready.");
+  BOLT_INFO(true, "CartPathPlanner Ready.");
 }
 
 void CartPathPlanner::processIMarkerPose(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback,
@@ -170,15 +170,15 @@ void CartPathPlanner::generateExactPoses(std::size_t indent)
 
 void CartPathPlanner::generateExactPoses(const Eigen::Affine3d& start_pose, std::size_t indent)
 {
-  BOLT_FUNC(indent, verbose_, "generateExactPoses()");
+  BOLT_FUNC(verbose_, "generateExactPoses()");
 
   if (!transform2DPaths(start_pose, exact_poses_, indent))
   {
-    BOLT_ERROR(indent, "Trajectory generation failed");
+    BOLT_ERROR("Trajectory generation failed");
     exit(-1);
   }
 
-  BOLT_DEBUG(indent, verbose_, "Generated exact Cartesian traj with " << exact_poses_.front().size() << " points for "
+  BOLT_DEBUG(verbose_, "Generated exact Cartesian traj with " << exact_poses_.front().size() << " points for "
                                                                       << arm_datas_.size() << " dimensions");
 
   // Publish trajectory poses for visualization
@@ -196,7 +196,7 @@ void CartPathPlanner::generateExactPoses(const Eigen::Affine3d& start_pose, std:
 
 bool CartPathPlanner::debugShowAllIKSolutions(std::size_t indent)
 {
-  BOLT_FUNC(indent, true, "debugShowAllIKSolutions()");
+  BOLT_FUNC(true, "debugShowAllIKSolutions()");
   std::size_t total_redun_joint_poses = 0;
 
   // For each dimension
@@ -213,14 +213,14 @@ bool CartPathPlanner::debugShowAllIKSolutions(std::size_t indent)
       RedunJointPoses local_joint_poses;
       if (!getRedunJointPosesForCartPoint(pose, local_joint_poses, ee_link, jmg, indent))
       {
-        BOLT_ERROR(indent, "Error when getting joint poses for cartesian point");
+        BOLT_ERROR("Error when getting joint poses for cartesian point");
         continue;
       }
 
       // Handle error: no IK solutions found
       if (local_joint_poses.empty())
       {
-        BOLT_ERROR(indent, "No joint solutions found for cartesian pose " << i);
+        BOLT_ERROR("No joint solutions found for cartesian pose " << i);
 
         visual_tools_->publishAxis(pose, rvt::XXSMALL);
         visual_tools_->trigger();
@@ -234,7 +234,7 @@ bool CartPathPlanner::debugShowAllIKSolutions(std::size_t indent)
       total_redun_joint_poses += local_joint_poses.size();
     }
   }
-  BOLT_INFO(indent, true, "Found " << total_redun_joint_poses << " total redun joint poses");
+  BOLT_INFO(true, "Found " << total_redun_joint_poses << " total redun joint poses");
 
   return true;
 }
@@ -243,7 +243,7 @@ bool CartPathPlanner::computeRedunPosesForCartPoint(const Eigen::Affine3d& pose,
                                                     EigenSTL::vector_Affine3d& candidate_poses, bool verbose,
                                                     std::size_t indent)
 {
-  BOLT_FUNC(indent, verbose_, "computeRedunPosesForCartPoint()");
+  BOLT_FUNC(verbose_, "computeRedunPosesForCartPoint()");
   BOOST_ASSERT_MSG(tolerance_increment_ > std::numeric_limits<double>::epsilon(), "Divide by zero using orientation "
                                                                                   "increment");
 
@@ -252,10 +252,10 @@ bool CartPathPlanner::computeRedunPosesForCartPoint(const Eigen::Affine3d& pose,
 
   const std::size_t num_axis = 3;
 
-  BOLT_INFO(indent, verbose, "----------------------------------");
-  BOLT_INFO(indent, verbose, "Poses per Point");
-  BOLT_INFO(indent, verbose, "  IK Solver Discretization: " << ik_solver_discretization_);
-  BOLT_INFO(indent, verbose, "  Tolerance Increment:      " << tolerance_increment_);
+  BOLT_INFO(verbose, "----------------------------------");
+  BOLT_INFO(verbose, "Poses per Point");
+  BOLT_INFO(verbose, "  IK Solver Discretization: " << ik_solver_discretization_);
+  BOLT_INFO(verbose, "  Tolerance Increment:      " << tolerance_increment_);
 
   // Reserve vector size
   std::vector<size_t> num_steps_per_axis(num_axis, 0 /* value */);
@@ -267,19 +267,19 @@ bool CartPathPlanner::computeRedunPosesForCartPoint(const Eigen::Affine3d& pose,
     // std::cout << "num_steps_per_axis[i]: " << num_steps_per_axis[i] << std::endl;
 
     if (i == 0)
-      BOLT_INFO(indent, verbose, "  Roll:");
+      BOLT_INFO(verbose, "  Roll:");
     else if (i == 1)
-      BOLT_INFO(indent, verbose, "  Pitch:");
+      BOLT_INFO(verbose, "  Pitch:");
     else if (i == 2)
-      BOLT_INFO(indent, verbose, "  Yaw:");
-    BOLT_INFO(indent, verbose, "    Tolerance:          " << orientation_tol.axis_dist_from_center_[i]);
-    BOLT_INFO(indent, verbose, "    Range (x2):         " << range);
-    BOLT_INFO(indent, verbose, "    Steps:              " << num_steps_per_axis[i]);
+      BOLT_INFO(verbose, "  Yaw:");
+    BOLT_INFO(verbose, "    Tolerance:          " << orientation_tol.axis_dist_from_center_[i]);
+    BOLT_INFO(verbose, "    Range (x2):         " << range);
+    BOLT_INFO(verbose, "    Steps:              " << num_steps_per_axis[i]);
   }
   double total_num_steps = num_steps_per_axis[0] * num_steps_per_axis[1] * num_steps_per_axis[2];
 
-  BOLT_INFO(indent, verbose, "  Total Poses:          " << total_num_steps);
-  BOLT_INFO(indent, verbose, "----------------------------------");
+  BOLT_INFO(verbose, "  Total Poses:          " << total_num_steps);
+  BOLT_INFO(verbose, "----------------------------------");
 
   candidate_poses.reserve(total_num_steps);
 
@@ -315,7 +315,7 @@ bool CartPathPlanner::computeRedunPosesForCartPoint(const Eigen::Affine3d& pose,
 bool CartPathPlanner::rotateOnAxis(const Eigen::Affine3d& pose, const OrientationTol& orientation_tol, const Axis axis,
                                    EigenSTL::vector_Affine3d& candidate_poses, std::size_t indent)
 {
-  BOLT_FUNC(indent, false, "rotateOnAxis()");
+  BOLT_FUNC(false, "rotateOnAxis()");
 
   const bool verbose = false;
   double range = 2 * orientation_tol.axis_dist_from_center_[axis];
@@ -326,7 +326,7 @@ bool CartPathPlanner::rotateOnAxis(const Eigen::Affine3d& pose, const Orientatio
   for (int i = num_steps * -0.5; i < num_steps * 0.5; ++i)
   {
     double rotation_amount = i * tolerance_increment_;
-    BOLT_DEBUG(indent, verbose, std::string(axis * 2, ' ') << "axis: " << axis << " i: " << i << " rotation_amount: "
+    BOLT_DEBUG(verbose, std::string(axis * 2, ' ') << "axis: " << axis << " i: " << i << " rotation_amount: "
                                                            << rotation_amount << " num_steps: " << num_steps);
 
     // clang-format off
@@ -335,7 +335,7 @@ bool CartPathPlanner::rotateOnAxis(const Eigen::Affine3d& pose, const Orientatio
       case X_AXIS: new_pose = pose * Eigen::AngleAxisd(rotation_amount, Eigen::Vector3d::UnitX()); break;
       case Y_AXIS: new_pose = pose * Eigen::AngleAxisd(rotation_amount, Eigen::Vector3d::UnitY()); break;
       case Z_AXIS: new_pose = pose * Eigen::AngleAxisd(rotation_amount, Eigen::Vector3d::UnitZ()); break;
-      default: BOLT_ERROR(indent, "Unknown axis");
+      default: BOLT_ERROR("Unknown axis");
     }
     // clang-format on
 
@@ -357,11 +357,11 @@ bool CartPathPlanner::rotateOnAxis(const Eigen::Affine3d& pose, const Orientatio
 bool CartPathPlanner::transform2DPaths(const Eigen::Affine3d& starting_pose,
                                        std::vector<EigenSTL::vector_Affine3d>& exact_poses, std::size_t indent)
 {
-  BOLT_FUNC(indent, verbose_, "transform2DPaths()");
+  BOLT_FUNC(verbose_, "transform2DPaths()");
 
   if (path_from_file_.empty())
   {
-    BOLT_ERROR(indent, "Unable to create drawing: no paths loaded from file");
+    BOLT_ERROR("Unable to create drawing: no paths loaded from file");
     return false;
   }
 
@@ -388,13 +388,13 @@ bool CartPathPlanner::transform2DPath(const Eigen::Affine3d& starting_pose, Eige
 {
   if (path_from_file.empty())
   {
-    BOLT_ERROR(indent, "Unable to create drawing: no path loaded from file");
+    BOLT_ERROR("Unable to create drawing: no path loaded from file");
     return false;
   }
 
   if (path_from_file.size() == 1)
   {
-    BOLT_ERROR(indent, "Unable to create drawing: path only has 1 point");
+    BOLT_ERROR("Unable to create drawing: path only has 1 point");
     return false;
   }
 
@@ -441,7 +441,7 @@ bool CartPathPlanner::transform2DPath(const Eigen::Affine3d& starting_pose, Eige
 
 bool CartPathPlanner::populateBoltGraph(ompl::tools::bolt::TaskGraphPtr task_graph, std::size_t indent)
 {
-  BOLT_FUNC(indent, true, "populateBoltGraph()");
+  BOLT_FUNC(true, "populateBoltGraph()");
   ros::Time start_time = ros::Time::now();
 
   task_graph_ = task_graph;  // copy pointer into this class to share among all functions
@@ -449,7 +449,7 @@ bool CartPathPlanner::populateBoltGraph(ompl::tools::bolt::TaskGraphPtr task_gra
   // Make sure exact poses are available
   if (exact_poses_.empty())
   {
-    BOLT_WARN(indent, true, "No exact poses had been previously generated. Creating.");
+    BOLT_WARN(true, "No exact poses had been previously generated. Creating.");
 
     // Generating trajectory
     generateExactPoses(indent);
@@ -457,7 +457,7 @@ bool CartPathPlanner::populateBoltGraph(ompl::tools::bolt::TaskGraphPtr task_gra
 
   if (arm_datas_.size() < 2)
   {
-    BOLT_ERROR(indent, "Must have at least 2 poses in trajectory");
+    BOLT_ERROR("Must have at least 2 poses in trajectory");
     return false;
   }
 
@@ -482,10 +482,10 @@ bool CartPathPlanner::populateBoltGraph(ompl::tools::bolt::TaskGraphPtr task_gra
   {
     const moveit::core::LinkModel* ee_link = arm_datas_[i].ee_link_;
     moveit::core::JointModelGroup* arm_jmg = arm_datas_[i].jmg_;
-    BOLT_DEBUG(indent, true, "Creating redundant poses for end effector \"" << ee_link->getName() << "\"");
+    BOLT_DEBUG(true, "Creating redundant poses for end effector \"" << ee_link->getName() << "\"");
     if (!createSingleDimTrajectory(exact_poses_[i], redun_traj_per_eef[i], ee_link, arm_jmg, indent))
     {
-      BOLT_ERROR(indent, "Error creating single dim trajectory");
+      BOLT_ERROR("Error creating single dim trajectory");
       return false;
     }
   }
@@ -499,7 +499,7 @@ bool CartPathPlanner::populateBoltGraph(ompl::tools::bolt::TaskGraphPtr task_gra
   TaskVertexMatrix point_vertices;
   point_vertices.resize(combined_traj_points.size());
 
-  BOLT_DEBUG(indent, true, "Converting combined trajectories into TaskGraph vertices");
+  BOLT_DEBUG(true, "Converting combined trajectories into TaskGraph vertices");
 
   std::size_t total_vertices = 0;
   for (std::size_t traj_id = 0; traj_id < combined_traj_points.size(); ++traj_id)
@@ -512,14 +512,14 @@ bool CartPathPlanner::populateBoltGraph(ompl::tools::bolt::TaskGraphPtr task_gra
     // Convert all possible configurations into the Bolt graph
     if (!addCartPointToBoltGraph(combined_points, point_vertices[traj_id], moveit_robot_state, indent))
     {
-      BOLT_ERROR(indent, "Failed to add all joint configurations to Bolt graph");
+      BOLT_ERROR("Failed to add all joint configurations to Bolt graph");
       return false;
     }
 
     if (!ros::ok())
       break;
   }
-  BOLT_DEBUG(indent, true, "Added " << total_vertices << " total vertices to the task graph");
+  BOLT_DEBUG(true, "Added " << total_vertices << " total vertices to the task graph");
 
   // For assertion testing
   ompl::tools::bolt::TaskVertex endingVertex = task_graph_->getNumVertices() - 1;
@@ -528,7 +528,7 @@ bool CartPathPlanner::populateBoltGraph(ompl::tools::bolt::TaskGraphPtr task_gra
   // Add edges
   if (!addEdgesToBoltGraph(point_vertices, startingVertex, endingVertex, indent))
   {
-    BOLT_ERROR(indent, "Error creating edges");
+    BOLT_ERROR("Error creating edges");
     return false;
   }
 
@@ -538,7 +538,7 @@ bool CartPathPlanner::populateBoltGraph(ompl::tools::bolt::TaskGraphPtr task_gra
   double shortest_path_across_cart = std::numeric_limits<double>::infinity();
   if (!connectTrajectoryEndPoints(point_vertices, shortest_path_across_cart, indent))
   {
-    BOLT_ERROR(indent, "Unable to connect trajectory end points!");
+    BOLT_ERROR("Unable to connect trajectory end points!");
     return false;
   }
 
@@ -560,7 +560,7 @@ bool CartPathPlanner::createSingleDimTrajectory(const EigenSTL::vector_Affine3d&
                                                 const moveit::core::LinkModel* ee_link,
                                                 moveit::core::JointModelGroup* jmg, std::size_t indent)
 {
-  BOLT_FUNC(indent, true, "createSingleDimTrajectory() for " << exact_poses.size() << " trajectory points");
+  BOLT_FUNC(true, "createSingleDimTrajectory() for " << exact_poses.size() << " trajectory points");
 
   // Enumerate the potential cartesian poses within tolerance
   for (std::size_t traj_id = 0; traj_id < exact_poses.size(); ++traj_id)
@@ -574,7 +574,7 @@ bool CartPathPlanner::createSingleDimTrajectory(const EigenSTL::vector_Affine3d&
     // Handle error: no IK solutions found
     if (joint_poses.empty())
     {
-      BOLT_ERROR(indent, "No joint solutions found for pose " << traj_id);
+      BOLT_ERROR("No joint solutions found for pose " << traj_id);
 
       visual_tools_->publishAxis(exact_pose, rvt::SMALL);
       visual_tools_->trigger();
@@ -590,7 +590,7 @@ bool CartPathPlanner::createSingleDimTrajectory(const EigenSTL::vector_Affine3d&
         visual_tools_->publishRobotState(joint_poses.front(), jmg, rvt::RED);
       }
       else
-        BOLT_WARN(indent, true, "First pose is invalid, unable to visualize last pose");
+        BOLT_WARN(true, "First pose is invalid, unable to visualize last pose");
 
       return false;
     }
@@ -603,7 +603,7 @@ bool CartPathPlanner::createSingleDimTrajectory(const EigenSTL::vector_Affine3d&
       visualizeAllJointPoses(joint_poses, jmg, indent);
   }
 
-  BOLT_DEBUG(indent, true, "Trajectory " << ee_link->getName() << " has redun_poses: " << redun_poses.size());
+  BOLT_DEBUG(true, "Trajectory " << ee_link->getName() << " has redun_poses: " << redun_poses.size());
 
   return true;
 }
@@ -642,7 +642,7 @@ bool CartPathPlanner::combineEETrajectories(const std::vector<RedunJointTrajecto
     if (trajectory_eef0.size() <= i)
     {
       // just use the last set of redun poses in the shorter trajectory
-      // BOLT_INFO(indent, true, "eef0: using last set of redundant poses in shorter trajectory");
+      // BOLT_INFO(true, "eef0: using last set of redundant poses in shorter trajectory");
       poses0 = &trajectory_eef0.back();
     }
     else
@@ -651,7 +651,7 @@ bool CartPathPlanner::combineEETrajectories(const std::vector<RedunJointTrajecto
     if (trajectory_eef1.size() <= i)
     {
       // just use the last set of redun poses in the shorter trajectory
-      // BOLT_INFO(indent, true, "eef1: using last set of redundant poses in shorter trajectory");
+      // BOLT_INFO(true, "eef1: using last set of redundant poses in shorter trajectory");
       poses1 = &trajectory_eef1.back();
     }
     else
@@ -680,9 +680,9 @@ bool CartPathPlanner::combineEETrajectories(const std::vector<RedunJointTrajecto
         for (std::size_t pose1_id = 0; pose1_id < poses1->size(); ++pose1_id)
         {
           if (poses0->size() < pose0_id)
-            BOLT_ERROR(indent, "Pose 0 is null at id " << pose0_id);
+            BOLT_ERROR("Pose 0 is null at id " << pose0_id);
           if (poses1->size() < pose1_id)
-            BOLT_ERROR(indent, "Pose 1 is null at id " << pose1_id);
+            BOLT_ERROR("Pose 1 is null at id " << pose1_id);
 
           // Create new trajectory point
           BothArmsJointPose point;
@@ -716,12 +716,12 @@ bool CartPathPlanner::combineEETrajectories(const std::vector<RedunJointTrajecto
         }
       }
     }
-    BOLT_DEBUG(indent, verbose_, "Total combined points for this trajectory point: " << combined_points.size());
+    BOLT_DEBUG(verbose_, "Total combined points for this trajectory point: " << combined_points.size());
 
     if (combined_points.size() == 0)
     {
-      BOLT_DEBUG(indent, !verbose_, "Total combined points for this trajectory point: " << combined_points.size());
-      BOLT_ERROR(indent, "Trajectory point has no point!");
+      BOLT_DEBUG(!verbose_, "Total combined points for this trajectory point: " << combined_points.size());
+      BOLT_ERROR("Trajectory point has no point!");
       return false;
     }
 
@@ -729,14 +729,14 @@ bool CartPathPlanner::combineEETrajectories(const std::vector<RedunJointTrajecto
     combined_traj_points.push_back(combined_points);
   }
 
-  BOLT_DEBUG(indent, verbose_, "Total size of combined traj points vector: " << combined_traj_points.size());
+  BOLT_DEBUG(verbose_, "Total size of combined traj points vector: " << combined_traj_points.size());
   return true;
 }
 
 bool CartPathPlanner::addCartPointToBoltGraph(const CombinedPoints& combined_points, TaskVertexPoint& point_vertices,
                                               moveit::core::RobotStatePtr moveit_robot_state, std::size_t indent)
 {
-  BOLT_FUNC(indent, verbose_, "addCartPointToBoltGraph() - total points: " << combined_points.size());
+  BOLT_FUNC(verbose_, "addCartPointToBoltGraph() - total points: " << combined_points.size());
 
   std::size_t new_vertex_count = 0;
   const ompl::tools::bolt::VertexType vertex_type = ompl::tools::bolt::CARTESIAN;
@@ -766,7 +766,7 @@ bool CartPathPlanner::addCartPointToBoltGraph(const CombinedPoints& combined_poi
 
     if (!planning_scene->isStateValid(*moveit_robot_state, planning_jmg_->getName(), verbose_collision_check_))
     {
-      BOLT_DEBUG(indent, verbose_collision_check_, "Invalid robot state");
+      BOLT_DEBUG(verbose_collision_check_, "Invalid robot state");
 
       if (visualize_rejected_states_)
       {
@@ -805,7 +805,7 @@ bool CartPathPlanner::addCartPointToBoltGraph(const CombinedPoints& combined_poi
   }  // end for
 
   const double percent = states_rejected / double(combined_points.size()) * 100.0;
-  BOLT_DEBUG(indent, verbose_, "Added " << new_vertex_count << " new vertices to TaskGraph, rejected by collision: "
+  BOLT_DEBUG(verbose_, "Added " << new_vertex_count << " new vertices to TaskGraph, rejected by collision: "
                                         << states_rejected << "  (" << percent << "%)");
 
   return true;
@@ -815,7 +815,7 @@ bool CartPathPlanner::addEdgesToBoltGraph(const TaskVertexMatrix& point_vertices
                                           ompl::tools::bolt::TaskVertex startingVertex,
                                           ompl::tools::bolt::TaskVertex endingVertex, std::size_t indent)
 {
-  BOLT_FUNC(indent, true, "addEdgesToBoltGraph()");
+  BOLT_FUNC(true, "addEdgesToBoltGraph()");
 
   // Iterate to create edges
   std::size_t new_edge_count = 0;
@@ -868,13 +868,13 @@ bool CartPathPlanner::addEdgesToBoltGraph(const TaskVertexMatrix& point_vertices
             // parent_->waitForNextStep("showing rejected edge due to timing");
           }
 
-          // BOLT_DEBUG(indent, true, "Skipping edge, total skipped: " << edges_skipped_count);
+          // BOLT_DEBUG(true, "Skipping edge, total skipped: " << edges_skipped_count);
           edges_skipped_count++;
 
           continue;
         }
 
-        // BOLT_DEBUG(indent, true, "Adding edge " << v0 << " to " << v1);
+        // BOLT_DEBUG(true, "Adding edge " << v0 << " to " << v1);
         task_graph_->addEdge(v0, v1, indent);
 
         new_edge_count++;
@@ -884,7 +884,7 @@ bool CartPathPlanner::addEdgesToBoltGraph(const TaskVertexMatrix& point_vertices
         exit(0);
     }  // for
 
-    // BOLT_DEBUG(indent, true, "Point " << traj_id << " current edge count: " << new_edge_count);
+    // BOLT_DEBUG(true, "Point " << traj_id << " current edge count: " << new_edge_count);
 
     if (!ros::ok())
       exit(0);
@@ -897,14 +897,14 @@ bool CartPathPlanner::addEdgesToBoltGraph(const TaskVertexMatrix& point_vertices
   }  // for
   std::cout << std::endl;
 
-  BOLT_INFO(indent, true, "Added " << new_edge_count << " new edges, rejected " << edges_skipped_count
+  BOLT_INFO(true, "Added " << new_edge_count << " new edges, rejected " << edges_skipped_count
                                    << " because of velocity constraint (rejected "
                                    << edges_skipped_count / (new_edge_count + double(edges_skipped_count)) * 100.0
                                    << "%)");
 
   std::size_t warning_factor = 4;
   if (edges_skipped_count * warning_factor > new_edge_count)
-    BOLT_INFO(indent, true, "More than " << warning_factor << " times as many edges were rejected than accepted "
+    BOLT_INFO(true, "More than " << warning_factor << " times as many edges were rejected than accepted "
                                                               "because of motion timing/velocity contraints.");
 
   return true;
@@ -913,7 +913,7 @@ bool CartPathPlanner::addEdgesToBoltGraph(const TaskVertexMatrix& point_vertices
 bool CartPathPlanner::connectTrajectoryEndPoints(const TaskVertexMatrix& point_vertices,
                                                  double& shortest_path_across_cart, std::size_t indent)
 {
-  BOLT_FUNC(indent, true, "connectTrajectoryEndPoints()");
+  BOLT_FUNC(true, "connectTrajectoryEndPoints()");
 
   // force visualization
   // task_graph_->visualizeTaskGraph_ = true;
@@ -923,7 +923,7 @@ bool CartPathPlanner::connectTrajectoryEndPoints(const TaskVertexMatrix& point_v
   const TaskVertexPoint& goal_vertices = point_vertices.back();
 
   // Loop through all start points
-  BOLT_INFO(indent, true, "Connecting Cartesian start points to TaskGraph");
+  BOLT_INFO(true, "Connecting Cartesian start points to TaskGraph");
   for (const ompl::tools::bolt::TaskVertex& start_vertex : start_vertices)
   {
     // Connect to TaskGraph
@@ -931,7 +931,7 @@ bool CartPathPlanner::connectTrajectoryEndPoints(const TaskVertexMatrix& point_v
     bool isStart = true;
     if (!task_graph_->connectVertexToNeighborsAtLevel(start_vertex, level0, isStart, indent))
     {
-      BOLT_WARN(indent, true, "Failed to connect start vertex");
+      BOLT_WARN(true, "Failed to connect start vertex");
       return false;  // TODO(davetcoleman): return here?
     }
 
@@ -953,7 +953,7 @@ bool CartPathPlanner::connectTrajectoryEndPoints(const TaskVertexMatrix& point_v
   }
 
   // Loop through all goal points
-  BOLT_INFO(indent, true, "Connecting Cartesian end points to TaskGraph");
+  BOLT_INFO(true, "Connecting Cartesian end points to TaskGraph");
   for (const ompl::tools::bolt::TaskVertex& goal_vertex : goal_vertices)
   {
     // Connect to TaskGraph
@@ -961,14 +961,14 @@ bool CartPathPlanner::connectTrajectoryEndPoints(const TaskVertexMatrix& point_v
     bool isStart = false;
     if (!task_graph_->connectVertexToNeighborsAtLevel(goal_vertex, level2, isStart, indent))
     {
-      BOLT_WARN(indent, true, "Failed to connect goal vertex");
+      BOLT_WARN(true, "Failed to connect goal vertex");
       return false;  // TODO(davetcoleman): return here?
     }
 
     if (!ros::ok())
       exit(-1);
   }
-  BOLT_INFO(indent, true, "Finished connecting Cartesian end points to TaskGraph");
+  BOLT_INFO(true, "Finished connecting Cartesian end points to TaskGraph");
 
   return true;
 }
@@ -977,7 +977,7 @@ bool CartPathPlanner::getRedunJointPosesForCartPoint(const Eigen::Affine3d& pose
                                                      const moveit::core::LinkModel* ee_link,
                                                      moveit::core::JointModelGroup* jmg, std::size_t indent)
 {
-  BOLT_FUNC(indent, verbose_, "getRedunJointPosesForCartPoint()");
+  BOLT_FUNC(verbose_, "getRedunJointPosesForCartPoint()");
 
   EigenSTL::vector_Affine3d candidate_poses;
   if (!computeRedunPosesForCartPoint(pose, orientation_tol_, candidate_poses, true, indent))
@@ -1055,7 +1055,7 @@ bool CartPathPlanner::getRedunJointPosesForCartPoint(const Eigen::Affine3d& pose
     // Solve
     if (!solver->getPositionIK(ik_queries, ik_seed_state, solutions, kin_result, options))
     {
-      BOLT_DEBUG(indent, verbose_, "Failed to find a solution for a pose");
+      BOLT_DEBUG(verbose_, "Failed to find a solution for a pose");
 
       // visual_tools_->publishZArrow(pose, rvt::YELLOW, rvt::MEDIUM);
       // visual_tools_->trigger();
@@ -1084,7 +1084,7 @@ bool CartPathPlanner::getRedunJointPosesForCartPoint(const Eigen::Affine3d& pose
 
       if (!planning_scene->isStateValid(*shared_robot_state1_, jmg->getName(), verbose_collision_check_))
       {
-        // BOLT_DEBUG(indent, true, "Invalid robot state");
+        // BOLT_DEBUG(true, "Invalid robot state");
         if (visualize_rejected_states_)
         {
           visual_tools_->publishRobotState(shared_robot_state1_, rvt::RED);
@@ -1101,7 +1101,7 @@ bool CartPathPlanner::getRedunJointPosesForCartPoint(const Eigen::Affine3d& pose
     }  // for each solution
 
     const double percent = states_rejected / double(solutions.size()) * 100.0;
-    BOLT_DEBUG(indent, verbose_, "Found " << joint_poses.size() << " redun poses for Cartesian point, rejected "
+    BOLT_DEBUG(verbose_, "Found " << joint_poses.size() << " redun poses for Cartesian point, rejected "
                                           << states_rejected << "  (" << percent << "%)");
   }
   return true;
@@ -1110,7 +1110,7 @@ bool CartPathPlanner::getRedunJointPosesForCartPoint(const Eigen::Affine3d& pose
 void CartPathPlanner::visualizeAllJointPoses(const RedunJointPoses& joint_poses,
                                              const moveit::core::JointModelGroup* jmg, std::size_t indent)
 {
-  BOLT_FUNC(indent, true, "visualizeAllJointPoses() found " << joint_poses.size() << " joint_poses for this cartesian "
+  BOLT_FUNC(true, "visualizeAllJointPoses() found " << joint_poses.size() << " joint_poses for this cartesian "
                                                                                      "point");
 
   for (const JointSpacePoint& joint_pose : joint_poses)
@@ -1127,7 +1127,7 @@ void CartPathPlanner::visualizeAllPointVertices(const TaskVertexMatrix& point_ve
 {
   for (std::size_t traj_id = 0; traj_id < point_vertices.size(); ++traj_id)
   {
-    BOLT_DEBUG(indent, true, "traj_id: " << traj_id);
+    BOLT_DEBUG(true, "traj_id: " << traj_id);
 
     // Get all vertices at this cartesian point
     const TaskVertexPoint& point_vertices1 = point_vertices[traj_id];

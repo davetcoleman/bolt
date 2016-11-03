@@ -118,7 +118,7 @@ void TaskCriteria::resetStats()
 bool TaskCriteria::addStateToRoadmap(TaskCandidateData &candidateD, VertexType &addReason, std::size_t threadID,
                                        std::size_t indent)
 {
-  BOLT_FUNC(indent, vCriteria_, "addStateToRoadmap() Adding candidate state ID " << candidateD.state_);
+  BOLT_FUNC(vCriteria_, "addStateToRoadmap() Adding candidate state ID " << candidateD.state_);
 
   if (visualizeAttemptedStates_)
   {
@@ -134,7 +134,7 @@ bool TaskCriteria::addStateToRoadmap(TaskCandidateData &candidateD, VertexType &
   // Always add a node if no other nodes around it are visible (GUARD)
   if (checkAddCoverage(candidateD, indent))
   {
-    BOLT_DEBUG(indent, vAddedReason_, "Graph updated: COVERAGE Fourth: " << useFourthCriteria_
+    BOLT_DEBUG(vAddedReason_, "Graph updated: COVERAGE Fourth: " << useFourthCriteria_
                                                                          << " State: " << candidateD.state_);
 
     addReason = COVERAGE;
@@ -142,7 +142,7 @@ bool TaskCriteria::addStateToRoadmap(TaskCandidateData &candidateD, VertexType &
   }
   else if (checkAddConnectivity(candidateD, indent + 2))
   {
-    BOLT_MAGENTA(indent, vAddedReason_, "Graph updated: CONNECTIVITY Fourth: " << useFourthCriteria_
+    BOLT_MAGENTA(vAddedReason_, "Graph updated: CONNECTIVITY Fourth: " << useFourthCriteria_
                                                                                << " State: " << candidateD.state_);
 
     addReason = CONNECTIVITY;
@@ -150,14 +150,14 @@ bool TaskCriteria::addStateToRoadmap(TaskCandidateData &candidateD, VertexType &
   }
   else if (checkAddInterface(candidateD, indent + 4))
   {
-    BOLT_BLUE(indent, vAddedReason_, "Graph updated: INTERFACE Fourth: " << useFourthCriteria_
+    BOLT_BLUE(vAddedReason_, "Graph updated: INTERFACE Fourth: " << useFourthCriteria_
                                                                          << " State: " << candidateD.state_);
     addReason = INTERFACE;
     stateAdded = true;
   }
   else
   {
-    BOLT_DEBUG(indent, vCriteria_, "Did NOT add state for any criteria "
+    BOLT_DEBUG(vCriteria_, "Did NOT add state for any criteria "
                                        << " State: " << candidateD.state_);
   }
 
@@ -166,17 +166,17 @@ bool TaskCriteria::addStateToRoadmap(TaskCandidateData &candidateD, VertexType &
 
 bool TaskCriteria::checkAddCoverage(TaskCandidateData &candidateD, std::size_t indent)
 {
-  BOLT_FUNC(indent, vCriteria_, "checkAddCoverage() Are other nodes around it visible?");
+  BOLT_FUNC(vCriteria_, "checkAddCoverage() Are other nodes around it visible?");
 
   // Only add a node for coverage if it has no neighbors
   if (candidateD.visibleNeighborhood_.size() > 0)
   {
-    BOLT_DEBUG(indent, vCriteria_, "NOT adding node for coverage ");
+    BOLT_DEBUG(vCriteria_, "NOT adding node for coverage ");
     return false;  // has visible neighbors
   }
 
   // No free paths means we add for coverage
-  BOLT_DEBUG(indent, vCriteria_, "Adding node for COVERAGE ");
+  BOLT_DEBUG(vCriteria_, "Adding node for COVERAGE ");
 
   candidateD.newVertex_ = taskGraph_->addVertex(candidateD.state_, indent + 4);
 
@@ -188,11 +188,11 @@ bool TaskCriteria::checkAddCoverage(TaskCandidateData &candidateD, std::size_t i
 
 bool TaskCriteria::checkAddConnectivity(TaskCandidateData &candidateD, std::size_t indent)
 {
-  BOLT_FUNC(indent, vCriteria_, "checkAddConnectivity() Does this node connect two disconnected components?");
+  BOLT_FUNC(vCriteria_, "checkAddConnectivity() Does this node connect two disconnected components?");
 
   if (!useConnectivityCriteria_)
   {
-    BOLT_DEBUG(indent, vCriteria_, "NOT adding node for connectivity - disabled ");
+    BOLT_DEBUG(vCriteria_, "NOT adding node for connectivity - disabled ");
     return false;
   }
   // Not implemented
@@ -200,7 +200,7 @@ bool TaskCriteria::checkAddConnectivity(TaskCandidateData &candidateD, std::size
   /*
   if (!useFourthCriteria_)
   {
-    BOLT_DEBUG(indent, vCriteria_, "NOT adding node for connectivity - waiting until fourth criteria ");
+    BOLT_DEBUG(vCriteria_, "NOT adding node for connectivity - waiting until fourth criteria ");
     return false;
   }
 
@@ -208,7 +208,7 @@ bool TaskCriteria::checkAddConnectivity(TaskCandidateData &candidateD, std::size
   // different connected components
   if (candidateD.visibleNeighborhood_.size() < 2)
   {
-    BOLT_DEBUG(indent, vCriteria_, "NOT adding node for connectivity");
+    BOLT_DEBUG(vCriteria_, "NOT adding node for connectivity");
     return false;
   }
 
@@ -225,7 +225,7 @@ bool TaskCriteria::checkAddConnectivity(TaskCandidateData &candidateD, std::size
       // If they are in different components
       if (!taskGraph_->sameComponent(v1, v2))
       {
-        BOLT_DEBUG(indent, vCriteria_, "Different connected component: " << v1 << ", " << v2);
+        BOLT_DEBUG(vCriteria_, "Different connected component: " << v1 << ", " << v2);
 
         if (visualizeConnectivity_)  // Debug
         {
@@ -262,11 +262,11 @@ bool TaskCriteria::checkAddConnectivity(TaskCandidateData &candidateD, std::size
   // Were any disconnected states found?
   if (statesInDiffConnectedComponents.empty())
   {
-    BOLT_DEBUG(indent, vCriteria_, "NOT adding node for connectivity");
+    BOLT_DEBUG(vCriteria_, "NOT adding node for connectivity");
     return false;
   }
 
-  BOLT_DEBUG(indent, vCriteria_, "Adding node for CONNECTIVITY ");
+  BOLT_DEBUG(vCriteria_, "Adding node for CONNECTIVITY ");
 
   // Add the node
   candidateD.newVertex_ = taskGraph_->addVertex(candidateD.state_, indent + 2);
@@ -282,25 +282,25 @@ bool TaskCriteria::checkAddConnectivity(TaskCandidateData &candidateD, std::size
   for (std::set<TaskVertex>::const_iterator vertexIt = statesInDiffConnectedComponents.begin();
        vertexIt != statesInDiffConnectedComponents.end(); ++vertexIt)
   {
-    BOLT_DEBUG(indent + 4, vCriteria_, "Loop: Adding vertex " << *vertexIt);
+    BOLT_DEBUG(vCriteria_, "Loop: Adding vertex " << *vertexIt);
 
     if (taskGraph_->stateDeleted(*vertexIt))
     {
-      BOLT_DEBUG(indent + 4, vCriteria_, "Skipping because vertex " << *vertexIt << " was removed (state marked as 0)");
+      BOLT_DEBUG(vCriteria_, "Skipping because vertex " << *vertexIt << " was removed (state marked as 0)");
       continue;
     }
 
     // Do not add edge from self to self
     if (compoundSI_->getStateSpace()->equalStates(taskGraph_->getState(*vertexIt), taskGraph_->getState(candidateD.newVertex_)))
     {
-      BOLT_ERROR(indent + 4, "Prevented same vertex from being added twice ");
+      BOLT_ERROR("Prevented same vertex from being added twice ");
       continue;  // skip this pairing
     }
 
     // New vertex should not be connected to anything - there's no edge between the two states
     if (taskGraph_->hasEdge(candidateD.newVertex_, *vertexIt))
     {
-      BOLT_DEBUG(indent + 4, vCriteria_, "The new vertex " << candidateD.newVertex_ << " is already connected to old "
+      BOLT_DEBUG(vCriteria_, "The new vertex " << candidateD.newVertex_ << " is already connected to old "
                                                                                        "vertex");
       continue;
     }
@@ -320,13 +320,13 @@ bool TaskCriteria::checkAddConnectivity(TaskCandidateData &candidateD, std::size
 
 bool TaskCriteria::checkAddInterface(TaskCandidateData &candidateD, std::size_t indent)
 {
-  BOLT_FUNC(indent, vCriteria_, "checkAddInterface() Does this node's neighbor's need it to better connect them?");
+  BOLT_FUNC(vCriteria_, "checkAddInterface() Does this node's neighbor's need it to better connect them?");
 
   // If there are less than two neighbors the interface property is not applicable, because requires
   // two closest visible neighbots
   if (candidateD.visibleNeighborhood_.size() < 2)
   {
-    BOLT_DEBUG(indent, vCriteria_, "NOT adding node (less than 2 visible neighbors)");
+    BOLT_DEBUG(vCriteria_, "NOT adding node (less than 2 visible neighbors)");
     return false;
   }
 
@@ -337,7 +337,7 @@ bool TaskCriteria::checkAddInterface(TaskCandidateData &candidateD, std::size_t 
   bool skipThis = false;  // when true, is a new experimental feature
   if (!skipThis && !(candidateD.graphNeighborhood_[0] == v1 && candidateD.graphNeighborhood_[1] == v2))
   {
-    BOLT_DEBUG(indent, vCriteria_, "NOT adding because two closest nodes are not visible to each other");
+    BOLT_DEBUG(vCriteria_, "NOT adding because two closest nodes are not visible to each other");
 
     // TEMP
     if (vCriteria_)
@@ -356,7 +356,7 @@ bool TaskCriteria::checkAddInterface(TaskCandidateData &candidateD, std::size_t 
   // Ensure two closest neighbors don't share an edge
   if (taskGraph_->hasEdge(v1, v2))
   {
-    BOLT_DEBUG(indent, vCriteria_, "Two closest two neighbors already share an edge, not connecting them");
+    BOLT_DEBUG(vCriteria_, "Two closest two neighbors already share an edge, not connecting them");
     return false;
   }
 
@@ -367,7 +367,7 @@ bool TaskCriteria::checkAddInterface(TaskCandidateData &candidateD, std::size_t 
   // If they can be directly connected
   if (compoundSI_->checkMotion(taskGraph_->getCompoundState(v1), taskGraph_->getCompoundState(v2)))
   {
-    BOLT_DEBUG(indent, vCriteria_, "INTERFACE: directly connected nodes");
+    BOLT_DEBUG(vCriteria_, "INTERFACE: directly connected nodes");
 
     // Connect them
     taskGraph_->addEdge(v1, v2, indent);
@@ -381,7 +381,7 @@ bool TaskCriteria::checkAddInterface(TaskCandidateData &candidateD, std::size_t 
 
   // They cannot be directly connected
   // Add the new node to the graph, to bridge the interface
-  BOLT_DEBUG(indent, vCriteria_, "Adding node for INTERFACE");
+  BOLT_DEBUG(vCriteria_, "Adding node for INTERFACE");
 
   candidateD.newVertex_ = taskGraph_->addVertex(candidateD.state_, indent);
 
@@ -396,7 +396,7 @@ bool TaskCriteria::checkAddInterface(TaskCandidateData &candidateD, std::size_t 
   taskGraph_->addEdge(candidateD.newVertex_, v1, indent);
   taskGraph_->addEdge(candidateD.newVertex_, v2, indent);
 
-  BOLT_DEBUG(indent, vCriteria_, "INTERFACE: connected two neighbors through new interface node");
+  BOLT_DEBUG(vCriteria_, "INTERFACE: connected two neighbors through new interface node");
 
   // Report success
   return true;

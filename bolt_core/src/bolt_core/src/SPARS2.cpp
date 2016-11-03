@@ -1181,26 +1181,26 @@ bool ompl::geometric::SPARS2::checkGraphOptimality()
 
     // Save path quality
     double pathQuality = optimalLength / sparseLength;
-    // BOLT_DEBUG(indent, true, "pathQuality: " << pathQuality << " optimalLength: " << optimalLength << " sparseLength:
+    // BOLT_DEBUG(true, "pathQuality: " << pathQuality << " optimalLength: " << optimalLength << " sparseLength:
     // " << sparseLength);
     avgPathQuality_.push_back(pathQuality);
 
     // Output to console
     bool show = sparseLength >= theoryLength || false;
-    BOLT_DEBUG(indent, show, "-----------------------------------------");
-    BOLT_DEBUG(indent, show, "Checking Asymptotic Optimality Guarantees");
-    BOLT_DEBUG(indent + 2, show, "Raw Path Length:         " << sparseLength);
-    BOLT_DEBUG(indent + 2, show, "Smoothed Path Length:    " << optimalLength);
-    BOLT_DEBUG(indent + 2, show, "Smoothed Path States:    " << smoothedPathPtr->getStateCount());
-    BOLT_DEBUG(indent + 2, show, "Theoretical Path Length: " << theoryLength);
-    BOLT_DEBUG(indent + 2, show, "Stretch Factor t:        " << stretchFactor_);
-    BOLT_DEBUG(indent + 2, show, "Sparse Delta:            " << sparseDelta_);
+    BOLT_DEBUG(show, "-----------------------------------------");
+    BOLT_DEBUG(show, "Checking Asymptotic Optimality Guarantees");
+    BOLT_DEBUG(show, "Raw Path Length:         " << sparseLength);
+    BOLT_DEBUG(show, "Smoothed Path Length:    " << optimalLength);
+    BOLT_DEBUG(show, "Smoothed Path States:    " << smoothedPathPtr->getStateCount());
+    BOLT_DEBUG(show, "Theoretical Path Length: " << theoryLength);
+    BOLT_DEBUG(show, "Stretch Factor t:        " << stretchFactor_);
+    BOLT_DEBUG(show, "Sparse Delta:            " << sparseDelta_);
 
     BOLT_ASSERT(sparseLength > std::numeric_limits<double>::epsilon(), "Path is zero length");
 
     if (sparseLength >= theoryLength)
     {
-      BOLT_ERROR(indent + 2, "Asymptotic optimality guarantee VIOLATED");
+      BOLT_ERROR("Asymptotic optimality guarantee VIOLATED");
 
       // Show the two paths
       visual_->viz2()->deleteAllMarkers();
@@ -1218,19 +1218,19 @@ bool ompl::geometric::SPARS2::checkGraphOptimality()
       return false;
     }
     else
-      BOLT_GREEN(indent + 2, show, "Asymptotic optimality guarantee maintained");
-    BOLT_WARN(indent + 2, show, "Percent of max allowed:  " << percentOfMaxAllows << " %");
-    BOLT_DEBUG(indent, show, "-----------------------------------------");
+      BOLT_GREEN(show, "Asymptotic optimality guarantee maintained");
+    BOLT_WARN(show, "Percent of max allowed:  " << percentOfMaxAllows << " %");
+    BOLT_DEBUG(show, "-----------------------------------------");
 
     // visual_->prompt("next problem");
   }
 
   // Summary
-  BOLT_DEBUG(indent, 1, "-----------------------------------------");
-  BOLT_DEBUG(indent, 1, "Checking Asymptotic Optimality Guarantees");
-  BOLT_DEBUG(indent + 2, 1, "Total tests:               " << numTests);
-  BOLT_DEBUG(indent + 2, 1, "Number failed plans:       " << numFailedPlans);
-  BOLT_DEBUG(indent, 1, "-----------------------------------------");
+  BOLT_DEBUG(1, "-----------------------------------------");
+  BOLT_DEBUG(1, "Checking Asymptotic Optimality Guarantees");
+  BOLT_DEBUG(1, "Total tests:               " << numTests);
+  BOLT_DEBUG(1, "Number failed plans:       " << numFailedPlans);
+  BOLT_DEBUG(1, "-----------------------------------------");
 
   return true;
 }

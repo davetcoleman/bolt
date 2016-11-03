@@ -189,7 +189,7 @@ BoltBaxter::BoltBaxter(const std::string &hostname, const std::string &package_p
 
   if (arm_jmgs.size() != ee_tip_links.size())
   {
-    BOLT_ERROR(indent, "Joint model groups array must match size of EEF tip links array");
+    BOLT_ERROR("Joint model groups array must match size of EEF tip links array");
     exit(-1);
   }
 
@@ -199,12 +199,12 @@ BoltBaxter::BoltBaxter(const std::string &hostname, const std::string &package_p
         mvt::ArmData(robot_model_->getJointModelGroup(arm_jmgs[i]), robot_model_->getLinkModel(ee_tip_links[i])));
     if (!arm_datas_.back().jmg_)
     {
-      BOLT_ERROR(indent, "No joint model group found for jmg name " << arm_jmgs[i]);
+      BOLT_ERROR("No joint model group found for jmg name " << arm_jmgs[i]);
       exit(-1);
     }
     if (!arm_datas_.back().ee_link_)
     {
-      BOLT_ERROR(indent, "No link model found for link name " << ee_tip_links[i]);
+      BOLT_ERROR("No link model found for link name " << ee_tip_links[i]);
       exit(-1);
     }
   }
@@ -889,7 +889,7 @@ void BoltBaxter::testConnectionToGraphOfRandStates()
     const ob::PlannerTerminationCondition ptc = ob::timedPlannerTerminationCondition(60.0);
     std::size_t indent = 0;
 
-    BOLT_ERROR(indent, "bolt_baxter: not implemented");
+    BOLT_ERROR("bolt_baxter: not implemented");
     // bool result = bolt_->getBoltPlanner()->canConnect(random_state, ptc, indent);
     // if (result)
     //   successful_connections++;
@@ -1097,7 +1097,7 @@ void BoltBaxter::mirrorGraph(std::size_t indent)
   // Test all verticies
   if (false)
   {
-    BOLT_INFO(indent, true, "TESTING ALL VERTICES ON OTHER ARM");
+    BOLT_INFO(true, "TESTING ALL VERTICES ON OTHER ARM");
     bolt_->getSparseMirror()->checkValidityOfArmMirror(both_arms_space_info, left_arm_space_info, indent);
     std::cout << "success " << std::endl;
     exit(0);
@@ -1108,7 +1108,7 @@ void BoltBaxter::mirrorGraph(std::size_t indent)
 
   // Mirror graph
   bolt_->getSparseMirror()->mirrorGraphDualArm(both_arms_space_info, left_arm_space_info, file_path, indent);
-  BOLT_INFO(indent, true, "Done mirroring graph!");
+  BOLT_INFO(true, "Done mirroring graph!");
 }
 
 ob::State *BoltBaxter::combineStates(const ob::State *state1, const ob::State *state2)
@@ -1289,7 +1289,7 @@ void BoltBaxter::loadScene(std::size_t indent)
 
 void BoltBaxter::loadOfficeScene(std::size_t indent)
 {
-  BOLT_FUNC(indent, true, "loadOfficeScene()");
+  BOLT_FUNC(true, "loadOfficeScene()");
   //psm_->updateFrameTransforms();
 
   // const double table_height = -0.77 * baxter_torso_height_;
@@ -1308,7 +1308,7 @@ void BoltBaxter::loadOfficeScene(std::size_t indent)
 
 void BoltBaxter::loadAmazonScene(std::size_t indent)
 {
-  BOLT_FUNC(indent, true, "loadAmazonScene()");
+  BOLT_FUNC(true, "loadAmazonScene()");
 
   // Load mesh file name
   std::string collision_mesh_path = "file://" + package_path_ + "/meshes/kiva_pod/meshes/pod_lowres.stl";
@@ -1369,7 +1369,7 @@ void BoltBaxter::saveIMarkersToFile()
 
 void BoltBaxter::viewIMarkersFromFile(std::size_t indent)
 {
-  BOLT_FUNC(indent, true, "viewIMarkersFromFile()");
+  BOLT_FUNC(true, "viewIMarkersFromFile()");
   std::vector<moveit::core::RobotStatePtr> robot_states;
 
   loadIMarkersFromFile(robot_states, indent);
@@ -1388,7 +1388,7 @@ void BoltBaxter::viewIMarkersFromFile(std::size_t indent)
 
 void BoltBaxter::loadIMarkersFromFile(std::vector<moveit::core::RobotStatePtr> &robot_states, std::size_t indent)
 {
-  BOLT_FUNC(indent, true, "loadIMarkersFromFile()");
+  BOLT_FUNC(true, "loadIMarkersFromFile()");
 
   std::string file_path;
   bolt_moveit::getFilePath(file_path, imarker_goal_list_, "ros/ompl_storage");
@@ -1447,7 +1447,7 @@ void BoltBaxter::loadIMarkers()
 
 robot_trajectory::RobotTrajectoryPtr BoltBaxter::processSimpleSolution(std::size_t indent)
 {
-  BOLT_FUNC(indent, true, "processSimpleSolution()");
+  BOLT_FUNC(true, "processSimpleSolution()");
 
   og::PathGeometric &path
     = static_cast<og::PathGeometric &>(*simple_setup_->getProblemDefinition()->getSolutionPath());
@@ -1464,7 +1464,7 @@ robot_trajectory::RobotTrajectoryPtr BoltBaxter::processSimpleSolution(std::size
   const double speed = 0.025;
   if (!space_->convertPathToRobotState(path, planning_jmg_, trajectory, speed))
   {
-    BOLT_ERROR(indent, "Unable to convert path");
+    BOLT_ERROR("Unable to convert path");
     return false;
   }
 
@@ -1480,7 +1480,7 @@ robot_trajectory::RobotTrajectoryPtr BoltBaxter::processSimpleSolution(std::size
 
 robot_trajectory::RobotTrajectoryPtr BoltBaxter::processSegments(std::size_t indent)
 {
-  BOLT_FUNC(indent, true, "processSegments()");
+  BOLT_FUNC(true, "processSegments()");
 
   // Visualize if not already done so within BoltPlanner
   if (!bolt_->getBoltPlanner()->visualizeRawTrajectory_)
@@ -1503,14 +1503,14 @@ robot_trajectory::RobotTrajectoryPtr BoltBaxter::processSegments(std::size_t ind
     const double speed = 0.025;
     if (!space_->convertPathToRobotState(*path_segment, planning_jmg_, traj_segment, speed))
     {
-      BOLT_ERROR(indent, "Unable to convert path");
+      BOLT_ERROR("Unable to convert path");
       return false;
     }
 
     // Check/test the solution for errors
     // if (!checkMoveItPathSolution(traj_segment))
     // {
-    //   BOLT_WARN(indent, true, "Invalid path");
+    //   BOLT_WARN(true, "Invalid path");
     // }
 
     // Loop through each state in subtrajectory
@@ -1544,7 +1544,7 @@ robot_trajectory::RobotTrajectoryPtr BoltBaxter::processSegments(std::size_t ind
 
 void BoltBaxter::chooseStartGoal(std::size_t run_id, std::size_t indent)
 {
-  BOLT_FUNC(indent, true, "chooseStartGoal()");
+  BOLT_FUNC(true, "chooseStartGoal()");
 
   switch (problem_type_)
   {

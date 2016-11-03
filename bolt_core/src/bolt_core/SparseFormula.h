@@ -78,7 +78,7 @@ struct SparseFormula
     // Discretization for initial input into sparse graph
     if (useL2Norm)  // this is for the 2D world
     {
-      BOLT_WARN(indent, true, "Using L2 Norm for discretization");
+      BOLT_WARN(true, "Using L2 Norm for discretization");
 
       // const double discFactor = 2 * sparseDelta_;
       // discretization_ = sqrt(std::pow(discFactor, 2) / dim) -
@@ -87,7 +87,7 @@ struct SparseFormula
     }
     else  // this is for joint space
     {
-      BOLT_DEBUG(indent, true, "Using L1 Norm for discretization");
+      BOLT_DEBUG(true, "Using L1 Norm for discretization");
       // L1 Norm
       discretization_ = 2 * sparseDelta_ / dim - discretizePenetrationDist_;
     }
@@ -96,7 +96,7 @@ struct SparseFormula
     bool autoStretchFactor = stretchFactor < std::numeric_limits<double>::epsilon();
     if (autoStretchFactor)  // if stretchFactor is zero, auto set it
     {
-      BOLT_DEBUG(indent, 1, "Auto setting stretch factor because input value was 0");
+      BOLT_DEBUG(1, "Auto setting stretch factor because input value was 0");
 
       // ND: August 4th
       // stretchFactor_ = dim * discretization_ / (discretization_ - 2 * denseDelta_);
@@ -116,22 +116,22 @@ struct SparseFormula
     const double range = bounds.high[jointID] - bounds.low[jointID];
     const std::size_t jointIncrements = floor(range / discretization_);
     const std::size_t maxStatesCount = pow(jointIncrements, dim);
-    BOLT_INFO(indent, 1, "--------------------------------------------------");
-    BOLT_INFO(indent, 1, "SparseCriteria Setup:");
-    BOLT_INFO(indent + 2, 1, "Dimensions              = " << dim);
-    BOLT_INFO(indent + 2, 1, "Max Extent              = " << maxExtent_);
-    BOLT_INFO(indent + 2, 1, "Sparse Delta            = " << sparseDelta_);
-    BOLT_INFO(indent + 2, 1, "Sparse Delta Fraction   = " << sparseDeltaFraction);
-    BOLT_INFO(indent + 2, 1, "Dense Delta             = " << denseDelta_);
-    BOLT_INFO(indent + 2, 1, "State Dimension         = " << dim);
-    BOLT_INFO(indent + 2, 1, "Discretization          = " << discretization_);
-    BOLT_INFO(indent + 2, 1, "Joint Increments        = " << jointIncrements);
-    BOLT_INFO(indent + 2, 1, "Max States Count        = " << maxStatesCount);
-    BOLT_INFO(indent + 2, 1, "Near Sample Points      = " << nearSamplePoints_);
-    BOLT_INFO(indent + 2, 1, "Pentrat. Overlap Frac   = " << penetrationOverlapFraction);
-    BOLT_INFO(indent + 2, 1, "Discret Penetration     = " << discretizePenetrationDist_);
-    BOLT_INFO(indent + 2, 1, "Stretch Factor          = " << stretchFactor_);
-    BOLT_INFO(indent, 1, "--------------------------------------------------");
+    BOLT_INFO(1, "--------------------------------------------------");
+    BOLT_INFO(1, "SparseCriteria Setup:");
+    BOLT_INFO(1, "Dimensions              = " << dim);
+    BOLT_INFO(1, "Max Extent              = " << maxExtent_);
+    BOLT_INFO(1, "Sparse Delta            = " << sparseDelta_);
+    BOLT_INFO(1, "Sparse Delta Fraction   = " << sparseDeltaFraction);
+    BOLT_INFO(1, "Dense Delta             = " << denseDelta_);
+    BOLT_INFO(1, "State Dimension         = " << dim);
+    BOLT_INFO(1, "Discretization          = " << discretization_);
+    BOLT_INFO(1, "Joint Increments        = " << jointIncrements);
+    BOLT_INFO(1, "Max States Count        = " << maxStatesCount);
+    BOLT_INFO(1, "Near Sample Points      = " << nearSamplePoints_);
+    BOLT_INFO(1, "Pentrat. Overlap Frac   = " << penetrationOverlapFraction);
+    BOLT_INFO(1, "Discret Penetration     = " << discretizePenetrationDist_);
+    BOLT_INFO(1, "Stretch Factor          = " << stretchFactor_);
+    BOLT_INFO(1, "--------------------------------------------------");
   }  // calc
 
   double maxExtent_;

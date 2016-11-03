@@ -65,7 +65,7 @@ void SparseSmoother::setup()
 
 bool SparseSmoother::smoothQualityPath(geometric::PathGeometric *path, double clearance, bool debug, std::size_t indent)
 {
-  BOLT_FUNC(indent, vSmooth_, "smoothQualityPath() clearance: " << clearance);
+  BOLT_FUNC(vSmooth_, "smoothQualityPath() clearance: " << clearance);
 
   // These vars are only used when compiled in debug mode
   base::State *startCopy;
@@ -92,7 +92,7 @@ bool SparseSmoother::smoothQualityPath(geometric::PathGeometric *path, double cl
 
   // Ensure that the number of states always decreases
   std::size_t minStatesFound = path->getStateCount();
-  BOLT_DEBUG(indent, visualizeQualityPathSmoothing_, "Original quality path has " << minStatesFound << " states");
+  BOLT_DEBUG(visualizeQualityPathSmoothing_, "Original quality path has " << minStatesFound << " states");
 
   // if (vSmooth_)
   //   visual_->prompt("path simplification");
@@ -169,7 +169,7 @@ bool SparseSmoother::smoothQualityPath(geometric::PathGeometric *path, double cl
       visual_->viz6()->trigger();
     }
 
-    BOLT_ERROR(indent, "Check and repair failed (v2)");
+    BOLT_ERROR("Check and repair failed (v2)");
     usleep(1 * 1000000);
     return false;
   }
@@ -180,7 +180,7 @@ bool SparseSmoother::smoothQualityPath(geometric::PathGeometric *path, double cl
 
 bool SparseSmoother::smoothMax(geometric::PathGeometric *path, std::size_t indent)
 {
-  BOLT_FUNC(indent, visualizeQualityPathSmoothing_ && false, "smoothMax()");
+  BOLT_FUNC(visualizeQualityPathSmoothing_ && false, "smoothMax()");
 
   // Two-point paths can't be optimized
   if (path->getStateCount() < 3)
@@ -233,7 +233,7 @@ bool SparseSmoother::smoothMax(geometric::PathGeometric *path, std::size_t inden
         visual_->viz3()->path(path, tools::MEDIUM, tools::BLACK, tools::ORANGE);
         visual_->viz3()->trigger();
         usleep(0.1 * 1000000);
-        // BOLT_DEBUG(indent, true, "path->length() " << path->length() << " states: " << path->getStateCount());
+        // BOLT_DEBUG(true, "path->length() " << path->length() << " states: " << path->getStateCount());
         // visual_->prompt("interpolate");
       }
     }
@@ -257,7 +257,7 @@ bool SparseSmoother::smoothMax(geometric::PathGeometric *path, std::size_t inden
         usleep(0.01 * 1000000);
         // visual_->prompt("reduce vertices");
       }
-      // BOLT_DEBUG(indent, true, "reduce vert: length: " << path->length() << " states: " << path->getStateCount());
+      // BOLT_DEBUG(true, "reduce vert: length: " << path->length() << " states: " << path->getStateCount());
 
       if (path->getStateCount() < 3)  // Can't smooth if only two points
         break;
@@ -273,7 +273,7 @@ bool SparseSmoother::smoothMax(geometric::PathGeometric *path, std::size_t inden
     //   visual_->viz4()->path(path, tools::MEDIUM, tools::ORANGE);
     //   visual_->viz4()->trigger();
     //   usleep(0.01 * 1000000);
-    //   BOLT_DEBUG(indent, true, "length: " << path->length() << " states: " << path->getStateCount());
+    //   BOLT_DEBUG(true, "length: " << path->length() << " states: " << path->getStateCount());
     //   //visual_->prompt("collapseCloseVertices");
     // }
 
@@ -290,7 +290,7 @@ bool SparseSmoother::smoothMax(geometric::PathGeometric *path, std::size_t inden
     //   visual_->viz5()->path(path, tools::MEDIUM, tools::ORANGE);
     //   visual_->viz5()->trigger();
     //   usleep(0.01 * 1000000);
-    //   BOLT_DEBUG(indent, true, "length: " << path->length() << " states: " << path->getStateCount());
+    //   BOLT_DEBUG(true, "length: " << path->length() << " states: " << path->getStateCount());
     //   //visual_->prompt("shortcutPath");
     // }
 
@@ -307,7 +307,7 @@ bool SparseSmoother::smoothMax(geometric::PathGeometric *path, std::size_t inden
 
       // visual_->prompt("smoothBSpline");
     }
-    // BOLT_DEBUG(indent, true, "smoothBSpline length: " << path->length() << " states: " << path->getStateCount());
+    // BOLT_DEBUG(true, "smoothBSpline length: " << path->length() << " states: " << path->getStateCount());
 
     // Reduce vertices yet again
     tryMore = true;
@@ -327,7 +327,7 @@ bool SparseSmoother::smoothMax(geometric::PathGeometric *path, std::size_t inden
 
         // visual_->prompt("reduce vertices");
       }
-      // BOLT_DEBUG(indent, true, "reduce vert length: " << path->length() << " states: " << path->getStateCount());
+      // BOLT_DEBUG(true, "reduce vert length: " << path->length() << " states: " << path->getStateCount());
 
       if (path->getStateCount() < 3)  // Can't smooth if only two points
         break;

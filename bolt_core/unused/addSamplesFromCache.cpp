@@ -2,18 +2,18 @@ void addSamplesFromCache(std::size_t indent);
 
 void SparseCriteria::addSamplesFromCache(std::size_t indent)
 {
-  BOLT_CYAN(indent, vCriteria_, "addRandomSamplesFromCache()");
+  BOLT_CYAN(vCriteria_, "addRandomSamplesFromCache()");
   indent += 2;
 
   if (denseCache_->getStateCacheSize() <= 1)
   {
-    BOLT_WARN(indent, true, "Cache is empty, no states to add");
+    BOLT_WARN(true, "Cache is empty, no states to add");
     return;
   }
 
   if (useDiscretizedSamples_)
   {
-    BOLT_WARN(indent, true, "Not using cache for random samples because discretized samples is enabled.");
+    BOLT_WARN(true, "Not using cache for random samples because discretized samples is enabled.");
     return;
   }
 

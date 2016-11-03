@@ -179,12 +179,12 @@ void TaskGraph::initializeQueryState()
 bool TaskGraph::astarSearch(const TaskVertex start, const TaskVertex goal, std::vector<TaskVertex> &vertexPath,
                             double &distance, std::size_t indent)
 {
-  BOLT_FUNC(indent, vSearch_, "astarSearch()");
+  BOLT_FUNC(vSearch_, "astarSearch()");
 
   // Check if start and goal are the same
   if (compoundSI_->getStateSpace()->equalStates(getCompoundState(start), getCompoundState(goal)))
   {
-    BOLT_DEBUG(indent, vSearch_, "astarSearch: start and goal states are the same");
+    BOLT_DEBUG(vSearch_, "astarSearch: start and goal states are the same");
 
     // Just add one vertex - this is the whole path
     vertexPath.push_back(start);
@@ -229,11 +229,11 @@ bool TaskGraph::astarSearch(const TaskVertex start, const TaskVertex goal, std::
   {
     if (std::isinf(vertexDistances[goal]))
     {
-      BOLT_WARN(indent, true, "Distance is inifinity");
+      BOLT_WARN(true, "Distance is inifinity");
     }
     else if (vertexDistances[goal] > 1e300)
     {
-      BOLT_WARN(indent, true, "Distance is close to inifinity");
+      BOLT_WARN(true, "Distance is close to inifinity");
     }
     else
       foundGoal = true;
@@ -242,7 +242,7 @@ bool TaskGraph::astarSearch(const TaskVertex start, const TaskVertex goal, std::
   // Search failed
   if (!foundGoal)
   {
-    BOLT_WARN(indent, vSearch_, "Did not find goal");
+    BOLT_WARN(vSearch_, "Did not find goal");
 
     // Unload
     delete[] vertexPredecessors;
@@ -256,9 +256,9 @@ bool TaskGraph::astarSearch(const TaskVertex start, const TaskVertex goal, std::
 
 #ifdef ENABLE_ASTAR_DEBUG
   // the custom exception from SparseAstarVisitor
-  BOLT_DEBUG(indent, vSearch_, "AStar found solution. Distance to goal: " << vertexDistances[goal]);
+  BOLT_DEBUG(vSearch_, "AStar found solution. Distance to goal: " << vertexDistances[goal]);
 
-  BOLT_DEBUG(indent, vSearch_, "Number nodes opened: " << numNodesOpened_
+  BOLT_DEBUG(vSearch_, "Number nodes opened: " << numNodesOpened_
                                                        << ", Number nodes closed: " << numNodesClosed_);
 #endif
 
@@ -291,7 +291,7 @@ bool TaskGraph::astarSearch(const TaskVertex start, const TaskVertex goal, std::
   // Show all predecessors
   if (visualizeAstar_)
   {
-    BOLT_DEBUG(indent, vSearch_, "Show all predecessors");
+    BOLT_DEBUG(vSearch_, "Show all predecessors");
     visual_->viz4()->deleteAllMarkers();
     for (std::size_t i = getNumQueryVertices(); i < getNumVertices(); ++i)  // skip query vertices
     {
@@ -326,7 +326,7 @@ bool TaskGraph::astarSearch(const TaskVertex start, const TaskVertex goal, std::
 
 bool TaskGraph::astarSearchLength(TaskVertex start, TaskVertex goal, double &distance, std::size_t indent)
 {
-  BOLT_FUNC(indent, vSearch_, "astarSearchLength()");
+  BOLT_FUNC(vSearch_, "astarSearchLength()");
 
   bool foundGoal = false;
 
@@ -365,11 +365,11 @@ bool TaskGraph::astarSearchLength(TaskVertex start, TaskVertex goal, double &dis
   {
     if (std::isinf(vertexDistances[goal]))
     {
-      BOLT_WARN(indent, true, "Distance is inifinity");
+      BOLT_WARN(true, "Distance is inifinity");
     }
     else if (vertexDistances[goal] > 1e300)
     {
-      BOLT_WARN(indent, true, "Distance is close to inifinity");
+      BOLT_WARN(true, "Distance is close to inifinity");
     }
     else
       foundGoal = true;
@@ -400,13 +400,13 @@ bool TaskGraph::checkPathLength(TaskVertex v1, SparseVertex v2, double distance,
 
   if (pathLength < distance + SMALL_EPSILON)
   {
-    BOLT_ERROR(indent, "New interface edge does not help enough, edge length: " << distance << ", astar: " << pathLength
+    BOLT_ERROR("New interface edge does not help enough, edge length: " << distance << ", astar: " << pathLength
                                                                                 << ", difference between distances: "
                                                                                 << fabs(distance - pathLength));
     return false;
   }
 
-  BOLT_WARN(indent, false, "Interface edge qualifies - diff: " << (distance + SMALL_EPSILON - pathLength));
+  BOLT_WARN(false, "Interface edge qualifies - diff: " << (distance + SMALL_EPSILON - pathLength));
   return true;
 }
 
@@ -441,6 +441,7 @@ double TaskGraph::distanceState(const base::CompoundState *a, const base::Compou
 
 double TaskGraph::astarTaskHeuristic(const TaskVertex a, const TaskVertex b) const
 {
+  std::size_t indent = 0;
   // Do not use task distance if that mode is not enabled
   if (!taskPlanningEnabled_)
     return distanceVertex(a, b);
@@ -451,7 +452,7 @@ double TaskGraph::astarTaskHeuristic(const TaskVertex a, const TaskVertex b) con
   if (taskLevelA > taskLevelB)
   {
     // Call itself again, this time switching ordering
-    BOLT_DEBUG(0, vHeuristic_, "Switched ordering for distanceFunctionTasks()");
+    BOLT_DEBUG(vHeuristic_, "Switched ordering for distanceFunctionTasks()");
     return astarTaskHeuristic(b, a);
   }
 
@@ -470,18 +471,18 @@ double TaskGraph::astarTaskHeuristic(const TaskVertex a, const TaskVertex b) con
   {
     if (taskLevelB == 0)  // regular distance for bottom level
     {
-      BOLT_DEBUG(0, vHeuristic_, "Distance Mode a");
+      BOLT_DEBUG(vHeuristic_, "Distance Mode a");
       dist = distanceState(g_[a].state_, g_[b].state_);
     }
     else if (taskLevelB == 1)
     {
-      BOLT_DEBUG(0, vHeuristic_, "Distance Mode b");
+      BOLT_DEBUG(vHeuristic_, "Distance Mode b");
       dist = distanceState(g_[a].state_, g_[startConnectorVertex_].state_) + TASK_LEVEL_COST +
              distanceState(g_[startConnectorVertex_].state_, g_[b].state_);
     }
     else if (taskLevelB == 2)
     {
-      BOLT_DEBUG(0, vHeuristic_, "Distance Mode c");
+      BOLT_DEBUG(vHeuristic_, "Distance Mode c");
       dist = distanceState(g_[a].state_, g_[startConnectorVertex_].state_) + TASK_LEVEL_COST +
              shortestDistAcrossCartGraph_ + TASK_LEVEL_COST +
              distanceState(g_[goalConnectorVertex_].state_, g_[b].state_);
@@ -499,12 +500,12 @@ double TaskGraph::astarTaskHeuristic(const TaskVertex a, const TaskVertex b) con
     }
     else if (taskLevelB == 1)
     {
-      BOLT_DEBUG(0, vHeuristic_, "Distance Mode d");
+      BOLT_DEBUG(vHeuristic_, "Distance Mode d");
       dist = distanceState(g_[a].state_, g_[b].state_);
     }
     else if (taskLevelB == 2)
     {
-      BOLT_DEBUG(0, vHeuristic_, "Distance Mode e");
+      BOLT_DEBUG(vHeuristic_, "Distance Mode e");
 
       dist = distanceState(g_[a].state_, g_[goalConnectorVertex_].state_) + TASK_LEVEL_COST +
              distanceState(g_[goalConnectorVertex_].state_, g_[b].state_);
@@ -522,7 +523,7 @@ double TaskGraph::astarTaskHeuristic(const TaskVertex a, const TaskVertex b) con
     }
     else if (taskLevelB == 2)
     {
-      BOLT_DEBUG(0, vHeuristic_, "Distance Mode f");
+      BOLT_DEBUG(vHeuristic_, "Distance Mode f");
       dist = distanceState(g_[a].state_, g_[b].state_);
     }
     else
@@ -535,7 +536,7 @@ double TaskGraph::astarTaskHeuristic(const TaskVertex a, const TaskVertex b) con
     throw Exception(name_, "Unknown task level mode");
   }
 
-  BOLT_DEBUG(0, vHeuristic_, "Vertex " << a << " @level " << taskLevelA << " to Vertex " << b << " @level "
+  BOLT_DEBUG(vHeuristic_, "Vertex " << a << " @level " << taskLevelA << " to Vertex " << b << " @level "
                                        << taskLevelB << " has distance " << dist);
   return dist;
 }
@@ -561,13 +562,13 @@ bool TaskGraph::isEmpty() const
 
 void TaskGraph::generateMonoLevelTaskSpace(std::size_t indent)
 {
-  BOLT_FUNC(indent, verbose_, "generateMonoLevelTaskTaskSpace()");
+  BOLT_FUNC(verbose_, "generateMonoLevelTaskTaskSpace()");
   time::point startTime = time::now();  // Benchmark
 
   // Clear pre-existing graphs
   if (!isEmpty())
   {
-    BOLT_DEBUG(indent, vGenerateTask_, "Clearing previous graph");
+    BOLT_DEBUG(vGenerateTask_, "Clearing previous graph");
     clear();
   }
 
@@ -575,7 +576,7 @@ void TaskGraph::generateMonoLevelTaskSpace(std::size_t indent)
   std::vector<TaskVertex> sparseToTaskVertex0(sg_->getNumVertices());
 
   // Loop through every vertex in sparse graph and copy once to task graph
-  BOLT_DEBUG(indent + 2, true || vGenerateTask_, "Adding " << sg_->getNumVertices() << " task space vertices");
+  BOLT_DEBUG(true || vGenerateTask_, "Adding " << sg_->getNumVertices() << " task space vertices");
   foreach (SparseVertex sparseV, boost::vertices(sg_->getGraph()))
   {
     // The first thread number of verticies are used for queries and should be skipped
@@ -591,7 +592,7 @@ void TaskGraph::generateMonoLevelTaskSpace(std::size_t indent)
   }
 
   // Loop through every edge in sparse graph and copy to task graph
-  BOLT_DEBUG(indent + 2, true || vGenerateTask_, "Adding " << sg_->getNumEdges() << " task space edges");
+  BOLT_DEBUG(true || vGenerateTask_, "Adding " << sg_->getNumEdges() << " task space edges");
   foreach (const SparseEdge sparseE, boost::edges(sg_->getGraph()))
   {
     const SparseVertex sparseE_v0 = boost::source(sparseE, sg_->getGraph());
@@ -618,13 +619,13 @@ void TaskGraph::generateMonoLevelTaskSpace(std::size_t indent)
 
 void TaskGraph::generateTaskSpace(std::size_t indent)
 {
-  BOLT_FUNC(indent, verbose_, "generateTaskSpace()");
+  BOLT_FUNC(verbose_, "generateTaskSpace()");
   time::point startTime = time::now();  // Benchmark
 
   // Clear pre-existing graphs
   if (!isEmpty())
   {
-    BOLT_DEBUG(indent, vGenerateTask_, "Clearing previous graph");
+    BOLT_DEBUG(vGenerateTask_, "Clearing previous graph");
     clear();
   }
 
@@ -633,7 +634,7 @@ void TaskGraph::generateTaskSpace(std::size_t indent)
   std::vector<TaskVertex> sparseToTaskVertex2(sg_->getNumVertices());
 
   // Loop through every vertex in sparse graph and copy twice to task graph
-  BOLT_DEBUG(indent + 2, true || vGenerateTask_, "Adding " << 2 * sg_->getNumVertices() << " task space vertices");
+  BOLT_DEBUG(true || vGenerateTask_, "Adding " << 2 * sg_->getNumVertices() << " task space vertices");
   foreach (SparseVertex sparseV, boost::vertices(sg_->getGraph()))
   {
     // The first thread number of verticies are used for queries and should be skipped
@@ -658,7 +659,7 @@ void TaskGraph::generateTaskSpace(std::size_t indent)
   }
 
   // Loop through every edge in sparse graph and copy twice to task graph
-  BOLT_DEBUG(indent + 2, true || vGenerateTask_, "Adding " << 2 * sg_->getNumEdges() << " task space edges");
+  BOLT_DEBUG(true || vGenerateTask_, "Adding " << 2 * sg_->getNumEdges() << " task space edges");
   foreach (const SparseEdge sparseE, boost::edges(sg_->getGraph()))
   {
     const SparseVertex &sparseE_v0 = boost::source(sparseE, sg_->getGraph());
@@ -682,9 +683,9 @@ void TaskGraph::generateTaskSpace(std::size_t indent)
 
 bool TaskGraph::addCartPath(std::vector<base::CompoundState *> path, std::size_t indent)
 {
-  BOLT_ERROR(indent, "TODO implement");
+  BOLT_ERROR("TODO implement");
   /*
-  BOLT_FUNC(indent, verbose_, "addCartPath()");
+  BOLT_FUNC(verbose_, "addCartPath()");
 
   // Error check
   if (path.size() < 2)
@@ -706,7 +707,7 @@ bool TaskGraph::addCartPath(std::vector<base::CompoundState *> path, std::size_t
   shortestDistAcrossCartGraph_ = distanceVertex(startVertex, goalVertex);
 
   // Connect Start to graph --------------------------------------
-  BOLT_DEBUG(indent, verbose_, "Creating start connector");
+  BOLT_DEBUG(verbose_, "Creating start connector");
   const VertexLevel level0 = 0;
   bool isStart = true;
   if (!connectVertexToNeighborsAtLevel(startVertex, level0, isStart, indent))
@@ -716,7 +717,7 @@ bool TaskGraph::addCartPath(std::vector<base::CompoundState *> path, std::size_t
   }
 
   // Connect goal to graph --------------------------------------
-  BOLT_DEBUG(indent, verbose_, "Creating goal connector");
+  BOLT_DEBUG(verbose_, "Creating goal connector");
   const VertexLevel level2 = 2;
   isStart = false;
   if (!connectVertexToNeighborsAtLevel(goalVertex, level2, isStart, indent))
@@ -729,7 +730,7 @@ bool TaskGraph::addCartPath(std::vector<base::CompoundState *> path, std::size_t
   TaskVertex v1 = startVertex;
   TaskVertex v2;
   VertexLevel cartLevel = 1;
-  BOLT_DEBUG(indent, verbose_, "Add cartesian path");
+  BOLT_DEBUG(verbose_, "Add cartesian path");
 
   for (std::size_t i = 1; i < path.size(); ++i)
   {
@@ -756,7 +757,7 @@ bool TaskGraph::addCartPath(std::vector<base::CompoundState *> path, std::size_t
 bool TaskGraph::connectVertexToNeighborsAtLevel(TaskVertex fromVertex, const VertexLevel level, bool isStart,
                                                 std::size_t indent)
 {
-  BOLT_FUNC(indent, vGenerateTask_, "connectVertexToNeighborsAtLevel()");
+  BOLT_FUNC(vGenerateTask_, "connectVertexToNeighborsAtLevel()");
 
   // Get nearby states to goal
   std::vector<TaskVertex> neighbors;
@@ -765,15 +766,15 @@ bool TaskGraph::connectVertexToNeighborsAtLevel(TaskVertex fromVertex, const Ver
   // Error check
   if (neighbors.empty())
   {
-    BOLT_ERROR(indent, "No neighbors found when connecting cartesian path");
+    BOLT_ERROR("No neighbors found when connecting cartesian path");
     return false;
   }
   else if (neighbors.size() < 3)
   {
-    BOLT_DEBUG(indent, vGenerateTask_, "Only found " << neighbors.size() << " neighbors on level " << level);
+    BOLT_DEBUG(vGenerateTask_, "Only found " << neighbors.size() << " neighbors on level " << level);
   }
   else
-    BOLT_DEBUG(indent, vGenerateTask_, "Found " << neighbors.size() << " neighbors on level " << level);
+    BOLT_DEBUG(vGenerateTask_, "Found " << neighbors.size() << " neighbors on level " << level);
 
   // Find the shortest connector out of all the options
 
@@ -803,7 +804,7 @@ bool TaskGraph::connectVertexToNeighborsAtLevel(TaskVertex fromVertex, const Ver
 void TaskGraph::getNeighborsAtLevel(const TaskVertex origVertex, const VertexLevel level, const std::size_t kNeighbors,
                                     std::vector<TaskVertex> &neighbors, std::size_t indent)
 {
-  BOLT_FUNC(indent, vGenerateTask_, "getNeighborsAtLevel()");
+  BOLT_FUNC(vGenerateTask_, "getNeighborsAtLevel()");
 
   BOLT_ASSERT(level != 1, "Unhandled level, does not support level 1");
 
@@ -828,7 +829,7 @@ void TaskGraph::getNeighborsAtLevel(const TaskVertex origVertex, const VertexLev
       // Collision check
       if (!compoundSI_->checkMotion(origState, getState(nearVertex)))  // is not valid motion
       {
-        BOLT_DEBUG(indent, vGenerateTask_, "Skipping neighbor " << nearVertex << ", i=" << i
+        BOLT_DEBUG(vGenerateTask_, "Skipping neighbor " << nearVertex << ", i=" << i
                                                                 << ", at level=" << getTaskLevel(nearVertex)
                                                                 << " because invalid motion");
         neighbors.erase(neighbors.begin() + i);
@@ -837,14 +838,14 @@ void TaskGraph::getNeighborsAtLevel(const TaskVertex origVertex, const VertexLev
       }
     }
 
-    BOLT_DEBUG(indent, vGenerateTask_, "Keeping neighbor " << nearVertex);
+    BOLT_DEBUG(vGenerateTask_, "Keeping neighbor " << nearVertex);
   }
   */
 
   // Convert our list of neighbors to the proper level
   if (level == 2)
   {
-    BOLT_DEBUG(indent, vGenerateTask_, "Converting vector of level 0 neighbors to level 2 neighbors");
+    BOLT_DEBUG(vGenerateTask_, "Converting vector of level 0 neighbors to level 2 neighbors");
 
     for (std::size_t i = 0; i < neighbors.size(); ++i)
     {
@@ -858,8 +859,9 @@ void TaskGraph::getNeighborsAtLevel(const TaskVertex origVertex, const VertexLev
 
 bool TaskGraph::checkTaskPathSolution(og::PathGeometric &path, base::CompoundState *start, base::CompoundState *goal)
 {
+  std::size_t indent = 0;
   // TODO: this assumes the path has task data, which it no longer does
-  BOLT_ERROR(0, "checkTaskPathSolution() - broken");
+  BOLT_ERROR("checkTaskPathSolution() - broken");
 
   bool error = true;  // false
   /*
@@ -934,7 +936,7 @@ void TaskGraph::clearEdgeCollisionStates()
 
 void TaskGraph::errorCheckDuplicateStates(std::size_t indent)
 {
-  BOLT_ERROR(indent, "errorCheckDuplicateStates() - NOT IMPLEMENTEDpart of super debug");
+  BOLT_ERROR("errorCheckDuplicateStates() - NOT IMPLEMENTEDpart of super debug");
 
   // bool found = false;
   // // Error checking: check for any duplicate states
@@ -944,7 +946,7 @@ void TaskGraph::errorCheckDuplicateStates(std::size_t indent)
   //   {
   //     if (compoundSI_->getStateSpace()->equalStates(getState(i), getState(j)))
   //     {
-  //       BOLT_ERROR(indent, 1, "Found equal state: " << i << ", " << j);
+  //       BOLT_ERROR(1, "Found equal state: " << i << ", " << j);
   //       debugState(getState(i));
   //       found = true;
   //     }
@@ -956,9 +958,9 @@ void TaskGraph::errorCheckDuplicateStates(std::size_t indent)
 
 bool TaskGraph::smoothQualityPath(geometric::PathGeometric *path, double clearance, std::size_t indent)
 {
-  BOLT_FUNC(indent, visualizeQualityPathSmoothing_, "smoothQualityPath()");
+  BOLT_FUNC(visualizeQualityPathSmoothing_, "smoothQualityPath()");
 
-  BOLT_ERROR(indent, "smoothQualityPath is using compound state space which has unknown smoothing results...");
+  BOLT_ERROR("smoothQualityPath is using compound state space which has unknown smoothing results...");
 
   // Visualize path
   if (visualizeQualityPathSmoothing_)
@@ -969,7 +971,7 @@ bool TaskGraph::smoothQualityPath(geometric::PathGeometric *path, double clearan
     usleep(0.001 * 1000000);
   }
 
-  BOLT_DEBUG(indent, visualizeQualityPathSmoothing_, "Created 'quality path' candidate with " << path->getStateCount()
+  BOLT_DEBUG(visualizeQualityPathSmoothing_, "Created 'quality path' candidate with " << path->getStateCount()
                                                                                               << " states");
   if (visualizeQualityPathSmoothing_)
     visual_->prompt("path simplification");
@@ -1057,7 +1059,7 @@ TaskVertex TaskGraph::addVertex(base::CompoundState *state, std::size_t indent)
 {
   // Create vertex
   TaskVertex v = boost::add_vertex(g_);
-  BOLT_FUNC(indent, vAdd_, "addVertex(): v: " << v);
+  BOLT_FUNC(vAdd_, "addVertex(): v: " << v);
 
   // Add properties
   g_[v].state_ = state;
@@ -1101,7 +1103,7 @@ void TaskGraph::removeVertex(TaskVertex v)
 
 void TaskGraph::removeDeletedVertices(std::size_t indent)
 {
-  BOLT_FUNC(indent, verbose_, "removeDeletedVertices()");
+  BOLT_FUNC(verbose_, "removeDeletedVertices()");
   bool verbose = true;
 
   // Remove all vertices that are set to 0
@@ -1119,7 +1121,7 @@ void TaskGraph::removeDeletedVertices(std::size_t indent)
 
     if (getCompoundState(*v) == NULL)  // Found vertex to delete
     {
-      BOLT_DEBUG(indent, verbose, "Removing TaskVertex " << *v << " state: " << getCompoundState(*v));
+      BOLT_DEBUG(verbose, "Removing TaskVertex " << *v << " state: " << getCompoundState(*v));
 
       boost::remove_vertex(*v, g_);
       numRemoved++;
@@ -1129,11 +1131,11 @@ void TaskGraph::removeDeletedVertices(std::size_t indent)
       v++;
     }
   }
-  BOLT_DEBUG(indent, verbose, "Removed " << numRemoved << " vertices from graph that were abandoned");
+  BOLT_DEBUG(verbose, "Removed " << numRemoved << " vertices from graph that were abandoned");
 
   if (numRemoved == 0)
   {
-    BOLT_DEBUG(indent, verbose, "No verticies deleted, skipping resetting NN");
+    BOLT_DEBUG(verbose, "No verticies deleted, skipping resetting NN");
     return;
   }
 
@@ -1152,7 +1154,7 @@ void TaskGraph::removeDeletedVertices(std::size_t indent)
 
 TaskEdge TaskGraph::addEdge(TaskVertex v1, TaskVertex v2, std::size_t indent)
 {
-  // BOLT_FUNC(indent, vAdd_, "addEdge(): from vertex " << v1 << " to " << v2);
+  // BOLT_FUNC(vAdd_, "addEdge(): from vertex " << v1 << " to " << v2);
 
   if (superDebug_)  // Extra checks
   {
@@ -1206,7 +1208,7 @@ bool TaskGraph::hasEdge(TaskVertex v1, TaskVertex v2)
 
 void TaskGraph::displayDatabase(bool showVertices, std::size_t indent)
 {
-  BOLT_FUNC(indent, vVisualize_, "displayDatabase()");
+  BOLT_FUNC(vVisualize_, "displayDatabase()");
 
   // Error check
   if (getNumVertices() == 0 || getNumEdges() == 0)
@@ -1272,7 +1274,7 @@ void TaskGraph::displayDatabase(bool showVertices, std::size_t indent)
       // Check for null states
       if (!getCompoundState(v))
       {
-        BOLT_ERROR(indent, "Null vertex found: " << v);
+        BOLT_ERROR("Null vertex found: " << v);
         continue;
       }
 
@@ -1398,17 +1400,17 @@ void TaskGraph::printGraphStats(double generationDuration, std::size_t indent)
   }
   double averageEdgeLength = getNumEdges() ? totalEdgeLength / getNumEdges() : 0;
 
-  BOLT_INFO(indent, 1, "---------------------------------------------");
-  BOLT_INFO(indent, 1, "TaskGraph stats:");
-  BOLT_INFO(indent, 1, "   Generation time:        " << generationDuration << " s");
-  BOLT_INFO(indent, 1, "   Total vertices:         " << getNumRealVertices());
-  BOLT_INFO(indent, 1, "   Total edges:            " << getNumEdges());
-  BOLT_INFO(indent, 1, "   Average degree:         " << averageDegree);
-  BOLT_INFO(indent, 1, "   Edge Lengths:           ");
-  BOLT_INFO(indent, 1, "      Max:                 " << maxEdgeLength);
-  BOLT_INFO(indent, 1, "      Min:                 " << minEdgeLength);
-  BOLT_INFO(indent, 1, "      Average:             " << averageEdgeLength);
-  BOLT_INFO(indent, 1, "---------------------------------------------");
+  BOLT_INFO(1, "---------------------------------------------");
+  BOLT_INFO(1, "TaskGraph stats:");
+  BOLT_INFO(1, "   Generation time:        " << generationDuration << " s");
+  BOLT_INFO(1, "   Total vertices:         " << getNumRealVertices());
+  BOLT_INFO(1, "   Total edges:            " << getNumEdges());
+  BOLT_INFO(1, "   Average degree:         " << averageDegree);
+  BOLT_INFO(1, "   Edge Lengths:           ");
+  BOLT_INFO(1, "      Max:                 " << maxEdgeLength);
+  BOLT_INFO(1, "      Min:                 " << minEdgeLength);
+  BOLT_INFO(1, "      Average:             " << averageEdgeLength);
+  BOLT_INFO(1, "---------------------------------------------");
 }
 
 bool TaskGraph::checkMotion(const base::CompoundState *a, const base::CompoundState *b)
