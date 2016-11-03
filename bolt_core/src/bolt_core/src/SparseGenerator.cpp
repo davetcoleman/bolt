@@ -1184,6 +1184,7 @@ ExperiencePathStats SparseGenerator::addExperiencePath(geometric::PathGeometricP
 void SparseGenerator::createSPARS2(std::size_t indent)
 {
   BOLT_FUNC(indent, true, "createSPARS2()");
+  BOLT_DEBUG(indent, true, "si_->getMaximumExtent() " << si_->getMaximumExtent());
 
   // Setup sampler
   sampler_->setNrAttempts(1000);
@@ -1191,7 +1192,7 @@ void SparseGenerator::createSPARS2(std::size_t indent)
   base::State *candidateState;
   bool usedState = true;  // flag indicating whether memory needs to be allocated again for candidateState
 
-  std::size_t attempts = 1; // start at 1 to allow modulo to skip 0
+  std::size_t attempts = 1;  // start at 1 to allow modulo to skip 0
   std::size_t numStatesUsed = 0;
   bool addEdges = false;
   double nodeAdditionRate = std::numeric_limits<double>::infinity();
@@ -1226,24 +1227,33 @@ void SparseGenerator::createSPARS2(std::size_t indent)
     }
 
     // Only run at certain intervals
-    if (attempts++ % 500 == 0)
+    static const std::size_t FEEDBACK_SAVE_INTERVAL = 1000;
+    if (attempts++ % FEEDBACK_SAVE_INTERVAL == 0)
     {
       // Check if time to change modes
       if (!addEdges)
       {
         nodeAdditionRate = numStatesUsed / double(attempts);
-        //static const std::size_t NODE_ADDITION_RATE_THRESHOLD = 0.01;
-        static const std::size_t NODE_ADDITION_RATE_THRESHOLD = 0.1;
+        static const double NODE_ADDITION_RATE_THRESHOLD = 0.01;
         if (nodeAdditionRate < NODE_ADDITION_RATE_THRESHOLD)
+        {
+          BOLT_INFO(indent, true, "SparseGenerator: Add edges is now enabled");
           addEdges = true;
+        }
       }
 
       // User feedback
-      BOLT_INFO(indent, true, "SparseGenerator: vertices: " << sg_->getNumVertices() << " edges: " << sg_->getNumEdges()
-                << " attempts: " << attempts << " nodeAdditionRate: " << nodeAdditionRate << " addEdges: " << addEdges);
+      BOLT_INFO(indent, true, "SparseGenerator: "
+                                  << " V: " << sg_->getNumVertices() << " E: " << sg_->getNumEdges()
+                                  << " attempts: " << attempts << " nodeAdditionRate: " << nodeAdditionRate
+                                  << " addEdges: " << addEdges);
 
-      // Save
-      sg_->saveIfChanged(indent);
+      // Save less frequently
+      if (attempts % (FEEDBACK_SAVE_INTERVAL * 4) == 0)
+      {
+        std::cout << std::endl;
+        sg_->saveIfChanged(indent);
+      }
     }
   }  // for each sample attempt
 
@@ -1260,42 +1270,40 @@ bool SparseGenerator::addSampleSparseCriteria(base::State *candidateState, bool 
   BOLT_FUNC(indent, vCriteria_, "addSampleSparseCriteria()");
 
   // Calculate secondary sparse delta (smaller than normal sparse delta)
-  double sparseDelta = sg_->getSparseCriteria()->getSparseDelta();
+  const double &sparseDelta = sg_->getSparseCriteria()->getSparseDelta();
 
   // Get neighbors of new state
-  std::size_t threadID = 0;
+  static const std::size_t THREAD_ID = 0;
   std::vector<SparseVertex> graphNeighborhood;
-  sg_->getQueryStateNonConst(threadID) = candidateState;
-  sg_->getNN()->nearestR(sg_->getQueryVertices(threadID), sparseDelta, graphNeighborhood);
-  sg_->getQueryStateNonConst(threadID) = nullptr;
-
-  std::cout << "graphNeighborhood: " << graphNeighborhood.size() << std::endl;
+  sg_->getQueryStateNonConst(THREAD_ID) = candidateState;
+  sg_->getNN()->nearestR(sg_->getQueryVertices(THREAD_ID), sparseDelta, graphNeighborhood);
+  sg_->getQueryStateNonConst(THREAD_ID) = nullptr;
 
   // Find all visibile neighbors
   std::vector<SparseVertex> visibleNeighborhood;
-  std::size_t count = 0;
-  for (const SparseVertex &v2 : graphNeighborhood)
+  for (std::size_t i = 0; i < graphNeighborhood.size(); ++i)
   {
-    count++;
-
-    // Stop-gap: assume after checking 100 nearest nodes that this state has no neighbors
-    // This saves a lot of computation at the expense of possibly adding too many coverage nodes
-    static const std::size_t MAX_NEIGHBOR_CHECK = 100;
-    if (count > MAX_NEIGHBOR_CHECK)
-    {
-      BOLT_WARN(indent, true, "Using MAX_NEIGHBOR_CHECK " << MAX_NEIGHBOR_CHECK);
-      break;
-    }
+    const SparseVertex &v2 = graphNeighborhood[i];
 
     // Visualize
     if (visualizeSampling_)
-    {
       visual_->viz6()->state(sg_->getState(v2), tools::MEDIUM, tools::ORANGE, 1);
-    }
 
+    // Check for visible nearby neighbor
     if (!si_->checkMotion(candidateState, sg_->getState(v2)))
     {
-      continue;
+      continue;  // not visible, check next one
+    }
+
+    // we've found a valid edge - see if its the longest one yet
+    // TODO: remove
+    double dist = si_->distance(candidateState, sg_->getState(v2));
+    if (dist > max_dist_)
+    {
+      max_dist_ = dist;
+      double percentOfSpace = max_dist_ / si_->getMaximumExtent();
+      BOLT_WARN(indent, percentOfSpace > 0.35, "max_dist_ found: " << max_dist_
+                                                                   << " percentOfSpace: " << percentOfSpace);
     }
 
     // A visible state was found nearby so there is no way we would add candidate state
@@ -1305,9 +1313,7 @@ bool SparseGenerator::addSampleSparseCriteria(base::State *candidateState, bool 
 
     // Visualize
     if (visualizeSampling_)
-    {
       visual_->viz6()->edge(candidateState, sg_->getState(v2), tools::MEDIUM, tools::PINK);
-    }
 
     // The two are visible to each other!
     visibleNeighborhood.push_back(v2);
@@ -1315,7 +1321,7 @@ bool SparseGenerator::addSampleSparseCriteria(base::State *candidateState, bool 
     // We only care about the first two visibile neighbors
     if (visibleNeighborhood.size() == 2)
     {
-      BOLT_DEBUG(indent, vCriteria_, "Collision checked: " << count << " motions of " << graphNeighborhood.size()
+      BOLT_DEBUG(indent, vCriteria_, "Collision checked: " << i << " motions of " << graphNeighborhood.size()
                                                            << " nearby nodes");
       break;
     }
@@ -1323,7 +1329,7 @@ bool SparseGenerator::addSampleSparseCriteria(base::State *candidateState, bool 
     // Enforce that the two closest nodes must also be visible for an edge to be added
     // But this only applies if at least oen visible neighbor has been found,
     // otherwise we could be finding a coverage node
-    if (count > 1)
+    if (i > 1)
       break;
   }
 
@@ -1331,13 +1337,13 @@ bool SparseGenerator::addSampleSparseCriteria(base::State *candidateState, bool 
   if (visibleNeighborhood.empty())
   {
     // No free paths means we add for coverage
-    BOLT_DEBUG(indent, vCriteria_ || true, "Adding node for COVERAGE ");
+    BOLT_DEBUG(indent, vCriteria_, "Adding node for COVERAGE ");
     sg_->addVertex(candidateState, COVERAGE, indent);
 
-    if (visualizeSampling_ || true)
+    if (visualizeSampling_)
     {
       visual_->viz6()->state(candidateState, tools::ROBOT, tools::GREEN, 1);
-      visual_->prompt("coverage");
+      // visual_->prompt("coverage");
     }
 
     return true;
@@ -1385,7 +1391,7 @@ bool SparseGenerator::addSampleSparseCriteria(base::State *candidateState, bool 
 
     if (visualizeSampling_)
     {
-      visual_->viz6()->edge(sg_->getState(v1), sg_->getState(v2), tools::MEDIUM, tools::LIME_GREEN);
+      visual_->viz6()->edge(sg_->getState(v1), sg_->getState(v2), tools::SMALL, tools::LIME_GREEN);
       visual_->viz6()->trigger();
       // visual_->prompt("directly added edge");
     }
@@ -1403,8 +1409,8 @@ bool SparseGenerator::addSampleSparseCriteria(base::State *candidateState, bool 
   if (visualizeSampling_)
   {
     visual_->viz6()->state(candidateState, tools::MEDIUM, tools::YELLOW, 1);
-    visual_->viz6()->edge(candidateState, sg_->getState(v1), tools::MEDIUM, tools::LIME_GREEN);
-    visual_->viz6()->edge(candidateState, sg_->getState(v2), tools::MEDIUM, tools::LIME_GREEN);
+    visual_->viz6()->edge(candidateState, sg_->getState(v1), tools::SMALL, tools::LIME_GREEN);
+    visual_->viz6()->edge(candidateState, sg_->getState(v2), tools::SMALL, tools::LIME_GREEN);
     visual_->viz6()->trigger();
     // visual_->prompt("added node for interface");
   }

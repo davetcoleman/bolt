@@ -75,7 +75,7 @@ public:
   void freeState(ob::State *state) const
   {
     if (!state)
-      BOLT_ERROR(0, "State already deleted " << state);
+      OMPL_ERROR("State already deleted ");
 
     delete state->as<StateType>();
   }

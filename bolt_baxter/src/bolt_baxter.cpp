@@ -160,6 +160,21 @@ BoltBaxter::BoltBaxter(const std::string &hostname, const std::string &package_p
   // Initialize MoveIt base
   MoveItBase::init(nh_);
 
+  // Set custom joint weights
+  robot_model_->getJointModel("left_s1")->setDistanceFactor(1.0);
+  robot_model_->getJointModel("left_e0")->setDistanceFactor(0.9);
+  robot_model_->getJointModel("left_e1")->setDistanceFactor(0.8);
+  robot_model_->getJointModel("left_w0")->setDistanceFactor(0.7);
+  robot_model_->getJointModel("left_w1")->setDistanceFactor(0.6);
+  robot_model_->getJointModel("left_w2")->setDistanceFactor(0.0);
+
+  robot_model_->getJointModel("right_s1")->setDistanceFactor(1.0);
+  robot_model_->getJointModel("right_e0")->setDistanceFactor(0.9);
+  robot_model_->getJointModel("right_e1")->setDistanceFactor(0.8);
+  robot_model_->getJointModel("right_w0")->setDistanceFactor(0.7);
+  robot_model_->getJointModel("right_w1")->setDistanceFactor(0.6);
+  robot_model_->getJointModel("right_w2")->setDistanceFactor(0.0);
+
   // Load more robot states
   moveit_start_.reset(new moveit::core::RobotState(*current_state_));
   moveit_goal_.reset(new moveit::core::RobotState(*current_state_));

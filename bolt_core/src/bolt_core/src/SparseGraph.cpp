@@ -206,11 +206,10 @@ bool SparseGraph::load(std::size_t indent)
   BOLT_INFO(indent, true, "Graph total loading time: " << duration);
 
   // Error check
-  if (!getNumVertices() || !getNumEdges())
-  {
-    OMPL_ERROR("Corrupted sparse graph loaded");
-    return false;
-  }
+  if (!getNumVertices())
+    BOLT_WARN(indent, true, "SparseGraph loaded with 0 vertices");
+  if (!getNumEdges())
+    BOLT_WARN(indent, true, "SparseGraph loaded with 0 edges");
 
   // Show more data
   printGraphStats();
@@ -266,7 +265,8 @@ SparseStorage::GraphSizeChange SparseGraph::save(std::size_t indent)
   }
 
   // Always must clear out deleted veritices from graph before saving otherwise NULL state will throw exception
-  removeDeletedVertices(indent);
+  // TODO: enable again?
+  //removeDeletedVertices(indent);
 
   // Benchmark
   time::point start = time::now();

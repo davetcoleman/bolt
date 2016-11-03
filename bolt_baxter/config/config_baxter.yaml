@@ -91,8 +91,8 @@ sparse_generator:
 # ====================================================
 sparse_criteria:
   #sparse_delta_fraction: 0.4
-  #sparse_delta_fraction: 0.45
-  sparse_delta_fraction: 0.5
+  sparse_delta_fraction: 0.45
+  #sparse_delta_fraction: 0.5
   sparse_delta_fraction_secondary: 0.1
   penetration_overlap_fraction: 0.01
   near_sample_points_multiple: 2 # multiply this times number of dimensions
@@ -126,7 +126,7 @@ sparse_criteria:
 
 # ====================================================
 sparse_graph:
-  save_enabled: false
+  save_enabled: true
   super_debug: false # run more checks and tests that slow down speed
   obstacle_clearance: 0.0 #0.0035 # max before gripper piece is in collision
   verbose:

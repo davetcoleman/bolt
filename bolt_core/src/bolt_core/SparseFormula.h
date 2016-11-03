@@ -141,6 +141,9 @@ struct SparseFormula
   double nearSamplePoints_;
   double discretization_;
   double stretchFactor_;
+
+  // Short name for this struct
+  const std::string name_ = "SparseFormula";
 };
 
 }  // namespace bolt
