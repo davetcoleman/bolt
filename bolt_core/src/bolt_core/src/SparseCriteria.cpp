@@ -150,7 +150,7 @@ bool SparseCriteria::addStateToRoadmap(SparseCandidateData &candidateD, VertexTy
     addReason = COVERAGE;
     stateAdded = true;
   }
-  else if (checkAddConnectivity(candidateD, indent + 2))
+  else if (checkAddConnectivity(candidateD, indent))
   {
     BOLT_MAGENTA(indent, vAddedReason_, "Graph updated: CONNECTIVITY Fourth: " << useFourthCriteria_
                                                                                << " State: " << candidateD.state_);
@@ -158,7 +158,7 @@ bool SparseCriteria::addStateToRoadmap(SparseCandidateData &candidateD, VertexTy
     addReason = CONNECTIVITY;
     stateAdded = true;
   }
-  else if (checkAddInterface(candidateD, indent + 4))
+  else if (checkAddInterface(candidateD, indent))
   {
     BOLT_BLUE(indent, vAddedReason_, "Graph updated: INTERFACE Fourth: " << useFourthCriteria_
                                                                          << " State: " << candidateD.state_);
@@ -166,7 +166,7 @@ bool SparseCriteria::addStateToRoadmap(SparseCandidateData &candidateD, VertexTy
     stateAdded = true;
   }
 #ifdef ENABLE_QUALITY
-  else if (checkAddQuality(candidateD, threadID, indent + 6))
+  else if (checkAddQuality(candidateD, threadID, indent))
   {
     BOLT_GREEN(indent, vAddedReason_, "Graph updated: QUALITY Fourth: " << useFourthCriteria_
                                                                         << " State: " << candidateD.state_);
@@ -201,7 +201,7 @@ bool SparseCriteria::checkAddCoverage(SparseCandidateData &candidateD, std::size
   // No free paths means we add for coverage
   BOLT_DEBUG(indent, vCriteria_, "Adding node for COVERAGE ");
 
-  candidateD.newVertex_ = sg_->addVertex(candidateD.state_, COVERAGE, indent + 4);
+  candidateD.newVertex_ = sg_->addVertex(candidateD.state_, COVERAGE, indent);
 
   // Note: we do not connect this node with any edges because we have already determined
   // it is too far away from any nearby nodes
@@ -289,7 +289,7 @@ bool SparseCriteria::checkAddConnectivity(SparseCandidateData &candidateD, std::
   BOLT_DEBUG(indent, vCriteria_, "Adding node for CONNECTIVITY ");
 
   // Add the node
-  candidateD.newVertex_ = sg_->addVertex(candidateD.state_, CONNECTIVITY, indent + 2);
+  candidateD.newVertex_ = sg_->addVertex(candidateD.state_, CONNECTIVITY, indent);
 
   // Remove all edges from all vertices near our new vertex
   sg_->clearEdgesNearVertex(candidateD.newVertex_, indent);
@@ -302,25 +302,25 @@ bool SparseCriteria::checkAddConnectivity(SparseCandidateData &candidateD, std::
   for (std::set<SparseVertex>::const_iterator vertexIt = statesInDiffConnectedComponents.begin();
        vertexIt != statesInDiffConnectedComponents.end(); ++vertexIt)
   {
-    BOLT_DEBUG(indent + 4, vCriteria_, "Loop: Adding vertex " << *vertexIt);
+    BOLT_DEBUG(indent, vCriteria_, "Loop: Adding vertex " << *vertexIt);
 
     if (sg_->stateDeleted(*vertexIt))
     {
-      BOLT_DEBUG(indent + 4, vCriteria_, "Skipping because vertex " << *vertexIt << " was removed (state marked as 0)");
+      BOLT_DEBUG(indent, vCriteria_, "Skipping because vertex " << *vertexIt << " was removed (state marked as 0)");
       continue;
     }
 
     // Do not add edge from self to self
     if (si_->getStateSpace()->equalStates(sg_->getState(*vertexIt), sg_->getState(candidateD.newVertex_)))
     {
-      BOLT_ERROR(indent + 4, "Prevented same vertex from being added twice ");
+      BOLT_ERROR(indent, "Prevented same vertex from being added twice ");
       continue;  // skip this pairing
     }
 
     // New vertex should not be connected to anything - there's no edge between the two states
     if (sg_->hasEdge(candidateD.newVertex_, *vertexIt))
     {
-      BOLT_DEBUG(indent + 4, vCriteria_, "The new vertex " << candidateD.newVertex_ << " is already connected to old "
+      BOLT_DEBUG(indent, vCriteria_, "The new vertex " << candidateD.newVertex_ << " is already connected to old "
                                                                                        "vertex");
       continue;
     }
@@ -330,7 +330,7 @@ bool SparseCriteria::checkAddConnectivity(SparseCandidateData &candidateD, std::
     if (!sg_->sameComponent(*vertexIt, candidateD.newVertex_))
     {
       // Connect
-      sg_->addEdge(candidateD.newVertex_, *vertexIt, eCONNECTIVITY, indent + 4);
+      sg_->addEdge(candidateD.newVertex_, *vertexIt, eCONNECTIVITY, indent);
     }
   }
 
@@ -414,7 +414,7 @@ bool SparseCriteria::checkAddInterface(SparseCandidateData &candidateD, std::siz
 
   if (sg_->stateDeleted(v1))
   {
-    BOLT_ERROR(indent + 3, "Skipping edge 0 because vertex was removed");
+    BOLT_ERROR(indent, "Skipping edge 0 because vertex was removed");
   }
   else
   {
@@ -423,7 +423,7 @@ bool SparseCriteria::checkAddInterface(SparseCandidateData &candidateD, std::siz
 
   if (sg_->stateDeleted(v2))
   {
-    BOLT_ERROR(indent + 3, "Skipping edge 1 because vertex was removed");
+    BOLT_ERROR(indent, "Skipping edge 1 because vertex was removed");
   }
   else
   {
@@ -603,16 +603,16 @@ bool SparseCriteria::checkAddPath(SparseVertex v, std::size_t indent)
   {
     SparseVertex vp = adjVertices[i];  // vp = v' from paper
 
-    BOLT_DEBUG(indent + 2, vQuality_, "Checking v' = " << vp << " ----------------------------");
+    BOLT_DEBUG(indent, vQuality_, "Checking v' = " << vp << " ----------------------------");
 
     // Compute all nodes which qualify as a candidate v" for v and vp
-    getAdjVerticesOfV1UnconnectedToV2(v, vp, adjVerticesUnconnected, indent + 4);
+    getAdjVerticesOfV1UnconnectedToV2(v, vp, adjVerticesUnconnected, indent);
 
     // for each vertex v'' that is adjacent to v (has a valid edge) and does not
     // share an edge with v'
     foreach (SparseVertex vpp, adjVerticesUnconnected)  // vpp = v'' from paper
     {
-      BOLT_DEBUG(indent + 4, vQuality_, "Checking v'' = " << vpp);
+      BOLT_DEBUG(indent, vQuality_, "Checking v'' = " << vpp);
 
       // Check if by chance vpp was removed during addQualityPath() due to other optimization
       if (sg_->stateDeleted(vpp))
@@ -621,15 +621,15 @@ bool SparseCriteria::checkAddPath(SparseVertex v, std::size_t indent)
         return spannerPropertyWasViolated;
       }
 
-      InterfaceData &iData = sg_->getInterfaceData(v, vp, vpp, indent + 6);
+      InterfaceData &iData = sg_->getInterfaceData(v, vp, vpp, indent);
 
       double shortestPathVpVpp;  // remember what the shortest path is from astar
 
       // Check if we need to actually add path
-      if (spannerTest(v, vp, vpp, iData, shortestPathVpVpp, indent + 2))
+      if (spannerTest(v, vp, vpp, iData, shortestPathVpVpp, indent))
       {
         // Actually add the vertices and possibly edges
-        if (addQualityPath(v, vp, vpp, iData, shortestPathVpVpp, indent + 6))
+        if (addQualityPath(v, vp, vpp, iData, shortestPathVpVpp, indent))
         {
           spannerPropertyWasViolated = true;
 
@@ -722,13 +722,13 @@ void SparseCriteria::visualizeCheckAddPath(SparseVertex v, SparseVertex vp, Spar
   {
     if (sg_->hasEdge(x, v) && !sg_->hasEdge(x, vp))
     {
-      InterfaceData &iData = sg_->getInterfaceData(v, vpp, x, indent + 2);
+      InterfaceData &iData = sg_->getInterfaceData(v, vpp, x, indent);
 
       // Check if we previously had found a pair of points that support this
       // interface
       if ((vpp < x && iData.getInterface1Inside()) || (x < vpp && iData.getInterface2Inside()))
       {
-        BOLT_INFO(indent + 2, vQuality_, "Visualizing (orange, purple, red, pink, white) additional qualified vertex "
+        BOLT_INFO(indent, vQuality_, "Visualizing (orange, purple, red, pink, white) additional qualified vertex "
                                              << x);
         visual_->viz5()->state(sg_->getState(x), tools::LARGE, static_cast<tools::VizColors>(color++), 0);
       }
@@ -745,7 +745,7 @@ bool SparseCriteria::addQualityPath(SparseVertex v, SparseVertex vp, SparseVerte
   BOLT_FUNC(indent, vQuality_, "addQualityPath()");
 
   if (visualizeQualityCriteria_)
-    visualizeCheckAddPath(v, vp, vpp, iData, indent + 4);
+    visualizeCheckAddPath(v, vp, vpp, iData, indent);
 
   // Can we connect these two vertices directly?
   if (si_->checkMotion(sg_->getState(vp), sg_->getState(vpp)))
@@ -753,7 +753,7 @@ bool SparseCriteria::addQualityPath(SparseVertex v, SparseVertex vp, SparseVerte
     BOLT_DEBUG(indent, vQuality_, "Adding edge between vp and vpp");
 
     BOLT_ASSERT(!sg_->hasEdge(vp, vpp), "Edge already exists, cannot add quality");
-    sg_->addEdge(vp, vpp, eQUALITY, indent + 2);
+    sg_->addEdge(vp, vpp, eQUALITY, indent);
     // visual_->prompt("addQualityPath");
 
     return true;
@@ -787,7 +787,7 @@ bool SparseCriteria::addQualityPath(SparseVertex v, SparseVertex vp, SparseVerte
 
   // Create path and simplify
   const bool debug = false;
-  if (!sg_->getSparseSmoother()->smoothQualityPath(path, sg_->getObstacleClearance(), debug, indent + 4))
+  if (!sg_->getSparseSmoother()->smoothQualityPath(path, sg_->getObstacleClearance(), debug, indent))
   {
     delete path;
     return false;
@@ -809,7 +809,7 @@ bool SparseCriteria::addQualityPath(SparseVertex v, SparseVertex vp, SparseVerte
   SparseVertex prior = vp;
   SparseVertex newVertex;
 
-  BOLT_DEBUG(indent + 2, vQuality_, "Shortcuted path now has " << path->getStateCount() << " states");
+  BOLT_DEBUG(indent, vQuality_, "Shortcuted path now has " << path->getStateCount() << " states");
 
   // first and last states are vp and vpp so don't get added
   for (std::size_t i = 1; i < path->getStates().size() - 1; ++i)
@@ -817,21 +817,21 @@ bool SparseCriteria::addQualityPath(SparseVertex v, SparseVertex vp, SparseVerte
     base::State *state = path->getStates()[i];
 
     // We don't have to copy the state memory because we did already above and use smart unloading
-    BOLT_DEBUG(indent + 2, vQuality_, "Adding node from shortcut path for QUALITY");
-    newVertex = sg_->addVertex(si_->getStateSpace()->cloneState(state), QUALITY, indent + 4);
+    BOLT_DEBUG(indent, vQuality_, "Adding node from shortcut path for QUALITY");
+    newVertex = sg_->addVertex(si_->getStateSpace()->cloneState(state), QUALITY, indent);
 
     // Remove all edges from all vertices near our new vertex
     sg_->clearEdgesNearVertex(newVertex, indent);
 
     assert(prior != newVertex);
-    sg_->addEdge(prior, newVertex, eQUALITY, indent + 2);
+    sg_->addEdge(prior, newVertex, eQUALITY, indent);
     prior = newVertex;
 
   }  // for each state in path
 
   // Add last edge back onto graph
   assert(prior != vpp);
-  sg_->addEdge(prior, vpp, eQUALITY, indent + 2);
+  sg_->addEdge(prior, vpp, eQUALITY, indent);
 
   delete path;
   return true;
@@ -842,17 +842,17 @@ bool SparseCriteria::spannerTest(SparseVertex v, SparseVertex vp, SparseVertex v
 {
   BOLT_FUNC(indent, vQuality_, "spannerTest()");
   // Computes all nodes which qualify as a candidate x for v, v', and v" and get the length of the longest one
-  double midpointPathLength = maxSpannerPath(v, vp, vpp, indent + 2);
+  double midpointPathLength = maxSpannerPath(v, vp, vpp, indent);
 
   if (stretchFactor_ * iData.getLastDistance() < midpointPathLength)
   {
     BOLT_WARN(indent, vQuality_, "Spanner property violated");
-    BOLT_DEBUG(indent + 2, vQuality_, "Sparse Graph Midpoint Length  = " << midpointPathLength);
-    BOLT_DEBUG(indent + 2, vQuality_, "Spanner Path Length * Stretch = " << (stretchFactor_ * iData.getLastDistance()));
-    BOLT_DEBUG(indent + 2, vQuality_, "last distance = " << iData.getLastDistance());
-    BOLT_DEBUG(indent + 2, vQuality_, "stretch factor = " << stretchFactor_);
+    BOLT_DEBUG(indent, vQuality_, "Sparse Graph Midpoint Length  = " << midpointPathLength);
+    BOLT_DEBUG(indent, vQuality_, "Spanner Path Length * Stretch = " << (stretchFactor_ * iData.getLastDistance()));
+    BOLT_DEBUG(indent, vQuality_, "last distance = " << iData.getLastDistance());
+    BOLT_DEBUG(indent, vQuality_, "stretch factor = " << stretchFactor_);
     double rejectStretchFactor = midpointPathLength / iData.getLastDistance();
-    BOLT_DEBUG(indent + 2, vQuality_, "to reject, stretch factor > " << rejectStretchFactor);
+    BOLT_DEBUG(indent, vQuality_, "to reject, stretch factor > " << rejectStretchFactor);
 
     // Modification of Quality Criteria for $L_1$ Space
     if (useEdgeImprovementRule_)
@@ -869,15 +869,15 @@ bool SparseCriteria::spannerTest(SparseVertex v, SparseVertex vp, SparseVertex v
 
       // Second test: Compare to the length of the shortest path through the graph with those endpoints
       shortestPathVpVpp = qualityEdgeAstarTest(vp, vpp, iData, indent);
-      BOLT_DEBUG(indent + 2, vQuality_, "newEdgeDistance: " << newEdgeDistance);
-      BOLT_DEBUG(indent + 2, vQuality_, "shortestPathVpVpp: " << shortestPathVpVpp);
-      // BOLT_DEBUG(indent + 2, vQuality_ || 1, "shortestPathVpVpp+: " << shortestPathVpVpp - SMALL_EPSILON);
+      BOLT_DEBUG(indent, vQuality_, "newEdgeDistance: " << newEdgeDistance);
+      BOLT_DEBUG(indent, vQuality_, "shortestPathVpVpp: " << shortestPathVpVpp);
+      // BOLT_DEBUG(indent, vQuality_ || 1, "shortestPathVpVpp+: " << shortestPathVpVpp - SMALL_EPSILON);
       // visual_->viz6()->state(sg_->getState(vp), tools::MEDIUM, tools::BLACK, 0);
       // visual_->viz6()->state(sg_->getState(vpp), tools::MEDIUM, tools::BLACK, 0);
       // visual_->viz6()->trigger();
 
       if (visualizeQualityCriteria_)                           // TEMP
-        visualizeCheckAddPath(v, vp, vpp, iData, indent + 4);  // TEMP
+        visualizeCheckAddPath(v, vp, vpp, iData, indent);  // TEMP
 
       if (newEdgeDistance > shortestPathVpVpp - SMALL_EPSILON)
       {
@@ -888,7 +888,7 @@ bool SparseCriteria::spannerTest(SparseVertex v, SparseVertex vp, SparseVertex v
     return true;  // spanner property was violated
   }
 
-  BOLT_DEBUG(indent + 4, vQuality_, "Spanner property not violated");
+  BOLT_DEBUG(indent, vQuality_, "Spanner property not violated");
   return false;  // spanner property was NOT violated
 }
 
@@ -954,12 +954,12 @@ SparseVertex SparseCriteria::findGraphRepresentative(base::State *state, std::si
     BOLT_DEBUG(indent, vQuality_, "Checking motion of graph representative candidate " << i);
     if (si_->checkMotion(state, sg_->getState(graphNeighbors[i])))
     {
-      BOLT_DEBUG(indent + 2, vQuality_, "graph representative valid ");
+      BOLT_DEBUG(indent, vQuality_, "graph representative valid ");
       result = graphNeighbors[i];
       break;
     }
     else
-      BOLT_DEBUG(indent + 2, vQuality_, "graph representative NOT valid, checking next ");
+      BOLT_DEBUG(indent, vQuality_, "graph representative NOT valid, checking next ");
   }
   return result;
 }
@@ -988,7 +988,7 @@ void SparseCriteria::findCloseRepresentatives(const base::State *candidateState,
 
       if (!si_->isValid(sampledState))
       {
-        BOLT_DEBUG(indent + 4, vQuality_ && false, "Sample attempt " << attempt << " notValid ");
+        BOLT_DEBUG(indent, vQuality_ && false, "Sample attempt " << attempt << " notValid ");
 
         if (visualizeQualityCriteriaSampler_)
           visual_->viz3()->state(sampledState, tools::SMALL, tools::RED, 0);
@@ -997,7 +997,7 @@ void SparseCriteria::findCloseRepresentatives(const base::State *candidateState,
       }
       if (si_->distance(candidateState, sampledState) > denseDelta_)
       {
-        BOLT_DEBUG(indent + 4, vQuality_ && false, "Sample attempt " << attempt << " Distance too far "
+        BOLT_DEBUG(indent, vQuality_ && false, "Sample attempt " << attempt << " Distance too far "
                                                                      << si_->distance(candidateState, sampledState)
                                                                      << " needs to be less than " << denseDelta_);
 
@@ -1007,7 +1007,7 @@ void SparseCriteria::findCloseRepresentatives(const base::State *candidateState,
       }
       if (!si_->checkMotion(candidateState, sampledState))
       {
-        BOLT_DEBUG(indent + 4, vQuality_ && false, "Sample attempt " << attempt << " motion invalid ");
+        BOLT_DEBUG(indent, vQuality_ && false, "Sample attempt " << attempt << " motion invalid ");
 
         if (visualizeQualityCriteriaSampler_)
           visual_->viz3()->state(sampledState, tools::SMALL, tools::RED, 0);
@@ -1017,7 +1017,7 @@ void SparseCriteria::findCloseRepresentatives(const base::State *candidateState,
       if (visualizeQualityCriteriaSampler_)
         visual_->viz3()->state(sampledState, tools::SMALL, tools::GREEN, 0);
 
-      BOLT_DEBUG(indent + 4, vQuality_ && false, "Sample attempt " << attempt << " valid ");
+      BOLT_DEBUG(indent, vQuality_ && false, "Sample attempt " << attempt << " valid ");
 
       foundValidSample = true;
       break;
@@ -1031,20 +1031,20 @@ void SparseCriteria::findCloseRepresentatives(const base::State *candidateState,
 
     if (!foundValidSample)
     {
-      BOLT_DEBUG(indent + 2, vQuality_, "Unable to find valid sample after " << MAX_SAMPLE_ATTEMPT << " attempts"
+      BOLT_DEBUG(indent, vQuality_, "Unable to find valid sample after " << MAX_SAMPLE_ATTEMPT << " attempts"
                                                                                                       " ");
     }
     else
-      BOLT_DEBUG(indent + 2, vQuality_, "Found valid nearby sample");
+      BOLT_DEBUG(indent, vQuality_, "Found valid nearby sample");
 
     // Compute which sparse vertex represents this new candidate vertex
-    SparseVertex sampledStateRep = findGraphRepresentative(sampledState, threadID, indent + 6);
+    SparseVertex sampledStateRep = findGraphRepresentative(sampledState, threadID, indent);
 
     // Check if sample is not visible to any other node (it should be visible
     // in all likelihood)
     if (sampledStateRep == boost::graph_traits<SparseAdjList>::null_vertex())
     {
-      BOLT_DEBUG(indent + 2, vQuality_, "Sampled state has no representative (is null) ");
+      BOLT_DEBUG(indent, vQuality_, "Sampled state has no representative (is null) ");
 
       // It can't be seen by anybody, so we should take this opportunity to add it
       // Check for proper clearance if in superdebug mode
@@ -1054,11 +1054,11 @@ void SparseCriteria::findCloseRepresentatives(const base::State *candidateState,
       }
       else
       {
-        BOLT_DEBUG(indent + 2, vQuality_ || true, "Adding node for COVERAGE - findCloseRepresentatives");
-        sg_->addVertex(si_->cloneState(sampledState), COVERAGE, indent + 2);
+        BOLT_DEBUG(indent, vQuality_ || true, "Adding node for COVERAGE - findCloseRepresentatives");
+        sg_->addVertex(si_->cloneState(sampledState), COVERAGE, indent);
       }
 
-      BOLT_DEBUG(indent + 2, vQuality_, "STOP EFFORTS TO ADD A DENSE PATH");
+      BOLT_DEBUG(indent, vQuality_, "STOP EFFORTS TO ADD A DENSE PATH");
 
       // We should also stop our efforts to add a dense path
       for (std::map<SparseVertex, base::State *>::iterator it = closeRepresentatives.begin();
@@ -1068,29 +1068,29 @@ void SparseCriteria::findCloseRepresentatives(const base::State *candidateState,
       break;
     }
 
-    BOLT_DEBUG(indent + 2, vQuality_, "Sampled state has representative (is not null)");
+    BOLT_DEBUG(indent, vQuality_, "Sampled state has representative (is not null)");
 
     // If its representative is different than candidateState
     if (sampledStateRep != candidateRep)
     {
-      BOLT_DEBUG(indent + 2, vQuality_, "candidateRep != sampledStateRep ");
+      BOLT_DEBUG(indent, vQuality_, "candidateRep != sampledStateRep ");
 
       // And we haven't already tracked this representative
       if (closeRepresentatives.find(sampledStateRep) == closeRepresentatives.end())
       {
-        BOLT_DEBUG(indent + 2, vQuality_, "Track the representative");
+        BOLT_DEBUG(indent, vQuality_, "Track the representative");
 
         // Track the representative
         closeRepresentatives[sampledStateRep] = si_->cloneState(sampledState);
       }
       else
       {
-        BOLT_DEBUG(indent + 2, vQuality_, "Already tracking the representative");
+        BOLT_DEBUG(indent, vQuality_, "Already tracking the representative");
       }
     }
     else
     {
-      BOLT_DEBUG(indent + 2, vQuality_, "candidateRep == sampledStateRep, do not keep this sample ");
+      BOLT_DEBUG(indent, vQuality_, "candidateRep == sampledStateRep, do not keep this sample ");
     }
   }  // for each supporting representative
 }
@@ -1157,7 +1157,7 @@ double SparseCriteria::maxSpannerPath(SparseVertex v, SparseVertex vp, SparseVer
 
     if (sg_->hasEdge(x, v) && !sg_->hasEdge(x, vp))
     {
-      const InterfaceData &iData = sg_->getInterfaceData(v, vpp, x, indent + 2);
+      const InterfaceData &iData = sg_->getInterfaceData(v, vpp, x, indent);
 
       // Check if we previously had found a pair of points that support this interface
       if (iData.getInsideInterfaceOfV1(vpp, x) != nullptr)
@@ -1187,7 +1187,7 @@ double SparseCriteria::maxSpannerPath(SparseVertex v, SparseVertex vp, SparseVer
     double tempDist = (si_->distance(sg_->getState(vp), sg_->getState(v)) +
                        si_->distance(sg_->getState(v), sg_->getState(qualifiedVertex))) /
                       2.0;
-    BOLT_DEBUG(indent + 2, vQualityMaxSpanner_,
+    BOLT_DEBUG(indent, vQualityMaxSpanner_,
                "Checking vertex: " << qualifiedVertex << " distance: " << tempDist
                                    << " dist1: " << si_->distance(sg_->getState(vp), sg_->getState(v))
                                    << " dist2: " << si_->distance(sg_->getState(v), sg_->getState(qualifiedVertex)));
@@ -1195,7 +1195,7 @@ double SparseCriteria::maxSpannerPath(SparseVertex v, SparseVertex vp, SparseVer
     // Compare with previous max
     if (tempDist > maxDist)
     {
-      BOLT_DEBUG(indent + 4, vQualityMaxSpanner_, "Is larger than previous");
+      BOLT_DEBUG(indent, vQualityMaxSpanner_, "Is larger than previous");
       maxDist = tempDist;
     }
   }
@@ -1213,7 +1213,7 @@ bool SparseCriteria::distanceCheck(SparseVertex v, const base::State *q, SparseV
                          // representatives
 
   // Get the info for the current representative-neighbors pair
-  InterfaceData &iData = sg_->getInterfaceData(v, vp, vpp, indent + 4);
+  InterfaceData &iData = sg_->getInterfaceData(v, vp, vpp, indent);
 
   if (vp < vpp)  // FIRST points represent r (the interface discovered through
                  // sampling)

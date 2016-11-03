@@ -66,7 +66,7 @@ OMPL_CLASS_FORWARD(SparseGenerator);
 OMPL_CLASS_FORWARD(SparseCriteria);
 OMPL_CLASS_FORWARD(SparseMirror);
 OMPL_CLASS_FORWARD(TaskGraph);
-OMPL_CLASS_FORWARD(TaskCriteria);
+//OMPL_CLASS_FORWARD(TaskCriteria);
 /// @endcond
 
 /** \class BoltPtr
@@ -246,10 +246,10 @@ public:
     return sparseCriteria_;
   }
 
-  TaskCriteriaPtr getTaskCriteria()
-  {
-    return taskCriteria_;
-  }
+  // TaskCriteriaPtr getTaskCriteria()
+  // {
+  //   return taskCriteria_;
+  // }
 
   SparseMirrorPtr getSparseMirror()
   {
@@ -299,7 +299,7 @@ protected:
   TaskGraphPtr taskGraph_;
 
   /** \brief Various tests to determine if a vertex/edge should be added to the graph, based on SPARS */
-  TaskCriteriaPtr taskCriteria_;
+  //TaskCriteriaPtr taskCriteria_;
 
   /** \brief Accumulated experiences to be later added to experience database - ModelBasedStateSpace*/
   std::vector<geometric::PathGeometricPtr> queuedModelSolPaths_;

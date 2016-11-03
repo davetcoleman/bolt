@@ -130,6 +130,17 @@ public:
    * Setup and cleanup
    * --------------------------------------------------------------------------------- */
 
+  // /** \brief Give the task graph reference to the criteria, because sometimes it needs data from there */
+  // void setTaskCriteria(TaskCriteriaPtr taskCriteria)
+  // {
+  //   taskCriteria_ = taskCriteria;
+  // }
+
+  // TaskCriteriaPtr getTaskCriteria()
+  // {
+  //   return taskCriteria_;
+  // }
+
   /** \brief Retrieve the computed roadmap. */
   const TaskAdjList& getGraph() const
   {
@@ -273,9 +284,9 @@ public:
     g_[v].state_->as<base::DiscreteStateSpace::StateType>(DISCRETE)->value = level;
   }
 
-  inline void setStateTaskLevel(base::CompoundState* state, VertexLevel level)
+  inline void setStateTaskLevel(base::CompoundState* compoundState, VertexLevel level)
   {
-    state->as<base::DiscreteStateSpace::StateType>(DISCRETE)->value = level;
+    compoundState->as<base::DiscreteStateSpace::StateType>(DISCRETE)->value = level;
   }
 
   bool taskPlanningEnabled() const
@@ -414,6 +425,11 @@ public:
     // Disregard task level
     return compoundState->components[MODEL_BASED];
   }
+  inline base::State* getModelBasedStateNonConst(const base::CompoundState* compoundState) const
+  {
+    // Disregard task level
+    return compoundState->components[MODEL_BASED];
+  }
 
   /** \brief Convert a compound state to just the ModelBasedStateSpace component (joints) ignoring the discrete
    * component */
@@ -476,6 +492,9 @@ protected:
 
   /** \brief Class for managing various visualization features */
   VisualizerPtr visual_;
+
+  /** \brief Class for deciding which vertices and edges get added */
+  //TaskCriteriaPtr taskCriteria_;
 
   /** \brief Nearest neighbors data structure */
   std::shared_ptr<NearestNeighbors<TaskVertex> > nn_;

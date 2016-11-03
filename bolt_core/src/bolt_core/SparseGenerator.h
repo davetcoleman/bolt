@@ -79,7 +79,7 @@ public:
   bool setup(std::size_t indent);
 
   /** \brief Create a SPARS graph */
-  void createSPARS();
+  void createSPARS(std::size_t indent = 0);
 
   void copyPasteState(std::size_t numSets = 0);
   void dumpLog();
@@ -173,6 +173,10 @@ public:
 
   ExperiencePathStats addExperiencePath(geometric::PathGeometricPtr path, std::size_t indent);
 
+  /** \brief Improved version for sparse criteria */
+  void createSPARS2(std::size_t indent = 0);
+  bool addSampleSparseCriteria(base::State *candidateState, bool addEdges, std::size_t indent);
+
 protected:
   /** \brief Short name of this class */
   const std::string name_ = "SparseGenerator";
@@ -216,9 +220,15 @@ protected:
   std::size_t saveInterval_ = 10;
 
 public:
+
+  // Verbose levels
   bool verbose_ = false;
   bool vGuarantees_ = false;
   bool vFindGraphNeighbors_ = false;
+  bool vCriteria_ = false;
+
+  // Visualizations
+  bool visualizeSampling_ = false;
 
   /** \brief Number of failed state insertion attempts before stopping the algorithm */
   std::size_t terminateAfterFailures_ = 1000;

@@ -120,7 +120,10 @@ void Bolt::initialize(std::size_t indent)
   taskGraph_.reset(new TaskGraph(si_, compoundSI_, sparseGraph_));
 
   // Task Criteria
-  taskCriteria_.reset(new TaskCriteria(taskGraph_));
+  //taskCriteria_.reset(new TaskCriteria(taskGraph_));
+
+  // Give the task graph reference to the criteria, because sometimes it needs data from there
+  //taskGraph_->setTaskCriteria(taskCriteria_);
 
   // Load the Retrieve repair database. We do it here so that setRepairPlanner() works
   BOLT_INFO(indent, verbose_, "Loading BoltPlanner");
@@ -153,7 +156,7 @@ void Bolt::setup()
     sparseCriteria_->setup(indent);
     sparseGenerator_->setup(indent);
     taskGraph_->setup();
-    taskCriteria_->setup(indent);
+    //taskCriteria_->setup(indent);
     // Set the configured flag
     configured_ = true;
   }
@@ -176,7 +179,7 @@ void Bolt::clear()
   sparseGraph_->clear();
   taskGraph_->clear();
   sparseCriteria_->clear();
-  taskCriteria_->clear();
+  //taskCriteria_->clear();
   sparseGenerator_->clear();
   boltPlanner_->clear();
   pdef_->clearSolutionPaths();

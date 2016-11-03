@@ -182,7 +182,18 @@ public:
   void visualizeBadEdge(TaskVertex fromVertex, TaskVertex toVertex);
   void visualizeBadEdge(const base::State *from, const base::State *to);
 
+  /**
+   * \brief Add samples to the taskGraph if no solution is found because of obstacles
+   * \param near - ModelBasedStateSpace, or NULL if you don't want to sample near the start or goal
+   */
   void addSamples(const base::State *near, std::size_t indent);
+
+  /**
+   * \brief After a valid sample is found, determine if it should be added to the graph based on SPARS criteria
+   * \param state - ModelBasedStateSpace - a newly sampled joint state
+   * \param bool - return true if state was added to graph, false if memory can be re-used
+   */
+  bool addSampleSparseCriteria(base::CompoundState *compoundState, std::size_t indent);
 
   TaskGraphPtr getTaskGraph()
   {
@@ -275,6 +286,8 @@ public:
   bool vCollisionCheck_ = false;
   bool vSampling_ = true;
   bool vNearestNeighbor_ = false;
+  bool vCriteria_ = false;
+
   /** \brief Visualize original solution from graph before smoothing */
   bool visualizeRawTrajectory_ = true;
 

@@ -35,12 +35,15 @@
 /* Author: Dave Coleman */
 
 // OMPL
-#include <bolt_core/BoltPlanner.h>
 #include <ompl/base/PlannerStatus.h>
 #include <ompl/base/goals/GoalState.h>
 #include <ompl/base/goals/GoalSampleableRegion.h>
 #include <ompl/tools/config/SelfConfig.h>
 #include <ompl/util/Console.h>
+
+// Bolt
+#include <bolt_core/BoltPlanner.h>
+#include <bolt_core/SparseCriteria.h>
 
 // Boost
 #include <boost/thread.hpp>
@@ -367,24 +370,24 @@ bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
     BOLT_WARN(indent, true, "getPathOnGraph() Both a valid start and goal were found but still no path found.");
 
     // Re-attempt to connect both
-    // addSamples(taskGraph_->getModelBasedState(actualGoal), indent);
-    // addSamples(taskGraph_->getModelBasedState(actualStart), indent);
-    // addSamples(NULL, indent); // do general sampling
+    addSamples(taskGraph_->getModelBasedState(actualGoal), indent);
+    addSamples(taskGraph_->getModelBasedState(actualStart), indent);
+    addSamples(NULL, indent); // do general sampling
   }
   else if (foundValidStart && !foundValidGoal)
   {
     BOLT_WARN(indent, true, "getPathOnGraph() Unable to connect GOAL state to graph");
 
-    //addSamples(taskGraph_->getModelBasedState(actualGoal), indent);
+    addSamples(taskGraph_->getModelBasedState(actualGoal), indent);
   }
   else
   {
     BOLT_WARN(indent, true, "getPathOnGraph() Unable to connect START state to graph");
 
-    //addSamples(taskGraph_->getModelBasedState(actualStart), indent);
+    addSamples(taskGraph_->getModelBasedState(actualStart), indent);
   }
 
-  addSamples(NULL, indent); // do general sampling
+  //addSamples(NULL, indent); // do general sampling
 
   // Feedback on growth of graph
   BOLT_DEBUG(indent, true, "SparseGraph edges: " << taskGraph_->getSparseGraph()->getNumEdges() << " vertices: " << taskGraph_->getSparseGraph()->getNumVertices());
@@ -1021,103 +1024,219 @@ void BoltPlanner::addSamples(const base::State *near, std::size_t indent)
 
   sampler_->setNrAttempts(1000);
 
-  std::size_t numAttempts = 10;
+  base::CompoundState* compoundState;
+  bool usedState = true; // flag indicating whether memory needs to be allocated again for compoundState
+
+  std::size_t numAttempts = 1000;
+  // if (near)
+  //   numAttempts = 100; // use way less attempts when sampling near a state
+
   for (std::size_t i = 0; i < numAttempts; ++i)
   {
-    base::State *candidateState = modelSI_->getStateSpace()->allocState();
+    if (usedState)
+    {
+      compoundState = compoundSI_->allocState()->as<base::CompoundState>();
+      const VertexLevel level0 = 0;
+      taskGraph_->setStateTaskLevel(compoundState, level0);
+      usedState = false;
+    }
+    base::State *jointState = taskGraph_->getModelBasedStateNonConst(compoundState);
 
-    // 0.1 is magic num
-    const double magic_fraction = 0.05;  // TODO
+    //const double magic_fraction = 0.05;  // TODO
+    const double magic_fraction = 0.1;  // TODO
     double distance = i / double(numAttempts) * magic_fraction * taskGraph_->getSparseGraph()->getSparseDelta();
     //double fraction = std::max(0.5, i / double(numAttempts));
     //double distance = magic_fraction * taskGraph_->getSparseGraph()->getSparseDelta();
-    //std::cout << "distance: " << distance << std::endl;
 
     if (near)
     {
-      if (!sampler_->sampleNear(candidateState, near, distance))
+      if (!sampler_->sampleNear(jointState, near, distance))
         throw Exception(name_, "Unable to find valid sample near state");
     }
     else
     {
-      if (!sampler_->sample(candidateState))
+      if (!sampler_->sample(jointState))
         throw Exception(name_, "Unable to find valid sample");
     }
 
     // Visualize
     if (visualizeSampling_)
     {
-      visual_->viz6()->state(candidateState, tools::ROBOT, tools::DEFAULT, 1);
-      if (near)
-        visual_->viz6()->state(candidateState, tools::MEDIUM, tools::CYAN, 1);
-      else // sampling whole space
-        visual_->viz6()->state(candidateState, tools::MEDIUM, tools::BLUE, 1);
+      // visual_->viz6()->deleteAllMarkers();
+      visual_->viz6()->state(jointState, tools::ROBOT, tools::DEFAULT, 1);
+
+      // if (near)
+      //   visual_->viz6()->state(jointState, tools::MEDIUM, tools::CYAN, 1);
+      // else // sampling whole space
+      //visual_->viz6()->state(jointState, tools::SMALL, tools::BLUE, 1);
     }
 
-    // Add the vertex
-    VertexLevel level = 0;
-    TaskVertex v1 = taskGraph_->addVertexWithLevel(candidateState, level, indent);
-
-    base::CompoundState *compoundState1 = taskGraph_->getCompoundStateNonConst(v1);
-
-    // Add edges around vertex ----------------------------------------------------
-
-    // Get neighbors
-    std::size_t threadID = 0;
-
-    std::vector<TaskVertex> graphNeighborhood;
-    taskGraph_->getQueryStateNonConst(threadID) = compoundState1;
-    // taskGraph_->getNN()->nearestR(taskGraph_->getQueryVertices(threadID), distance, graphNeighborhood);
-    taskGraph_->getNN()->nearestK(taskGraph_->getQueryVertices(threadID), kNearestNeighbors_, graphNeighborhood);
-    taskGraph_->getQueryStateNonConst(threadID) = nullptr;
-
-    // if (visualizeSampling_)
-    //   visual_->viz6()->deleteAllMarkers(); // in preparation for many edges
-
-    // Now that we got the neighbors from the NN, we must remove any we can't see
-    std::size_t invalid = 0;
-    for (std::size_t i = 0; i < graphNeighborhood.size(); ++i)
-    {
-      const TaskVertex &v2 = graphNeighborhood[i];
-      base::CompoundState *compoundState2 = taskGraph_->getCompoundStateNonConst(v2);
-
-      // Don't collision check if they are the same state
-      if (compoundState1 == compoundState2)
-      {
-        // std::cout << "Skipping collision checking because same vertex " << std::endl;
-        continue;
-      }
-
-      // Collision check
-      if (true)  // let lazy checking work
-        if (!taskGraph_->checkMotion(compoundState1, compoundState2))
-        {
-          invalid++;
-          continue;
-        }
-
-      // The two are visible to each other, add edge
-      TaskEdge e = taskGraph_->addEdge(v1, v2, indent);
-
-      // Mark edge as free so we no longer need to check for collision
-      // taskGraph_->getGraphNonConst()[e].collision_state_ = FREE;
-
-      if (visualizeSampling_ && false)
-        visual_->viz6()->edge(taskGraph_->getModelBasedState(v2), candidateState, tools::XXSMALL, tools::ORANGE);
-    }  // for each neighbor
-
-    BOLT_INFO(indent, vSampling_, "Found sample " << i << " at distance " << distance << ", removed " << invalid
-                                              << " edges out of " << graphNeighborhood.size() << " neighbors");
+    // Add to TaskGraph if it obeys sparse properties
+    usedState = addSampleSparseCriteria(compoundState, indent);
 
     if (visualizeSampling_)
     {
       visual_->viz6()->trigger();
-      //visual_->prompt("next sample");
     }
 
     if (visual_->viz3()->shutdownRequested())
       break;
-  }  // for each sample
+
+  } // for each sample attempt
+
+  // free state if necessary
+  if (!usedState)
+    compoundSI_->freeState(compoundState);
+}
+
+bool BoltPlanner::addSampleSparseCriteria(base::CompoundState *compoundState, std::size_t indent)
+{
+  BOLT_FUNC(indent, vCriteria_, "addSampleSparseCriteria()");
+
+  // Calculate secondary sparse delta (smaller than normal sparse delta)
+  double maxExtent = modelSI_->getMaximumExtent();
+  //double sparseDelta = maxExtent * taskGraph_->getSparseGraph()->getSparseCriteria()->sparseDeltaFractionSecondary_;
+  double sparseDelta = taskGraph_->getSparseGraph()->getSparseCriteria()->getSparseDelta();
+
+  // Helper pointer
+  base::State *jointState = taskGraph_->getModelBasedStateNonConst(compoundState);
+
+  // Get neighbors of new state
+  std::size_t threadID = 0;
+  std::vector<TaskVertex> graphNeighborhood;
+  taskGraph_->getQueryStateNonConst(threadID) = compoundState;
+  taskGraph_->getNN()->nearestR(taskGraph_->getQueryVertices(threadID), sparseDelta, graphNeighborhood);
+  taskGraph_->getQueryStateNonConst(threadID) = nullptr;
+
+  if (visualizeSampling_)
+    visual_->viz6()->deleteAllMarkers(); // in preparation for many edges
+
+  // Find all visibile neighbors
+  std::vector<TaskVertex> visibleNeighborhood;
+  std::size_t count = 0;
+  for (const SparseVertex &v2 : graphNeighborhood)
+  {
+    count++;
+
+    // Stop-gap: assume after checking 100 nearest nodes that this state has no neighbors
+    // This saves a lot of computation at the expense of possibly adding too many coverage nodes
+    static const std::size_t MAX_NEIGHBOR_CHECK = 100;
+    if (count > MAX_NEIGHBOR_CHECK)
+      break;
+
+    // Visualize
+    if (visualizeSampling_)
+    {
+      visual_->viz6()->state(taskGraph_->getModelBasedState(v2), tools::MEDIUM, tools::ORANGE, 1);
+    }
+
+    if (!modelSI_->checkMotion(jointState, taskGraph_->getModelBasedState(v2)))
+    {
+      continue;
+    }
+
+    // Visualize
+    if (visualizeSampling_)
+    {
+      visual_->viz6()->edge(jointState, taskGraph_->getModelBasedState(v2), tools::MEDIUM, tools::PINK);
+    }
+
+    // The two are visible to each other!
+    visibleNeighborhood.push_back(v2);
+
+    // We only care about the first two visibile neighbors
+    if (visibleNeighborhood.size() == 2)
+    {
+      BOLT_DEBUG(indent, vCriteria_, "Collision checked: " << count << " motions of " << graphNeighborhood.size() << " nearby nodes");
+      break;
+    }
+
+    // Enforce that the two closest nodes must also be visible for an edge to be added
+    // But this only applies if at least oen visible neighbor has been found,
+    // otherwise we could be finding a coverage node
+    if (count > 1)
+      break;
+  }
+
+  // Criteria 1: add guard (no nearby visibile nodes
+  if (visibleNeighborhood.empty())
+  {
+    // No free paths means we add for coverage
+    BOLT_DEBUG(indent, vCriteria_ || true, "Adding node for COVERAGE ");
+    taskGraph_->addVertex(compoundState, indent);
+
+    if (visualizeSampling_ || true)
+    {
+      visual_->viz6()->state(jointState, tools::ROBOT, tools::GREEN, 1);
+      visual_->prompt("coverage");
+    }
+
+    return true;
+  }
+
+  // Criteria 2: determine if two closest visible nodes need connecting
+  if (visibleNeighborhood.size() == 1)
+  {
+    BOLT_DEBUG(indent, vCriteria_, "Not enough visibile neighbors (1)");
+    //visual_->prompt("not enough");
+    return false; // did not use memory of compoundState
+  }
+
+  const SparseVertex &v1 = visibleNeighborhood[0];
+  const SparseVertex &v2 = visibleNeighborhood[1];
+
+  // Ensure two closest neighbors don't share an edge
+  if (taskGraph_->hasEdge(v1, v2))
+  {
+    BOLT_DEBUG(indent, vCriteria_, "Two closest two neighbors already share an edge, not connecting them");
+
+    // Sampled state was not used - free it
+    //visual_->prompt("already share edge");
+    return false; // did not use memory of compoundState
+  }
+
+  // Don't add an interface edge if dist between the two verticies on graph are already the minimum in L1 space
+  // if (!taskGraph_->checkPathLength(v1, v2, indent))
+  // {
+  //   visual_->prompt("checkPathLenght");
+  //   return false; // did not use memory of compoundState
+  // }
+
+  // If they can be directly connected
+  if (modelSI_->checkMotion(taskGraph_->getModelBasedState(v1), taskGraph_->getModelBasedState(v2)))
+  {
+    BOLT_DEBUG(indent, vCriteria_ || true, "INTERFACE: directly connected nodes");
+
+    // Connect them
+    taskGraph_->addEdge(v1, v2, indent);
+
+    if (visualizeSampling_)
+    {
+      visual_->viz6()->edge(taskGraph_->getModelBasedState(v1), taskGraph_->getModelBasedState(v2), tools::MEDIUM, tools::LIME_GREEN);
+      visual_->viz6()->trigger();
+      //visual_->prompt("directly added edge");
+    }
+
+    return false; // did not use memory of compoundState
+  }
+
+  // They cannot be directly connected, so add the new node to the graph, to bridge the interface
+  BOLT_DEBUG(indent, vCriteria_ || true, "INTERFACE2: Added new NODE and surrounding edges");
+  TaskVertex newVertex = taskGraph_->addVertex(compoundState, indent);
+
+  taskGraph_->addEdge(newVertex, v1, indent);
+  taskGraph_->addEdge(newVertex, v2, indent);
+
+  if (visualizeSampling_)
+  {
+    visual_->viz6()->state(jointState, tools::MEDIUM, tools::YELLOW, 1);
+    visual_->viz6()->edge(jointState, taskGraph_->getModelBasedState(v1), tools::MEDIUM, tools::LIME_GREEN);
+    visual_->viz6()->edge(jointState, taskGraph_->getModelBasedState(v2), tools::MEDIUM, tools::LIME_GREEN);
+    visual_->viz6()->trigger();
+    //visual_->prompt("added node for interface");
+  }
+
+  return true;
 }
 
 void BoltPlanner::visualizeRaw(std::size_t indent)

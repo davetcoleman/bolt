@@ -379,7 +379,8 @@ void BoltBaxter::run(std::size_t indent)
     // Create SPARS
     if (create_spars_ && (!loaded || continue_spars_))
     {
-      bolt_->getSparseGenerator()->createSPARS();
+      //bolt_->getSparseGenerator()->createSPARS();
+      bolt_->getSparseGenerator()->createSPARS2();
       loaded = true;
     }
     if (!loaded)
