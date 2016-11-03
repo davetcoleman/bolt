@@ -40,8 +40,8 @@ bolt_baxter:
   connect_to_hardware: false
   velocity_scaling_factor: 1.0
 
-  # solver type
-  planner: bolt
+  # planner type
+  planners: [bolt, RRTConnect, LazyRRT, LazyPRM, SPARStwo]
   #planner: spars2
   #planner: RRTConnect
 

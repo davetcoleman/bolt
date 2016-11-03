@@ -201,7 +201,7 @@ void SparseStorage::saveEdges(boost::archive::binary_oarchive &oa)
 bool SparseStorage::load(const std::string &filePath, std::size_t indent)
 {
   BOLT_INFO(true, "------------------------------------------------");
-  BOLT_INFO(true, "SparseStorage: Loading Sparse Graph");
+  BOLT_INFO(true, "Loading Sparse Graph");
   indent += 2;
   BOLT_INFO(true, "Path: " << filePath.c_str());
 

@@ -1496,3 +1496,6 @@ void otb::TaskAstarVisitor::examine_vertex(TaskVertex v, const TaskAdjList &) co
   if (v == goal_)
     throw FoundGoalException();
 }
+
+// TODO: whenever an edge is relaxed, add it to a list that a separate thread collision checks
+// vis.edge_relaxed(e, g) is invoked on edge (u,v) if d[u] + w(u,v) < d[v].

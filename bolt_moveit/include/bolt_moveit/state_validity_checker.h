@@ -48,6 +48,8 @@ namespace bolt_moveit
 {
 class ModelBasedPlanningContext;
 
+MOVEIT_CLASS_FORWARD(StateValidityChecker);
+
 /** @class StateValidityChecker
     @brief An interface for a OMPL state validity checker*/
 class StateValidityChecker : public ompl::base::StateValidityChecker

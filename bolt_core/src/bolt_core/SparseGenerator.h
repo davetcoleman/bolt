@@ -220,7 +220,7 @@ protected:
   std::size_t saveInterval_ = 10;
 
   // For SPARS2 generator
-  double max_dist_ = 0; // temporary variable TODO remove
+  //double max_dist_ = 0; // temporary variable TODO remove
 
 public:
 

@@ -77,8 +77,11 @@ public:
   /** \brief Destructor */
   ~BoltBaxter();
 
+  /** \brief Clear previous planner stuff */
+  void reset();
+
   /** \brief Load the basic planning context components */
-  bool loadOMPL();
+  bool loadOMPL(std::size_t indent);
 
   /** \brief Generate states for testing */
   void testConnectionToGraphOfRandStates();
@@ -86,6 +89,8 @@ public:
   void loadCollisionChecker();
 
   bool loadData(std::size_t indent);
+
+  void eachPlanner(std::size_t indent);
 
   void run(std::size_t indent);
 
@@ -97,7 +102,7 @@ public:
   bool generateCartGraph();
 
   bool checkOMPLPathSolution(og::PathGeometric& path);
-  bool checkMoveItPathSolution(robot_trajectory::RobotTrajectoryPtr traj);
+  bool checkMoveItPathSolution(robot_trajectory::RobotTrajectoryPtr traj, std::size_t indent);
 
   bool getRandomState(moveit::core::RobotStatePtr& robot_state);
 
@@ -213,7 +218,8 @@ public:
   int post_processing_interval_;
 
   // Type of planner
-  std::string planner_;
+  std::vector<std::string> planners_;
+  std::string planner_; // the current planner being run
   bool is_bolt_ = false;
   bool is_thunder_ = false;
   bool is_simple_setup_ = false;
@@ -271,7 +277,7 @@ public:
   moveit_visual_tools::IMarkerRobotStatePtr imarker_goal_;
 
   // Validity checker
-  bolt_moveit::StateValidityChecker* validity_checker_;
+  bolt_moveit::StateValidityCheckerPtr validity_checker_;
 
   // Scene vars
   std::size_t scene_type_;
