@@ -1261,9 +1261,9 @@ void BoltPlanner::visualizeSmoothed(std::size_t indent)
   {
     geometric::PathGeometricPtr modelSolutionSegment = smoothedModelSolSegments_[i];
     if (i == 1)
-      visual_->viz6()->path(modelSolutionSegment.get(), tools::LARGE, tools::BLACK, tools::PURPLE);
+      visual_->viz6()->path(modelSolutionSegment.get(), tools::MEDIUM, tools::BLACK, tools::PURPLE);
     else
-      visual_->viz6()->path(modelSolutionSegment.get(), tools::LARGE, tools::BLACK, tools::BLUE);
+      visual_->viz6()->path(modelSolutionSegment.get(), tools::MEDIUM, tools::BLACK, tools::BLUE);
   }
   visual_->viz6()->trigger();
 

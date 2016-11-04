@@ -333,11 +333,14 @@ void BoltBaxter::eachPlanner(std::size_t indent)
     run(indent);
     // --------------------------------------
 
+    // Wait for user
+    if (i < planner_.size() - 2)
+    {
+      BOLT_INFO(true, "Next planner " << planners_[i+1]);
+      visual_->prompt("Next planner"); // Must do this before calling reset()
+    }
     // Clear previous planner
     reset();
-
-    if (i < planner_.size() - 2)
-      visual_->prompt("Next planner");
   }
 }
 
@@ -679,6 +682,10 @@ bool BoltBaxter::plan(std::size_t indent)
   if (!is_bolt_)
   {
     simple_setup_->simplifySolution();
+  }
+  else
+  {
+    bolt_->processResults(indent);
   }
 
   // Interpolate and parameterize
@@ -1482,12 +1489,10 @@ robot_trajectory::RobotTrajectoryPtr BoltBaxter::processSimpleSolution(std::size
 
   last_plan_path_length_ = path.length();
 
-  visual_->prompt("before vi6");
   // Have additional visualizations that mimmic those in BoltPlanner
   visual_->viz6()->deleteAllMarkers();
   visual_->viz6()->path(&path, ot::MEDIUM, ot::BLACK, ot::BLUE);
   visual_->viz6()->trigger();
-  visual_->prompt("after before vi6");
 
   // Convert trajectory from OMPL to MoveIt! format
   robot_trajectory::RobotTrajectoryPtr trajectory;

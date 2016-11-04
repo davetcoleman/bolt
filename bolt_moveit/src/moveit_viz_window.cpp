@@ -221,16 +221,16 @@ void MoveItVizWindow::path(ompl::geometric::PathGeometric* path, ompl::tools::Vi
   switch (type)
   {
     case ompl::tools::SMALL:  // Basic line with vertiices
-      publish3DPath(geometric_path, visuals_->intToRvizColor(edgeColor), min_edge_radius_);
+      publish3DPath(geometric_path, visuals_->intToRvizColor(edgeColor), rvt::XSMALL);
       publishSpheres(geometric_path, visuals_->intToRvizColor(vertexColor), rvt::SMALL);
       break;
     case ompl::tools::MEDIUM:  // Basic line with vertiices
-      publish3DPath(geometric_path, visuals_->intToRvizColor(edgeColor), (max_edge_radius_ - min_edge_radius_) / 2.0);
-      publishSpheres(geometric_path, visuals_->intToRvizColor(vertexColor), rvt::SMALL);
+      publish3DPath(geometric_path, visuals_->intToRvizColor(edgeColor), rvt::SMALL);
+      publishSpheres(geometric_path, visuals_->intToRvizColor(vertexColor), rvt::MEDIUM);
       break;
     case ompl::tools::LARGE:  // Basic line with vertiices
-      publish3DPath(geometric_path, visuals_->intToRvizColor(edgeColor), max_edge_radius_);
-      publishSpheres(geometric_path, visuals_->intToRvizColor(vertexColor), rvt::SMALL);
+      publish3DPath(geometric_path, visuals_->intToRvizColor(edgeColor), rvt::MEDIUM);
+      publishSpheres(geometric_path, visuals_->intToRvizColor(vertexColor), rvt::LARGE);
       break;
     case ompl::tools::ROBOT:  // Playback motion for real robot
       // Check that jmg_ was set
@@ -330,7 +330,7 @@ void MoveItVizWindow::publishTrajectoryPath(const og::PathGeometric& path, const
   visuals_->publishTrajectoryPath(*traj, blocking);
 }
 
-void MoveItVizWindow::publish3DPath(const og::PathGeometric& path, const rvt::colors& color, const double thickness,
+void MoveItVizWindow::publish3DPath(const og::PathGeometric& path, const rvt::colors& color, const rvt::scales& scale,
                                     const std::string& ns)
 {
   // Error check
@@ -352,7 +352,7 @@ void MoveItVizWindow::publish3DPath(const og::PathGeometric& path, const rvt::co
       // Get current coordinates
       this_vertex = stateToPoint(path.getState(i), link);
       // Create line
-      visuals_->publishCylinder(prev_vertex, this_vertex, color, thickness, ns);
+      visuals_->publishCylinder(prev_vertex, this_vertex, color, scale, ns);
 
       // Save these coordinates for next line
       prev_vertex = this_vertex;

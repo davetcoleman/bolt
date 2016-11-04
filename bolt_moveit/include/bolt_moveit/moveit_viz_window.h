@@ -153,11 +153,7 @@ public:
    * \brief Display result path from a solver
    * \return true on success
    */
-  // RVIZ_VISUAL_TOOLS_DEPRECATED
-  // void publishPath(const og::PathGeometric& path, const rviz_visual_tools::colors& color, const double thickness =
-  // 0.4,
-  //                  const std::string& ns = "result_path");
-  void publish3DPath(const og::PathGeometric& path, const rvt::colors& color, const double thickness = 0.4,
+  void publish3DPath(const og::PathGeometric& path, const rvt::colors& color, const rvt::scales& scale,
                      const std::string& ns = "result_path");
 
   /**
