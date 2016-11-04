@@ -13,7 +13,7 @@ bolt_baxter:
   # create sparse graph
   load_spars: true
   create_spars: true
-  continue_spars: true # even if a file has been saved, randomly sample for more coverage
+  continue_spars: false # even if a file has been saved, randomly sample for more coverage
   sweep_spars_maps: true
   sweep_map_start: 1 # Base 1, not 0
   sweep_map_end: 1 # Base 1, not 0
@@ -26,11 +26,11 @@ bolt_baxter:
   # run type
   run_problems: true # do plans?
   headless: false
-  num_problems: 20
+  num_problems: 1
   problem_type: 2 # 0 - random, 1 - imarkers, 2 - imarker goal list
-  #imarker_goal_list: easy1.moveit
+  imarker_goal_list: easy1.moveit
   #imarker_goal_list: hard1.moveit
-  imarker_goal_list: very_hard1.moveit
+  #imarker_goal_list: very_hard1.moveit
 
   # scene
   scene_type: 1 # 0 - office, 1 - amazon
@@ -53,7 +53,7 @@ bolt_baxter:
 
   # other
   use_task_planning: false  # cartesian hybrid planning
-  post_processing: true
+  post_processing: false
   post_processing_interval: 1 # how often (in runs) to adjust the graphs
   seed_random: true
   use_logging: true # write to file log info
@@ -126,7 +126,7 @@ sparse_criteria:
 
 # ====================================================
 sparse_graph:
-  save_enabled: true
+  save_enabled: false
   super_debug: false # run more checks and tests that slow down speed
   obstacle_clearance: 0.0 #0.0035 # max before gripper piece is in collision
   verbose:

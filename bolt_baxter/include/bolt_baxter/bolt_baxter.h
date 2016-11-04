@@ -109,7 +109,7 @@ public:
   /**
    * \brief Clear all markers displayed in Rviz
    */
-  void deleteAllMarkers(bool clearDatabase = true);
+  void deleteAllMarkers();
 
   void loadVisualTools();
   void loadOMPLVisualTools();
@@ -149,6 +149,8 @@ public:
   robot_trajectory::RobotTrajectoryPtr processSegments(std::size_t indent);
 
   void chooseStartGoal(std::size_t run_id, std::size_t indent);
+
+  void displayDisjointSets(std::size_t indent);
 
   // --------------------------------------------------------
 
@@ -287,8 +289,8 @@ public:
 };  // end class
 
 // Create boost pointers for this class
-typedef boost::shared_ptr<BoltBaxter> BoltBaxterPtr;
-typedef boost::shared_ptr<const BoltBaxter> BoltBaxterConstPtr;
+typedef std::shared_ptr<BoltBaxter> BoltBaxterPtr;
+typedef std::shared_ptr<const BoltBaxter> BoltBaxterConstPtr;
 
 }  // namespace bolt_baxter
 

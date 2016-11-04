@@ -243,7 +243,7 @@ bool SparseCriteria::checkAddConnectivity(SparseCandidateData &candidateD, std::
     for (const SparseVertex &v2 : candidateD.visibleNeighborhood_)
     {
       // If they are in different components
-      if (!sg_->sameComponent(v1, v2))
+      if (!sg_->sameComponent(v1, v2, indent))
       {
         BOLT_DEBUG(vCriteria_, "Different connected component: " << v1 << ", " << v2);
 
@@ -327,7 +327,7 @@ bool SparseCriteria::checkAddConnectivity(SparseCandidateData &candidateD, std::
 
     // The components haven't been united by previous edges created in this for
     // loop
-    if (!sg_->sameComponent(*vertexIt, candidateD.newVertex_))
+    if (!sg_->sameComponent(*vertexIt, candidateD.newVertex_, indent))
     {
       // Connect
       sg_->addEdge(candidateD.newVertex_, *vertexIt, eCONNECTIVITY, indent);

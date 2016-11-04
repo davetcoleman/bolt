@@ -423,8 +423,8 @@ public:
       ROS_INFO_STREAM_NAMED(name_, "Displaying disjoint sets ----------- ");
       otb::SparseDisjointSetsMap disjointSets;
       bolt_->getSparseGraph()->getDisjointSets(disjointSets, indent);
-      bolt_->getSparseGraph()->printDisjointSets(disjointSets);
-      bolt_->getSparseGraph()->visualizeDisjointSets(disjointSets);
+      bolt_->getSparseGraph()->printDisjointSets(disjointSets, indent);
+      bolt_->getSparseGraph()->visualizeDisjointSets(disjointSets, indent);
     }
 
     // Remove verticies that are somehow in collision

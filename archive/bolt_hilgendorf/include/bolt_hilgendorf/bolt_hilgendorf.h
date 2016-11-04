@@ -220,8 +220,8 @@ public:
 };  // end class
 
 // Create boost pointers for this class
-typedef boost::shared_ptr<BoltHilgendorf> BoltHilgendorfPtr;
-typedef boost::shared_ptr<const BoltHilgendorf> BoltHilgendorfConstPtr;
+typedef std::shared_ptr<BoltHilgendorf> BoltHilgendorfPtr;
+typedef std::shared_ptr<const BoltHilgendorf> BoltHilgendorfConstPtr;
 
 }  // namespace bolt_hilgendorf
 

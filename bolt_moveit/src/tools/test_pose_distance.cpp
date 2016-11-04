@@ -159,8 +159,8 @@ private:
 };  // end class
 
 // Create boost pointers for this class
-typedef boost::shared_ptr<TestPoseDistance> TestPoseDistancePtr;
-typedef boost::shared_ptr<const TestPoseDistance> TestPoseDistanceConstPtr;
+typedef std::shared_ptr<TestPoseDistance> TestPoseDistancePtr;
+typedef std::shared_ptr<const TestPoseDistance> TestPoseDistanceConstPtr;
 
 }  // namespace bolt_moveit
 #endif  // BOLT_MOVEIT_TEST_POSE_DISTANCE_H

@@ -126,7 +126,7 @@ protected:
   std::string planning_scene_topic_;
 
   // Transform
-  boost::shared_ptr<tf::TransformListener> tf_;
+  std::shared_ptr<tf::TransformListener> tf_;
 
   // Core MoveIt components
   robot_model_loader::RobotModelLoaderPtr robot_model_loader_;

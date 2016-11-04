@@ -84,8 +84,8 @@ private:
 };  // end class
 
 // Create boost pointers for this class
-typedef boost::shared_ptr<CLASS_NAME> CLASS_NAMEPtr;
-typedef boost::shared_ptr<const CLASS_NAME> CLASS_NAMEConstPtr;
+typedef std::shared_ptr<CLASS_NAME> CLASS_NAMEPtr;
+typedef std::shared_ptr<const CLASS_NAME> CLASS_NAMEConstPtr;
 
 }  // namespace PACKAGE_NAME
 #endif  // PACKAGE_NAME_SHORT_NAME_H

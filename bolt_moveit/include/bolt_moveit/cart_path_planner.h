@@ -203,8 +203,8 @@ private:
 };  // end class
 
 // Create boost pointers for this class
-typedef boost::shared_ptr<CartPathPlanner> CartPathPlannerPtr;
-typedef boost::shared_ptr<const CartPathPlanner> CartPathPlannerConstPtr;
+typedef std::shared_ptr<CartPathPlanner> CartPathPlannerPtr;
+typedef std::shared_ptr<const CartPathPlanner> CartPathPlannerConstPtr;
 
 }  // namespace bolt_moveit
 

@@ -163,6 +163,7 @@ void MoveItVizWindow::states(std::vector<const ob::State*> states, std::vector<o
   visuals_->publishSpheres(std::move(sphere_points), std::move(sphere_colors), visuals_->intToRvizScale(size));
 }
 
+MOVEIT_DEPRECATED
 void MoveItVizWindow::edge(const ob::State* stateA, const ob::State* stateB, double cost)
 {
   // Error check

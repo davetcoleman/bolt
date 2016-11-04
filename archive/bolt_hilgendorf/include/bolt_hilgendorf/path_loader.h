@@ -159,8 +159,8 @@ private:
 };  // end class
 
 // Create boost pointers for this class
-typedef boost::shared_ptr<PathLoader> PathLoaderPtr;
-typedef boost::shared_ptr<const PathLoader> PathLoaderConstPtr;
+typedef std::shared_ptr<PathLoader> PathLoaderPtr;
+typedef std::shared_ptr<const PathLoader> PathLoaderConstPtr;
 
 }  // namespace bolt_hilgendorf
 #endif  // BOLT_HILGENDORF_PATH_LOADER_H

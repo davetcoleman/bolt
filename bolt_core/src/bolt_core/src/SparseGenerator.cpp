@@ -160,7 +160,7 @@ void SparseGenerator::createSPARS(std::size_t indent)
   double duration = time::seconds(time::now() - timeDiscretizeAndRandomStarted_);
 
   // Check how many connected components exist
-  std::size_t numSets = sg_->getDisjointSetsCount();
+  std::size_t numSets = sg_->getDisjointSetsCount(indent);
 
   // Find min, max, and average edge length
   double totalEdgeLength = 0;
@@ -1239,7 +1239,7 @@ void SparseGenerator::createSPARS2(std::size_t indent)
       }
 
       // User feedback
-      std::size_t numSets = sg_->getDisjointSetsCount();
+      std::size_t numSets = sg_->getDisjointSetsCount(indent);
       BOLT_INFO(true, "V: " << sg_->getNumVertices() << " E: " << sg_->getNumEdges() << " attempts: " << attempts
                             << " nodeAdditionRate: " << nodeAdditionRate << " DisjointSets: " << numSets);
 

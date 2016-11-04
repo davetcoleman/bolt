@@ -87,7 +87,7 @@ SparseGraph::SparseGraph(base::SpaceInformationPtr si, VisualizerPtr visual)
   numThreads_ = boost::thread::hardware_concurrency();
 
   // Add search state
-  initializeQueryState();
+  initializeQueryStates();
 
   // Saving and loading from file
   sparseStorage_.reset(new SparseStorage(si_, this));
@@ -120,12 +120,14 @@ SparseGraph::~SparseGraph()
 
 void SparseGraph::clear()
 {
+  std::size_t indent = 0;
+
   freeMemory();
   clearStatistics();
-  resetDisjointSets();
+  resetDisjointSets(indent);
 
   // Add search states back
-  initializeQueryState();
+  initializeQueryStates();
 }
 
 void SparseGraph::freeMemory()
@@ -174,7 +176,7 @@ void SparseGraph::clearStatistics()
   numNodesClosed_ = 0;
 }
 
-void SparseGraph::initializeQueryState()
+void SparseGraph::initializeQueryStates()
 {
   if (boost::num_vertices(g_) > 0)
   {
@@ -213,7 +215,7 @@ bool SparseGraph::load(std::size_t indent)
     BOLT_WARN(true, "SparseGraph loaded with 0 edges");
 
   // Show more data
-  printGraphStats();
+  printGraphStats(indent);
 
   // Nothing to save because was just loaded from file
   hasUnsavedChanges_ = false;
@@ -252,7 +254,7 @@ SparseStorage::GraphSizeChange SparseGraph::save(std::size_t indent)
   // Disabled
   if (!savingEnabled_)
   {
-    OMPL_INFORM("Saving is disabled");
+    BOLT_INFO(true, "Saving is disabled");
     result.success_ = false;
     return result;
   }
@@ -599,7 +601,7 @@ void SparseGraph::errorCheckDuplicateStates(std::size_t indent)
   //   throw Exception(name_, "Duplicate state found");
 }
 
-std::size_t SparseGraph::getDisjointSetsCount(bool verbose) const
+std::size_t SparseGraph::getDisjointSetsCount(std::size_t indent) const
 {
   std::size_t numSets = 0;
   foreach (SparseVertex v, boost::vertices(g_))
@@ -610,8 +612,6 @@ std::size_t SparseGraph::getDisjointSetsCount(bool verbose) const
 
     if (boost::get(boost::get(&SparseVertexStruct::vertex_predecessor_, g_), v) == v)
     {
-      if (verbose)
-        OMPL_INFORM("Disjoint set: %u", v);
       ++numSets;
     }
   }
@@ -636,14 +636,16 @@ void SparseGraph::getDisjointSets(SparseDisjointSetsMap &disjointSets, std::size
   boost::graph_traits<SparseAdjList>::vertex_iterator v = boost::vertices(g_).first + getNumQueryVertices();
   for (; v != boost::vertices(g_).second; ++v)
   {
+    if (*v <= queryVertices_.back())  // Ignore query vertices
+      continue;
+
     disjointSets[boost::get(boost::get(&SparseVertexStruct::vertex_predecessor_, g_), *v)].push_back(*v);
   }
 }
 
-void SparseGraph::printDisjointSets(SparseDisjointSetsMap &disjointSets)
+void SparseGraph::printDisjointSets(SparseDisjointSetsMap &disjointSets, std::size_t indent)
 {
-  std::size_t indent = 0;
-  OMPL_INFORM("Print disjoint sets");
+  BOLT_INFO(true, "Print disjoint sets");
 
   if (!sparseCriteria_->useConnectivityCriteria_)
   {
@@ -660,10 +662,9 @@ void SparseGraph::printDisjointSets(SparseDisjointSetsMap &disjointSets)
   }
 }
 
-void SparseGraph::visualizeDisjointSets(SparseDisjointSetsMap &disjointSets)
+void SparseGraph::visualizeDisjointSets(SparseDisjointSetsMap &disjointSets, std::size_t indent)
 {
-  std::size_t indent = 0;
-  OMPL_INFORM("Visualizing disjoint sets");
+  BOLT_INFO(true, "Visualizing disjoint sets");
 
   if (!sparseCriteria_->useConnectivityCriteria_)
   {
@@ -686,13 +687,16 @@ void SparseGraph::visualizeDisjointSets(SparseDisjointSetsMap &disjointSets)
       maxDisjointSetParent = v;
     }
   }
-  OMPL_INFORM("The largest disjoint set is of size %u with root vertex %u (not visualizing)", maxDisjointSetSize,
-              maxDisjointSetParent);
+  BOLT_INFO(true, "The largest disjoint set is of size " << maxDisjointSetSize << " with root vertex " <<
+            maxDisjointSetParent << " (not visualizing)");
 
   // Display size of disjoint sets and visualize small ones
   for (SparseDisjointSetsMap::const_iterator iterator = disjointSets.begin(); iterator != disjointSets.end();
        iterator++)
   {
+    if (visual_->viz1()->shutdownRequested())
+      break;
+
     const SparseVertex v1 = iterator->first;
     const std::size_t freq = iterator->second.size();
 
@@ -701,75 +705,83 @@ void SparseGraph::visualizeDisjointSets(SparseDisjointSetsMap &disjointSets)
     if (freq == maxDisjointSetSize)  // any subgraph that is smaller than the full graph
       continue;                      // the main disjoint set is not considered a disjoint set
 
-    BOLT_INFO(true, "Showing disjoint set of size " << freq);
+    BOLT_INFO(true, "Showing disjoint set of size " << freq << " rooted at v1=" << v1);
 
     // Visualize sets of size one
     if (freq == 1)
     {
-      visual_->viz4()->deleteAllMarkers();
-      visual_->viz4()->state(getState(v1), tools::LARGE, tools::RED, 0);
-      visual_->viz4()->state(getState(v1), tools::ROBOT, tools::DEFAULT, 0);
-      visual_->viz4()->trigger();
+      visual_->viz6()->deleteAllMarkers();
+      visual_->viz6()->state(getState(v1), tools::LARGE, tools::RED, 0);
+      visual_->viz6()->state(getState(v1), tools::ROBOT, tools::DEFAULT, 0);
+      visual_->viz6()->trigger();
       visual_->prompt("showing disjoint set");
+
       continue;
     }
 
     // Visualize large disjoint sets (greater than one)
-    if (freq > 1 && freq < 1000)
+    if (freq > 1000)
+    {
+      BOLT_WARN(true, "Skipping visualizing disjoint set of size " << freq);
+    }
+    else if (freq > 1)
     {
       // Clear markers
-      visual_->viz4()->deleteAllMarkers();
+      visual_->viz6()->deleteAllMarkers();
 
       // Visualize this subgraph that is disconnected
       // Loop through every every vertex and check if its part of this group
       typedef boost::graph_traits<SparseAdjList>::vertex_iterator VertexIterator;
       for (VertexIterator v2 = boost::vertices(g_).first; v2 != boost::vertices(g_).second; ++v2)
       {
+        if (*v2 <= queryVertices_.back())  // Ignore query vertices
+          continue;
+
         if (boost::get(boost::get(&SparseVertexStruct::vertex_predecessor_, g_), *v2) == v1)
         {
-          visual_->viz4()->state(getState(*v2), tools::LARGE, tools::RED, 0);
+          visual_->viz6()->state(getState(*v2), tools::LARGE, tools::RED, 0);
 
           // Show state's edges
           foreach (SparseEdge edge, boost::out_edges(*v2, g_))
           {
             SparseVertex e_v1 = boost::source(edge, g_);
             SparseVertex e_v2 = boost::target(edge, g_);
-            visual_->viz4()->edge(getState(e_v1), getState(e_v2), g_[edge].weight_);
+            visual_->viz6()->edge(getState(e_v1), getState(e_v2), tools::MEDIUM, tools::BLUE);
           }
-          visual_->viz4()->trigger(/*every*/ 50);
+          visual_->viz6()->trigger(/*every*/ 50);
 
           // Show this robot state
-          visual_->viz4()->state(getState(*v2), tools::ROBOT, tools::DEFAULT, 0);
-          visual_->viz4()->state(getState(*v2), tools::SMALL, tools::RED, 0);
+          visual_->viz6()->state(getState(*v2), tools::ROBOT, tools::DEFAULT, 0);
+          visual_->viz6()->state(getState(*v2), tools::SMALL, tools::RED, 0);
 
           usleep(0.001 * 1000000);
         }  // if
       }    // for
-      visual_->viz4()->trigger();
+      visual_->viz6()->trigger();
       visual_->prompt("showing large disjoint set");
+
     }  // if
   }
 }
 
-std::size_t SparseGraph::checkConnectedComponents()
+std::size_t SparseGraph::checkConnectedComponents(std::size_t indent)
 {
   // Check how many disjoint sets are in the sparse graph (should be none)
-  std::size_t numSets = getDisjointSetsCount();
+  std::size_t numSets = getDisjointSetsCount(indent);
   if (numSets > 1)
   {
-    std::size_t indent = 0;
     BOLT_WARN(true, "More than 1 connected component is in the sparse graph: " << numSets);
   }
 
   return numSets;
 }
 
-bool SparseGraph::sameComponent(SparseVertex v1, SparseVertex v2)
+bool SparseGraph::sameComponent(SparseVertex v1, SparseVertex v2, std::size_t indent)
 {
   return boost::same_component(v1, v2, disjointSets_);
 }
 
-void SparseGraph::resetDisjointSets()
+void SparseGraph::resetDisjointSets(std::size_t indent)
 {
   disjointSets_ = SparseDisjointSetType(boost::get(&SparseVertexStruct::vertex_rank_, g_),
                                         boost::get(&SparseVertexStruct::vertex_predecessor_, g_));
@@ -949,7 +961,7 @@ void SparseGraph::removeDeletedVertices(std::size_t indent)
 
   // Reset disjoint sets
   if (sparseCriteria_ && sparseCriteria_->useConnectivityCriteria_)
-    resetDisjointSets();
+    resetDisjointSets(indent);
 
   // Reinsert vertices into nearest neighbor
   foreach (SparseVertex v, boost::vertices(g_))
@@ -1089,13 +1101,13 @@ SparseVertex SparseGraph::getQueryVertices(std::size_t threadID)
 /** \brief Shortcut function for getting the state of a vertex */
 base::State *&SparseGraph::getStateNonConst(SparseVertex v)
 {
-  BOLT_ASSERT(v >= queryVertices_.size(), "Attempted to request state of query vertex using wrong function");
+  BOLT_ASSERT(v >= queryVertices_.size(), "Attempted to request state of query vertex using wrong function, v= " << v);
   return g_[v].state_;
 }
 
 const base::State *SparseGraph::getState(SparseVertex v) const
 {
-  BOLT_ASSERT(v >= queryVertices_.size(), "Attempted to request state of query vertex using wrong function");
+  BOLT_ASSERT(v >= queryVertices_.size(), "Attempted to request state of query vertex using wrong function, v= " << v);
   return g_[v].state_;
 }
 
@@ -1371,13 +1383,13 @@ void SparseGraph::debugNN()
   std::cout << std::endl;
 }
 
-void SparseGraph::printGraphStats()
+void SparseGraph::printGraphStats(std::size_t indent)
 {
   // Get the average vertex degree (number of connected edges)
   double averageDegree = (getNumEdges() * 2) / static_cast<double>(getNumRealVertices());
 
   // Check how many disjoint sets are in the sparse graph (should be none)
-  std::size_t numSets = checkConnectedComponents();
+  std::size_t numSets = checkConnectedComponents(indent);
 
   // Find min, max, and average edge length
   double totalEdgeLength = 0;
@@ -1394,7 +1406,6 @@ void SparseGraph::printGraphStats()
   }
   double averageEdgeLength = getNumEdges() ? totalEdgeLength / getNumEdges() : 0;
 
-  std::size_t indent = 0;
   BOLT_INFO(1, "------------------------------------------------------");
   BOLT_INFO(1, "SparseGraph stats:");
   BOLT_INFO(1, "   Total vertices:         " << getNumRealVertices());

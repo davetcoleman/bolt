@@ -193,7 +193,7 @@ public:
    * --------------------------------------------------------------------------------- */
 
   /** \brief Check that the query vertex is initialized (used for internal nearest neighbor searches) */
-  void initializeQueryState();
+  void initializeQueryStates();
 
   /** \brief Set the file path to load/save to/from */
   void setFilePath(const std::string& filePath)
@@ -311,7 +311,7 @@ public:
    * --------------------------------------------------------------------------------- */
 
   /** \brief Clear all past edge state information about in collision or not */
-  void clearEdgeCollisionStates();
+  void clearEdgeCollisionStates(std::size_t indent);
 
   /** \brief Part of super debugging */
   void errorCheckDuplicateStates(std::size_t indent);
@@ -321,13 +321,13 @@ public:
    * --------------------------------------------------------------------------------- */
 
   /** \brief Disjoint sets analysis tools */
-  std::size_t getDisjointSetsCount(bool verbose = false) const;
+  std::size_t getDisjointSetsCount(std::size_t indent) const;
   void getDisjointSets(SparseDisjointSetsMap& disjointSets, std::size_t indent);
-  void printDisjointSets(SparseDisjointSetsMap& disjointSets);
-  void visualizeDisjointSets(SparseDisjointSetsMap& disjointSets);
-  std::size_t checkConnectedComponents();
-  bool sameComponent(SparseVertex v1, SparseVertex v2);
-  void resetDisjointSets();
+  void printDisjointSets(SparseDisjointSetsMap& disjointSets, std::size_t indent);
+  void visualizeDisjointSets(SparseDisjointSetsMap& disjointSets, std::size_t indent);
+  std::size_t checkConnectedComponents(std::size_t indent);
+  bool sameComponent(SparseVertex v1, SparseVertex v2, std::size_t indent);
+  void resetDisjointSets(std::size_t indent);
 
   /* ---------------------------------------------------------------------------------
    * Add/remove vertices, edges, states
@@ -434,7 +434,7 @@ public:
   void debugNN();
 
   /** \brief Information about the loaded graph */
-  void printGraphStats();
+  void printGraphStats(std::size_t indent);
 
   /** \brief Verify graph is not in collision */
   bool verifyGraph(std::size_t indent);

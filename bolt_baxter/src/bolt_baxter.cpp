@@ -81,9 +81,7 @@ namespace rvt = rviz_visual_tools;
 namespace bolt_baxter
 {
 BoltBaxter::BoltBaxter(const std::string &hostname, const std::string &package_path)
-  : MoveItBase()
-  , nh_("~")
-  , package_path_(package_path)
+  : MoveItBase(), nh_("~"), package_path_(package_path)
 {
   std::size_t indent = 0;
 
@@ -179,11 +177,11 @@ BoltBaxter::BoltBaxter(const std::string &hostname, const std::string &package_p
   robot_model_->getJointModel("right_w2")->setDistanceFactor(0.0);
 
   // Load more robot states
-  moveit_start_.reset(new moveit::core::RobotState(*current_state_));
-  moveit_goal_.reset(new moveit::core::RobotState(*current_state_));
+  moveit_start_ = std::make_shared<moveit::core::RobotState>(*current_state_);
+  moveit_goal_ = std::make_shared<moveit::core::RobotState>(*current_state_);
 
   // State for copying one arm to another (mirroring)
-  mirror_state_.reset(new moveit::core::RobotState(*current_state_));
+  mirror_state_ = std::make_shared<moveit::core::RobotState>(*current_state_);
   // set default wrist position (and all other joints)
   mirror_state_->setToDefaultValues();
 
@@ -225,11 +223,10 @@ BoltBaxter::BoltBaxter(const std::string &hostname, const std::string &package_p
   // Connect to physical hardware
   if (connect_to_hardware_)
   {
-    execution_interface_ =
-        std::make_shared<moveit_boilerplate::ExecutionInterface>(psm_, visual_tools_[6]);
+    execution_interface_ = std::make_shared<moveit_boilerplate::ExecutionInterface>(psm_, visual_tools_[6]);
   }
-  planning_interface_ = std::make_shared<moveit_boilerplate::PlanningInterface>(psm_, visual_tools_[6],
-                                                                                planning_jmg_, execution_interface_);
+  planning_interface_ = std::make_shared<moveit_boilerplate::PlanningInterface>(psm_, visual_tools_[6], planning_jmg_,
+                                                                                execution_interface_);
 
   // Wait until user does something
   if (!auto_run_)
@@ -312,7 +309,6 @@ bool BoltBaxter::loadData(std::size_t indent)
 // Loop through each planner to benchmark
 void BoltBaxter::eachPlanner(std::size_t indent)
 {
-
   for (std::size_t i = 0; i < planners_.size(); ++i)
   {
     planner_ = planners_[i];
@@ -339,12 +335,15 @@ void BoltBaxter::eachPlanner(std::size_t indent)
 
     // Clear previous planner
     reset();
+
+    if (i < planner_.size() - 2)
+      visual_->prompt("Next planner");
   }
 }
 
 bool BoltBaxter::loadOMPL(std::size_t indent)
 {
-  std::size_t visual_id = 6; // use 6th for sampler, which is loaded inside ModelBasedStateSpace
+  std::size_t visual_id = 6;  // use 6th for sampler, which is loaded inside ModelBasedStateSpace
   bolt_moveit::ModelBasedStateSpaceSpecification mbss_spec(robot_model_, planning_jmg_, visual_tools_[visual_id]);
 
   // Construct the state space we are planning in
@@ -363,7 +362,7 @@ bool BoltBaxter::loadOMPL(std::size_t indent)
     simple_setup_ = std::make_shared<ot::Thunder>(si_);
     is_thunder_ = true;
   }
-  else // Assume simple setup
+  else  // Assume simple setup
   {
     simple_setup_ = std::make_shared<og::SimpleSetup>(si_);
     is_simple_setup_ = true;
@@ -453,7 +452,7 @@ void BoltBaxter::run(std::size_t indent)
     // Create SPARS
     if (create_spars_ && (!loaded || continue_spars_))
     {
-      //bolt_->getSparseGenerator()->createSPARS();
+      // bolt_->getSparseGenerator()->createSPARS();
       bolt_->getSparseGenerator()->createSPARS2();
       loaded = true;
     }
@@ -464,12 +463,7 @@ void BoltBaxter::run(std::size_t indent)
   // Display disconnected components
   if (display_disjoint_sets_ && is_bolt_)
   {
-    std::cout << std::endl;
-    ROS_INFO_STREAM_NAMED(name_, "Displaying disjoint sets ----------- ");
-    ot::bolt::SparseDisjointSetsMap disjointSets;
-    bolt_->getSparseGraph()->getDisjointSets(disjointSets, indent);
-    bolt_->getSparseGraph()->printDisjointSets(disjointSets);
-    bolt_->getSparseGraph()->visualizeDisjointSets(disjointSets);
+    displayDisjointSets(indent);
     exit(0);
   }
 
@@ -558,9 +552,10 @@ bool BoltBaxter::runProblems(std::size_t indent)
       }
       else
       {
-        ompl::time::point startTime0 = ompl::time::now(); // Benchmark
+        ompl::time::point startTime0 = ompl::time::now();  // Benchmark
         bolt_->getTaskGraph()->generateMonoLevelTaskSpace(indent);
-        OMPL_WARN("generateMonoLevelTaskSpace took %f seconds", ompl::time::seconds(ompl::time::now() - startTime0)); // Benchmark
+        OMPL_WARN("generateMonoLevelTaskSpace took %f seconds",
+                  ompl::time::seconds(ompl::time::now() - startTime0));  // Benchmark
       }
     }
 
@@ -594,12 +589,13 @@ bool BoltBaxter::runProblems(std::size_t indent)
       }
       else
       {
-        const double planTime = simple_setup_->getLastSimplificationTime() + simple_setup_->getLastPlanComputationTime();
-        logging_file << planner_ << ", " // bolt, etc
-                     << planTime << ", " // smoothing + planning
-                     << last_plan_path_length_ << ", " // basic planning stats
-                     << 0 << ", " // numVerticesAdded
-                     << 0 // numEdgesAdded
+        const double planTime =
+            simple_setup_->getLastSimplificationTime() + simple_setup_->getLastPlanComputationTime();
+        logging_file << planner_ << ", "                // bolt, etc
+                     << planTime << ", "                // smoothing + planning
+                     << last_plan_path_length_ << ", "  // basic planning stats
+                     << 0 << ", "                       // numVerticesAdded
+                     << 0                               // numEdgesAdded
                      << std::endl;
       }
       logging_file.flush();
@@ -622,7 +618,7 @@ bool BoltBaxter::runProblems(std::size_t indent)
 
     // Reset marker if this is not our last run
     if (run_id < num_problems_ - 1)
-      deleteAllMarkers(false);
+      deleteAllMarkers();
   }  // for each run
 
   // Save experience
@@ -632,7 +628,6 @@ bool BoltBaxter::runProblems(std::size_t indent)
   // Finishing up
   if (is_bolt_)
   {
-
     ROS_INFO_STREAM_NAMED(name_, "Saving experience db...");
     bolt_->saveIfChanged(indent);
   }
@@ -692,7 +687,7 @@ bool BoltBaxter::plan(std::size_t indent)
   {
     execution_traj = processSegments(indent);
   }
-  else // RRTConnect, etc
+  else  // RRTConnect, etc
   {
     execution_traj = processSimpleSolution(indent);
   }
@@ -725,7 +720,8 @@ bool BoltBaxter::plan(std::size_t indent)
 void BoltBaxter::loadCollisionChecker()
 {
   // Create state validity checking for this space
-  validity_checker_ = std::make_shared<bolt_moveit::StateValidityChecker>(planning_group_name_, si_, *current_state_, planning_scene_, space_);
+  validity_checker_ = std::make_shared<bolt_moveit::StateValidityChecker>(planning_group_name_, si_, *current_state_,
+                                                                          planning_scene_, space_);
   validity_checker_->setCheckingEnabled(collision_checking_enabled_);
 
   // Set checker
@@ -733,33 +729,22 @@ void BoltBaxter::loadCollisionChecker()
 
   // The interval in which obstacles are checked for between states
   // seems that it default to 0.01 but doesn't do a good job at that level
-  //si_->setStateValidityCheckingResolution(0.005);
+  // si_->setStateValidityCheckingResolution(0.005);
   si_->setStateValidityCheckingResolution(0.001);
 }
 
-void BoltBaxter::deleteAllMarkers(bool clearDatabase)
+void BoltBaxter::deleteAllMarkers()
 {
   if (headless_)
     return;
 
   // Reset rviz markers
-  if (clearDatabase)
+  const std::size_t NUM_VISUALS = 6;
+  for (std::size_t i = 1; i < NUM_VISUALS; ++i)
   {
-    visual_->viz1()->deleteAllMarkers();
-    visual_->viz2()->deleteAllMarkers();
-    visual_->viz3()->deleteAllMarkers();
+    visual_tools_[i]->deleteAllMarkers();
+    visual_tools_[i]->trigger();
   }
-  visual_->viz4()->deleteAllMarkers();
-  visual_->viz5()->deleteAllMarkers();
-  visual_->viz6()->deleteAllMarkers();
-
-  // Publish
-  visual_->viz1()->trigger();
-  visual_->viz2()->trigger();
-  visual_->viz3()->trigger();
-  visual_->viz4()->trigger();
-  visual_->viz5()->trigger();
-  visual_->viz6()->trigger();
 }
 
 void BoltBaxter::loadVisualTools()
@@ -774,8 +759,8 @@ void BoltBaxter::loadVisualTools()
   visual_tools_.resize(NUM_VISUALS + 1);
   for (std::size_t i = 1; i <= NUM_VISUALS; ++i)
   {
-    MoveItVisualToolsPtr moveit_visual = MoveItVisualToolsPtr(new MoveItVisualTools(
-        "/world_visual" + std::to_string(i), namesp + "/ompl_visual" + std::to_string(i), robot_model_));
+    MoveItVisualToolsPtr moveit_visual = std::make_shared<MoveItVisualTools>(
+        "/world_visual" + std::to_string(i), namesp + "/ompl_visual" + std::to_string(i), robot_model_);
     moveit_visual->loadMarkerPub(false);
     moveit_visual->setPlanningSceneMonitor(psm_);
     moveit_visual->setManualSceneUpdating(true);
@@ -813,21 +798,19 @@ void BoltBaxter::loadVisualTools()
     const double wait_time = 0.2;
     for (std::size_t i = 1; i <= NUM_VISUALS; ++i)
     {
-      moveit_visual_tools::MoveItVisualToolsPtr moveit_visual = visual_tools_[i];
-
-      moveit_visual->waitForMarkerPub(wait_time);
+      visual_tools_[i]->waitForMarkerPub(wait_time);
 
       // Load publishers
       bool blocking = false;
-      moveit_visual->loadRobotStatePub(namesp + "/robot_state" + std::to_string(i), blocking);
+      visual_tools_[i]->loadRobotStatePub(namesp + "/robot_state" + std::to_string(i), blocking);
 
       // Show the initial robot state
       usleep(0.001 * 1000000);
-      moveit_visual->publishRobotState(moveit_start_);
+      visual_tools_[i]->publishRobotState(moveit_start_);
 
       // Load trajectory publisher - ONLY for viz6
       if (i == 6)
-        moveit_visual->loadTrajectoryPub("/baxter/display_trajectory", blocking);
+        visual_tools_[i]->loadTrajectoryPub("/baxter/display_trajectory", blocking);
     }
   }
 
@@ -837,14 +820,22 @@ void BoltBaxter::loadVisualTools()
 // Set the OMPL planner / SimpleSetup with proper visualizer
 void BoltBaxter::loadOMPLVisualTools()
 {
-  using namespace bolt_moveit;
+  // Set Rviz visuals in OMPL planner
+  if (is_bolt_)
+  {
+    visual_ = bolt_->getVisual();
+  }
+  else
+  {
+    visual_ = std::make_shared<ot::Visualizer>();
+  }
 
   const std::string namesp = nh_.getNamespace();
   const std::size_t NUM_VISUALS = 6;
 
   for (std::size_t i = 1; i <= NUM_VISUALS; ++i)
   {
-    MoveItVizWindowPtr viz = MoveItVizWindowPtr(new MoveItVizWindow(visual_tools_[i], si_));
+    bolt_moveit::MoveItVizWindowPtr viz = std::make_shared<bolt_moveit::MoveItVizWindow>(visual_tools_[i], si_);
     viz->setJointModelGroup(planning_jmg_);
     for (std::size_t i = 0; i < arm_datas_.size(); ++i)
     {
@@ -860,16 +851,6 @@ void BoltBaxter::loadOMPLVisualTools()
     // Index the visualizers
     visual_->setVizWindow(i, viz);
   }  // for each visualizer
-
-  // Set Rviz visuals in OMPL planner
-  if (is_bolt_)
-  {
-    visual_ = bolt_->getVisual();
-  }
-  else
-  {
-    visual_ = std::make_shared<ot::Visualizer>();
-  }
 
   // Projection viewer - mirrors MoveItVisualTools 6
   // {
@@ -1129,16 +1110,14 @@ void BoltBaxter::mirrorGraph(std::size_t indent)
   left_arm_space_info->setup();
 
   // Create state validity checking for both arms
-  bolt_moveit::StateValidityChecker *both_arms_validity_checker;
-  both_arms_validity_checker = new bolt_moveit::StateValidityChecker(
+  bolt_moveit::StateValidityCheckerPtr both_arms_validity_checker = std::make_shared<bolt_moveit::StateValidityChecker>(
       both_arms_group_name_, both_arms_space_info, *current_state_, planning_scene_, both_arms_state_space_);
-  both_arms_space_info->setStateValidityChecker(ob::StateValidityCheckerPtr(both_arms_validity_checker));
+  both_arms_space_info->setStateValidityChecker(both_arms_validity_checker);
 
   // Create state validity checking for left arm
-  bolt_moveit::StateValidityChecker *left_arm_validity_checker;
-  left_arm_validity_checker = new bolt_moveit::StateValidityChecker(
+  bolt_moveit::StateValidityCheckerPtr left_arm_validity_checker = std::make_shared<bolt_moveit::StateValidityChecker>(
       opposite_arm_name_, left_arm_space_info, *current_state_, planning_scene_, left_arm_state_space_);
-  left_arm_space_info->setStateValidityChecker(ob::StateValidityCheckerPtr(left_arm_validity_checker));
+  left_arm_space_info->setStateValidityChecker(left_arm_validity_checker);
 
   // Set the database file location
   const std::string file_path = getFilePath(both_arms_group_name_);
@@ -1320,7 +1299,7 @@ void BoltBaxter::loadScene(std::size_t indent)
   {
     case 1:
       loadAmazonScene(indent);
-      //break;
+    // break;
     case 0:
       loadOfficeScene(indent);
       break;
@@ -1339,7 +1318,7 @@ void BoltBaxter::loadScene(std::size_t indent)
 void BoltBaxter::loadOfficeScene(std::size_t indent)
 {
   BOLT_FUNC(true, "loadOfficeScene()");
-  //psm_->updateFrameTransforms();
+  // psm_->updateFrameTransforms();
 
   // const double table_height = -0.77 * baxter_torso_height_;
   const double table_height = -0.75 * baxter_torso_height_;
@@ -1469,14 +1448,14 @@ void BoltBaxter::loadIMarkers()
   // Create cartesian planner
   if (use_task_planning_)
   {
-    cart_path_planner_.reset(new bolt_moveit::CartPathPlanner(arm_datas_, visual_tools_[6], moveit_start_, psm_,
-                                                              package_path_, space_, planning_jmg_));
+    cart_path_planner_ = std::make_shared<bolt_moveit::CartPathPlanner>(arm_datas_, visual_tools_[6], moveit_start_,
+                                                                        psm_, package_path_, space_, planning_jmg_);
   }
 
   // Create start/goal imarkers
   if (!connect_to_hardware_)  // if running on hardware, these imarkers are not needed
-    imarker_start_.reset(new mvt::IMarkerRobotState(psm_, "start", arm_datas_, rvt::GREEN, package_path_));
-  imarker_goal_.reset(new mvt::IMarkerRobotState(psm_, "goal", arm_datas_, rvt::ORANGE, package_path_));
+    imarker_start_ = std::make_shared<mvt::IMarkerRobotState>(psm_, "start", arm_datas_, rvt::GREEN, package_path_);
+  imarker_goal_ = std::make_shared<mvt::IMarkerRobotState>(psm_, "goal", arm_datas_, rvt::ORANGE, package_path_);
 
   // Error message until current state is valid
   if (connect_to_hardware_)
@@ -1499,15 +1478,16 @@ robot_trajectory::RobotTrajectoryPtr BoltBaxter::processSimpleSolution(std::size
 {
   BOLT_FUNC(true, "processSimpleSolution()");
 
-  og::PathGeometric &path
-    = static_cast<og::PathGeometric &>(*simple_setup_->getProblemDefinition()->getSolutionPath());
+  og::PathGeometric &path = static_cast<og::PathGeometric &>(*simple_setup_->getProblemDefinition()->getSolutionPath());
 
   last_plan_path_length_ = path.length();
 
+  visual_->prompt("before vi6");
   // Have additional visualizations that mimmic those in BoltPlanner
   visual_->viz6()->deleteAllMarkers();
-  visual_->viz6()->path(&path, ot::LARGE, ot::BLACK, ot::BLUE);
+  visual_->viz6()->path(&path, ot::MEDIUM, ot::BLACK, ot::BLUE);
   visual_->viz6()->trigger();
+  visual_->prompt("after before vi6");
 
   // Convert trajectory from OMPL to MoveIt! format
   robot_trajectory::RobotTrajectoryPtr trajectory;
@@ -1522,8 +1502,7 @@ robot_trajectory::RobotTrajectoryPtr BoltBaxter::processSimpleSolution(std::size
 
   // Interpolate and parameterize
   const bool use_interpolation = false;
-  planning_interface_->convertRobotStatesToTraj(trajectory, planning_jmg_, velocity_scaling_factor,
-                                                use_interpolation);
+  planning_interface_->convertRobotStatesToTraj(trajectory, planning_jmg_, velocity_scaling_factor, use_interpolation);
 
   return trajectory;
 }
@@ -1641,6 +1620,16 @@ void BoltBaxter::chooseStartGoal(std::size_t run_id, std::size_t indent)
   // Visualize
   if (visualize_start_goal_states_)
     visualizeStartGoal();
+}
+
+void BoltBaxter::displayDisjointSets(std::size_t indent)
+{
+  std::cout << std::endl;
+  ROS_INFO_STREAM_NAMED(name_, "Displaying disjoint sets ----------- ");
+  ot::bolt::SparseDisjointSetsMap disjointSets;
+  bolt_->getSparseGraph()->getDisjointSets(disjointSets, indent);
+  bolt_->getSparseGraph()->printDisjointSets(disjointSets, indent);
+  bolt_->getSparseGraph()->visualizeDisjointSets(disjointSets, indent);
 }
 
 }  // namespace bolt_baxter
