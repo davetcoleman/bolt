@@ -42,32 +42,33 @@
 // ROS
 #include <ros/ros.h>
 
+// OMPL
+#include <ompl/tools/thunder/Thunder.h>
+#include <ompl/geometric/SimpleSetup.h>
+#include <ompl/geometric/planners/prm/SPARStwo.h>
+
+// bolt_core
+#include <bolt_core/Bolt.h>
+
+// bolt_moveit
+#include <bolt_moveit/moveit_viz_window.h>
+#include <bolt_moveit/model_based_state_space.h>
+#include <bolt_moveit/moveit_base.h>
+#include <bolt_moveit/state_validity_checker.h>
+#include <bolt_moveit/cart_path_planner.h>
+
 // MoveIt
 #include <moveit/planning_interface/planning_interface.h>
 #include <moveit/robot_state/conversions.h>
 #include <moveit/kinematic_constraints/utils.h>
-#include <bolt_moveit/moveit_base.h>
-
-// bolt_moveit
-#include <bolt_moveit/model_based_state_space.h>
-
-// moveit_boilerplate
-#include <moveit_boilerplate/planning_interface.h>
-
-// OMPL
-#include <ompl/tools/thunder/Thunder.h>
-#include <ompl/geometric/SimpleSetup.h>
-#include <bolt_core/Bolt.h>
-#include <bolt_moveit/moveit_viz_window.h>
-
-// this package
-//#include <bolt_moveit/process_mem_usage.h>
-#include <bolt_moveit/state_validity_checker.h>
-#include <bolt_moveit/cart_path_planner.h>
 #include <moveit_visual_tools/imarker_robot_state.h>
+#include <moveit_boilerplate/planning_interface.h>
 
 namespace bolt_baxter
 {
+
+static const std::size_t NUM_VISUALS = 6;
+
 class BoltBaxter : public bolt_moveit::MoveItBase
 {
 public:
@@ -78,15 +79,15 @@ public:
   ~BoltBaxter();
 
   /** \brief Clear previous planner stuff */
-  void reset();
+  void reset(std::size_t indent);
 
   /** \brief Load the basic planning context components */
   bool loadOMPL(std::size_t indent);
 
   /** \brief Generate states for testing */
-  void testConnectionToGraphOfRandStates();
+  void testConnectionToGraphOfRandStates(std::size_t indent);
 
-  void loadCollisionChecker();
+  void loadCollisionChecker(std::size_t indent);
 
   bool loadData(std::size_t indent);
 
@@ -99,7 +100,7 @@ public:
   bool plan(std::size_t indent);
 
   /** \brief Create multiple dummy cartesian paths */
-  bool generateCartGraph();
+  bool generateCartGraph(std::size_t indent);
 
   bool checkOMPLPathSolution(og::PathGeometric& path);
   bool checkMoveItPathSolution(robot_trajectory::RobotTrajectoryPtr traj, std::size_t indent);
@@ -109,20 +110,18 @@ public:
   /**
    * \brief Clear all markers displayed in Rviz
    */
-  void deleteAllMarkers();
+  void deleteAllMarkers(std::size_t indent);
 
-  void loadVisualTools();
-  void loadOMPLVisualTools();
+  void loadVisualTools(std::size_t indent);
+  void loadOMPLVisualTools(std::size_t indent);
 
-  void visualizeStartGoal();
+  void visualizeStartGoal(std::size_t indent);
 
-  void visualizeRawTrajectory(og::PathGeometric& path);
+  void visualizeRawTrajectory(og::PathGeometric& path, std::size_t indent);
 
   void displayWaitingState(bool waiting);
 
-  void testMotionValidator();
-
-  std::string getFilePath(const std::string& planning_group_name);
+  void testMotionValidator(std::size_t indent);
 
   void mirrorGraph(std::size_t indent);
 
@@ -136,13 +135,13 @@ public:
 
   void loadAmazonScene(std::size_t indent);
 
-  void saveIMarkersToFile();
+  void saveIMarkersToFile(std::size_t indent);
 
   void viewIMarkersFromFile(std::size_t indent);
 
   void loadIMarkersFromFile(std::vector<moveit::core::RobotStatePtr>& robot_states, std::size_t indent);
 
-  void loadIMarkers();
+  void loadIMarkers(std::size_t indent);
 
   robot_trajectory::RobotTrajectoryPtr processSimpleSolution(std::size_t indent);
 
@@ -151,6 +150,16 @@ public:
   void chooseStartGoal(std::size_t run_id, std::size_t indent);
 
   void displayDisjointSets(std::size_t indent);
+
+  std::string getPlannerFilePath(const std::string& planning_group_name, std::size_t indent);
+
+  void doPostProcessing(std::size_t indent);
+
+  void loadSPARS2Data(std::size_t indent);
+
+  void log(bool solved, std::size_t indent);
+
+  void processAndExecute(std::size_t indent);
 
   // --------------------------------------------------------
 
@@ -166,6 +175,8 @@ public:
   // Save the experience setup until the program ends so that the planner data is not lost
   ompl::geometric::SimpleSetupPtr simple_setup_;
   ompl::tools::bolt::BoltPtr bolt_;
+  ompl::tools::ThunderPtr thunder_;
+  ompl::geometric::SPARStwoPtr spars2_;
 
   // Configuration space
   bolt_moveit::ModelBasedStateSpacePtr space_;
@@ -205,10 +216,14 @@ public:
   // Interpolate and parameterize trajectories
   moveit_boilerplate::PlanningInterfacePtr planning_interface_;
 
+  // Logging
+  std::ofstream logging_file_;
+
   // Modes
   bool run_problems_;
   bool create_spars_;
   bool load_spars_;
+  std::size_t load_database_version_;
   bool continue_spars_;
   bool eliminate_dense_disjoint_sets_;
   bool check_valid_vertices_;
@@ -221,6 +236,7 @@ public:
 
   // Type of planner
   std::vector<std::string> planners_;
+  double planning_time_; // seconds
   std::string planner_; // the current planner being run
   bool is_bolt_ = false;
   bool is_thunder_ = false;

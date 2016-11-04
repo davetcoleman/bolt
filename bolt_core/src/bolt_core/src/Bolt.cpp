@@ -167,7 +167,7 @@ std::size_t Bolt::getExperiencesCount() const
   return sparseGraph_->getNumVertices();
 }
 
-void Bolt::clearForNextPlan()
+void Bolt::clearForNextPlan(std::size_t indent)
 {
   boltPlanner_->clear();
   pdef_->clearSolutionPaths();
@@ -179,7 +179,6 @@ void Bolt::clear()
   sparseGraph_->clear();
   taskGraph_->clear();
   sparseCriteria_->clear();
-  //taskCriteria_->clear();
   sparseGenerator_->clear();
   boltPlanner_->clear();
   pdef_->clearSolutionPaths();
@@ -203,7 +202,8 @@ base::PlannerStatus Bolt::solve(const base::PlannerTerminationCondition &ptc)
   time::point start = time::now();
 
   // Warn if there are queued paths that have not been added to the experience database
-  OMPL_INFORM("Num solved paths uninserted into the experience database in the post-proccessing queue: %u",
+  if (!queuedModelSolPaths_.empty())
+    BOLT_INFO(true, "Num solved paths uninserted into the experience database in the post-proccessing queue: " <<
               queuedModelSolPaths_.size());
 
   // SOLVE
@@ -253,7 +253,6 @@ void Bolt::processResults(std::size_t indent)
   if (visual_->viz1()->shutdownRequested())
     return;
 
-  ExperiencePathStats result;
   double pathLength = 0;
 
   // Record overall stats
@@ -264,14 +263,14 @@ void Bolt::processResults(std::size_t indent)
   {
     case base::PlannerStatus::TIMEOUT:
       stats_.numSolutionsTimedout_++;
-      BOLT_ERROR("Bolt::solve(): TIMEOUT - No solution found after " << planTime_);
+      BOLT_ERROR("solve(): TIMEOUT - No solution found after " << planTime_);
       break;
     case base::PlannerStatus::ABORT:
       stats_.numSolutionsFailed_++;
-      BOLT_ERROR("Bolt::solve(): ABORT - No solution found after " << planTime_);
+      BOLT_ERROR("solve(): ABORT - No solution found after " << planTime_);
       break;
     case base::PlannerStatus::APPROXIMATE_SOLUTION:
-      BOLT_ERROR("Bolt::solve(): Approximate - should not happen!");
+      BOLT_ERROR("solve(): Approximate - should not happen!");
       exit(-1);
       break;
     case base::PlannerStatus::EXACT_SOLUTION:
@@ -279,7 +278,7 @@ void Bolt::processResults(std::size_t indent)
       // og::PathGeometric smoothedModelSolPath = og::SimpleSetup::getSolutionPath();  // copied so that it is non-const
       og::PathGeometricPtr smoothedModelSolPath = boltPlanner_->getSmoothedModelSolPath();
       pathLength = smoothedModelSolPath->length();
-      BOLT_BLUE(true, "Bolt: solution found in " << planTime_ << " seconds with "
+      BOLT_BLUE(true, "Solution found in " << planTime_ << " seconds with "
                                                          << smoothedModelSolPath->getStateCount() << " states");
 
       // Error check for repeated states
@@ -303,9 +302,6 @@ void Bolt::processResults(std::size_t indent)
       BOLT_ERROR("Unknown status type: " << lastStatus_);
       stats_.numSolutionsFailed_++;
   }  // end switch
-
-  csvDataLogStream_ << "Bolt, " << planTime_ << ", " << pathLength  // basic planning stats
-                    << ", " << result.numVerticesAdded_ << ", " << result.numEdgesAdded_ << std::endl;
 }
 
 bool Bolt::doPostProcessing(std::size_t indent)
@@ -325,7 +321,8 @@ bool Bolt::doPostProcessing(std::size_t indent)
   queuedModelSolPaths_.clear();
 
   // Start thread
-  ppThread_ = std::thread(std::bind(&Bolt::postProcessingThread, this, threadQueuedModelSolPaths, indent));
+  //ppThread_ = std::thread(std::bind(&Bolt::postProcessingThread, this, threadQueuedModelSolPaths, indent));
+  postProcessingThread(threadQueuedModelSolPaths, indent);
 
   return true;
 }
@@ -341,11 +338,16 @@ void Bolt::waitForPostProcessing(std::size_t indent)
 
 void Bolt::postProcessingThread(std::vector<geometric::PathGeometricPtr> queuedModelSolPaths, std::size_t indent)
 {
-  BOLT_FUNC(true, "postProcessingThread()");
+  BOLT_FUNC(true, "postProcessingThread() adding " << queuedModelSolPaths.size());
+
+  if (queuedModelSolPaths.size() > 1)
+    BOLT_WARN(true, "Normally only post-process one state!");
 
   for (geometric::PathGeometricPtr queuedSolutionPath : queuedModelSolPaths)
   {
-    sparseGenerator_->addExperiencePath(queuedSolutionPath, indent);
+    ExperiencePathStats postProcessingResults = sparseGenerator_->addExperiencePath(queuedSolutionPath, indent);
+    postProcessingResults_.numVerticesAdded_ += postProcessingResults.numVerticesAdded_;
+    postProcessingResults_.numEdgesAdded_ += postProcessingResults.numEdgesAdded_;
   }
 
   // Remove all inserted paths from the queue
@@ -394,12 +396,12 @@ bool Bolt::saveIfChanged(std::size_t indent)
   return sparseGraph_->saveIfChanged(indent).success_;
 }
 
-void Bolt::saveDataLog(std::ostream &out)
-{
-  // Export to file and clear the stream
-  out << csvDataLogStream_.str();
-  csvDataLogStream_.str("");
-}
+// void Bolt::saveDataLog(std::ostream &out)
+// {
+//   // Export to file and clear the stream
+//   out << csvDataLogStream_.str();
+//   csvDataLogStream_.str("");
+// }
 
 void Bolt::printResultsInfo(std::ostream &out) const
 {
@@ -460,11 +462,21 @@ void Bolt::printLogs(std::ostream &out) const
   out << "    Vertices:                    " << sparseGraph_->getNumVertices() << " (" << vertPercent << "%)"
       << std::endl;
   out << "    Edges:                       " << sparseGraph_->getNumEdges() << " (" << edgePercent << "%)" << std::endl;
-  out << "    Disjoint Samples Added:      " << sparseGenerator_->getNumRandSamplesAdded() << std::endl;
+  //out << "    Disjoint Samples Added:      " << sparseGenerator_->getNumRandSamplesAdded() << std::endl;
   out << "    Sparse Delta:                " << sparseCriteria_->getSparseDelta() << std::endl;
   out << "  Average planning time:         " << stats_.getAveragePlanningTime() << " seconds" << std::endl;
-  out << "  Average insertion time:        " << stats_.getAverageInsertionTime() << " seconds" << std::endl;
+  //out << "  Average insertion time:        " << stats_.getAverageInsertionTime() << " seconds" << std::endl;
   out << std::endl;
+}
+
+ExperiencePathStats Bolt::getPostProcessingResultsAndReset()
+{
+  ExperiencePathStats temp = postProcessingResults_;
+
+  // Reset
+  postProcessingResults_ = ExperiencePathStats();
+
+  return temp;
 }
 
 }  // namespace bolt

@@ -230,9 +230,7 @@ bool BoltPlanner::getPathOffGraph(const base::CompoundState *start, const base::
   std::size_t attempt = 0;
   for (; attempt < maxAttempts; ++attempt)
   {
-    BOLT_DEBUG(true, "------------------------------------------------------------------------");
-    BOLT_DEBUG(true, "Starting getPathOffGraph() attempt " << attempt);
-    BOLT_DEBUG(true, "------------------------------------------------------------------------");
+    BOLT_DEBUG(true, "Starting getPathOffGraph() attempt " << attempt << " ------------------------");
 
     // Get neighbors near start and goal. Note: potentially they are not *visible* - will test for this later
 
@@ -743,7 +741,7 @@ bool BoltPlanner::simplifyNonTaskPath(og::PathGeometricPtr compoundPath, Termina
   }
 
   // Interpolate
-  if (true)
+  if (false)
   {
     origNumStates = modelPath->getStateCount();
     modelPath->interpolate();
