@@ -41,9 +41,9 @@ bolt_baxter:
   velocity_scaling_factor: 1.0
 
   # planner type
-  planners: [bolt, RRTConnect, LazyRRT, LazyPRM, SPARStwo]
-  #planner: spars2
-  #planner: RRTConnect
+  #planners: [bolt, RRTConnect, LazyPRM, SPARStwo]
+  planners: [bolt, LazyPRM, SPARStwo]
+  planning_time: 120 # seconds
 
   # robot setup
   #planning_group_name: right_arm_minus_one

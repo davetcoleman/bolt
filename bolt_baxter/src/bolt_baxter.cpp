@@ -116,6 +116,7 @@ BoltBaxter::BoltBaxter(const std::string &hostname, const std::string &package_p
   // run type
   error += !rosparam_shortcuts::get(name_, rpnh, "auto_run", auto_run_);
   error += !rosparam_shortcuts::get(name_, rpnh, "planners", planners_);
+  error += !rosparam_shortcuts::get(name_, rpnh, "planning_time", planning_time_);
   error += !rosparam_shortcuts::get(name_, rpnh, "num_problems", num_problems_);
   error += !rosparam_shortcuts::get(name_, rpnh, "headless", headless_);
   error += !rosparam_shortcuts::get(name_, rpnh, "problem_type", problem_type_);
@@ -257,28 +258,6 @@ void BoltBaxter::reset()
   visual_.reset();
 }
 
-std::string BoltBaxter::getFilePath(const std::string &planning_group_name)
-{
-  // Set the database file location
-  std::string file_path;
-  std::string file_name;
-  if (benchmark_performance_)
-  {
-    file_name = "benchmark_";
-  }
-  if (is_bolt_)
-  {
-    file_name = file_name + "bolt_" + planning_group_name + "_" +
-                std::to_string(bolt_->getSparseCriteria()->sparseDeltaFraction_) + "_database";
-  }
-  else
-  {
-    file_name = file_name + " thunder_" + planning_group_name + "_database";
-  }
-  bolt_moveit::getFilePath(file_path, file_name, "ros/ompl_storage");
-  return file_path;
-}
-
 bool BoltBaxter::loadData(std::size_t indent)
 {
   double vm1, rss1;
@@ -306,42 +285,75 @@ bool BoltBaxter::loadData(std::size_t indent)
   return true;
 }
 
-// Loop through each planner to benchmark
-void BoltBaxter::eachPlanner(std::size_t indent)
+void BoltBaxter::loadVisualTools()
 {
-  for (std::size_t i = 0; i < planners_.size(); ++i)
+  // Load the ROS part, but not the OMPL part until loadOMPL has occured
+  using namespace moveit_visual_tools;
+
+  std::string namesp = nh_.getNamespace();
+
+  // NOTE that all visuals start at index 1, not 0
+  const std::size_t NUM_VISUALS = 6;
+  visual_tools_.resize(NUM_VISUALS + 1);
+  for (std::size_t i = 1; i <= NUM_VISUALS; ++i)
   {
-    planner_ = planners_[i];
-
-    // Feedback
-    std::cout << std::endl;
-    BOLT_INFO(true, "------------------------------------------------------------------");
-    BOLT_INFO(true, "Testing with planner '" << planner_ << "'");
-    BOLT_INFO(true, "------------------------------------------------------------------");
-
-    // Load planning
-    if (!loadOMPL(indent))
-    {
-      BOLT_ERROR("Unable to load planning context");
-      exit(-1);
-    }
-
-    // Visuals
-    loadOMPLVisualTools();
-
-    // --------------------------------------
-    run(indent);
-    // --------------------------------------
-
-    // Wait for user
-    if (i < planner_.size() - 2)
-    {
-      BOLT_INFO(true, "Next planner " << planners_[i+1]);
-      visual_->prompt("Next planner"); // Must do this before calling reset()
-    }
-    // Clear previous planner
-    reset();
+    MoveItVisualToolsPtr moveit_visual = std::make_shared<MoveItVisualTools>(
+        "/world_visual" + std::to_string(i), namesp + "/ompl_visual" + std::to_string(i), robot_model_);
+    moveit_visual->loadMarkerPub(false);
+    moveit_visual->setPlanningSceneMonitor(psm_);
+    moveit_visual->setManualSceneUpdating(true);
+    moveit_visual->setGlobalScale(0.8);
+    moveit_visual->enableBatchPublishing();
+    moveit_visual->loadRemoteControl();
+    visual_tools_[i] = moveit_visual;
   }
+
+  ros::spinOnce();
+  moveit_start_->setToDefaultValues();
+
+  // Secondary loop to give time for all the publishers to load up
+  Eigen::Affine3d offset;
+  if (!headless_)
+  {
+    for (std::size_t i = 1; i <= NUM_VISUALS; ++i)
+    {
+      // Get TF
+      getTFTransform("world", "world_visual" + std::to_string(i), offset);
+      visual_tools_[i]->enableRobotStateRootOffet(offset);
+    }
+  }
+
+  visual_tools_[6]->setBaseFrame("world");
+  visual_moveit_start_ = visual_tools_[4];
+  visual_moveit_goal_ = visual_tools_[5];
+
+  ros::spinOnce();
+
+  // Block until all visualizers are finished loading
+  if (!headless_)
+  {
+    std::cout << "remove this sleep " << std::endl;
+    ros::Duration(0.5).sleep();
+    const double wait_time = 0.2;
+    for (std::size_t i = 1; i <= NUM_VISUALS; ++i)
+    {
+      visual_tools_[i]->waitForMarkerPub(wait_time);
+
+      // Load publishers
+      bool blocking = false;
+      visual_tools_[i]->loadRobotStatePub(namesp + "/robot_state" + std::to_string(i), blocking);
+
+      // Show the initial robot state
+      usleep(0.001 * 1000000);
+      visual_tools_[i]->publishRobotState(moveit_start_);
+
+      // Load trajectory publisher - ONLY for viz6
+      if (i == 6)
+        visual_tools_[i]->loadTrajectoryPub("/baxter/display_trajectory", blocking);
+    }
+  }
+
+  deleteAllMarkers();
 }
 
 bool BoltBaxter::loadOMPL(std::size_t indent)
@@ -359,9 +371,11 @@ bool BoltBaxter::loadOMPL(std::size_t indent)
     bolt_ = std::make_shared<otb::Bolt>(si_);
     simple_setup_ = bolt_;
     is_bolt_ = true;
+    visual_ = bolt_->getVisual();
   }
   else if (planner_ == "thunder")
   {
+    // TODO: not tested
     simple_setup_ = std::make_shared<ot::Thunder>(si_);
     is_thunder_ = true;
   }
@@ -369,6 +383,8 @@ bool BoltBaxter::loadOMPL(std::size_t indent)
   {
     simple_setup_ = std::make_shared<og::SimpleSetup>(si_);
     is_simple_setup_ = true;
+
+    visual_ = std::make_shared<ot::Visualizer>();
 
     if (planner_ == "RRTConnect")
     {
@@ -384,7 +400,9 @@ bool BoltBaxter::loadOMPL(std::size_t indent)
     }
     else if (planner_ == "SPARStwo")
     {
-      simple_setup_->setPlanner(std::make_shared<og::SPARStwo>(si_));
+      og::SPARStwoPtr sparsTwo = std::make_shared<og::SPARStwo>(si_);
+      sparsTwo->setVisual(visual_);
+      simple_setup_->setPlanner(sparsTwo);
     }
     else
     {
@@ -419,8 +437,102 @@ bool BoltBaxter::loadOMPL(std::size_t indent)
   return true;
 }
 
+// Set the OMPL planner / SimpleSetup with proper visualizer
+void BoltBaxter::loadOMPLVisualTools()
+{
+  // Set Rviz visuals in OMPL planner
+  // if (is_bolt_)
+  // {
+  //   visual_ = bolt_->getVisual();
+  // }
+  // else
+  // {
+  //   visual_ = std::make_shared<ot::Visualizer>();
+  // }
+
+  const std::string namesp = nh_.getNamespace();
+  const std::size_t NUM_VISUALS = 6;
+
+  for (std::size_t i = 1; i <= NUM_VISUALS; ++i)
+  {
+    bolt_moveit::MoveItVizWindowPtr viz = std::make_shared<bolt_moveit::MoveItVizWindow>(visual_tools_[i], si_);
+    viz->setJointModelGroup(planning_jmg_);
+    for (std::size_t i = 0; i < arm_datas_.size(); ++i)
+    {
+      viz->setEEFLink(arm_datas_[i].ee_link_);
+    }
+
+    // Calibrate the color scale for visualization
+    // const bool invert_colors = true;
+    // viz->setMinMaxEdgeCost(0, 110, invert_colors);
+    // viz->setMinMaxEdgeRadius(0.001, 0.004);
+    // viz->setMinMaxStateRadius(0.5, 5);
+
+    // Index the visualizers
+    visual_->setVizWindow(i, viz);
+  }  // for each visualizer
+
+  // Projection viewer - mirrors MoveItVisualTools 6
+  // {
+  //   visual_tools_[6]->setGlobalScale(1.0);
+
+  //   using namespace bolt_moveit;
+  //   ProjectionVizWindowPtr viz = ProjectionVizWindowPtr(new ProjectionVizWindow(visual_tools_[2], si_));
+  //   // Calibrate the color scale for visualization
+  //   const bool invert_colors = true;
+  //   viz->setMinMaxEdgeCost(0, 110, invert_colors);
+  //   viz->setMinMaxEdgeRadius(0.001, 0.004);
+  //   viz->setMinMaxStateRadius(1, 4);
+
+  //   visual_->setVizWindow(7, viz);
+  // }
+
+  // Allow collision checker to visualize
+  validity_checker_->setVisual(visual_);
+}
+
+// Loop through each planner to benchmark
+void BoltBaxter::eachPlanner(std::size_t indent)
+{
+  for (std::size_t i = 0; i < planners_.size(); ++i)
+  {
+    planner_ = planners_[i];
+
+    // Feedback
+    std::cout << std::endl;
+    std::cout << "###################################################################### " << std::endl;
+    BOLT_INFO(true, "Testing with planner '" << planner_ << "'");
+    std::cout << "###################################################################### " << std::endl;
+
+    // Load planning
+    if (!loadOMPL(indent))
+    {
+      BOLT_ERROR("Unable to load planning context");
+      exit(-1);
+    }
+
+    // Visuals
+    loadOMPLVisualTools();
+
+    // --------------------------------------
+    run(indent);
+    // --------------------------------------
+
+    // Wait for user
+    if (i < planner_.size() - 2)
+    {
+      BOLT_INFO(true, "Next planner " << planners_[i+1]);
+      visual_->prompt("Next planner"); // Must do this before calling reset()
+    }
+    // Clear previous planner
+    reset();
+  }
+}
+
 void BoltBaxter::run(std::size_t indent)
 {
+  BOLT_FUNC(true, "run()");
+
   // Benchmark performance
   if (benchmark_performance_)
   {
@@ -661,8 +773,7 @@ bool BoltBaxter::plan(std::size_t indent)
   // Solve -----------------------------------------------------------
 
   // Create the termination condition
-  double seconds = 60 * 60;  // 1 hour
-  ob::PlannerTerminationCondition ptc = ob::timedPlannerTerminationCondition(seconds, 0.1);
+  ob::PlannerTerminationCondition ptc = ob::timedPlannerTerminationCondition(planning_time_, 0.1);
 
   // Profiler
   CALLGRIND_TOGGLE_COLLECT;
@@ -752,130 +863,6 @@ void BoltBaxter::deleteAllMarkers()
     visual_tools_[i]->deleteAllMarkers();
     visual_tools_[i]->trigger();
   }
-}
-
-void BoltBaxter::loadVisualTools()
-{
-  // Load the ROS part, but not the OMPL part until loadOMPL has occured
-  using namespace moveit_visual_tools;
-
-  std::string namesp = nh_.getNamespace();
-
-  // NOTE that all visuals start at index 1, not 0
-  const std::size_t NUM_VISUALS = 6;
-  visual_tools_.resize(NUM_VISUALS + 1);
-  for (std::size_t i = 1; i <= NUM_VISUALS; ++i)
-  {
-    MoveItVisualToolsPtr moveit_visual = std::make_shared<MoveItVisualTools>(
-        "/world_visual" + std::to_string(i), namesp + "/ompl_visual" + std::to_string(i), robot_model_);
-    moveit_visual->loadMarkerPub(false);
-    moveit_visual->setPlanningSceneMonitor(psm_);
-    moveit_visual->setManualSceneUpdating(true);
-    moveit_visual->setGlobalScale(0.8);
-    moveit_visual->enableBatchPublishing();
-    visual_tools_[i] = moveit_visual;
-  }
-
-  ros::spinOnce();
-  moveit_start_->setToDefaultValues();
-
-  // Secondary loop to give time for all the publishers to load up
-  Eigen::Affine3d offset;
-  if (!headless_)
-  {
-    for (std::size_t i = 1; i <= NUM_VISUALS; ++i)
-    {
-      // Get TF
-      getTFTransform("world", "world_visual" + std::to_string(i), offset);
-      visual_tools_[i]->enableRobotStateRootOffet(offset);
-    }
-  }
-
-  visual_tools_[6]->setBaseFrame("world");
-  visual_moveit_start_ = visual_tools_[4];
-  visual_moveit_goal_ = visual_tools_[5];
-
-  ros::spinOnce();
-
-  // Block until all visualizers are finished loading
-  if (!headless_)
-  {
-    std::cout << "remove this sleep " << std::endl;
-    ros::Duration(0.5).sleep();
-    const double wait_time = 0.2;
-    for (std::size_t i = 1; i <= NUM_VISUALS; ++i)
-    {
-      visual_tools_[i]->waitForMarkerPub(wait_time);
-
-      // Load publishers
-      bool blocking = false;
-      visual_tools_[i]->loadRobotStatePub(namesp + "/robot_state" + std::to_string(i), blocking);
-
-      // Show the initial robot state
-      usleep(0.001 * 1000000);
-      visual_tools_[i]->publishRobotState(moveit_start_);
-
-      // Load trajectory publisher - ONLY for viz6
-      if (i == 6)
-        visual_tools_[i]->loadTrajectoryPub("/baxter/display_trajectory", blocking);
-    }
-  }
-
-  deleteAllMarkers();
-}
-
-// Set the OMPL planner / SimpleSetup with proper visualizer
-void BoltBaxter::loadOMPLVisualTools()
-{
-  // Set Rviz visuals in OMPL planner
-  if (is_bolt_)
-  {
-    visual_ = bolt_->getVisual();
-  }
-  else
-  {
-    visual_ = std::make_shared<ot::Visualizer>();
-  }
-
-  const std::string namesp = nh_.getNamespace();
-  const std::size_t NUM_VISUALS = 6;
-
-  for (std::size_t i = 1; i <= NUM_VISUALS; ++i)
-  {
-    bolt_moveit::MoveItVizWindowPtr viz = std::make_shared<bolt_moveit::MoveItVizWindow>(visual_tools_[i], si_);
-    viz->setJointModelGroup(planning_jmg_);
-    for (std::size_t i = 0; i < arm_datas_.size(); ++i)
-    {
-      viz->setEEFLink(arm_datas_[i].ee_link_);
-    }
-
-    // Calibrate the color scale for visualization
-    // const bool invert_colors = true;
-    // viz->setMinMaxEdgeCost(0, 110, invert_colors);
-    // viz->setMinMaxEdgeRadius(0.001, 0.004);
-    // viz->setMinMaxStateRadius(0.5, 5);
-
-    // Index the visualizers
-    visual_->setVizWindow(i, viz);
-  }  // for each visualizer
-
-  // Projection viewer - mirrors MoveItVisualTools 6
-  // {
-  //   visual_tools_[6]->setGlobalScale(1.0);
-
-  //   using namespace bolt_moveit;
-  //   ProjectionVizWindowPtr viz = ProjectionVizWindowPtr(new ProjectionVizWindow(visual_tools_[2], si_));
-  //   // Calibrate the color scale for visualization
-  //   const bool invert_colors = true;
-  //   viz->setMinMaxEdgeCost(0, 110, invert_colors);
-  //   viz->setMinMaxEdgeRadius(0.001, 0.004);
-  //   viz->setMinMaxStateRadius(1, 4);
-
-  //   visual_->setVizWindow(7, viz);
-  // }
-
-  // Allow collision checker to visualize
-  validity_checker_->setVisual(visual_);
 }
 
 void BoltBaxter::visualizeStartGoal()
@@ -1635,6 +1622,28 @@ void BoltBaxter::displayDisjointSets(std::size_t indent)
   bolt_->getSparseGraph()->getDisjointSets(disjointSets, indent);
   bolt_->getSparseGraph()->printDisjointSets(disjointSets, indent);
   bolt_->getSparseGraph()->visualizeDisjointSets(disjointSets, indent);
+}
+
+std::string BoltBaxter::getFilePath(const std::string &planning_group_name)
+{
+  // Set the database file location
+  std::string file_path;
+  std::string file_name;
+  if (benchmark_performance_)
+  {
+    file_name = "benchmark_";
+  }
+  if (is_bolt_)
+  {
+    file_name = file_name + "bolt_" + planning_group_name + "_" +
+                std::to_string(bolt_->getSparseCriteria()->sparseDeltaFraction_) + "_database";
+  }
+  else
+  {
+    file_name = file_name + " thunder_" + planning_group_name + "_database";
+  }
+  bolt_moveit::getFilePath(file_path, file_name, "ros/ompl_storage");
+  return file_path;
 }
 
 }  // namespace bolt_baxter

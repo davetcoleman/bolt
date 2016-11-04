@@ -267,6 +267,12 @@ public:
     return visual_;
   }
 
+  /** \brief Set class for managing various visualization features */
+  void setVisual(VisualizerPtr visual)
+  {
+    visual_ = visual;
+  }
+
   /** \brief Allow accumlated experiences to be processed */
   // bool doPostProcessing();
 
