@@ -311,6 +311,7 @@ public:
   const double baxter_torso_height_ = -0.95;
   double distance_to_shelf_ = 0;
   bool use_shelf_noise_ = true;
+  double bin_height_ = 0;
 
 };  // end class
 

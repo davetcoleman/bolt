@@ -45,8 +45,7 @@
 #include <bolt_core/BoltPlanner.h>
 #include <bolt_core/SparseCriteria.h>
 
-// Boost
-#include <boost/thread.hpp>
+#include <thread>
 
 // C++
 #include <limits>
@@ -171,6 +170,19 @@ base::PlannerStatus BoltPlanner::solve(Termination &ptc)
 base::PlannerStatus BoltPlanner::solve(base::CompoundState *startState, base::CompoundState *goalState,
                                        Termination &ptc, std::size_t indent)
 {
+
+  // Mark the solution as not found so the thread knows to continue
+  solutionFound_ = false;
+
+  // Create thread for collision checking
+  std::thread ccThread([this, &indent]
+                       {
+                         collisionCheckingThread(indent);
+                       });
+
+  // Allocate memory for relaxed edges
+  taskGraph_->getRelaxedEdges().reserve(taskGraph_->getNumEdges() * 0.25); // fraction of total edges
+
   // Create solution structure
   origCompoundSolPath_ = std::make_shared<og::PathGeometric>(compoundSI_);
 
@@ -180,6 +192,9 @@ base::PlannerStatus BoltPlanner::solve(base::CompoundState *startState, base::Co
     BOLT_WARN(true, "BoltPlanner::solve() No near start or goal found");
     return base::PlannerStatus::ABORT;  // The planner failed to find a solution
   }
+
+  // Mark the solution as found so the thread knows to stop
+  solutionFound_ = true;
 
   BOLT_DEBUG(verbose_, "getPathOffGraph() found a solution of size " << origCompoundSolPath_->getStateCount());
 
@@ -215,6 +230,9 @@ base::PlannerStatus BoltPlanner::solve(base::CompoundState *startState, base::Co
   bool approximate = false;
   // pdef_->addSolutionPath(smoothedModelSolPath_, approximate, approximateDifference, getName());
   bool solved = true;
+
+  // Ensure thread is ceased before exiting
+  ccThread.join();
 
   BOLT_DEBUG(verbose_, "Finished BoltPlanner.solve()");
   return base::PlannerStatus(solved, approximate);
@@ -448,7 +466,7 @@ bool BoltPlanner::onGraphSearch(const TaskVertex &startVertex, const TaskVertex 
   while (true)
   {
     // Attempt to find a solution from start to goal
-    // time::point startTime0 = time::now(); // Benchmark
+    time::point startTime0 = time::now(); // Benchmark
     if (!taskGraph_->astarSearch(startVertex, goalVertex, vertexPath, distance, indent))
     {
       BOLT_WARN(verbose_, "Unable to construct solution between start and goal using astar");
@@ -456,12 +474,16 @@ bool BoltPlanner::onGraphSearch(const TaskVertex &startVertex, const TaskVertex 
       // no path found what so ever
       return false;
     }
-    // OMPL_INFORM("astar search took %f seconds", time::seconds(time::now() - startTime0)); // Benchmark
+    OMPL_INFORM("astar search took %f seconds", time::seconds(time::now() - startTime0)); // Benchmark
 
     // Check if all the points in the potential solution are valid
 
-    // time::point startTime1 = time::now(); // Benchmark
-    if (lazyCollisionCheck(vertexPath, ptc, indent))
+
+    time::point startTime1 = time::now(); // Benchmark
+    bool result = lazyCollisionCheck(vertexPath, ptc, indent);
+    OMPL_INFORM("collision check took %f seconds", time::seconds(time::now() - startTime1)); // Benchmark
+
+    if (result)
     {
       BOLT_DEBUG(verbose_, "Lazy collision check returned valid ");
 
@@ -469,7 +491,6 @@ bool BoltPlanner::onGraphSearch(const TaskVertex &startVertex, const TaskVertex 
       convertVertexPathToStatePath(vertexPath, actualStart, actualGoal, compoundSolution, indent);
       return true;
     }
-    // OMPL_INFORM("collision check took %f seconds", time::seconds(time::now() - startTime1)); // Benchmark
 
     // else, loop with updated graph that has the invalid edges/states disabled
   }  // end while
@@ -496,30 +517,37 @@ bool BoltPlanner::lazyCollisionCheck(std::vector<TaskVertex> &vertexPath, Termin
     // Increment location on path
     toVertex = vertexPath[toID];
 
-    TaskEdge thisEdge = boost::edge(fromVertex, toVertex, taskGraph_->getGraph()).first;
+    TaskEdge edge = boost::edge(fromVertex, toVertex, taskGraph_->getGraph()).first;
+    int collision_state = taskGraph_->getGraphNonConst()[edge].collision_state_;
 
     // Has this edge already been checked before?
-    if (taskGraph_->getGraphNonConst()[thisEdge].collision_state_ == NOT_CHECKED)
+    if (collision_state == NOT_CHECKED)
     {
       // TODO - is checking edges sufficient, or do we also need to check vertices? I think its fine.
       // Check path between states
       const base::State *fromState = taskGraph_->getModelBasedState(fromVertex);
       const base::State *toState = taskGraph_->getModelBasedState(toVertex);
-      if (!modelSI_->getMotionValidator()->checkMotion(fromState, toState))
+
+      time::point startTime3 = time::now(); // Benchmark
+      bool result = modelSI_->getMotionValidator()->checkMotion(fromState, toState);
+      OMPL_INFORM("regular CC %f seconds", time::seconds(time::now() - startTime3)); // Benchmark
+
+      if (!result)
       {
         BOLT_MAGENTA(vCollisionCheck_, "LAZY CHECK: disabling edge from vertex " << fromVertex << " to "
                                                                                          << toVertex);
 
         // Disable edge
-        // taskGraph_->getGraphNonConst()[thisEdge].collision_state_ = IN_COLLISION;
+        taskGraph_->getGraphNonConst()[edge].collision_state_ = IN_COLLISION;
 
         // Remove the edge
-        taskGraph_->removeEdge(thisEdge, indent);
+        //taskGraph_->removeEdge(edge, indent);
 
         // Remember that this path is no longer valid, but keep checking remainder of path edges
         hasInvalidEdges = true;
 
 #ifndef NDEBUG
+        std::cout << "ignore this " << std::endl;
         // Check if our planner is out of time - only do this after the slow checkMotion() action has occured to save
         // time
         if (ptc || visual_->viz1()->shutdownRequested())
@@ -544,10 +572,10 @@ bool BoltPlanner::lazyCollisionCheck(std::vector<TaskVertex> &vertexPath, Termin
       else
       {
         // Mark edge as free so we no longer need to check for collision
-        taskGraph_->getGraphNonConst()[thisEdge].collision_state_ = FREE;
+        taskGraph_->getGraphNonConst()[edge].collision_state_ = FREE;
       }
     }
-    else if (taskGraph_->getGraphNonConst()[thisEdge].collision_state_ == IN_COLLISION)
+    else if (collision_state == IN_COLLISION)
     {
       // Remember that this path is no longer valid, but keep checking remainder of path edges
       hasInvalidEdges = true;
@@ -555,7 +583,7 @@ bool BoltPlanner::lazyCollisionCheck(std::vector<TaskVertex> &vertexPath, Termin
       if (visualizeLazyCollisionCheck_)
         visualizeBadEdge(fromVertex, toVertex);
 
-      BOLT_ERROR("Somehow an edge " << thisEdge << " was found that is already in collision before lazy "
+      BOLT_ERROR("Somehow an edge " << edge << " was found that is already in collision before lazy "
                                                            "collision checking");
     }  // if in collision
 
@@ -1273,6 +1301,69 @@ void BoltPlanner::visualizeSmoothed(std::size_t indent)
 
   if (visualizeWait_)
     visual_->prompt("after visualization");
+}
+
+void BoltPlanner::collisionCheckingThread(std::size_t indent)
+{
+  BOLT_FUNC(true, "collisionCheckingThread()");
+
+  std::vector<TaskEdge>& relaxedEdges = taskGraph_->getRelaxedEdges();
+  static const double THREAD_WAIT_TIME = 0.0001*1000000;
+  std::size_t currentEdgeToProcess = 0; // ongoing count of which relaxed edge needs processing
+  while (!solutionFound_)
+  {
+    if (relaxedEdges.empty())
+    {
+      usleep(THREAD_WAIT_TIME);
+      continue;
+    }
+
+    // Always process all edges except last edge - to avoid race conditions of multi-thread read/write
+    for (; currentEdgeToProcess < relaxedEdges.size() - 1; ++currentEdgeToProcess)
+    {
+      // Check if thread should end
+      if (solutionFound_)
+        return;
+
+      std::cout << "currentEdgeToProcess: " << currentEdgeToProcess << " total edges in list " << relaxedEdges.size() << std::endl;
+
+      TaskEdge edge = relaxedEdges[currentEdgeToProcess];
+
+      // Has this edge already been checked before?
+      if (taskGraph_->getGraphNonConst()[edge].collision_state_ != NOT_CHECKED)
+        continue; // nothing to do here
+
+      SparseVertex e_v1 = boost::source(edge, taskGraph_->getGraphNonConst());
+      SparseVertex e_v2 = boost::target(edge, taskGraph_->getGraphNonConst());
+
+      // Check path between states
+      const base::State *fromState = taskGraph_->getModelBasedState(e_v1);
+      const base::State *toState = taskGraph_->getModelBasedState(e_v2);
+
+
+      time::point startTime0 = time::now(); // Benchmark
+      if (!secondary_si_->getMotionValidator()->checkMotion(fromState, toState))
+      {
+        BOLT_MAGENTA(vCollisionCheck_, "LAZY CHECK: disabling edge from vertex " << e_v1 << " to " << e_v2);
+        taskGraph_->getGraphNonConst()[edge].collision_state_ = IN_COLLISION;
+      }
+      else
+      {
+        // Mark edge as free so we no longer need to check for collision
+        taskGraph_->getGraphNonConst()[edge].collision_state_ = FREE;
+      }
+      OMPL_INFORM("CC took %f seconds", time::seconds(time::now() - startTime0)); // Benchmark
+
+    } // for each edge
+
+      // Check if thread should end
+    if (solutionFound_)
+      return;
+
+    // wait for more edges to be added
+    std::cout << "sleeping before next while loop " << std::endl;
+    usleep(THREAD_WAIT_TIME);
+  } // while search is running
 }
 
 }  // namespace bolt

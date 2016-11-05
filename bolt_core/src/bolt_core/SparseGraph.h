@@ -137,8 +137,10 @@ public:
     return g_;
   }
 
-  SparseAdjList getGraphNonConst()
+  SparseAdjList &getGraphNonConst()
   {
+    std::size_t indent = 0;
+    BOLT_ERROR("getGraphNonConst");
     return g_;
   }
 

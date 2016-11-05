@@ -229,6 +229,13 @@ public:
   void visualizeRaw(std::size_t indent);
   void visualizeSmoothed(std::size_t indent);
 
+  void collisionCheckingThread(std::size_t indent);
+
+  void setSecondarySI(base::SpaceInformationPtr secondary_si)
+  {
+    secondary_si_ = secondary_si;
+  }
+
 private:
   /** \brief This is included in parent class, but mentioned here. Use modelSI_ instead to reduce confusion   */
   // using Planner::si_;
@@ -276,6 +283,9 @@ protected:
   std::vector<geometric::PathGeometricPtr> smoothedModelSolSegments_;
 
   std::size_t kNearestNeighbors_ = 60;
+
+  bool solutionFound_ = false;
+  base::SpaceInformationPtr secondary_si_;
 
 public:
   /** \brief Optionally smooth retrieved and repaired paths from database */

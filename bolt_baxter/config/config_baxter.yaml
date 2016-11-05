@@ -27,10 +27,10 @@ bolt_baxter:
 
   # run type
   run_problems: true # do plans?
-  num_problems: 1000
+  num_problems: 10
   problem_type: 2 # 0 - random, 1 - imarkers, 2 - imarker goal list
-  #imarker_goal_list: problems/easy1.moveit
-  imarker_goal_list: problems/benchmark1.moveit
+  imarker_goal_list: problems/easy1.moveit
+  #imarker_goal_list: problems/benchmark1.moveit
   #imarker_goal_list: problems/hard1.moveit
   #imarker_goal_list: problems/very_hard1.moveit
   imarker_start_list: problems/benchmark1.moveit.start
@@ -38,16 +38,18 @@ bolt_baxter:
   # scene
   scene_type: 1 # 0 - office, 1 - amazon
   distance_to_shelf: 1.25
-  use_shelf_noise: true # keep shelf location constant or randomize it
+  use_shelf_noise: false # keep shelf location constant or randomize it
+  #bin_height: -0.15
+  bin_height: 0.5
 
   # execution
   connect_to_hardware: false
   velocity_scaling_factor: 1.0
 
   # planner type
-  planners: [Bolt, Thunder, RRTConnect, SPARStwo, BiEST, LazyPRM, LazyRRT]
+  #planners: [Bolt, Thunder, RRTConnect, SPARStwo, BiEST, LazyPRM, LazyRRT]
   #planners: [LazyPRM, LazyRRT]
-  #planners: [Bolt]
+  planners: [Bolt]
   #planners: [Thunder]
   #planners: [SPARStwo]
   #planners: [LazyRRT]
@@ -212,7 +214,7 @@ debug_interface:
 bolt_planner:
   smoothing_enabled: true
   verbose:
-    verbose: false
+    verbose: true
     nearest_neighbor: false
     collision_check: false
     sampling: false

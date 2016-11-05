@@ -276,10 +276,6 @@ bool SparseStorage::load(std::istream &in, std::size_t indent)
       return false;
     }
 
-    // Pre-allocate memory in graph
-    sparseGraph_->getGraphNonConst().m_vertices.resize(h.vertex_count);
-    sparseGraph_->getGraphNonConst().m_edges.resize(h.edge_count);
-
     // Read from file
     loadVertices(h.vertex_count, ia, indent);
     loadEdges(h.edge_count, ia, indent);
@@ -296,8 +292,8 @@ void SparseStorage::loadVertices(std::size_t numVertices, boost::archive::binary
 {
   BOLT_FUNC(true, "Loading vertices from file: " << numVertices);
 
-  // Reserve memory
-  sparseGraph_->getGraphNonConst().m_vertices.reserve(numVertices);
+  // Pre-allocate memory in graph
+  //sparseGraph_->getGraphNonConst().m_vertices.reserve(numVertices);
 
   // Create thread to populate nearest neighbor structure, because that is the slowest component
   loadVerticesFinished_ = false;
@@ -372,6 +368,9 @@ void SparseStorage::populateNNThread(std::size_t startingVertex, std::size_t num
 void SparseStorage::loadEdges(std::size_t numEdges, boost::archive::binary_iarchive &ia, std::size_t indent)
 {
   BOLT_FUNC(true, "Loading edges from file: " << numEdges);
+
+  // Pre-allocate memory in graph
+  //sparseGraph_->getGraphNonConst().m_edges.reserve(h.edge_count);
 
   std::size_t feedbackFrequency = std::max(10.0, numEdges / 10.0);
   BoltEdgeData edgeData;

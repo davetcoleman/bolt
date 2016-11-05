@@ -139,6 +139,7 @@ BoltBaxter::BoltBaxter(const std::string &hostname, const std::string &package_p
   error += !rosparam_shortcuts::get(name_, rpnh, "scene_type", scene_type_);
   error += !rosparam_shortcuts::get(name_, rpnh, "distance_to_shelf", distance_to_shelf_);
   error += !rosparam_shortcuts::get(name_, rpnh, "use_shelf_noise", use_shelf_noise_);
+  error += !rosparam_shortcuts::get(name_, rpnh, "bin_height", bin_height_);
   // execution
   error += !rosparam_shortcuts::get(name_, rpnh, "connect_to_hardware", connect_to_hardware_);
   error += !rosparam_shortcuts::get(name_, rpnh, "velocity_scaling_factor", velocity_scaling_factor_);
@@ -644,7 +645,6 @@ bool BoltBaxter::runProblems(std::size_t indent)
     while (!chooseStartGoal(run_id, indent))
     {
       BOLT_WARN(true, "Invalid start/goal found, trying again");
-      visual_->prompt("try again");
 
       // Move the shelf
       loadAmazonScene(indent);
@@ -809,15 +809,32 @@ void BoltBaxter::loadCollisionChecker(std::size_t indent)
 
   // Allow collision checker to visualize
   validity_checker_->setVisual(visual_);
+
+  // Load more collision checkers
+  if (is_bolt_)
+  {
+    ob::SpaceInformationPtr secondary_si = std::make_shared<ob::SpaceInformation>(space_);
+    secondary_si->setup();
+    validity_checker_ = std::make_shared<bolt_moveit::StateValidityChecker>(planning_group_name_, secondary_si, *current_state_,
+                                                                            planning_scene_, space_);
+    //validity_checker_->setCheckingEnabled(collision_checking_enabled_);
+
+    // Set checker
+    secondary_si->setStateValidityChecker(validity_checker_);
+
+    // The interval in which obstacles are checked for between states
+    // seems that it default to 0.01 but doesn't do a good job at that level
+    // si_->setStateValidityCheckingResolution(0.005);
+    secondary_si->setStateValidityCheckingResolution(0.001);
+
+    bolt_->getBoltPlanner()->setSecondarySI(secondary_si);
+  }
 }
 
 void BoltBaxter::deleteAllMarkers(std::size_t indent)
 {
-  if (headless_)
-    return;
-
   // Reset rviz markers
-  for (std::size_t i = 1; i < NUM_VISUALS; ++i)
+  for (std::size_t i = 1; i <= NUM_VISUALS; ++i)
   {
     visual_tools_[i]->deleteAllMarkers();
     visual_tools_[i]->trigger();
@@ -1363,7 +1380,7 @@ void BoltBaxter::loadBin(double y, std::size_t indent)
                   Eigen::AngleAxisd(0, Eigen::Vector3d::UnitZ());
   mesh_centroid.translation().x() = distance_to_shelf_ * 0.65;
   mesh_centroid.translation().y() = y;
-  mesh_centroid.translation().z() = -0.15;
+  mesh_centroid.translation().z() = bin_height_;
 
   const std::string collision_object_name = "bin" + std::to_string(y);
 
