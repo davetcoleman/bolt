@@ -385,8 +385,6 @@ bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
     addSamples(taskGraph_->getModelBasedState(actualStart), indent);
   }
 
-  //addSamples(NULL, indent); // do general sampling
-
   // Feedback on growth of graph
   BOLT_DEBUG(true, "SparseGraph edges: " << taskGraph_->getSparseGraph()->getNumEdges() << " vertices: " << taskGraph_->getSparseGraph()->getNumVertices());
   BOLT_DEBUG(true, "TaskGraph   edges: " << taskGraph_->getNumEdges() << " vertices: " << taskGraph_->getNumVertices());
@@ -575,10 +573,15 @@ bool BoltPlanner::lazyCollisionCheck(std::vector<TaskVertex> &vertexPath, Termin
 bool BoltPlanner::findGraphNeighbors(const base::CompoundState *state, std::vector<TaskVertex> &neighbors,
                                      int requiredLevel, std::size_t indent)
 {
+  bool useRadius = false;
+
   const double sparseDeltaFractionSecondary = 0.1;
   const double radius = sparseDeltaFractionSecondary * modelSI_->getMaximumExtent();
-
-  BOLT_FUNC(vNearestNeighbor_, "findGraphNeighbors() search radius " << radius);
+  std::size_t knearest = 10 * modelSI_->getStateDimension();
+  if (useRadius)
+    BOLT_FUNC(vNearestNeighbor_, "findGraphNeighbors() search radius " << radius);
+  else
+    BOLT_FUNC(vNearestNeighbor_, "findGraphNeighbors() search k " << knearest);
 
   BOLT_ASSERT(requiredLevel == 0 || requiredLevel == 2, "Wrong required level");
 
@@ -594,8 +597,10 @@ bool BoltPlanner::findGraphNeighbors(const base::CompoundState *state, std::vect
 
   // Search
   taskGraph_->getCompoundQueryStateNonConst(taskGraph_->getQueryVertices()[threadID]) = stateCopy;
-  //taskGraph_->getNN()->nearestR(taskGraph_->getQueryVertices()[threadID], radius, neighbors);
-  taskGraph_->getNN()->nearestK(taskGraph_->getQueryVertices()[threadID], 120, neighbors);
+  if (useRadius)
+    taskGraph_->getNN()->nearestR(taskGraph_->getQueryVertices()[threadID], radius, neighbors);
+  else
+    taskGraph_->getNN()->nearestK(taskGraph_->getQueryVertices()[threadID], knearest, neighbors);
   taskGraph_->getCompoundQueryStateNonConst(taskGraph_->getQueryVertices()[threadID]) = nullptr;
 
   // Convert our list of neighbors to the proper level
@@ -1025,12 +1030,13 @@ void BoltPlanner::addSamples(const base::State *near, std::size_t indent)
   base::CompoundState* compoundState;
   bool usedState = true; // flag indicating whether memory needs to be allocated again for compoundState
 
-  std::size_t numAttempts = 1000;
+  std::size_t numAttempts = 100;
   // if (near)
   //   numAttempts = 100; // use way less attempts when sampling near a state
 
   for (std::size_t i = 0; i < numAttempts; ++i)
   {
+    std::cout << "i: " << i << std::endl;
     if (usedState)
     {
       compoundState = compoundSI_->allocState()->as<base::CompoundState>();
@@ -1160,10 +1166,10 @@ bool BoltPlanner::addSampleSparseCriteria(base::CompoundState *compoundState, st
   if (visibleNeighborhood.empty())
   {
     // No free paths means we add for coverage
-    BOLT_DEBUG(vCriteria_ || true, "Adding node for COVERAGE ");
+    BOLT_DEBUG(vCriteria_, "Adding node for COVERAGE ");
     taskGraph_->addVertex(compoundState, indent);
 
-    if (visualizeSampling_ || true)
+    if (visualizeSampling_)
     {
       visual_->viz6()->state(jointState, tools::ROBOT, tools::GREEN, 1);
       visual_->prompt("coverage");

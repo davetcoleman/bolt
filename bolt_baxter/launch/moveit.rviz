@@ -1755,8 +1755,7 @@ Visualization Manager:
           Marker Topic: /baxter/ompl_visual5
           Name: ompl5 - markers
           Namespaces:
-            Cylinder: true
-            path_spheres: true
+            {}
           Queue Size: 100
           Value: true
         - Class: rviz/MarkerArray
@@ -1764,14 +1763,13 @@ Visualization Manager:
           Marker Topic: /baxter/ompl_visual6
           Name: ompl6 - markers
           Namespaces:
-            Cylinder: true
-            path_spheres: true
+            {}
           Queue Size: 100
           Value: true
       Enabled: true
       Name: Markers 1to6
     - Class: moveit_rviz_plugin/Trajectory
-      Enabled: true
+      Enabled: false
       Interrupt Display: true
       Links:
         All Links Enabled: true
@@ -2048,7 +2046,7 @@ Visualization Manager:
       Show Trail: false
       State Display Time: REALTIME
       Trajectory Topic: /baxter/display_trajectory
-      Value: true
+      Value: false
     - Class: moveit_rviz_plugin/PlanningScene
       Enabled: true
       Move Group Namespace: ""
@@ -2338,17 +2336,17 @@ Visualization Manager:
       Displays:
         - Class: rviz/InteractiveMarkers
           Enable Transparency: true
-          Enabled: true
+          Enabled: false
           Name: Start
           Show Axes: false
           Show Descriptions: true
           Show Visual Aids: false
           Update Topic: /baxter/start_imarker/update
-          Value: true
+          Value: false
         - Attached Body Color: 150; 50; 150
           Class: moveit_rviz_plugin/RobotState
           Collision Enabled: false
-          Enabled: true
+          Enabled: false
           Links:
             All Links Enabled: true
             Expand Joint Details: false
@@ -2621,7 +2619,7 @@ Visualization Manager:
           Robot State Topic: /baxter/imarker_start_state
           Show All Links: true
           Show Highlights: true
-          Value: true
+          Value: false
           Visual Enabled: true
         - Class: rviz/InteractiveMarkers
           Enable Transparency: true
@@ -2921,7 +2919,7 @@ Visualization Manager:
           Value: false
         - Attached Body Color: 150; 50; 150
           Class: moveit_rviz_plugin/RobotState
-          Collision Enabled: true
+          Collision Enabled: false
           Enabled: false
           Links:
             All Links Enabled: true
@@ -3196,7 +3194,7 @@ Visualization Manager:
           Show All Links: true
           Show Highlights: true
           Value: false
-          Visual Enabled: false
+          Visual Enabled: true
         - Class: rviz/MarkerArray
           Enabled: true
           Marker Topic: /baxter/cartesian_trajectory
@@ -3258,24 +3256,24 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 3.88853574
+      Distance: 2.92518139
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.155145139
-        Y: 0.396835268
+        X: 0.119903803
+        Y: 0.0154609531
         Z: -1.35600567e-06
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.799797058
+      Pitch: 1.12479699
       Target Frame: robot_table_link
       Value: XYOrbit (rviz)
-      Yaw: 0.539024651
+      Yaw: 3.23902607
     Saved: ~
 Window Geometry:
   Displays:

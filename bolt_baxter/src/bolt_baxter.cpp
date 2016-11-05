@@ -55,6 +55,8 @@
 #include <ompl/geometric/planners/rrt/RRTConnect.h>
 #include <ompl/geometric/planners/rrt/LazyRRT.h>
 #include <ompl/geometric/planners/prm/LazyPRM.h>
+#include <ompl/geometric/planners/est/BiEST.h>
+#include <ompl/geometric/planners/pdst/PDST.h>
 
 // this package
 #include <bolt_baxter/bolt_baxter.h>
@@ -122,7 +124,8 @@ BoltBaxter::BoltBaxter(const std::string &hostname, const std::string &package_p
   error += !rosparam_shortcuts::get(name_, rpnh, "num_problems", num_problems_);
   error += !rosparam_shortcuts::get(name_, rpnh, "headless", headless_);
   error += !rosparam_shortcuts::get(name_, rpnh, "problem_type", problem_type_);
-  error += !rosparam_shortcuts::get(name_, rpnh, "imarker_goal_list", imarker_goal_list_);
+  error += !rosparam_shortcuts::get(name_, rpnh, "imarker_goal_list", imarker_goal_list_name_);
+  error += !rosparam_shortcuts::get(name_, rpnh, "imarker_start_list", imarker_start_list_name_);
   error += !rosparam_shortcuts::get(name_, rpnh, "use_task_planning", use_task_planning_);
   error += !rosparam_shortcuts::get(name_, rpnh, "planning_group_name", planning_group_name_);
   error += !rosparam_shortcuts::get(name_, rpnh, "arm_jmgs", arm_jmgs);
@@ -135,6 +138,7 @@ BoltBaxter::BoltBaxter(const std::string &hostname, const std::string &package_p
   // collision
   error += !rosparam_shortcuts::get(name_, rpnh, "scene_type", scene_type_);
   error += !rosparam_shortcuts::get(name_, rpnh, "distance_to_shelf", distance_to_shelf_);
+  error += !rosparam_shortcuts::get(name_, rpnh, "use_shelf_noise", use_shelf_noise_);
   // execution
   error += !rosparam_shortcuts::get(name_, rpnh, "connect_to_hardware", connect_to_hardware_);
   error += !rosparam_shortcuts::get(name_, rpnh, "velocity_scaling_factor", velocity_scaling_factor_);
@@ -381,6 +385,14 @@ bool BoltBaxter::loadOMPL(std::size_t indent)
     {
       simple_setup_->setPlanner(std::make_shared<og::LazyPRM>(si_));
     }
+    else if (planner_ == "BiEST")
+    {
+      simple_setup_->setPlanner(std::make_shared<og::BiEST>(si_));
+    }
+    else if (planner_ == "PDST")
+    {
+      simple_setup_->setPlanner(std::make_shared<og::PDST>(si_));
+    }
     else if (planner_ == "SPARStwo")
     {
       spars2_ = std::make_shared<og::SPARStwo>(si_);
@@ -416,8 +428,8 @@ bool BoltBaxter::loadOMPL(std::size_t indent)
   }
   else if (is_thunder_)
   {
-    thunder_->setFilePath(getPlannerFilePath(planning_group_name_, indent) + ".ompl");
     thunder_->getExperienceDB()->getSPARSdb()->setSparseDeltaFraction(0.1);  // TODO do not hardcode
+    thunder_->setFilePath(getPlannerFilePath(planning_group_name_, indent) + ".ompl");
   }
 
   // Create start and goal states
@@ -492,9 +504,9 @@ void BoltBaxter::eachPlanner(std::size_t indent)
 
     // Feedback
     std::cout << std::endl;
-    std::cout << "###################################################################### " << std::endl;
+    std::cout << "##############################################################################################\n";
     BOLT_INFO(true, "Testing with planner '" << planner_ << "'");
-    std::cout << "###################################################################### " << std::endl;
+    std::cout << "##############################################################################################\n\n";
 
     // Load planning
     if (!loadOMPL(indent))
@@ -511,11 +523,14 @@ void BoltBaxter::eachPlanner(std::size_t indent)
     if (i + 1 < planners_.size() - 1)  // if there are more planners to test
     {
       BOLT_INFO(true, "Next planner " << planners_[i + 1]);
-      visual_->prompt("Next planner");  // Must do this before calling reset()
+      //visual_->prompt("Next planner");  // Must do this before calling reset()
     }
 
     // Clear previous planner
     reset(indent);
+
+    if (!ros::ok())
+      break;
   }
 
   logging_file_.close();
@@ -625,11 +640,16 @@ bool BoltBaxter::runProblems(std::size_t indent)
     BOLT_INFO(true, "Planning " << run_id + 1 << " out of " << num_problems_);
     std::cout << "***************************************************************" << std::endl;
 
-    if (headless_)
-      BOLT_WARN(true, "IMarker start/goal not loaded, should not be planning in headless mode");
-
     // Generate start/goal pair
-    chooseStartGoal(run_id, indent);
+    while (!chooseStartGoal(run_id, indent))
+    {
+      BOLT_WARN(true, "Invalid start/goal found, trying again");
+      visual_->prompt("try again");
+
+      // Move the shelf
+      loadAmazonScene(indent);
+      visual_moveit_start_->triggerPlanningSceneUpdate();
+    }
 
     // Track memory usage
     double vm1, rss1;
@@ -695,6 +715,13 @@ bool BoltBaxter::runProblems(std::size_t indent)
     // Reset marker if this is not our last run
     if (run_id < num_problems_ - 1)
       deleteAllMarkers(indent);
+
+    // Move the shelf with noise
+    if (use_shelf_noise_)
+    {
+      loadAmazonScene(indent);
+      visual_moveit_start_->triggerPlanningSceneUpdate();
+    }
   }  // for each run
 
   // Save experience
@@ -716,6 +743,9 @@ bool BoltBaxter::plan(std::size_t indent)
   BOLT_FUNC(true, "plan()");
 
   // Setup -----------------------------------------------------------
+
+  // Reset value
+  last_plan_path_length_ = 0.0;
 
   // Clear all planning data. This only includes data generated by motion plan computation.
   // Planner settings, start & goal states are not affected.
@@ -796,6 +826,7 @@ void BoltBaxter::deleteAllMarkers(std::size_t indent)
 
 void BoltBaxter::visualizeStartGoal(std::size_t indent)
 {
+  ROS_WARN_STREAM_NAMED(name_, "Deprecated, remove");
   visual_moveit_start_->publishRobotState(moveit_start_, rvt::GREEN);
   visual_moveit_goal_->publishRobotState(moveit_goal_, rvt::ORANGE);
 
@@ -1223,7 +1254,15 @@ void BoltBaxter::loadScene(std::size_t indent)
   {
     case 1:
       loadAmazonScene(indent);
-    // break;
+      visual_moveit_start_->triggerPlanningSceneUpdate();
+      ros::spinOnce();
+
+      loadBin(0.7, indent);
+      visual_moveit_start_->triggerPlanningSceneUpdate();
+      ros::spinOnce();
+
+      loadBin(-0.7, indent);
+      // no break on purpose
     case 0:
       loadOfficeScene(indent);
       break;
@@ -1263,21 +1302,35 @@ void BoltBaxter::loadAmazonScene(std::size_t indent)
   BOLT_FUNC(true, "loadAmazonScene()");
 
   // Load mesh file name
-  std::string collision_mesh_path = "file://" + package_path_ + "/meshes/kiva_pod/meshes/pod_lowres.stl";
+  std::string collision_mesh_path = "file://" + package_path_ + "/meshes/pod_lowres.stl";
 
   BOLT_INFO(true, "Loading mesh from " << collision_mesh_path);
 
   Eigen::Affine3d mesh_centroid = Eigen::Affine3d::Identity();
 
+  // Add noise
+  double noise = 0.03 ; // 3 cm, slighlty more than an inch
+  double rnoise_degrees = 5;
+  double rnoise = rnoise_degrees * 0.0174533; // radians
+  double x_noise = 0;
+  double y_noise = 0;
+  double rotation_noise = 0;
+  if (use_shelf_noise_)
+  {
+    x_noise = visual_tools_[6]->dRand(-noise, noise);
+    y_noise = visual_tools_[6]->dRand(-noise, noise);
+    rotation_noise = visual_tools_[6]->dRand(-rnoise, rnoise); // z axis
+  }
+
   // Calculate offset
   mesh_centroid = Eigen::AngleAxisd(M_PI / 2.0, Eigen::Vector3d::UnitX()) *
-                  Eigen::AngleAxisd(M_PI / 2.0, Eigen::Vector3d::UnitY()) *
+                  Eigen::AngleAxisd(M_PI / 2.0 + rotation_noise, Eigen::Vector3d::UnitY()) *
                   Eigen::AngleAxisd(0, Eigen::Vector3d::UnitZ());
-  mesh_centroid.translation().x() = distance_to_shelf_;
-  mesh_centroid.translation().y() = 0;
+  mesh_centroid.translation().x() = distance_to_shelf_ + x_noise;
+  mesh_centroid.translation().y() = y_noise;
   mesh_centroid.translation().z() = baxter_torso_height_;
 
-  const std::string collision_object_name = "shelf";
+  const std::string collision_object_name = "shelf"; // + std::to_string(visual_tools_[6]->iRand(0,1000));
 
   shapes::Shape *mesh = shapes::createMeshFromResource(collision_mesh_path);  // make sure its prepended by file://
   shapes::ShapeMsg shape_msg;  // this is a boost::variant type from shape_messages.h
@@ -1293,10 +1346,45 @@ void BoltBaxter::loadAmazonScene(std::size_t indent)
   visual_tools_[6]->publishCollisionMesh(mesh_centroid, collision_object_name, mesh_msg, rvt::BROWN);
 }
 
+void BoltBaxter::loadBin(double y, std::size_t indent)
+{
+  BOLT_FUNC(true, "loadBin()");
+
+  // Load mesh file name
+  std::string collision_mesh_path = "file://" + package_path_ + "/meshes/goal_bin.stl";
+
+  BOLT_INFO(true, "Loading mesh from " << collision_mesh_path);
+
+  Eigen::Affine3d mesh_centroid = Eigen::Affine3d::Identity();
+
+  // Calculate offset
+  mesh_centroid = Eigen::AngleAxisd(0, Eigen::Vector3d::UnitX()) *
+                  Eigen::AngleAxisd(0, Eigen::Vector3d::UnitY()) *
+                  Eigen::AngleAxisd(0, Eigen::Vector3d::UnitZ());
+  mesh_centroid.translation().x() = distance_to_shelf_ * 0.65;
+  mesh_centroid.translation().y() = y;
+  mesh_centroid.translation().z() = -0.15;
+
+  const std::string collision_object_name = "bin" + std::to_string(y);
+
+  shapes::Shape *mesh = shapes::createMeshFromResource(collision_mesh_path);  // make sure its prepended by file://
+  shapes::ShapeMsg shape_msg;  // this is a boost::variant type from shape_messages.h
+  if (!mesh || !shapes::constructMsgFromShape(mesh, shape_msg))
+  {
+    BOLT_ERROR("Unable to create mesh shape message from resource " << collision_mesh_path);
+    return;
+  }
+
+  shape_msgs::Mesh mesh_msg = boost::get<shape_msgs::Mesh>(shape_msg);
+
+  // Add mesh to scene
+  visual_tools_[6]->publishCollisionMesh(mesh_centroid, collision_object_name, mesh_msg, rvt::RED);
+}
+
 void BoltBaxter::saveIMarkersToFile(std::size_t indent)
 {
   std::string file_path;
-  bolt_moveit::getFilePath(file_path, imarker_goal_list_, "ros/ompl_storage");
+  bolt_moveit::getFilePath(file_path, imarker_goal_list_name_, "ros/ompl_storage");
   BOLT_INFO(true, "Saving goal states to " << file_path);
 
   std::ofstream output_file;
@@ -1306,7 +1394,8 @@ void BoltBaxter::saveIMarkersToFile(std::size_t indent)
   {
     visual_->viz1()->prompt("save state to file...");
 
-    if (!imarker_goal_->isStateValid())
+    const bool verbose = true;
+    if (!imarker_goal_->isStateValid(verbose))
     {
       BOLT_WARN(true, "IMarker goal state is in collision, try again");
       continue;
@@ -1323,7 +1412,7 @@ void BoltBaxter::viewIMarkersFromFile(std::size_t indent)
   BOLT_FUNC(true, "viewIMarkersFromFile()");
   std::vector<moveit::core::RobotStatePtr> robot_states;
 
-  loadIMarkersFromFile(robot_states, indent);
+  loadIMarkersFromFile(robot_states, imarker_goal_list_name_, indent);
 
   std::size_t count = 0;
   for (moveit::core::RobotStatePtr state : robot_states)
@@ -1337,12 +1426,12 @@ void BoltBaxter::viewIMarkersFromFile(std::size_t indent)
   exit(0);
 }
 
-void BoltBaxter::loadIMarkersFromFile(std::vector<moveit::core::RobotStatePtr> &robot_states, std::size_t indent)
+void BoltBaxter::loadIMarkersFromFile(std::vector<moveit::core::RobotStatePtr> &robot_states, std::string file_name, std::size_t indent)
 {
   BOLT_FUNC(true, "loadIMarkersFromFile()");
 
   std::string file_path;
-  bolt_moveit::getFilePath(file_path, imarker_goal_list_, "ros/ompl_storage");
+  bolt_moveit::getFilePath(file_path, file_name, "ros/ompl_storage");
   BOLT_INFO(true, "Loading goal states from " << file_path);
 
   // Error check
@@ -1494,9 +1583,9 @@ robot_trajectory::RobotTrajectoryPtr BoltBaxter::processSegments(std::size_t ind
   return combined_traj;
 }
 
-void BoltBaxter::chooseStartGoal(std::size_t run_id, std::size_t indent)
+bool BoltBaxter::chooseStartGoal(std::size_t run_id, std::size_t indent)
 {
-  BOLT_FUNC(true, "chooseStartGoal()");
+  BOLT_FUNC(verbose_, "chooseStartGoal()");
 
   switch (problem_type_)
   {
@@ -1510,39 +1599,70 @@ void BoltBaxter::chooseStartGoal(std::size_t run_id, std::size_t indent)
       break;
     case 2:  // imarker goal list
     {
-      // start is always the same
-      imarker_start_->getRobotState()->setToDefaultValues(planning_jmg_, "both_ready");
+      // choose start ---------------------------------------
+      if (imarker_start_states_.empty())
+        loadIMarkersFromFile(imarker_start_states_, imarker_start_list_name_, indent);
+
+      std::size_t start_state_id = run_id % imarker_start_states_.size();
+      BOLT_INFO(true, "chooseStartGoal: total start states: " << imarker_start_states_.size() << " run_id: " << run_id << " start_state_id: " << start_state_id);
+
+      imarker_start_->getRobotState() = imarker_start_states_[start_state_id];
       imarker_start_->publishState();
 
-      // load goals
-      std::vector<moveit::core::RobotStatePtr> robot_states;
-      loadIMarkersFromFile(robot_states, indent);
+      // choose goal ---------------------------------------
+      if (imarker_goal_states_.empty())
+        loadIMarkersFromFile(imarker_goal_states_, imarker_goal_list_name_, indent);
 
-      // choose goal
-      std::size_t state_id = run_id % robot_states.size();
-      std::cout << "total states: " << robot_states.size() << " run_id: " << run_id << " state_id: " << state_id
-                << std::endl;
+      std::size_t goal_state_id = run_id % imarker_goal_states_.size();
+      BOLT_INFO(true, "chooseStartGoal: total goal states: " << imarker_goal_states_.size() << " run_id: " << run_id << " goal_state_id: " << goal_state_id);
 
-      imarker_goal_->getRobotState() = robot_states[state_id];
+      imarker_goal_->getRobotState() = imarker_goal_states_[goal_state_id];
       imarker_goal_->publishState();
     }
+    break;
+    case 3: // from SRDF
+      BOLT_WARN(true, "Not implemented");
+      // start is always the same
+      // imarker_start_->getRobotState()->setToDefaultValues(planning_jmg_, "both_ready");
+      // imarker_start_->publishState();
     break;
     default:
       BOLT_ERROR("Unknown problem type");
   }
 
   // Get start
-  if (!connect_to_hardware_)  // if running on hardware, these markers are not needed
-    moveit_start_ = imarker_start_->getRobotState();
-  else
+  if (connect_to_hardware_)  // if running on hardware, these markers are not needed
+  {
     moveit_start_ = getCurrentState();
+    imarker_start_->getRobotState() = moveit_start_;
+  }
+  else // not connected to hardware
+  {
+    moveit_start_ = imarker_start_->getRobotState();
+  }
 
   // Get goal
   moveit_goal_ = imarker_goal_->getRobotState();
 
   // Visualize
   if (visualize_start_goal_states_)
-    visualizeStartGoal(indent);
+  {
+    imarker_start_->publishState();
+    imarker_goal_->publishState();
+  }
+
+  if (!imarker_start_->isStateValid(true))
+  {
+    BOLT_WARN(true, "Invalid start state");
+    return false;
+  }
+  if (!imarker_goal_->isStateValid(true))
+  {
+    BOLT_WARN(true, "Invalid goal state");
+    return false;
+  }
+
+  return true;
 }
 
 void BoltBaxter::displayDisjointSets(std::size_t indent)
@@ -1571,7 +1691,8 @@ std::string BoltBaxter::getPlannerFilePath(const std::string &planning_group_nam
   }
   else
   {
-    file_name = file_name + planner_lower_ + "_" + planning_group_name + "_database";
+    file_name = file_name + planner_lower_ + "_" + planning_group_name + "_" +
+                std::to_string(thunder_->getExperienceDB()->getSPARSdb()->getSparseDeltaFraction()) + "database";
   }
 
   std::string file_path;
@@ -1657,6 +1778,16 @@ void BoltBaxter::log(bool solved, std::size_t indent)
     otb::ExperiencePathStats stats = bolt_->getPostProcessingResultsAndReset();
     numVerticesAdded = stats.numVerticesAdded_;
     numEdgesAdded = stats.numEdgesAdded_;
+  }
+  if (is_thunder_)
+  {
+    planTime = simple_setup_->getLastSimplificationTime() + simple_setup_->getLastPlanComputationTime();
+
+    // Get a copy of the stats and clear them from the Thunder setup
+    numVerticesAdded = thunder_->diffNumVertices_;
+    numEdgesAdded = thunder_->diffNumEdges_;
+    thunder_->diffNumVertices_ = 0;
+    thunder_->diffNumEdges_ = 0;
   }
   else
   {

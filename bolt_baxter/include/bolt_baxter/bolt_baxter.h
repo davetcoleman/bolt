@@ -135,11 +135,13 @@ public:
 
   void loadAmazonScene(std::size_t indent);
 
+  void loadBin(double y, std::size_t indent);
+
   void saveIMarkersToFile(std::size_t indent);
 
   void viewIMarkersFromFile(std::size_t indent);
 
-  void loadIMarkersFromFile(std::vector<moveit::core::RobotStatePtr>& robot_states, std::size_t indent);
+  void loadIMarkersFromFile(std::vector<moveit::core::RobotStatePtr>& robot_states, std::string file_name, std::size_t indent);
 
   void loadIMarkers(std::size_t indent);
 
@@ -147,7 +149,7 @@ public:
 
   robot_trajectory::RobotTrajectoryPtr processSegments(std::size_t indent);
 
-  void chooseStartGoal(std::size_t run_id, std::size_t indent);
+  bool chooseStartGoal(std::size_t run_id, std::size_t indent);
 
   void displayDisjointSets(std::size_t indent);
 
@@ -219,6 +221,8 @@ public:
   // Logging
   std::ofstream logging_file_;
 
+  bool verbose_ = false;
+
   // Modes
   bool run_problems_;
   bool create_spars_;
@@ -254,7 +258,6 @@ public:
   // Operation settings
   std::size_t num_problems_;
   int problem_type_;
-  std::string imarker_goal_list_;
   bool use_task_planning_;
   bool headless_;
   bool auto_run_;
@@ -294,6 +297,12 @@ public:
   moveit_visual_tools::IMarkerRobotStatePtr imarker_start_;
   moveit_visual_tools::IMarkerRobotStatePtr imarker_goal_;
 
+  // Load states from file
+  std::string imarker_start_list_name_;
+  std::string imarker_goal_list_name_;
+  std::vector<moveit::core::RobotStatePtr> imarker_start_states_;
+  std::vector<moveit::core::RobotStatePtr> imarker_goal_states_;
+
   // Validity checker
   bolt_moveit::StateValidityCheckerPtr validity_checker_;
 
@@ -301,6 +310,7 @@ public:
   std::size_t scene_type_;
   const double baxter_torso_height_ = -0.95;
   double distance_to_shelf_ = 0;
+  bool use_shelf_noise_ = true;
 
 };  // end class
 

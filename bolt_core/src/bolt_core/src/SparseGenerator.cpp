@@ -1169,8 +1169,6 @@ ExperiencePathStats SparseGenerator::addExperiencePath(geometric::PathGeometricP
 
     stats.numVerticesAdded_ = result.numVerticesAdded_;
     stats.numEdgesAdded_ = result.numEdgesAdded_;
-
-    BOLT_MAGENTA(true, "SPARSE GRAPH CHANGED, SAVED -------------------------------------");
   }
   else
     BOLT_MAGENTA(true, "Sparse graph NOT changed  -------------------------------------");

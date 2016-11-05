@@ -9,6 +9,7 @@ bolt_baxter:
   check_valid_vertices: false # Collision check every vertex in sparse graph and return error if invalid found
   save_imarkers_to_file: false
   view_imarkers_from_file: false
+  headless: false
 
   # create sparse graph
   load_spars: true
@@ -26,31 +27,37 @@ bolt_baxter:
 
   # run type
   run_problems: true # do plans?
-  headless: false
-  num_problems: 10
+  num_problems: 1000
   problem_type: 2 # 0 - random, 1 - imarkers, 2 - imarker goal list
-  imarker_goal_list: problems/easy1.moveit
+  #imarker_goal_list: problems/easy1.moveit
+  imarker_goal_list: problems/benchmark1.moveit
   #imarker_goal_list: problems/hard1.moveit
   #imarker_goal_list: problems/very_hard1.moveit
+  imarker_start_list: problems/benchmark1.moveit.start
 
   # scene
   scene_type: 1 # 0 - office, 1 - amazon
   distance_to_shelf: 1.25
+  use_shelf_noise: true # keep shelf location constant or randomize it
 
   # execution
   connect_to_hardware: false
   velocity_scaling_factor: 1.0
 
   # planner type
-  #planners: [Bolt, Thunder, SPARStwo, LazyRRT, RRTConnect, LazyPRM]
+  planners: [Bolt, Thunder, RRTConnect, SPARStwo, BiEST, LazyPRM, LazyRRT]
+  #planners: [LazyPRM, LazyRRT]
   #planners: [Bolt]
   #planners: [Thunder]
   #planners: [SPARStwo]
-  planners: [LazyRRT]
+  #planners: [LazyRRT]
   #planners: [RRTConnect]
   #planners: [LazyPRM]
 
-  planning_time: 120 # seconds
+  #planning_time: 60 # 1 minute
+  #planning_time: 120 # 2 minutes
+  planning_time: 240 # 4 minutes
+  #planning_time: 1200 # 20 minutes
 
   # robot setup
   #planning_group_name: right_arm_minus_one
@@ -69,7 +76,7 @@ bolt_baxter:
   # debugging
   visualize:
     display_database: false # does not display database as it is built, however
-    start_goal_states: true
+    start_goal_states: false
     interpolated_traj: false
     time_between_plans: 2
     database_every_plan: false
