@@ -476,12 +476,6 @@ public:
   /** \brief Convert a path of compound states into only the joint states component (ModelBasedStateSpace) */
   geometric::PathGeometricPtr convertPathToNonCompound(const geometric::PathGeometricPtr compoundPath);
 
-  /** \brief  */
-  std::vector<TaskEdge>& getRelaxedEdges()
-  {
-    return relaxedEdges_;
-  }
-
 protected:
   /** \brief Short name of this class */
   const std::string name_ = "TaskGraph";
@@ -539,8 +533,6 @@ protected:
   bool taskPlanningEnabled_ = false;
 
   bool superDebug_ = false;
-
-  std::vector<TaskEdge> relaxedEdges_;
 
 public:  // user settings from other applications
   /** \brief How many neighbors to a Cartesian start or goal point to attempt to connect to in the free space graph */
@@ -607,11 +599,6 @@ public:
    * \throw FoundGoalException if \a u is the goal
    */
   void examine_vertex(TaskVertex v, const TaskAdjList& g) const;
-
-  /**
-   * \brief This is invoked on every out-edge of each vertex after it is examined.
-   */
-  void examine_edge(TaskEdge e, const TaskAdjList &) const;
 
 };  // end TaskGraph
 

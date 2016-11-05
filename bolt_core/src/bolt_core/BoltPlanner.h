@@ -44,15 +44,18 @@
 #include <ompl/tools/debug/Visualizer.h>
 
 // Boost
-#include <boost/lambda/bind.hpp>
-#include <boost/graph/astar_search.hpp>
-#include <boost/graph/incremental_components.hpp>
-#include <boost/property_map/vector_property_map.hpp>
-#include <boost/graph/graph_traits.hpp>
-#include <boost/graph/adjacency_list.hpp>
-#include <boost/pending/disjoint_sets.hpp>
-#include <boost/function.hpp>
-#include <boost/thread.hpp>
+// #include <boost/lambda/bind.hpp>
+// #include <boost/graph/astar_search.hpp>
+// #include <boost/graph/incremental_components.hpp>
+// #include <boost/property_map/vector_property_map.hpp>
+// #include <boost/graph/graph_traits.hpp>
+// #include <boost/graph/adjacency_list.hpp>
+// #include <boost/pending/disjoint_sets.hpp>
+// #include <boost/function.hpp>
+//#include <boost/thread.hpp>
+
+// C++
+#include <mutex>
 
 namespace ompl
 {
@@ -186,14 +189,14 @@ public:
    * \brief Add samples to the taskGraph if no solution is found because of obstacles
    * \param near - ModelBasedStateSpace, or NULL if you don't want to sample near the start or goal
    */
-  void addSamples(const base::State *near, std::size_t indent);
+  void addSamples(const base::State *near, std::size_t threadID, std::size_t indent);
 
   /**
    * \brief After a valid sample is found, determine if it should be added to the graph based on SPARS criteria
    * \param state - ModelBasedStateSpace - a newly sampled joint state
    * \param bool - return true if state was added to graph, false if memory can be re-used
    */
-  bool addSampleSparseCriteria(base::CompoundState *compoundState, std::size_t indent);
+  bool addSampleSparseCriteria(base::CompoundState *compoundState, std::size_t threadID, std::size_t indent);
 
   TaskGraphPtr getTaskGraph()
   {
@@ -229,11 +232,11 @@ public:
   void visualizeRaw(std::size_t indent);
   void visualizeSmoothed(std::size_t indent);
 
-  void collisionCheckingThread(std::size_t indent);
+  void samplingThread(const base::CompoundState *start, const base::CompoundState *goal, std::size_t indent);
 
-  void setSecondarySI(base::SpaceInformationPtr secondary_si)
+  void setSecondarySI(base::SpaceInformationPtr secondarySI)
   {
-    secondary_si_ = secondary_si;
+    secondarySI_ = secondarySI;
   }
 
 private:
@@ -285,7 +288,10 @@ protected:
   std::size_t kNearestNeighbors_ = 60;
 
   bool solutionFound_ = false;
-  base::SpaceInformationPtr secondary_si_;
+  base::SpaceInformationPtr secondarySI_;
+
+  /** \brief Mutex to guard access to the graph */
+  mutable std::mutex graphMutex_;
 
 public:
   /** \brief Optionally smooth retrieved and repaired paths from database */

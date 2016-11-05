@@ -267,6 +267,7 @@ void BoltBaxter::reset(std::size_t indent)
   spars2_.reset();
   simple_setup_.reset();
   si_.reset();
+  secondary_si_.reset();
   space_.reset();
   visual_.reset();
 }
@@ -426,6 +427,7 @@ bool BoltBaxter::loadOMPL(std::size_t indent)
   if (is_bolt_)
   {
     bolt_->setFilePath(getPlannerFilePath(planning_group_name_, indent));
+    bolt_->getBoltPlanner()->setSecondarySI(secondary_si_); // must be called after loadCollisionChecker()
   }
   else if (is_thunder_)
   {
@@ -813,21 +815,19 @@ void BoltBaxter::loadCollisionChecker(std::size_t indent)
   // Load more collision checkers
   if (is_bolt_)
   {
-    ob::SpaceInformationPtr secondary_si = std::make_shared<ob::SpaceInformation>(space_);
-    secondary_si->setup();
-    validity_checker_ = std::make_shared<bolt_moveit::StateValidityChecker>(planning_group_name_, secondary_si, *current_state_,
+    secondary_si_ = std::make_shared<ob::SpaceInformation>(space_);
+    secondary_si_->setup();
+    validity_checker_ = std::make_shared<bolt_moveit::StateValidityChecker>(planning_group_name_, secondary_si_, *current_state_,
                                                                             planning_scene_, space_);
-    //validity_checker_->setCheckingEnabled(collision_checking_enabled_);
+    validity_checker_->setCheckingEnabled(collision_checking_enabled_);
 
     // Set checker
-    secondary_si->setStateValidityChecker(validity_checker_);
+    secondary_si_->setStateValidityChecker(validity_checker_);
 
     // The interval in which obstacles are checked for between states
     // seems that it default to 0.01 but doesn't do a good job at that level
     // si_->setStateValidityCheckingResolution(0.005);
-    secondary_si->setStateValidityCheckingResolution(0.001);
-
-    bolt_->getBoltPlanner()->setSecondarySI(secondary_si);
+    secondary_si_->setStateValidityCheckingResolution(0.001);
   }
 }
 

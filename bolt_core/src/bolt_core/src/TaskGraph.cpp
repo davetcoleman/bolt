@@ -88,7 +88,7 @@ TaskGraph::TaskGraph(const base::SpaceInformationPtr &modelSI, const base::Space
 
   // Initialize nearest neighbor datastructure
   // TODO(davetcoleman): do we need to have a separate NN_ structure for the TaskGraph??
-  nn_.reset(new NearestNeighborsGNAT<TaskVertex>());
+  nn_.reset(new NearestNeighborsGNAT<TaskVertex>()); // this is the thread-safe version
   nn_->setDistanceFunction(boost::bind(&otb::TaskGraph::distanceVertex, this, _1, _2));
 }
 
@@ -1495,11 +1495,4 @@ void otb::TaskAstarVisitor::examine_vertex(TaskVertex v, const TaskAdjList &) co
 
   if (v == goal_)
     throw FoundGoalException();
-}
-
-void otb::TaskAstarVisitor::examine_edge(TaskEdge e, const TaskAdjList &) const
-{
-  // whenever an edge is relaxed, add it to a list that a separate thread collision checks
-  //std::cout << "relaxed edge: " << e << std::endl;
-  parent_->getRelaxedEdges().push_back(e);
 }
