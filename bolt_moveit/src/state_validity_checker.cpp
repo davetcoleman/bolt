@@ -98,8 +98,6 @@ bool bolt_moveit::StateValidityChecker::isValid(const ompl::base::State *state, 
   robot_state::RobotState *robot_state = tss_.getStateStorage();
   mb_state_space_->copyToRobotState(*robot_state, state);
 
-  robot_state->printStateInfo();
-
   // check path constraints
   // const kinematic_constraints::KinematicConstraintSetPtr &kset = planning_context_->getPathConstraints();
   // if (kset && !kset->decide(*robot_state, verbose).satisfied)

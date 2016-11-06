@@ -52,14 +52,15 @@ bolt_baxter:
   velocity_scaling_factor: 1.0
 
   # planner type
-  #planners: [Bolt, Thunder, RRTConnect, SPARStwo, BiEST, LazyPRM, LazyRRT]
-  #planners: [LazyPRM, LazyRRT]
+  #planners: [Bolt, Thunder, Lightning, RRTConnect, SPARStwo, BiEST, LazyPRM, LazyRRT]
   #planners: [Bolt]
   planners: [Thunder]
-  #planners: [SPARStwo]
-  #planners: [LazyRRT]
+  #planners: [Lightning]
   #planners: [RRTConnect]
+  #planners: [SPARStwo]
+  #planners: [BiEST]
   #planners: [LazyPRM]
+  #planners: [LazyRRT]
 
   #planning_time: 60 # 1 minute
   #planning_time: 120 # 2 minutes

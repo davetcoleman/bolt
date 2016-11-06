@@ -44,6 +44,7 @@
 
 // OMPL
 #include <ompl/tools/thunder/Thunder.h>
+#include <ompl/tools/lightning/Lightning.h>
 #include <ompl/geometric/SimpleSetup.h>
 #include <ompl/geometric/planners/prm/SPARStwo.h>
 
@@ -176,6 +177,7 @@ public:
   ompl::geometric::SimpleSetupPtr simple_setup_;
   ompl::tools::bolt::BoltPtr bolt_;
   ompl::tools::ThunderPtr thunder_;
+  ompl::tools::LightningPtr lightning_;
   ompl::geometric::SPARStwoPtr spars2_;
 
   // Configuration space
@@ -243,6 +245,7 @@ public:
   std::string planner_; // the current planner being run
   bool is_bolt_ = false;
   bool is_thunder_ = false;
+  bool is_lightning_ = false;
   bool is_simple_setup_ = false;
 
   // Mirroring

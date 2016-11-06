@@ -257,6 +257,7 @@ void BoltBaxter::reset(std::size_t indent)
 {
   is_bolt_ = false;
   is_thunder_ = false;
+  is_lightning_ = false;
   is_simple_setup_ = false;
 
   // Free start and goal states
@@ -269,6 +270,7 @@ void BoltBaxter::reset(std::size_t indent)
   // Clear classes
   bolt_.reset();
   thunder_.reset();
+  lightning_.reset();
   spars2_.reset();
   simple_setup_.reset();
   si_.reset();
@@ -368,8 +370,17 @@ bool BoltBaxter::loadOMPL(std::size_t indent)
     simple_setup_ = thunder_;
     is_thunder_ = true;
 
-    // The visual pointer was already created and populated throughout the Bolt framework
+    // The visual pointer was already created and populated throughout the Thunder framework
     visual_ = thunder_->getVisual();
+  }
+  else if (planner_ == "Lightning")
+  {
+    lightning_ = std::make_shared<ot::Lightning>(si_);
+    simple_setup_ = lightning_;
+    is_lightning_ = true;
+
+    // The visual pointer was already created and populated throughout the Bolt framework
+    //visual_ = lightning_->getVisual();
   }
   else  // Assume simple setup
   {
@@ -435,7 +446,13 @@ bool BoltBaxter::loadOMPL(std::size_t indent)
   else if (is_thunder_)
   {
     thunder_->getExperienceDB()->getSPARSdb()->setSparseDeltaFraction(0.1);  // TODO do not hardcode
+    thunder_->getExperienceDB()->getSPARSdb()->setDenseDeltaFraction(0.01);  // TODO do not hardcode
+    thunder_->getExperienceDB()->getSPARSdb()->setup();
     thunder_->setFilePath(getPlannerFilePath(planning_group_name_, indent) + ".ompl");
+  }
+  else if (is_lightning_)
+  {
+    lightning_->setFilePath(getPlannerFilePath(planning_group_name_, indent) + ".ompl");
   }
 
   // Create start and goal states
@@ -631,6 +648,8 @@ void BoltBaxter::run(std::size_t indent)
   }
   else if (is_thunder_)
     thunder_->saveIfChanged();
+  else if (is_lightning_)
+    lightning_->saveIfChanged();
 }
 
 bool BoltBaxter::runProblems(std::size_t indent)
@@ -651,13 +670,19 @@ bool BoltBaxter::runProblems(std::size_t indent)
     {
       BOLT_WARN(true, "Invalid start/goal found, trying again");
 
-      exit(0);
-      visual_->prompt("try again");
-
       // Move the shelf
       loadAmazonScene(indent);
       visual_tools_[6]->triggerPlanningSceneUpdate();
+      ros::spinOnce();
+      ros::Duration(1.0).sleep(); // TODO this makes no sense why i need to add this
     }
+
+    // loadAmazonScene(indent);
+    // visual_tools_[6]->triggerPlanningSceneUpdate();
+    // ros::spinOnce();
+    // ros::Duration(0.1).sleep();
+
+    // continue;
 
     // Track memory usage
     double vm1, rss1;
@@ -732,16 +757,17 @@ bool BoltBaxter::runProblems(std::size_t indent)
     }
   }  // for each run
 
-  // Save experience
+  // Add last experience to database
   if (post_processing_)
     doPostProcessing(indent);
 
-  // Finishing up
+  // Save to file
   if (is_bolt_)
-  {
-    BOLT_INFO(true, "Saving experience db...");
     bolt_->saveIfChanged(indent);
-  }
+  else if (is_thunder_)
+    thunder_->saveIfChanged();
+  else if (is_lightning_)
+    lightning_->saveIfChanged();
 
   return true;
 }
@@ -1318,12 +1344,10 @@ void BoltBaxter::loadOfficeScene(std::size_t indent)
 
 void BoltBaxter::loadAmazonScene(std::size_t indent)
 {
-  BOLT_FUNC(true, "loadAmazonScene()");
-
   // Load mesh file name
   const std::string collision_mesh_path = "file://" + package_path_ + "/meshes/pod_lowres.stl";
 
-  BOLT_INFO(true, "Loading mesh from " << collision_mesh_path);
+  BOLT_FUNC(true, "loadAmazonScene() " << collision_mesh_path);
 
   Eigen::Affine3d mesh_centroid = Eigen::Affine3d::Identity();
 
@@ -1340,13 +1364,13 @@ void BoltBaxter::loadAmazonScene(std::size_t indent)
     y_noise = visual_tools_[6]->dRand(-noise, noise);
     rotation_noise = visual_tools_[6]->dRand(-rnoise, rnoise);  // z axis
 
-    std::cout << "x_noise = " << x_noise << std::endl;
-    std::cout << "y_noise = " << y_noise << std::endl;
-    std::cout << "rotation_noise = " << rotation_noise << std::endl;
+    BOLT_DEBUG(true, "x_noise = " << x_noise << "; y_noise = " << y_noise << "; rotation_noise = " << rotation_noise << ";");
   }
-  x_noise = -0.028225;
-  y_noise = -0.0260015;
-  rotation_noise = 0.0491695;
+  // if (visual_tools_[6]->iRand(0,3) == 0)
+  // {
+  //   std::cout << "applying bad noise " << std::endl;
+  //   x_noise = 0.0154689; y_noise = -0.0095881; rotation_noise = 0.0854152;
+  // }
 
   // Calculate offset
   mesh_centroid = Eigen::AngleAxisd(M_PI / 2.0, Eigen::Vector3d::UnitX()) *
@@ -1358,31 +1382,15 @@ void BoltBaxter::loadAmazonScene(std::size_t indent)
 
   const std::string collision_object_name = "shelf";  // + std::to_string(visual_tools_[6]->iRand(0,1000));
 
-  // shapes::Shape *mesh = shapes::createMeshFromResource(collision_mesh_path);  // make sure its prepended by file://
-  // shapes::ShapeMsg shape_msg;  // this is a boost::variant type from shape_messages.h
-  // if (!mesh || !shapes::constructMsgFromShape(mesh, shape_msg))
-  // {
-  //   BOLT_ERROR("Unable to create mesh shape message from resource " << collision_mesh_path);
-  //   return;
-  // }
-
-  // shape_msgs::Mesh mesh_msg = boost::get<shape_msgs::Mesh>(shape_msg);
-
-  // // Add mesh to scene
-  // visual_tools_[6]->publishCollisionMesh(mesh_centroid, collision_object_name, mesh_msg, rvt::BROWN);
-
-
   visual_tools_[6]->publishCollisionMesh(mesh_centroid, collision_object_name, collision_mesh_path, rvt::BROWN);
 }
 
 void BoltBaxter::loadBin(double y, std::size_t indent)
 {
-  BOLT_FUNC(true, "loadBin()");
-
   // Load mesh file name
   const std::string collision_mesh_path = "file://" + package_path_ + "/meshes/goal_bin.stl";
 
-  BOLT_INFO(true, "Loading mesh from " << collision_mesh_path);
+  BOLT_FUNC(true, "loadBin() " << collision_mesh_path);
 
   Eigen::Affine3d mesh_centroid = Eigen::Affine3d::Identity();
 
@@ -1542,8 +1550,11 @@ robot_trajectory::RobotTrajectoryPtr BoltBaxter::processSimpleSolution(std::size
   double velocity_scaling_factor = velocity_scaling_factor_;
 
   // Interpolate and parameterize
+  ros::Time start_time0 = ros::Time::now(); // Benchmark runtime
   const bool use_interpolation = false;
-  planning_interface_->convertRobotStatesToTraj(trajectory, planning_jmg_, velocity_scaling_factor, use_interpolation);
+
+  if (connect_to_hardware_)  // if running on hardware, add accel/vel
+    planning_interface_->convertRobotStatesToTraj(trajectory, planning_jmg_, velocity_scaling_factor, use_interpolation);
 
   return trajectory;
 }
@@ -1590,7 +1601,6 @@ robot_trajectory::RobotTrajectoryPtr BoltBaxter::processSegments(std::size_t ind
         std::cout << "i: " << i << std::endl;
         visual_tools_[6]->publishRobotState(traj_segment->getWayPoint(i), rvt::BLUE);
 
-        // traj_segment->getWayPoint(i).printStateInfo();
         visual_->viz1()->prompt("next step");
       }
 
@@ -1601,8 +1611,9 @@ robot_trajectory::RobotTrajectoryPtr BoltBaxter::processSegments(std::size_t ind
 
     // Interpolate and parameterize
     const bool use_interpolation = false;
-    planning_interface_->convertRobotStatesToTraj(traj_segment, planning_jmg_, velocity_scaling_factor,
-                                                  use_interpolation);
+    if (connect_to_hardware_)  // if running on hardware, add accel/vel
+      planning_interface_->convertRobotStatesToTraj(traj_segment, planning_jmg_, velocity_scaling_factor,
+                                                    use_interpolation);
 
     // Add to combined traj
     const double dt = i == 0 ? 0.0 : 1.0;  // Quick pause between segments except first one
@@ -1645,7 +1656,7 @@ bool BoltBaxter::chooseStartGoal(std::size_t run_id, std::size_t indent)
       if (imarker_goal_states_.empty())
         loadIMarkersFromFile(imarker_goal_states_, imarker_goal_list_name_, indent);
 
-      goal_state_id_ = 9; //run_id % imarker_goal_states_.size();
+      goal_state_id_ = run_id % imarker_goal_states_.size();
       BOLT_INFO(true, "chooseStartGoal: total goal states: " << imarker_goal_states_.size() << " run_id: " << run_id
                                                              << " goal_state_id: " << goal_state_id_);
 
@@ -1678,7 +1689,6 @@ bool BoltBaxter::chooseStartGoal(std::size_t run_id, std::size_t indent)
   *moveit_start_ = *(imarker_start_->getRobotState());
   *moveit_goal_ = *(imarker_goal_->getRobotState());
 
-  std::cout << "TESTING START/GOAL FOR VALIDITY " << std::endl;
   if (!imarker_start_->isStateValid(true))
   {
     BOLT_WARN(true, "Invalid start state");
@@ -1717,10 +1727,14 @@ std::string BoltBaxter::getPlannerFilePath(const std::string &planning_group_nam
                 std::to_string(bolt_->getSparseCriteria()->sparseDeltaFraction_) + "_database_v" +
                 std::to_string(load_database_version_);
   }
-  else
+  else if (is_thunder_)
   {
     file_name = file_name + planner_lower_ + "_" + planning_group_name + "_" +
                 std::to_string(thunder_->getExperienceDB()->getSPARSdb()->getSparseDeltaFraction()) + "database";
+  }
+  else if (is_lightning_)
+  {
+    file_name = file_name + planner_lower_ + "_" + planning_group_name + "_database";
   }
 
   std::string file_path;
@@ -1737,6 +1751,10 @@ void BoltBaxter::doPostProcessing(std::size_t indent)
   else if (is_thunder_)
   {
     thunder_->doPostProcessing();
+  }
+  else if (is_lightning_)
+  {
+    lightning_->doPostProcessing();
   }
 }
 
