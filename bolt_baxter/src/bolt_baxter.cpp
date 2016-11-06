@@ -153,6 +153,11 @@ BoltBaxter::BoltBaxter(const std::string &hostname, const std::string &package_p
   error += !rosparam_shortcuts::get(name_, rpnh, "verbose/print_trajectory", debug_print_trajectory_);
   rosparam_shortcuts::shutdownIfError(name_, error);
 
+  // Estimate the worse-case runtime
+  double maxRunTime = planning_time_ * planners_.size() * num_problems_;
+  BOLT_INFO(true, "Worse case run time: " << maxRunTime << " sec (" << maxRunTime / 60.0 / 60.0 << " hours)");
+  std::cout << std::endl;
+
   // Auto-set headless if not on developer PC, assume we are on server
   if (hostname != "ros-monster")
   {
@@ -283,10 +288,10 @@ void BoltBaxter::loadVisualTools(std::size_t indent)
   visual_tools_.resize(NUM_VISUALS + 1);
   for (std::size_t i = 1; i <= NUM_VISUALS; ++i)
   {
-    MoveItVisualToolsPtr moveit_visual = std::make_shared<MoveItVisualTools>(
-        "/world_visual" + std::to_string(i), namesp + "/ompl_visual" + std::to_string(i), robot_model_);
+    const std::string base_frame = "/world_visual" + std::to_string(i);
+    const std::string marker_topic = namesp + "/ompl_visual" + std::to_string(i);
+    MoveItVisualToolsPtr moveit_visual = std::make_shared<MoveItVisualTools>(base_frame, marker_topic, psm_);
     moveit_visual->loadMarkerPub(false);
-    moveit_visual->setPlanningSceneMonitor(psm_);
     moveit_visual->setManualSceneUpdating(true);
     moveit_visual->setGlobalScale(0.8);
     moveit_visual->enableBatchPublishing();
@@ -310,8 +315,6 @@ void BoltBaxter::loadVisualTools(std::size_t indent)
   }
 
   visual_tools_[6]->setBaseFrame("world");
-  visual_moveit_start_ = visual_tools_[4];
-  visual_moveit_goal_ = visual_tools_[5];
 
   ros::spinOnce();
 
@@ -427,7 +430,7 @@ bool BoltBaxter::loadOMPL(std::size_t indent)
   if (is_bolt_)
   {
     bolt_->setFilePath(getPlannerFilePath(planning_group_name_, indent));
-    bolt_->getBoltPlanner()->setSecondarySI(secondary_si_); // must be called after loadCollisionChecker()
+    bolt_->getBoltPlanner()->setSecondarySI(secondary_si_);  // must be called after loadCollisionChecker()
   }
   else if (is_thunder_)
   {
@@ -498,7 +501,7 @@ void BoltBaxter::eachPlanner(std::size_t indent)
     bolt_moveit::getFilePath(file_path, "bolt_baxter_logging.csv", "ros/ompl_storage");
     logging_file_.open(file_path.c_str(), std::ios::out | std::ios::app);
     // Header of CSV file
-    logging_file_ << "planner, solved, planTime, pathLength, verticesAdded, edgesAdded" << std::endl;
+    logging_file_ << "planner, planTime, pathLength, verticesAdded, edgesAdded, task, solved" << std::endl;
   }
 
   for (std::size_t i = 0; i < planners_.size(); ++i)
@@ -526,7 +529,7 @@ void BoltBaxter::eachPlanner(std::size_t indent)
     if (i + 1 < planners_.size() - 1)  // if there are more planners to test
     {
       BOLT_INFO(true, "Next planner " << planners_[i + 1]);
-      //visual_->prompt("Next planner");  // Must do this before calling reset()
+      // visual_->prompt("Next planner");  // Must do this before calling reset()
     }
 
     // Clear previous planner
@@ -648,9 +651,12 @@ bool BoltBaxter::runProblems(std::size_t indent)
     {
       BOLT_WARN(true, "Invalid start/goal found, trying again");
 
+      exit(0);
+      visual_->prompt("try again");
+
       // Move the shelf
       loadAmazonScene(indent);
-      visual_moveit_start_->triggerPlanningSceneUpdate();
+      visual_tools_[6]->triggerPlanningSceneUpdate();
     }
 
     // Track memory usage
@@ -722,7 +728,7 @@ bool BoltBaxter::runProblems(std::size_t indent)
     if (use_shelf_noise_)
     {
       loadAmazonScene(indent);
-      visual_moveit_start_->triggerPlanningSceneUpdate();
+      visual_tools_[6]->triggerPlanningSceneUpdate();
     }
   }  // for each run
 
@@ -767,6 +773,9 @@ bool BoltBaxter::plan(std::size_t indent)
 
   // Create the termination condition
   ob::PlannerTerminationCondition ptc = ob::timedPlannerTerminationCondition(planning_time_, 0.1);
+
+  // Lock the planning scene for read-only while a plan is solved - not outside node should be allowed to modify
+  planning_scene_monitor::LockedPlanningSceneRO lscene(psm_);
 
   // Profiler
   CALLGRIND_TOGGLE_COLLECT;
@@ -817,8 +826,8 @@ void BoltBaxter::loadCollisionChecker(std::size_t indent)
   {
     secondary_si_ = std::make_shared<ob::SpaceInformation>(space_);
     secondary_si_->setup();
-    validity_checker_ = std::make_shared<bolt_moveit::StateValidityChecker>(planning_group_name_, secondary_si_, *current_state_,
-                                                                            planning_scene_, space_);
+    validity_checker_ = std::make_shared<bolt_moveit::StateValidityChecker>(planning_group_name_, secondary_si_,
+                                                                            *current_state_, planning_scene_, space_);
     validity_checker_->setCheckingEnabled(collision_checking_enabled_);
 
     // Set checker
@@ -839,19 +848,6 @@ void BoltBaxter::deleteAllMarkers(std::size_t indent)
     visual_tools_[i]->deleteAllMarkers();
     visual_tools_[i]->trigger();
   }
-}
-
-void BoltBaxter::visualizeStartGoal(std::size_t indent)
-{
-  ROS_WARN_STREAM_NAMED(name_, "Deprecated, remove");
-  visual_moveit_start_->publishRobotState(moveit_start_, rvt::GREEN);
-  visual_moveit_goal_->publishRobotState(moveit_goal_, rvt::ORANGE);
-
-  // Show values and limits
-  // std::cout << "Start: " << std::endl;
-  // visual_moveit_start_->showJointLimits(moveit_start_);
-  // std::cout << "Goal: " << std::endl;
-  // visual_moveit_start_->showJointLimits(moveit_goal_);
 }
 
 void BoltBaxter::displayWaitingState(bool waiting)
@@ -880,7 +876,7 @@ void BoltBaxter::testConnectionToGraphOfRandStates(std::size_t indent)
     getRandomState(moveit_start_);
 
     // Visualize
-    visual_moveit_start_->publishRobotState(moveit_start_, rvt::GREEN);
+    //visual_tools_[6]->publishRobotState(moveit_start_, rvt::GREEN);
 
     // Convert to ompl
     space_->copyToOMPLState(random_state, *moveit_start_);
@@ -945,10 +941,12 @@ bool BoltBaxter::checkMoveItPathSolution(robot_trajectory::RobotTrajectoryPtr tr
     BOLT_INFO(true, "checkMoveItPathSolution: Solution path has " << state_count << " states");
   }
 
+  planning_scene_monitor::LockedPlanningSceneRO planning_scene(psm_);
+
   std::vector<std::size_t> index;
   const bool verbose = true;
   std::cout << "before isPathValid " << std::endl;
-  if (planning_scene_->isPathValid(*traj, "", verbose, &index))
+  if (planning_scene->isPathValid(*traj, "", verbose, &index))
   {
     return true;
   }
@@ -972,7 +970,7 @@ bool BoltBaxter::checkMoveItPathSolution(robot_trajectory::RobotTrajectoryPtr tr
       // check validity with verbose on
       const robot_state::RobotState &robot_state = traj->getWayPoint(index[i]);
       bool check_verbose = true;
-      planning_scene_->isStateValid(robot_state, planning_group_name_, check_verbose);
+      planning_scene->isStateValid(robot_state, planning_group_name_, check_verbose);
 
       // compute the contacts if any
       collision_detection::CollisionRequest c_req;
@@ -981,12 +979,12 @@ bool BoltBaxter::checkMoveItPathSolution(robot_trajectory::RobotTrajectoryPtr tr
       c_req.max_contacts = 10;
       c_req.max_contacts_per_pair = 3;
       c_req.verbose = false;
-      planning_scene_->checkCollision(c_req, c_res, robot_state);
+      planning_scene->checkCollision(c_req, c_res, robot_state);
 
       if (c_res.contact_count > 0)
       {
         visualization_msgs::MarkerArray single_array;
-        collision_detection::getCollisionMarkersFromContacts(single_array, planning_scene_->getPlanningFrame(),
+        collision_detection::getCollisionMarkersFromContacts(single_array, planning_scene->getPlanningFrame(),
                                                              c_res.contacts);
         combined_array.markers.insert(combined_array.markers.end(), single_array.markers.begin(),
                                       single_array.markers.end());
@@ -1003,6 +1001,8 @@ bool BoltBaxter::checkMoveItPathSolution(robot_trajectory::RobotTrajectoryPtr tr
 
 bool BoltBaxter::getRandomState(moveit::core::RobotStatePtr &robot_state)
 {
+  planning_scene_monitor::LockedPlanningSceneRO planning_scene(psm_);
+
   std::size_t indent = 0;
   static const std::size_t MAX_ATTEMPTS = 1000;
   for (std::size_t i = 0; i < MAX_ATTEMPTS; ++i)
@@ -1012,7 +1012,7 @@ bool BoltBaxter::getRandomState(moveit::core::RobotStatePtr &robot_state)
 
     // Error check
     bool check_verbose = false;
-    if (planning_scene_->isStateValid(*robot_state, "", check_verbose))  // second argument is what planning group to
+    if (planning_scene->isStateValid(*robot_state, "", check_verbose))  // second argument is what planning group to
                                                                          // collision check, "" is everything
     {
       return true;
@@ -1031,18 +1031,20 @@ void BoltBaxter::testMotionValidator(std::size_t indent)
 {
   // THIS FUNCTION BROKEN BECAUSE moveit_core SAYS "FCL continuous collision checking not yet implemented"
 
+  planning_scene_monitor::LockedPlanningSceneRO planning_scene(psm_);
+
   // moveit::core::RobotStatePtr start = moveit::core::RobotStatePtr(new moveit::core::RobotState(*current_state_));
   // moveit::core::RobotStatePtr goal = moveit::core::RobotStatePtr(new moveit::core::RobotState(*current_state_));
   moveit_start_->setToRandomPositions(planning_jmg_);
   moveit_goal_->setToRandomPositions(planning_jmg_);
 
-  // visual_moveit_start_->publishRobotState(moveit_start_, rvt::GREEN);
-  visual_moveit_goal_->publishRobotState(moveit_goal_, rvt::ORANGE);
+  // visual_tools_[6]->publishRobotState(moveit_start_, rvt::GREEN);
+  //visual_moveit_goal_->publishRobotState(moveit_goal_, rvt::ORANGE);
 
   // Check for collision between to states
   bool verbose = true;
   collision_detection::CollisionResult res;
-  planning_scene_->checkCollision(validity_checker_->collision_request_with_distance_verbose_, res, *moveit_start_);
+  planning_scene->checkCollision(validity_checker_->collision_request_with_distance_verbose_, res, *moveit_start_);
   std::cout << "start state in collision: " << res.collision << std::endl;
 
   collision_detection::CollisionRequest req;
@@ -1050,7 +1052,7 @@ void BoltBaxter::testMotionValidator(std::size_t indent)
   req.verbose = true;
 
   // Check motion
-  planning_scene_->getCollisionWorld()->checkCollision(req, res, *planning_scene_->getCollisionRobot(), *moveit_start_,
+  planning_scene->getCollisionWorld()->checkCollision(req, res, *planning_scene->getCollisionRobot(), *moveit_start_,
                                                        *moveit_goal_);
 
   std::cout << "motion in collision: " << res.collision << std::endl;
@@ -1271,26 +1273,26 @@ void BoltBaxter::loadScene(std::size_t indent)
   {
     case 1:
       loadAmazonScene(indent);
-      visual_moveit_start_->triggerPlanningSceneUpdate();
-      ros::spinOnce();
+      // visual_tools_[6]->triggerPlanningSceneUpdate();
+      // ros::spinOnce();
 
       loadBin(0.7, indent);
-      visual_moveit_start_->triggerPlanningSceneUpdate();
-      ros::spinOnce();
+      // visual_tools_[6]->triggerPlanningSceneUpdate();
+      // ros::spinOnce();
 
       loadBin(-0.7, indent);
-      // no break on purpose
+    // no break on purpose
     case 0:
       loadOfficeScene(indent);
       break;
   }
 
-  visual_moveit_start_->triggerPlanningSceneUpdate();
+  visual_tools_[6]->triggerPlanningSceneUpdate();
 
   // Append to allowed collision matrix
   {
-    planning_scene_monitor::LockedPlanningSceneRW scene(psm_);  // Lock planning
-    collision_detection::AllowedCollisionMatrix &collision_matrix = scene->getAllowedCollisionMatrixNonConst();
+    planning_scene_monitor::LockedPlanningSceneRW planning_scene(psm_);  // Read/write lock
+    collision_detection::AllowedCollisionMatrix &collision_matrix = planning_scene->getAllowedCollisionMatrixNonConst();
     collision_matrix.setEntry("wall", "pedestal", true);
   }
 }
@@ -1302,14 +1304,14 @@ void BoltBaxter::loadOfficeScene(std::size_t indent)
 
   // const double table_height = -0.77 * baxter_torso_height_;
   const double table_height = -0.75 * baxter_torso_height_;
-  visual_moveit_start_->publishCollisionFloor(baxter_torso_height_ + 0.001, "floor", rvt::TRANSLUCENT_DARK);
-  visual_moveit_start_->publishCollisionWall(/*x*/ -1.0, /*y*/ 0.0, /*z*/ baxter_torso_height_, /*angle*/ 0,
+  visual_tools_[6]->publishCollisionFloor(baxter_torso_height_ + 0.001, "floor", rvt::TRANSLUCENT_DARK);
+  visual_tools_[6]->publishCollisionWall(/*x*/ -1.0, /*y*/ 0.0, /*z*/ baxter_torso_height_, /*angle*/ 0,
                                              /*width*/ 2, /*height*/ 2.0, "wall1", rvt::YELLOW);
-  visual_moveit_start_->publishCollisionWall(/*x*/ 0.0, /*y*/ -1.075, /*z*/ baxter_torso_height_, /*angle*/ M_PI / 2.0,
+  visual_tools_[6]->publishCollisionWall(/*x*/ 0.0, /*y*/ -1.075, /*z*/ baxter_torso_height_, /*angle*/ M_PI / 2.0,
                                              /*width*/ 2, /*height*/ 2.0, "wall2", rvt::YELLOW);
-  visual_moveit_start_->publishCollisionWall(/*x*/ 0.0, /*y*/ 1.075, /*z*/ baxter_torso_height_, /*angle*/ M_PI / 2.0,
+  visual_tools_[6]->publishCollisionWall(/*x*/ 0.0, /*y*/ 1.075, /*z*/ baxter_torso_height_, /*angle*/ M_PI / 2.0,
                                              /*width*/ 2, /*height*/ 2.0, "wall3", rvt::YELLOW);
-  visual_moveit_start_->publishCollisionTable(/*x*/ 0.85, /*y*/ 0.0, /*z*/ baxter_torso_height_, /*angle*/ 0,
+  visual_tools_[6]->publishCollisionTable(/*x*/ 0.85, /*y*/ 0.0, /*z*/ baxter_torso_height_, /*angle*/ 0,
                                               /*width*/ 2.0, /*height*/ table_height, /*depth*/ 0.8, "table",
                                               rvt::DARK_GREY);
 }
@@ -1319,16 +1321,16 @@ void BoltBaxter::loadAmazonScene(std::size_t indent)
   BOLT_FUNC(true, "loadAmazonScene()");
 
   // Load mesh file name
-  std::string collision_mesh_path = "file://" + package_path_ + "/meshes/pod_lowres.stl";
+  const std::string collision_mesh_path = "file://" + package_path_ + "/meshes/pod_lowres.stl";
 
   BOLT_INFO(true, "Loading mesh from " << collision_mesh_path);
 
   Eigen::Affine3d mesh_centroid = Eigen::Affine3d::Identity();
 
   // Add noise
-  double noise = 0.03 ; // 3 cm, slighlty more than an inch
+  double noise = 0.03;  // 3 cm, slighlty more than an inch
   double rnoise_degrees = 5;
-  double rnoise = rnoise_degrees * 0.0174533; // radians
+  double rnoise = rnoise_degrees * 0.0174533;  // radians
   double x_noise = 0;
   double y_noise = 0;
   double rotation_noise = 0;
@@ -1336,8 +1338,15 @@ void BoltBaxter::loadAmazonScene(std::size_t indent)
   {
     x_noise = visual_tools_[6]->dRand(-noise, noise);
     y_noise = visual_tools_[6]->dRand(-noise, noise);
-    rotation_noise = visual_tools_[6]->dRand(-rnoise, rnoise); // z axis
+    rotation_noise = visual_tools_[6]->dRand(-rnoise, rnoise);  // z axis
+
+    std::cout << "x_noise = " << x_noise << std::endl;
+    std::cout << "y_noise = " << y_noise << std::endl;
+    std::cout << "rotation_noise = " << rotation_noise << std::endl;
   }
+  x_noise = -0.028225;
+  y_noise = -0.0260015;
+  rotation_noise = 0.0491695;
 
   // Calculate offset
   mesh_centroid = Eigen::AngleAxisd(M_PI / 2.0, Eigen::Vector3d::UnitX()) *
@@ -1347,20 +1356,23 @@ void BoltBaxter::loadAmazonScene(std::size_t indent)
   mesh_centroid.translation().y() = y_noise;
   mesh_centroid.translation().z() = baxter_torso_height_;
 
-  const std::string collision_object_name = "shelf"; // + std::to_string(visual_tools_[6]->iRand(0,1000));
+  const std::string collision_object_name = "shelf";  // + std::to_string(visual_tools_[6]->iRand(0,1000));
 
-  shapes::Shape *mesh = shapes::createMeshFromResource(collision_mesh_path);  // make sure its prepended by file://
-  shapes::ShapeMsg shape_msg;  // this is a boost::variant type from shape_messages.h
-  if (!mesh || !shapes::constructMsgFromShape(mesh, shape_msg))
-  {
-    BOLT_ERROR("Unable to create mesh shape message from resource " << collision_mesh_path);
-    return;
-  }
+  // shapes::Shape *mesh = shapes::createMeshFromResource(collision_mesh_path);  // make sure its prepended by file://
+  // shapes::ShapeMsg shape_msg;  // this is a boost::variant type from shape_messages.h
+  // if (!mesh || !shapes::constructMsgFromShape(mesh, shape_msg))
+  // {
+  //   BOLT_ERROR("Unable to create mesh shape message from resource " << collision_mesh_path);
+  //   return;
+  // }
 
-  shape_msgs::Mesh mesh_msg = boost::get<shape_msgs::Mesh>(shape_msg);
+  // shape_msgs::Mesh mesh_msg = boost::get<shape_msgs::Mesh>(shape_msg);
 
-  // Add mesh to scene
-  visual_tools_[6]->publishCollisionMesh(mesh_centroid, collision_object_name, mesh_msg, rvt::BROWN);
+  // // Add mesh to scene
+  // visual_tools_[6]->publishCollisionMesh(mesh_centroid, collision_object_name, mesh_msg, rvt::BROWN);
+
+
+  visual_tools_[6]->publishCollisionMesh(mesh_centroid, collision_object_name, collision_mesh_path, rvt::BROWN);
 }
 
 void BoltBaxter::loadBin(double y, std::size_t indent)
@@ -1368,15 +1380,14 @@ void BoltBaxter::loadBin(double y, std::size_t indent)
   BOLT_FUNC(true, "loadBin()");
 
   // Load mesh file name
-  std::string collision_mesh_path = "file://" + package_path_ + "/meshes/goal_bin.stl";
+  const std::string collision_mesh_path = "file://" + package_path_ + "/meshes/goal_bin.stl";
 
   BOLT_INFO(true, "Loading mesh from " << collision_mesh_path);
 
   Eigen::Affine3d mesh_centroid = Eigen::Affine3d::Identity();
 
   // Calculate offset
-  mesh_centroid = Eigen::AngleAxisd(0, Eigen::Vector3d::UnitX()) *
-                  Eigen::AngleAxisd(0, Eigen::Vector3d::UnitY()) *
+  mesh_centroid = Eigen::AngleAxisd(0, Eigen::Vector3d::UnitX()) * Eigen::AngleAxisd(0, Eigen::Vector3d::UnitY()) *
                   Eigen::AngleAxisd(0, Eigen::Vector3d::UnitZ());
   mesh_centroid.translation().x() = distance_to_shelf_ * 0.65;
   mesh_centroid.translation().y() = y;
@@ -1384,18 +1395,18 @@ void BoltBaxter::loadBin(double y, std::size_t indent)
 
   const std::string collision_object_name = "bin" + std::to_string(y);
 
-  shapes::Shape *mesh = shapes::createMeshFromResource(collision_mesh_path);  // make sure its prepended by file://
-  shapes::ShapeMsg shape_msg;  // this is a boost::variant type from shape_messages.h
-  if (!mesh || !shapes::constructMsgFromShape(mesh, shape_msg))
-  {
-    BOLT_ERROR("Unable to create mesh shape message from resource " << collision_mesh_path);
-    return;
-  }
+  // shapes::Shape *mesh = shapes::createMeshFromResource(collision_mesh_path);  // make sure its prepended by file://
+  // shapes::ShapeMsg shape_msg;  // this is a boost::variant type from shape_messages.h
+  // if (!mesh || !shapes::constructMsgFromShape(mesh, shape_msg))
+  // {
+  //   BOLT_ERROR("Unable to create mesh shape message from resource " << collision_mesh_path);
+  //   return;
+  // }
 
-  shape_msgs::Mesh mesh_msg = boost::get<shape_msgs::Mesh>(shape_msg);
+  // shape_msgs::Mesh mesh_msg = boost::get<shape_msgs::Mesh>(shape_msg);
 
   // Add mesh to scene
-  visual_tools_[6]->publishCollisionMesh(mesh_centroid, collision_object_name, mesh_msg, rvt::RED);
+  visual_tools_[6]->publishCollisionMesh(mesh_centroid, collision_object_name, collision_mesh_path, rvt::RED);
 }
 
 void BoltBaxter::saveIMarkersToFile(std::size_t indent)
@@ -1443,7 +1454,8 @@ void BoltBaxter::viewIMarkersFromFile(std::size_t indent)
   exit(0);
 }
 
-void BoltBaxter::loadIMarkersFromFile(std::vector<moveit::core::RobotStatePtr> &robot_states, std::string file_name, std::size_t indent)
+void BoltBaxter::loadIMarkersFromFile(std::vector<moveit::core::RobotStatePtr> &robot_states, std::string file_name,
+                                      std::size_t indent)
 {
   BOLT_FUNC(true, "loadIMarkersFromFile()");
 
@@ -1464,8 +1476,9 @@ void BoltBaxter::loadIMarkersFromFile(std::vector<moveit::core::RobotStatePtr> &
   std::size_t count = 0;
   while (std::getline(input_file, line))
   {
-    moveit::core::streamToRobotState(*imarker_goal_->getRobotState(), line);
-    robot_states.push_back(std::make_shared<moveit::core::RobotState>(*imarker_goal_->getRobotState()));
+    moveit::core::RobotStatePtr temp = std::make_shared<moveit::core::RobotState>(*current_state_);
+    moveit::core::streamToRobotState(*temp, line);
+    robot_states.push_back(temp);
   }
 
   input_file.close();
@@ -1491,7 +1504,9 @@ void BoltBaxter::loadIMarkers(std::size_t indent)
     ros::Duration(0.1).sleep();
     ros::spinOnce();
     bool check_verbose = true;
-    while (!planning_scene_->isStateValid(*getCurrentState(), "", check_verbose) && ros::ok())
+
+    planning_scene_monitor::LockedPlanningSceneRO planning_scene(psm_);
+    while (!planning_scene->isStateValid(*getCurrentState(), "", check_verbose) && ros::ok())
     {
       BOLT_ERROR("START STATE INVALID " << ros::Time::now());
       visual_tools_[5]->publishRobotState(getCurrentState(), rvt::RED);
@@ -1620,54 +1635,50 @@ bool BoltBaxter::chooseStartGoal(std::size_t run_id, std::size_t indent)
       if (imarker_start_states_.empty())
         loadIMarkersFromFile(imarker_start_states_, imarker_start_list_name_, indent);
 
-      std::size_t start_state_id = run_id % imarker_start_states_.size();
-      BOLT_INFO(true, "chooseStartGoal: total start states: " << imarker_start_states_.size() << " run_id: " << run_id << " start_state_id: " << start_state_id);
+      start_state_id_ = run_id % imarker_start_states_.size();
+      BOLT_INFO(true, "chooseStartGoal: total start states: " << imarker_start_states_.size() << " run_id: " << run_id
+                                                              << " start_state_id: " << start_state_id_);
 
-      imarker_start_->getRobotState() = imarker_start_states_[start_state_id];
-      imarker_start_->publishState();
+      imarker_start_->setRobotState(imarker_start_states_[start_state_id_]);
 
       // choose goal ---------------------------------------
       if (imarker_goal_states_.empty())
         loadIMarkersFromFile(imarker_goal_states_, imarker_goal_list_name_, indent);
 
-      std::size_t goal_state_id = run_id % imarker_goal_states_.size();
-      BOLT_INFO(true, "chooseStartGoal: total goal states: " << imarker_goal_states_.size() << " run_id: " << run_id << " goal_state_id: " << goal_state_id);
+      goal_state_id_ = 9; //run_id % imarker_goal_states_.size();
+      BOLT_INFO(true, "chooseStartGoal: total goal states: " << imarker_goal_states_.size() << " run_id: " << run_id
+                                                             << " goal_state_id: " << goal_state_id_);
 
-      imarker_goal_->getRobotState() = imarker_goal_states_[goal_state_id];
-      imarker_goal_->publishState();
+      imarker_goal_->setRobotState(imarker_goal_states_[goal_state_id_]);
     }
     break;
-    case 3: // from SRDF
+    case 3:  // from SRDF
       BOLT_WARN(true, "Not implemented");
       // start is always the same
       // imarker_start_->getRobotState()->setToDefaultValues(planning_jmg_, "both_ready");
-      // imarker_start_->publishState();
-    break;
+      // imarker_start_->publishRobotState();
+      break;
     default:
       BOLT_ERROR("Unknown problem type");
   }
 
-  // Get start
   if (connect_to_hardware_)  // if running on hardware, these markers are not needed
   {
-    moveit_start_ = getCurrentState();
-    imarker_start_->getRobotState() = moveit_start_;
+    imarker_start_->setToCurrentState();
   }
-  else // not connected to hardware
-  {
-    moveit_start_ = imarker_start_->getRobotState();
-  }
-
-  // Get goal
-  moveit_goal_ = imarker_goal_->getRobotState();
 
   // Visualize
   if (visualize_start_goal_states_)
   {
-    imarker_start_->publishState();
-    imarker_goal_->publishState();
+    imarker_start_->publishRobotState();
+    imarker_goal_->publishRobotState();
   }
 
+  // Copy imarkers to start and goal state
+  *moveit_start_ = *(imarker_start_->getRobotState());
+  *moveit_goal_ = *(imarker_goal_->getRobotState());
+
+  std::cout << "TESTING START/GOAL FOR VALIDITY " << std::endl;
   if (!imarker_start_->isStateValid(true))
   {
     BOLT_WARN(true, "Invalid start state");
@@ -1811,11 +1822,13 @@ void BoltBaxter::log(bool solved, std::size_t indent)
     planTime = simple_setup_->getLastSimplificationTime() + simple_setup_->getLastPlanComputationTime();
   }
 
-  logging_file_ << planner_ << ", "                    // bolt, etc
-                << solved << ", " << planTime << ", "  // smoothing + planning
-                << last_plan_path_length_ << ", "      // basic planning stats
-                << numVerticesAdded << ", "            // numVerticesAdded
-                << numEdgesAdded                       // numEdgesAdded
+  logging_file_ << planner_ << ", "                // bolt, etc
+                << planTime << ", "                // smoothing + planning
+                << last_plan_path_length_ << ", "  // basic planning stats
+                << numVerticesAdded << ", "        // numVerticesAdded
+                << numEdgesAdded << ", "           // numEdgesAdded
+                << goal_state_id_ << ", "          // task
+                << solved                          // solved
                 << std::endl;
   logging_file_.flush();
 }

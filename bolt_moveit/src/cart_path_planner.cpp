@@ -145,7 +145,7 @@ void CartPathPlanner::processIMarkerPose(const visualization_msgs::InteractiveMa
   if (feedback->marker_name == "cart_left")
     return;
 
-  moveit::core::RobotStatePtr imarker_state = imarker_cartesian_->getRobotState();
+  moveit::core::RobotStateConstPtr imarker_state = imarker_cartesian_->getRobotState();
   const moveit::core::LinkModel* ee_link = imarker_cartesian_->getEEF(feedback->marker_name)->getEELink();
   Eigen::Affine3d start_pose = imarker_state->getGlobalLinkTransform(ee_link);
 
@@ -155,7 +155,7 @@ void CartPathPlanner::processIMarkerPose(const visualization_msgs::InteractiveMa
 void CartPathPlanner::generateExactPoses(std::size_t indent)
 {
   // Generate exact poses
-  moveit::core::RobotStatePtr imarker_state = imarker_cartesian_->getRobotState();
+  moveit::core::RobotStateConstPtr imarker_state = imarker_cartesian_->getRobotState();
 
   // For now only use right arm
   generateExactPoses(imarker_state->getGlobalLinkTransform(arm_datas_[0].ee_link_), indent);

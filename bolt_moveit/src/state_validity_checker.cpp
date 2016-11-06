@@ -78,7 +78,7 @@ void bolt_moveit::StateValidityChecker::setVerbose(bool flag)
 
 bool bolt_moveit::StateValidityChecker::isValid(const ompl::base::State *state, bool verbose) const
 {
-  verbose = false;  // hack
+  //verbose = false;  // hack
 
   // check bounds
   if (!si_->satisfiesBounds(state))
@@ -97,6 +97,8 @@ bool bolt_moveit::StateValidityChecker::isValid(const ompl::base::State *state, 
   // convert ompl state to moveit robot state
   robot_state::RobotState *robot_state = tss_.getStateStorage();
   mb_state_space_->copyToRobotState(*robot_state, state);
+
+  robot_state->printStateInfo();
 
   // check path constraints
   // const kinematic_constraints::KinematicConstraintSetPtr &kset = planning_context_->getPathConstraints();
@@ -132,7 +134,7 @@ bool bolt_moveit::StateValidityChecker::isValid(const ompl::base::State *state, 
 
 bool bolt_moveit::StateValidityChecker::isValid(const ompl::base::State *state, double &dist, bool verbose) const
 {
-  verbose = false;  // hack
+  //verbose = false;  // hack
 
   if (!si_->satisfiesBounds(state))
   {

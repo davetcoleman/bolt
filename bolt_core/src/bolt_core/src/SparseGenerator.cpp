@@ -1140,6 +1140,8 @@ ExperiencePathStats SparseGenerator::addExperiencePath(geometric::PathGeometricP
     SparseCandidateData candidateD(candidateState);
     findGraphNeighbors(candidateD, threadID, indent);
 
+    // TODO: switch to the faster version in this class: addSampleSparseCriteria()
+
     // Add to roadmap
     VertexType addReason;  // returns why the state was added
     if (sparseCriteria_->addStateToRoadmap(candidateD, addReason, threadID, indent))

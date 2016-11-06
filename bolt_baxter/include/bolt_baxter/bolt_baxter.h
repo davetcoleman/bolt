@@ -115,8 +115,6 @@ public:
   void loadVisualTools(std::size_t indent);
   void loadOMPLVisualTools(std::size_t indent);
 
-  void visualizeStartGoal(std::size_t indent);
-
   void visualizeRawTrajectory(og::PathGeometric& path, std::size_t indent);
 
   void displayWaitingState(bool waiting);
@@ -197,8 +195,8 @@ public:
   ompl::tools::VisualizerPtr visual_;
 
   // TODO: remove these?
-  moveit_visual_tools::MoveItVisualToolsPtr visual_moveit_start_;  // Clone of ompl1
-  moveit_visual_tools::MoveItVisualToolsPtr visual_moveit_goal_;   // Clone of ompl2
+  //moveit_visual_tools::MoveItVisualToolsPtr visual_moveit_start_;  // Clone of ompl1
+  //moveit_visual_tools::MoveItVisualToolsPtr visual_moveit_goal_;   // Clone of ompl2
 
   // Robot states
   moveit::core::RobotStatePtr moveit_start_;
@@ -303,6 +301,8 @@ public:
   std::string imarker_goal_list_name_;
   std::vector<moveit::core::RobotStatePtr> imarker_start_states_;
   std::vector<moveit::core::RobotStatePtr> imarker_goal_states_;
+  std::size_t start_state_id_;
+  std::size_t goal_state_id_; // essentially the task
 
   // Validity checker
   bolt_moveit::StateValidityCheckerPtr validity_checker_;
