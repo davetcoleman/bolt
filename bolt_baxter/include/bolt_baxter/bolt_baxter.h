@@ -162,6 +162,8 @@ public:
 
   void processAndExecute(std::size_t indent);
 
+  void chooseStartGoalIK(std::size_t run_id, std::size_t indent);
+
   // --------------------------------------------------------
 
   // A shared node handle
@@ -316,6 +318,10 @@ public:
   double distance_to_shelf_ = 0;
   bool use_shelf_noise_ = true;
   double bin_height_ = 0;
+  Eigen::Affine3d common_transform_;
+  double penetration_dist_;
+
+  double test_var_;
 
 };  // end class
 

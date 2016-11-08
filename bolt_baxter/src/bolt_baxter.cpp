@@ -140,6 +140,7 @@ BoltBaxter::BoltBaxter(const std::string &hostname, const std::string &package_p
   error += !rosparam_shortcuts::get(name_, rpnh, "distance_to_shelf", distance_to_shelf_);
   error += !rosparam_shortcuts::get(name_, rpnh, "use_shelf_noise", use_shelf_noise_);
   error += !rosparam_shortcuts::get(name_, rpnh, "bin_height", bin_height_);
+  error += !rosparam_shortcuts::get(name_, rpnh, "test_var", test_var_);
   // execution
   error += !rosparam_shortcuts::get(name_, rpnh, "connect_to_hardware", connect_to_hardware_);
   error += !rosparam_shortcuts::get(name_, rpnh, "velocity_scaling_factor", velocity_scaling_factor_);
@@ -379,8 +380,11 @@ bool BoltBaxter::loadOMPL(std::size_t indent)
     simple_setup_ = lightning_;
     is_lightning_ = true;
 
+    // Set default planner so that a goal definition isn't necessary
+    lightning_->setPlanner(std::make_shared<og::RRTConnect>(si_));
+
     // The visual pointer was already created and populated throughout the Bolt framework
-    //visual_ = lightning_->getVisual();
+    visual_ = std::make_shared<ot::Visualizer>();
   }
   else  // Assume simple setup
   {
@@ -518,7 +522,7 @@ void BoltBaxter::eachPlanner(std::size_t indent)
     bolt_moveit::getFilePath(file_path, "bolt_baxter_logging.csv", "ros/ompl_storage");
     logging_file_.open(file_path.c_str(), std::ios::out | std::ios::app);
     // Header of CSV file
-    logging_file_ << "planner, planTime, pathLength, verticesAdded, edgesAdded, task, solved" << std::endl;
+    logging_file_ << "planner, planTime, pathLength, verticesAdded, edgesAdded, penetration, solved" << std::endl;
   }
 
   for (std::size_t i = 0; i < planners_.size(); ++i)
@@ -654,108 +658,115 @@ void BoltBaxter::run(std::size_t indent)
 
 bool BoltBaxter::runProblems(std::size_t indent)
 {
-  // Run the demo the desired number of times
-  for (std::size_t run_id = 0; run_id < num_problems_; ++run_id)
+  const double low_pd = -0.1;
+  const double high_pd = 0.15 + std::numeric_limits<double>::epsilon();
+  const double step_pd = 0.05;
+  for (penetration_dist_ = low_pd; penetration_dist_ <= high_pd; penetration_dist_ += step_pd)
   {
+    BOLT_INFO(true, "Penetration distance: " << penetration_dist_);
+
     if (!ros::ok())  // Check if user wants to shutdown
       break;
 
-    std::cout << std::endl;
-    std::cout << "***************************************************************" << std::endl;
-    BOLT_INFO(true, "Planning " << run_id + 1 << " out of " << num_problems_);
-    std::cout << "***************************************************************" << std::endl;
-
-    // Generate start/goal pair
-    while (!chooseStartGoal(run_id, indent))
+    // Run the demo the desired number of times
+    for (std::size_t run_id = 0; run_id < num_problems_; ++run_id)
     {
-      BOLT_WARN(true, "Invalid start/goal found, trying again");
+      if (!ros::ok())  // Check if user wants to shutdown
+        break;
 
-      // Move the shelf
-      loadAmazonScene(indent);
-      visual_tools_[6]->triggerPlanningSceneUpdate();
-      ros::spinOnce();
-      ros::Duration(1.0).sleep(); // TODO this makes no sense why i need to add this
-    }
+      std::cout << std::endl;
+      std::cout << "***************************************************************" << std::endl;
+      BOLT_INFO(true, "Planning " << run_id + 1 << " out of " << num_problems_);
+      std::cout << "***************************************************************" << std::endl;
 
-    // loadAmazonScene(indent);
-    // visual_tools_[6]->triggerPlanningSceneUpdate();
-    // ros::spinOnce();
-    // ros::Duration(0.1).sleep();
-
-    // continue;
-
-    // Track memory usage
-    double vm1, rss1;
-    if (track_memory_consumption_)
-      processMemUsage(vm1, rss1);
-
-    // Populate TaskGraph, even for non-task planning
-    if (is_bolt_)
-    {
-      if (use_task_planning_)
+      // Generate start/goal pair
+      while (!chooseStartGoal(run_id, indent))
       {
-        if (!generateCartGraph(indent))
+        BOLT_WARN(true, "Invalid start/goal found, trying again");
+
+        //visual_->prompt("try again");
+
+        // Move the shelf
+        loadAmazonScene(indent);
+        visual_tools_[6]->triggerPlanningSceneUpdate();
+        ros::spinOnce();
+        ros::Duration(1.0).sleep(); // TODO this makes no sense why i need to add this
+      }
+
+      // Track memory usage
+      double vm1, rss1;
+      if (track_memory_consumption_)
+        processMemUsage(vm1, rss1);
+
+      // Populate TaskGraph, even for non-task planning
+      if (is_bolt_)
+      {
+        if (use_task_planning_)
         {
-          BOLT_ERROR("Unable to create cart path");
-          exit(-1);
+          if (!generateCartGraph(indent))
+          {
+            BOLT_ERROR("Unable to create cart path");
+            exit(-1);
+          }
+        }
+        else
+        {
+          bolt_->getTaskGraph()->generateMonoLevelTaskSpace(indent);
         }
       }
-      else
+
+      // Track memory usage
+      if (track_memory_consumption_)
       {
-        bolt_->getTaskGraph()->generateMonoLevelTaskSpace(indent);
+        double vm2, rss2;
+        processMemUsage(vm2, rss2);
+        BOLT_INFO(true, "RAM usage diff (VM, RSS) MB:\n" << vm2 - vm1 << ", " << rss2 - rss1);
       }
-    }
 
-    // Track memory usage
-    if (track_memory_consumption_)
-    {
-      double vm2, rss2;
-      processMemUsage(vm2, rss2);
-      BOLT_INFO(true, "RAM usage diff (VM, RSS) MB:\n" << vm2 - vm1 << ", " << rss2 - rss1);
-    }
+      // -----------------------------------------------------
+      // -----------------------------------------------------
+      bool solved = plan(indent);
+      // -----------------------------------------------------
+      // -----------------------------------------------------
 
-    // -----------------------------------------------------
-    // -----------------------------------------------------
-    bool solved = plan(indent);
-    // -----------------------------------------------------
-    // -----------------------------------------------------
+      if (is_bolt_)
+      {
+        bolt_->processResults(indent);
+        bolt_->printLogs();
+      }
 
-    if (is_bolt_)
-    {
-      bolt_->processResults(indent);
-      bolt_->printLogs();
-    }
+      // Post Proccess
+      if (post_processing_ && run_id % post_processing_interval_ == 0)  // every x runs
+      {
+        BOLT_INFO(true, "Performing post processing every " << post_processing_interval_ << " plans");
+        doPostProcessing(indent);
+      }
 
-    // Post Proccess
-    if (post_processing_ && run_id % post_processing_interval_ == 0)  // every x runs
-    {
-      BOLT_INFO(true, "Performing post processing every " << post_processing_interval_ << " plans");
-      doPostProcessing(indent);
-    }
+      // Logging
+      if (use_logging_)
+        log(solved, indent);
 
-    // Logging
-    if (use_logging_)
-      log(solved, indent);
+      // Prompt user
+      if (visualize_wait_between_plans_ && run_id < num_problems_ - 1)
+        visual_->viz1()->prompt("run next problem");
+      else  // Main pause between planning instances - allows user to analyze
+        ros::Duration(visualize_time_between_plans_).sleep();
+      if (!ros::ok())  // Check if user wants to shutdown
+        break;
 
-    // Prompt user
-    if (visualize_wait_between_plans_ && run_id < num_problems_ - 1)
-      visual_->viz1()->prompt("run next problem");
-    else  // Main pause between planning instances - allows user to analyze
-      ros::Duration(visualize_time_between_plans_).sleep();
-    if (!ros::ok())  // Check if user wants to shutdown
-      break;
+      // Reset marker if this is not our last run
+      if (run_id < num_problems_ - 1)
+        deleteAllMarkers(indent);
 
-    // Reset marker if this is not our last run
-    if (run_id < num_problems_ - 1)
-      deleteAllMarkers(indent);
+      // Move the shelf with noise
+      if (use_shelf_noise_)
+      {
+        loadAmazonScene(indent);
+        visual_tools_[6]->triggerPlanningSceneUpdate();
+      }
+    }  // for each run
 
-    // Move the shelf with noise
-    if (use_shelf_noise_)
-    {
-      loadAmazonScene(indent);
-      visual_tools_[6]->triggerPlanningSceneUpdate();
-    }
-  }  // for each run
+  } // for each penetration distance
 
   // Add last experience to database
   if (post_processing_)
@@ -1217,76 +1228,6 @@ void BoltBaxter::benchmarkMemoryAllocation(std::size_t indent)
   }
   BOLT_INFO(true, "Old state - Total time: " << (ros::Time::now() - start_time).toSec() << " seconds");
 
-  // METHOD 2
-  // ros::Time start_time2 = ros::Time::now(); // Benchmark runtime
-  // for (std::size_t test = 0; test < tests; ++test)
-  // {
-  //   // Allocate
-  //   std::vector<ob::State*> states;
-  //   for (std::size_t i = 0; i < numStates; ++i)
-  //     states.push_back(space->allocState());
-
-  //   // Free
-  //   for (std::size_t i = 0; i < numStates; ++i)
-  //     space->freeState(states[i]);
-  // }
-  // BOLT_INFO(true, "New state - Total time: " << (ros::Time::now() - start_time2).toSec() << " seconds");
-
-  // METHOD 3
-  /*
-    ros::Time start_time0 = ros::Time::now();  // Benchmark runtime
-    for (std::size_t test = 0; test < tests; ++test)
-    {
-    using namespace bolt_moveit;
-
-    // Allocate
-    // ompl::base::State* states;
-    // space->allocStates(numStates, states);
-    ModelSize14StateSpace::StateType *states = new ModelSize14StateSpace::StateType[numStates];
-
-    std::cout << "allocStates: " << std::endl;
-    for (std::size_t i = 0; i < numStates; ++i)
-    {
-    std::cout << " - states[i]: " << &states[i] << std::endl;
-    for (std::size_t j = 0; j < 14; ++j)
-    {
-    std::cout << "     - value " << j << ": " << states[i].as<ModelSize14StateSpace::StateType>()->values[j] <<
-    std::endl;
-    }
-    }
-
-    std::cout << "allocated states " << std::endl;
-
-    // Free
-    // space->freeStates(states);
-    for (std::size_t i = 0; i < numStates; ++i)
-    {
-    std::cout << "i: " << i << std::endl;
-    // std::cout << "states[i]: " << states[i] << std::endl;
-    std::cout << &states[i] << " &states[i]" << std::endl;
-    std::cout << (&states[i])->as<ModelSize14StateSpace::StateType>() << "
-    (&states[i])->as<ModelSize14StateSpace::StateType>()" << std::endl;
-    std::cout << (&states[i])->as<ModelSize14StateSpace::StateType>()->values << "
-    (&states[i])->as<ModelSize14StateSpace::StateType>()->values" << std::endl;
-
-    for (std::size_t j = 0; j < 14; ++j)
-    {
-    std::cout << " - " << (&states[i])->as<ModelSize14StateSpace::StateType>()->values[j] << std::endl;
-    }
-
-    std::cout << "1 " << std::endl;
-    (&states[i])->as<ModelSize14StateSpace::StateType>()->values[0] = 0;
-    std::cout << "2 " << std::endl;
-    (&states[i])->as<ModelSize14StateSpace::StateType>()->values[7] = 7;
-    (&states[i])->as<ModelSize14StateSpace::StateType>()->values[13] = 13;
-
-    std::cout << "delete: " << std::endl;
-    delete[] states;
-    // space->freeState(&states[i]);
-    }
-    }
-    BOLT_INFO(true, "Array Total time: " << (ros::Time::now() - start_time0).toSec() << " seconds");
-  */
   visual_->viz1()->prompt("finished running");
 
   std::cout << "-------------------------------------------------------" << std::endl;
@@ -1299,21 +1240,15 @@ void BoltBaxter::loadScene(std::size_t indent)
   {
     case 1:
       loadAmazonScene(indent);
-      // visual_tools_[6]->triggerPlanningSceneUpdate();
-      // ros::spinOnce();
-
       loadBin(0.7, indent);
-      // visual_tools_[6]->triggerPlanningSceneUpdate();
-      // ros::spinOnce();
-
       loadBin(-0.7, indent);
-    // no break on purpose
+      // no break on purpose
     case 0:
       loadOfficeScene(indent);
       break;
   }
 
-  visual_tools_[6]->triggerPlanningSceneUpdate();
+  visual_tools_[6]->triggerPlanningSceneUpdate(); // send to Rviz
 
   // Append to allowed collision matrix
   {
@@ -1349,8 +1284,6 @@ void BoltBaxter::loadAmazonScene(std::size_t indent)
 
   BOLT_FUNC(true, "loadAmazonScene() " << collision_mesh_path);
 
-  Eigen::Affine3d mesh_centroid = Eigen::Affine3d::Identity();
-
   // Add noise
   double noise = 0.03;  // 3 cm, slighlty more than an inch
   double rnoise_degrees = 5;
@@ -1364,25 +1297,30 @@ void BoltBaxter::loadAmazonScene(std::size_t indent)
     y_noise = visual_tools_[6]->dRand(-noise, noise);
     rotation_noise = visual_tools_[6]->dRand(-rnoise, rnoise);  // z axis
 
-    BOLT_DEBUG(true, "x_noise = " << x_noise << "; y_noise = " << y_noise << "; rotation_noise = " << rotation_noise << ";");
+    BOLT_INFO(true, "x_noise = " << x_noise << "; y_noise = " << y_noise << "; rotation_noise = " << rotation_noise << ";");
   }
-  // if (visual_tools_[6]->iRand(0,3) == 0)
-  // {
-  //   std::cout << "applying bad noise " << std::endl;
-  //   x_noise = 0.0154689; y_noise = -0.0095881; rotation_noise = 0.0854152;
-  // }
+
+  visual_tools_[6]->deleteAllMarkers();
 
   // Calculate offset
+  common_transform_ = Eigen::Affine3d::Identity() *
+    Eigen::AngleAxisd(rotation_noise, Eigen::Vector3d::UnitZ());
+  common_transform_.translation().x() = distance_to_shelf_ + x_noise;
+  common_transform_.translation().y() = y_noise;
+
+  //visual_tools_[6]->publishArrow(common_transform_, rvt::ORANGE, rvt::XLARGE);
+
+  Eigen::Affine3d mesh_centroid;
   mesh_centroid = Eigen::AngleAxisd(M_PI / 2.0, Eigen::Vector3d::UnitX()) *
-                  Eigen::AngleAxisd(M_PI / 2.0 + rotation_noise, Eigen::Vector3d::UnitY()) *
-                  Eigen::AngleAxisd(0, Eigen::Vector3d::UnitZ());
-  mesh_centroid.translation().x() = distance_to_shelf_ + x_noise;
-  mesh_centroid.translation().y() = y_noise;
+    Eigen::AngleAxisd(M_PI / 2.0, Eigen::Vector3d::UnitY()) *
+    Eigen::AngleAxisd(0, Eigen::Vector3d::UnitZ());
   mesh_centroid.translation().z() = baxter_torso_height_;
+  mesh_centroid = common_transform_ * mesh_centroid;
 
-  const std::string collision_object_name = "shelf";  // + std::to_string(visual_tools_[6]->iRand(0,1000));
+  //const std::string object_name = "shelf" + std::to_string(visual_tools_[6]->iRand(0,10000)); // Unique name
+  const std::string object_name = "shelf";
 
-  visual_tools_[6]->publishCollisionMesh(mesh_centroid, collision_object_name, collision_mesh_path, rvt::BROWN);
+  visual_tools_[6]->publishCollisionMesh(mesh_centroid, object_name, collision_mesh_path, rvt::BROWN);
 }
 
 void BoltBaxter::loadBin(double y, std::size_t indent)
@@ -1401,7 +1339,7 @@ void BoltBaxter::loadBin(double y, std::size_t indent)
   mesh_centroid.translation().y() = y;
   mesh_centroid.translation().z() = bin_height_;
 
-  const std::string collision_object_name = "bin" + std::to_string(y);
+  const std::string object_name = "bin" + std::to_string(y);
 
   // shapes::Shape *mesh = shapes::createMeshFromResource(collision_mesh_path);  // make sure its prepended by file://
   // shapes::ShapeMsg shape_msg;  // this is a boost::variant type from shape_messages.h
@@ -1414,7 +1352,7 @@ void BoltBaxter::loadBin(double y, std::size_t indent)
   // shape_msgs::Mesh mesh_msg = boost::get<shape_msgs::Mesh>(shape_msg);
 
   // Add mesh to scene
-  visual_tools_[6]->publishCollisionMesh(mesh_centroid, collision_object_name, collision_mesh_path, rvt::RED);
+  visual_tools_[6]->publishCollisionMesh(mesh_centroid, object_name, collision_mesh_path, rvt::RED);
 }
 
 void BoltBaxter::saveIMarkersToFile(std::size_t indent)
@@ -1669,6 +1607,21 @@ bool BoltBaxter::chooseStartGoal(std::size_t run_id, std::size_t indent)
       // imarker_start_->getRobotState()->setToDefaultValues(planning_jmg_, "both_ready");
       // imarker_start_->publishRobotState();
       break;
+    case 4: // from IK
+
+      // choose start ---------------------------------------
+      if (imarker_start_states_.empty())
+        loadIMarkersFromFile(imarker_start_states_, imarker_start_list_name_, indent);
+
+      start_state_id_ = run_id % imarker_start_states_.size();
+      BOLT_INFO(true, "chooseStartGoal: total start states: " << imarker_start_states_.size() << " run_id: " << run_id
+                                                              << " start_state_id: " << start_state_id_);
+
+      imarker_start_->setRobotState(imarker_start_states_[start_state_id_]);
+
+      // choose goal
+      chooseStartGoalIK(run_id, indent);
+      break;
     default:
       BOLT_ERROR("Unknown problem type");
   }
@@ -1845,7 +1798,7 @@ void BoltBaxter::log(bool solved, std::size_t indent)
                 << last_plan_path_length_ << ", "  // basic planning stats
                 << numVerticesAdded << ", "        // numVerticesAdded
                 << numEdgesAdded << ", "           // numEdgesAdded
-                << goal_state_id_ << ", "          // task
+                << penetration_dist_ << ", "          // task
                 << solved                          // solved
                 << std::endl;
   logging_file_.flush();
@@ -1879,6 +1832,40 @@ void BoltBaxter::processAndExecute(std::size_t indent)
     bool blocking = false;
     visual_tools_[6]->publishTrajectoryPath(execution_traj, blocking);
   }
+}
+
+void BoltBaxter::chooseStartGoalIK(std::size_t run_id, std::size_t indent)
+{
+  const double half_shelf_depth = -0.44; // brings arrows to edge of shelf in x direction
+  const double horizontal_distance = 0.275; // left and right cubbys
+  const double height_of_shelf = 0.24;
+  const double penetration_depth = penetration_dist_; //test_var_; // m
+  const std::size_t num_shelves = 4; // 5 - includes top shelf
+
+  double z = (run_id % num_shelves) * height_of_shelf;
+
+  Eigen::Affine3d left_gripper = Eigen::Affine3d::Identity() * Eigen::AngleAxisd(M_PI / 2.0, Eigen::Vector3d::UnitY());
+  left_gripper.translation().x() = half_shelf_depth + penetration_depth;
+  left_gripper.translation().y() = -horizontal_distance; // left cubby
+  left_gripper.translation().z() = z;
+  left_gripper = common_transform_ * left_gripper;
+  visual_tools_[6]->publishZArrow(left_gripper, rvt::BLUE, rvt::LARGE);
+
+  Eigen::Affine3d right_gripper = Eigen::Affine3d::Identity() * Eigen::AngleAxisd(M_PI / 2.0, Eigen::Vector3d::UnitY());
+  right_gripper.translation().x() = half_shelf_depth + penetration_depth;
+  right_gripper.translation().y() = horizontal_distance; // right cubby
+  right_gripper.translation().z() = z;
+  right_gripper = common_transform_ * right_gripper;
+  visual_tools_[6]->publishZArrow(right_gripper, rvt::GREEN, rvt::LARGE);
+
+  // Visualize
+  visual_tools_[6]->trigger();
+
+  // IK Solve
+  EigenSTL::vector_Affine3d poses;
+  poses.push_back(right_gripper);
+  poses.push_back(left_gripper);
+  imarker_goal_->setFromPoses(poses, planning_jmg_);
 }
 
 }  // namespace bolt_baxter
