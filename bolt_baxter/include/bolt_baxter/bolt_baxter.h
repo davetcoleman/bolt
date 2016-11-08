@@ -234,6 +234,7 @@ public:
   bool continue_spars_;
   bool eliminate_dense_disjoint_sets_;
   bool check_valid_vertices_;
+  bool display_database_;
   bool display_disjoint_sets_;
   bool benchmark_performance_;
   bool save_imarkers_to_file_;

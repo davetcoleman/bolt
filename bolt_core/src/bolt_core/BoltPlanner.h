@@ -43,17 +43,6 @@
 #include <bolt_core/TaskGraph.h>
 #include <ompl/tools/debug/Visualizer.h>
 
-// Boost
-// #include <boost/lambda/bind.hpp>
-// #include <boost/graph/astar_search.hpp>
-// #include <boost/graph/incremental_components.hpp>
-// #include <boost/property_map/vector_property_map.hpp>
-// #include <boost/graph/graph_traits.hpp>
-// #include <boost/graph/adjacency_list.hpp>
-// #include <boost/pending/disjoint_sets.hpp>
-// #include <boost/function.hpp>
-//#include <boost/thread.hpp>
-
 // C++
 #include <mutex>
 

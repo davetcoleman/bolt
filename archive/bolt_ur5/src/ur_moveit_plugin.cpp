@@ -324,8 +324,8 @@ bool URKinematicsPlugin::initialize(robot_model::RobotModelConstPtr robot_model,
   mimic_joints_ = mimic_joints;
 
   // Setup the joint state groups that we need
-  state_.reset(new robot_state::RobotState(robot_model_));
-  state_2_.reset(new robot_state::RobotState(robot_model_));
+  state_std::make_shared<robot_state::RobotState(robot_model_));
+  state_2_std::make_shared<robot_state::RobotState(robot_model_));
 
   // Store things for when the set of redundant joints may change
   position_ik_ = position_ik;

@@ -99,7 +99,7 @@ public:
     // Robot model loader
     robot_model_loader::RobotModelLoader::Options options(urdf_string, srdf_string);
     options.load_kinematics_solvers_ = false;
-    robot_model_loader_.reset(new robot_model_loader::RobotModelLoader(options));
+    robot_model_loader_std::make_shared<robot_model_loader::RobotModelLoader(options));
 
     // Load the robot model
     robot_model_ = robot_model_loader_->getModel();  // Get a shared pointer to the robot
@@ -108,10 +108,10 @@ public:
     jmg_ = robot_model_->getJointModelGroup("right_arm");
 
     // Create the planning scene
-    planning_scene_.reset(new planning_scene::PlanningScene(robot_model_));
+    planning_scene_std::make_shared<planning_scene::PlanningScene(robot_model_));
 
     // Create initial robot state
-    robot_state_.reset(new moveit::core::RobotState(planning_scene_->getCurrentState()));
+    robot_state_std::make_shared<moveit::core::RobotState(planning_scene_->getCurrentState()));
 
     ROS_INFO_STREAM_NAMED("test", "Done initializing MoveIt!");
     return true;

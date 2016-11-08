@@ -42,6 +42,8 @@
 #include <ompl/geometric/SimpleSetup.h>  // the parent class
 #include <ompl/tools/debug/Visualizer.h>
 #include <bolt_core/BoostGraphHeaders.h>
+#include <bolt_core/RRTConnectBolt.h>
+#include <ompl/tools/multiplan/ParallelPlan.h>
 
 // C++
 #include <thread>
@@ -293,6 +295,12 @@ protected:
 
   /**  The maintained experience planner instance */
   BoltPlannerPtr boltPlanner_;
+
+  /** \brief Planning from scratch planner */
+  geometric::RRTConnectBoltPtr rrtPlanner_;
+
+  /** \brief Instance of parallel planning to use for computing solutions in parallel */
+  ompl::tools::ParallelPlanPtr pp_;
 
   /** \brief The graph that contains a sparse roadmap of the space */
   SparseGraphPtr sparseGraph_;

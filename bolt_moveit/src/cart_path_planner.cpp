@@ -94,8 +94,8 @@ CartPathPlanner::CartPathPlanner(std::vector<mvt::ArmData>& arm_datas, mvt::Move
   }
 
   // Load planning state
-  shared_robot_state0_.reset(new moveit::core::RobotState(*moveit_start));
-  shared_robot_state1_.reset(new moveit::core::RobotState(*moveit_start));
+  shared_robot_state0_ = std::make_shared<moveit::core::RobotState>(*moveit_start);
+  shared_robot_state1_ = std::make_shared<moveit::core::RobotState>(*moveit_start);
 
   // Create cartesian start pose interactive marker
   imarker_cartesian_.reset(
@@ -747,7 +747,7 @@ bool CartPathPlanner::addCartPointToBoltGraph(const CombinedPoints& combined_poi
 
   // Lock planning scene
   std::shared_ptr<planning_scene_monitor::LockedPlanningSceneRO> ls =
-      std::make_shared<planning_scene_monitor::LockedPlanningSceneRO>(planning_scene_monitor_);
+       std::make_shared<planning_scene_monitor::LockedPlanningSceneRO>(planning_scene_monitor_);
   const planning_scene::PlanningScene* planning_scene =
       static_cast<const planning_scene::PlanningSceneConstPtr&>(*ls).get();
 
@@ -1065,7 +1065,7 @@ bool CartPathPlanner::getRedunJointPosesForCartPoint(const Eigen::Affine3d& pose
 
     // Lock planning scene
     std::shared_ptr<planning_scene_monitor::LockedPlanningSceneRO> ls =
-        std::make_shared<planning_scene_monitor::LockedPlanningSceneRO>(planning_scene_monitor_);
+         std::make_shared<planning_scene_monitor::LockedPlanningSceneRO>(planning_scene_monitor_);
     const planning_scene::PlanningScene* planning_scene =
         static_cast<const planning_scene::PlanningSceneConstPtr&>(*ls).get();
 

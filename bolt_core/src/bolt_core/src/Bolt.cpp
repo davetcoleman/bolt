@@ -74,29 +74,29 @@ void Bolt::initialize(std::size_t indent)
 
   // Initalize visualizer class
   BOLT_INFO(verbose_, "Loading visualizer");
-  visual_.reset(new Visualizer());
+  visual_ = std::make_shared<Visualizer>();
 
   filePath_ = std::move("unloaded");
 
   // Load the sparse graph datastructure
   BOLT_INFO(verbose_, "Loading SparseGraph");
-  sparseGraph_.reset(new SparseGraph(si_, visual_));
+  sparseGraph_ = std::make_shared<SparseGraph>(si_, visual_);
 
   // Load criteria used to determine if samples are saved or rejected
   BOLT_INFO(verbose_, "Loading SparseCriteria");
-  sparseCriteria_.reset(new SparseCriteria(sparseGraph_));
+  sparseCriteria_ = std::make_shared<SparseCriteria>(sparseGraph_);
 
   // Give the sparse graph reference to the criteria, because sometimes it needs data from there
   sparseGraph_->setSparseCriteria(sparseCriteria_);
 
   // Load the generator of sparse vertices and edges, and give it reference to the criteria
   BOLT_INFO(verbose_, "Loading SparseGenerator");
-  sparseGenerator_.reset(new SparseGenerator(sparseGraph_));
+  sparseGenerator_ = std::make_shared<SparseGenerator>(sparseGraph_);
   sparseGenerator_->setSparseCriteria(sparseCriteria_);
 
   // Load mirror for duplicating arm
   BOLT_INFO(verbose_, "Loading SparseMirror");
-  sparseMirror_.reset(new SparseMirror(sparseGraph_));
+  sparseMirror_ = std::make_shared<SparseMirror>(sparseGraph_);
 
   // ----------------------------------------------------------------------------
   // CompoundState settings for task planning
@@ -117,17 +117,20 @@ void Bolt::initialize(std::size_t indent)
 
   // Load the task graph used for combining multiple layers of sparse graph
   BOLT_INFO(verbose_, "Loading TaskGraph");
-  taskGraph_.reset(new TaskGraph(si_, compoundSI_, sparseGraph_));
+  taskGraph_ = std::make_shared<TaskGraph>(si_, compoundSI_, sparseGraph_);
 
   // Task Criteria
-  //taskCriteria_.reset(new TaskCriteria(taskGraph_));
+  //taskCriteria_ = std::make_shared<TaskCriteria(taskGraph_));
 
   // Give the task graph reference to the criteria, because sometimes it needs data from there
   //taskGraph_->setTaskCriteria(taskCriteria_);
 
   // Load the Retrieve repair database. We do it here so that setRepairPlanner() works
   BOLT_INFO(verbose_, "Loading BoltPlanner");
-  boltPlanner_ = BoltPlannerPtr(new BoltPlanner(si_, compoundSI_, taskGraph_, visual_));
+  boltPlanner_ = std::make_shared<BoltPlanner>(si_, compoundSI_, taskGraph_, visual_);
+
+  BOLT_INFO(verbose_, "Loading RRTPlanner");
+  rrtPlanner_ = std::make_shared<geometric::RRTConnectBolt>(si_);
 
   std::size_t numThreads = boost::thread::hardware_concurrency();
   OMPL_INFORM("Bolt Framework initialized using %u threads", numThreads);
@@ -151,6 +154,9 @@ void Bolt::setup()
     if (!boltPlanner_->isSetup())
       boltPlanner_->setup();
 
+    if (!rrtPlanner_->isSetup())
+      rrtPlanner_->setup();
+
     // Setup SPARS
     sparseGraph_->setup();
     sparseCriteria_->setup(indent);
@@ -159,6 +165,23 @@ void Bolt::setup()
     //taskCriteria_->setup(indent);
     // Set the configured flag
     configured_ = true;
+
+    // Create the parallel component for splitting into two threads
+    pp_ = std::make_shared<ot::ParallelPlan>(pdef_);
+    // if (!scratchEnabled_ && !recallEnabled_)
+    // {
+    //   throw Exception("Both planning from scratch and experience have been disabled, unable to plan");
+    // }
+    // if (recallEnabled_)
+    pp_->addPlanner(boltPlanner_);  // Add the planning from experience planner if desired
+    //if (scratchEnabled_)
+    pp_->addPlanner(rrtPlanner_);  // Add the planning from scratch planner if desired
+    // if (dualThreadScratchEnabled_ && !recallEnabled_)
+    // {
+    //   OMPL_INFORM("Adding second planning from scratch planner");
+    //   pp_->addPlanner(planner2_);  // Add a SECOND planning from scratch planner if desired
+    // }
+
   }
 }
 
@@ -172,6 +195,7 @@ void Bolt::clearForNextPlan(std::size_t indent)
   boltPlanner_->clear();
   pdef_->clearSolutionPaths();
   taskGraph_->clearEdgeCollisionStates();
+  pp_->clearHybridizationPaths();
 }
 
 void Bolt::clear()
@@ -180,8 +204,8 @@ void Bolt::clear()
   taskGraph_->clear();
   sparseCriteria_->clear();
   sparseGenerator_->clear();
-  boltPlanner_->clear();
-  pdef_->clearSolutionPaths();
+
+  clearForNextPlan(0);
 }
 
 void Bolt::setPlannerAllocator(const base::PlannerAllocator &pa)
@@ -206,8 +230,13 @@ base::PlannerStatus Bolt::solve(const base::PlannerTerminationCondition &ptc)
     BOLT_INFO(true, "Num solved paths uninserted into the experience database in the post-proccessing queue: " <<
               queuedModelSolPaths_.size());
 
+  // If \e hybridize is false, when the first solution is found, the rest of the planners are stopped as well.
+  // Start both threads
+  bool hybridize = false;
+  lastStatus_ = pp_->solve(ptc, hybridize);
+
   // SOLVE
-  lastStatus_ = boltPlanner_->solve(ptc);
+  //lastStatus_ = boltPlanner_->solve(ptc);
 
   // Task time
   planTime_ = time::seconds(time::now() - start);
@@ -253,8 +282,6 @@ void Bolt::processResults(std::size_t indent)
   if (visual_->viz1()->shutdownRequested())
     return;
 
-  double pathLength = 0;
-
   // Record overall stats
   stats_.totalPlanningTime_ += planTime_;  // used for averaging
   stats_.numProblems_++;                   // used for averaging
@@ -276,14 +303,22 @@ void Bolt::processResults(std::size_t indent)
     case base::PlannerStatus::EXACT_SOLUTION:
     {
       // og::PathGeometric smoothedModelSolPath = og::SimpleSetup::getSolutionPath();  // copied so that it is non-const
-      og::PathGeometricPtr smoothedModelSolPath = boltPlanner_->getSmoothedModelSolPath();
-      pathLength = smoothedModelSolPath->length();
-      BOLT_BLUE(true, "Solution found in " << planTime_ << " seconds with "
-                                                         << smoothedModelSolPath->getStateCount() << " states");
+      // og::PathGeometricPtr smoothedModelSolPath = boltPlanner_->getSmoothedModelSolPath();
+      // pathLength = smoothedModelSolPath->length();
+      //BOLT_BLUE(true, "Solution found in " << planTime_ << " seconds"); // with "
+      //<< smoothedModelSolPath->getStateCount() << " states");
+
+      //og::PathGeometric solutionPath = static_cast<geometric::PathGeometric &>(*pdef_->getSolutionPath());
+      og::PathGeometricPtr solutionPath = std::dynamic_pointer_cast<og::PathGeometric>(pdef_->getSolutionPath());
+      OMPL_INFORM("Solution path has %d states and was generated from planner %s", solutionPath->getStateCount(),
+                  getSolutionPlannerName().c_str());
+
+      // Smooth the result
+      simplifySolution(); // max simplify
 
       // Error check for repeated states
-      if (!checkRepeatedStates(*smoothedModelSolPath, indent))
-        exit(-1);
+      // if (!checkRepeatedStates(*smoothedModelSolPath, indent))
+      //   exit(-1);
 
       // Check optimality
       // if (!checkBoltPlannerOptimality())
@@ -292,10 +327,10 @@ void Bolt::processResults(std::size_t indent)
       // Stats
       stats_.numSolutionsSuccess_++;
 
-      BOLT_ASSERT(smoothedModelSolPath->getStateCount() >= 2, "Solution is less than 2 states long");
+      BOLT_ASSERT(solutionPath->getStateCount() >= 2, "Solution is less than 2 states long");
 
       // Queue the solution path for future insertion into experience database (post-processing)
-      queuedModelSolPaths_.push_back(smoothedModelSolPath);
+      queuedModelSolPaths_.push_back(solutionPath);
     }
     break;
     default:

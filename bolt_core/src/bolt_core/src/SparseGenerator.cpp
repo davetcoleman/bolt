@@ -68,11 +68,11 @@ SparseGenerator::SparseGenerator(SparseGraphPtr sg)
   : sg_(sg), si_(sg_->getSpaceInformation()), visual_(sg_->getVisual())
 {
   // Initialize discretizer
-  vertexDiscretizer_.reset(new VertexDiscretizer(sg_));
+  vertexDiscretizer_ = std::make_shared<VertexDiscretizer>(sg_);
 
   // Initialize threading tools
   // Speed up random sampling with these threads
-  candidateQueue_.reset(new CandidateQueue(sg_, this));
+candidateQueue_ = std::make_shared<CandidateQueue>(sg_, this);
 }
 
 SparseGenerator::~SparseGenerator(void)

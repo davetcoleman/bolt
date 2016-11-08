@@ -298,7 +298,7 @@ void SparseStorage::loadVertices(std::size_t numVertices, boost::archive::binary
   // Create thread to populate nearest neighbor structure, because that is the slowest component
   loadVerticesFinished_ = false;
   SparseVertex startingVertex = sparseGraph_->getNumVertices();  // should be number of threads
-  boost::thread nnThread(boost::bind(&SparseStorage::populateNNThread, this, startingVertex, numVertices));
+  //boost::thread nnThread(boost::bind(&SparseStorage::populateNNThread, this, startingVertex, numVertices));
 
   const base::StateSpacePtr &space = si_->getStateSpace();
   std::size_t feedbackFrequency = numVertices / 10;
@@ -328,6 +328,8 @@ void SparseStorage::loadVertices(std::size_t numVertices, boost::archive::binary
   if (vThreadTiming_)
     startTime = time::now();  // Benchmark
 
+  BOLT_WARN(true, "Multi threading NN population for SparseGraph disabled ");
+  boost::thread nnThread(boost::bind(&SparseStorage::populateNNThread, this, startingVertex, numVertices));
   nnThread.join();
 
   if (vThreadTiming_)
@@ -347,6 +349,7 @@ void SparseStorage::populateNNThread(std::size_t startingVertex, std::size_t num
     {
       // There are vertices ready to be inserted
       sparseGraph_->getNN()->add(vertexID);
+
       vertexID++;
     }
 

@@ -58,6 +58,7 @@ include_directories(
 
 # Library
 add_library(${PROJECT_NAME}
+  src/bolt_core/src/RRTConnectBolt.cpp
   src/bolt_core/src/Bolt.cpp
   src/bolt_core/src/BoltPlanner.cpp
   src/bolt_core/src/SparseGraph.cpp

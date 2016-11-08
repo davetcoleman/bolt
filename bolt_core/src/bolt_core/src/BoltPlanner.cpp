@@ -73,7 +73,7 @@ BoltPlanner::BoltPlanner(const base::SpaceInformationPtr modelSI, const base::Sp
   specs_.directed = false;
 
   // Note that the path simplifier operates in the model_based_state_space, not the compound space
-  path_simplifier_.reset(new geometric::PathSimplifier(modelSI_, base::GoalPtr(), visual_));
+  path_simplifier_ = std::make_shared<geometric::PathSimplifier>(modelSI_, base::GoalPtr(), visual_);
 
   base::CompoundStateSpacePtr compoundSpace =
       std::dynamic_pointer_cast<base::CompoundStateSpace>(compoundSI_->getStateSpace());
@@ -205,8 +205,9 @@ base::PlannerStatus BoltPlanner::solve(base::CompoundState *startState, base::Co
   if (visualizeRawTrajectory_)
     visualizeRaw(indent);
 
+  /*
   // Create new PathGeometric that we can modify by smoothing
-  smoothedCompoundSolPath_.reset(new geometric::PathGeometric(*origCompoundSolPath_));
+  smoothedCompoundSolPath_ = std::make_shared<geometric::PathGeometric>(*origCompoundSolPath_);
 
   // Smooth the result
   if (taskGraph_->taskPlanningEnabled())
@@ -221,11 +222,12 @@ base::PlannerStatus BoltPlanner::solve(base::CompoundState *startState, base::Co
   // Visualize
   if (visualizeSmoothTrajectory_)
     visualizeSmoothed(indent);
+  */
 
   // Save solution
-  // double approximateDifference = -1;
+  double approximateDifference = -1;
   bool approximate = false;
-  // pdef_->addSolutionPath(smoothedModelSolPath_, approximate, approximateDifference, getName());
+  pdef_->addSolutionPath(origModelSolPath_, approximate, approximateDifference, getName());
   bool solved = true;
 
   // Ensure thread is ceased before exiting

@@ -69,7 +69,7 @@ bool MoveItBase::init(ros::NodeHandle& nh)
   rosparam_shortcuts::shutdownIfError(name_, error);
 
   // Load the loader
-  robot_model_loader_.reset(new robot_model_loader::RobotModelLoader(ROBOT_DESCRIPTION));
+  robot_model_loader_std::make_shared<robot_model_loader::RobotModelLoader(ROBOT_DESCRIPTION));
 
   // Load the robot model
   robot_model_ = robot_model_loader_->getModel();  // Get a shared pointer to the robot
@@ -78,7 +78,7 @@ bool MoveItBase::init(ros::NodeHandle& nh)
   jmg_ = robot_model_->getJointModelGroup(joint_model_group);
 
   // Create the planning scene
-  planning_scene_.reset(new planning_scene::PlanningScene(robot_model_));
+  planning_scene_std::make_shared<planning_scene::PlanningScene(robot_model_));
 
   // Load planning scene monitor
   if (!loadPlanningSceneMonitor(joint_state_topic))
@@ -89,7 +89,7 @@ bool MoveItBase::init(ros::NodeHandle& nh)
   // Create initial robot state
   {
     psm::LockedPlanningSceneRO scene(planning_scene_monitor_);  // Lock planning scene
-    current_state_.reset(new moveit::core::RobotState(scene->getCurrentState()));
+    current_state_std::make_shared<moveit::core::RobotState(scene->getCurrentState()));
   }  // end scoped pointer of locked planning scene
 
   ROS_INFO_STREAM_NAMED(name_, "MoveItBase Ready.");
@@ -100,7 +100,7 @@ bool MoveItBase::init(ros::NodeHandle& nh)
 bool MoveItBase::loadPlanningSceneMonitor(const std::string& joint_state_topic)
 {
   // Create tf transformer
-  tf_.reset(new tf::TransformListener(nh_));
+  tf_std::make_shared<tf::TransformListener(nh_));
   // TODO(davetcoleman): remove these lines, only an attempt to fix loadPlanningSceneMonitor bug
   ros::spinOnce();
 

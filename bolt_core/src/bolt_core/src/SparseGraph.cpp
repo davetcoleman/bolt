@@ -90,14 +90,14 @@ SparseGraph::SparseGraph(base::SpaceInformationPtr si, VisualizerPtr visual)
   initializeQueryStates();
 
   // Saving and loading from file
-  sparseStorage_.reset(new SparseStorage(si_, this));
+  sparseStorage_ = std::make_shared<SparseStorage>(si_, this);
 
   // Smoothing paths in ideal way for SPARS criteria */
-  sparseSmoother_.reset(new SparseSmoother(si_, visual_));
+  sparseSmoother_ = std::make_shared<SparseSmoother>(si_, visual_);
 
   // Initialize nearest neighbor datastructure
-  // nn_.reset(new NearestNeighborsGNATNoThreadSafety<SparseVertex>());
-  nn_.reset(new NearestNeighborsGNAT<SparseVertex>());
+  // nn_ = std::make_shared<NearestNeighborsGNATNoThreadSafety<SparseVertex>());
+  nn_ = std::make_shared<NearestNeighborsGNAT<SparseVertex>>();
   nn_->setDistanceFunction(boost::bind(&otb::SparseGraph::distanceFunction, this, _1, _2));
 
   std::size_t indent = 0;
@@ -1176,7 +1176,7 @@ void SparseGraph::clearEdgesNearVertex(SparseVertex vertex, std::size_t indent)
 
 void SparseGraph::displayDatabase(bool showVertices, bool showEdges, std::size_t windowID, std::size_t indent)
 {
-  BOLT_FUNC(vVisualize_, "displayDatabase() - Display Sparse Database");
+  BOLT_FUNC(vVisualize_, "displayDatabase() - Display Sparse Database in window " << windowID);
 
   // Error check
   if (getNumVertices() == 0 && getNumEdges() == 0)
@@ -1191,16 +1191,22 @@ void SparseGraph::displayDatabase(bool showVertices, bool showEdges, std::size_t
   // Edges
   if (visualizeDatabaseEdges_ && showEdges)
   {
+    BOLT_INFO(true, "Showing edges");
+
     // Loop through each edge
     foreach (SparseEdge e, boost::edges(g_))
     {
       visualizeEdge(e, eUNKNOWN, windowID);
+
+      visual_->viz(windowID)->trigger(100);
     }
   }
 
   // Vertices
   if (visualizeDatabaseVertices_ && showVertices)
   {
+    BOLT_INFO(true, "Showing vertices");
+
     std::vector<const ompl::base::State *> states;
     states.reserve(getNumVertices());
     std::vector<ot::VizColors> colors;
@@ -1495,7 +1501,7 @@ base::ValidStateSamplerPtr SparseGraph::getSampler(base::SpaceInformationPtr si,
   {
     // BOLT_INFO(true, "Sampling with clearance " << clearance);
     // Load minimum clearance state sampler
-    sampler.reset(new base::MinimumClearanceValidStateSampler(si.get()));
+    sampler = std::make_shared<base::MinimumClearanceValidStateSampler>(si.get());
     // Set the clearance
     base::MinimumClearanceValidStateSampler *mcvss =
         dynamic_cast<base::MinimumClearanceValidStateSampler *>(sampler.get());
@@ -1505,7 +1511,7 @@ base::ValidStateSamplerPtr SparseGraph::getSampler(base::SpaceInformationPtr si,
   else  // regular sampler
   {
     // BOLT_INFO(true, "Sampling without clearance");
-    sampler.reset(new base::UniformValidStateSampler(si.get()));
+    sampler = std::make_shared<base::UniformValidStateSampler>(si.get());
   }
   return sampler;
 }

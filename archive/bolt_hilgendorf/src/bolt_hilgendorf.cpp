@@ -119,8 +119,8 @@ BoltHilgendorf::BoltHilgendorf(const std::string &hostname, const std::string &p
   MoveItBase::init(nh_);
 
   // Load 2 more robot states
-  moveit_start_.reset(new moveit::core::RobotState(*current_state_));
-  moveit_goal_.reset(new moveit::core::RobotState(*current_state_));
+  moveit_start_std::make_shared<moveit::core::RobotState(*current_state_));
+  moveit_goal_std::make_shared<moveit::core::RobotState(*current_state_));
 
   // Get the two arms jmg
   jmg_ = robot_model_->getJointModelGroup(planning_group_name_);
@@ -153,7 +153,7 @@ BoltHilgendorf::BoltHilgendorf(const std::string &hostname, const std::string &p
   if (!headless_)
   {
     // Create cartesian planner
-    cart_path_planner_.reset(new CartPathPlanner(this));
+    cart_path_planner_std::make_shared<CartPathPlanner(this));
 
     imarker_start_.reset(
         new mvt::IMarkerRobotState(planning_scene_monitor_, "start", jmg_, ee_link_, rvt::GREEN, package_path_));
@@ -188,7 +188,7 @@ bool BoltHilgendorf::loadOMPL()
   bolt_moveit::ModelBasedStateSpaceSpecification mbss_spec(robot_model_, jmg_);
 
   // Construct the state space we are planning in
-  space_.reset(new bolt_moveit::ModelBasedStateSpace(mbss_spec));
+  space_std::make_shared<bolt_moveit::ModelBasedStateSpace(mbss_spec));
 
   // Create SimpleSetup
   if (experience_planner_ == "bolt")

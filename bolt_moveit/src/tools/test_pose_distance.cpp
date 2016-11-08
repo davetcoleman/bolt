@@ -73,7 +73,7 @@ public:
     // add more parameters here to load if desired
     // rosparam_shortcuts::shutdownIfError(name_, error);
 
-    rviz_visual_tools_.reset(new rviz_visual_tools::RvizVisualTools("world", "/baxter/markers"));
+    rviz_visual_tools_ = std::make_shared<rviz_visual_tools::RvizVisualTools>("world", "/baxter/markers");
     rviz_visual_tools_->deleteAllMarkers();
 
     ROS_INFO_STREAM_NAMED(name_, "TestPoseDistance Ready.");

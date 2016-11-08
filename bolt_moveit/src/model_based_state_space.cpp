@@ -302,7 +302,7 @@ bool ModelBasedStateSpace::convertPathToRobotState(const og::PathGeometric &path
   }
 
   // New trajectory
-  traj.reset(new robot_trajectory::RobotTrajectory(spec_.robot_model_, jmg));
+  traj = std::make_shared<robot_trajectory::RobotTrajectory>(spec_.robot_model_, jmg);
   moveit::core::RobotState state(spec_.robot_model_);  // TODO(davetcoleman):do i need to copy this?
   state.setToDefaultValues();
 

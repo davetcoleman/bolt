@@ -54,10 +54,10 @@ CartPathPlanner::CartPathPlanner(BoltHilgendorf* parent) : name_("cart_path_plan
   jmg_ = parent_->jmg_;
 
   // Load planning state
-  imarker_state_.reset(new moveit::core::RobotState(*parent_->moveit_start_));
+  imarker_state_std::make_shared<moveit::core::RobotState(*parent_->moveit_start_));
 
   // Create cartesian start pose interactive marker
-  imarker_cartesian_.reset(new mvt::IMarkerRobotState(parent_->getPlanningSceneMonitor(), "cart", jmg_,
+  imarker_cartesian_std::make_shared<mvt::IMarkerRobotState(parent_->getPlanningSceneMonitor(), "cart", jmg_,
                                                       parent_->ee_link_, rvt::BLUE, parent_->package_path_));
   imarker_cartesian_->setIMarkerCallback(
       std::bind(&CartPathPlanner::processIMarkerPose, this, std::placeholders::_1, std::placeholders::_2));
@@ -106,7 +106,7 @@ void CartPathPlanner::initDescartes()
 
   // Instantiating a robot model
   const std::string prefix = "right_";
-  ur5_robot_model_.reset(new bolt_ur5::UR5RobotModel(prefix));
+  ur5_robot_model_std::make_shared<bolt_ur5::UR5RobotModel(prefix));
 
   // Initialize
   if (!ur5_robot_model_->initialize(visual_tools_->getSharedRobotState()->getRobotModel(), group_name_, world_frame_,

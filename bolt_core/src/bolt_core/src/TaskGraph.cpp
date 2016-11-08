@@ -88,7 +88,7 @@ TaskGraph::TaskGraph(const base::SpaceInformationPtr &modelSI, const base::Space
 
   // Initialize nearest neighbor datastructure
   // TODO(davetcoleman): do we need to have a separate NN_ structure for the TaskGraph??
-  nn_.reset(new NearestNeighborsGNAT<TaskVertex>()); // this is the thread-safe version
+  nn_ = std::make_shared<NearestNeighborsGNAT<TaskVertex>>(); // this is the thread-safe version
   nn_->setDistanceFunction(boost::bind(&otb::TaskGraph::distanceVertex, this, _1, _2));
 }
 
@@ -102,7 +102,7 @@ bool TaskGraph::setup()
   // Initialize path simplifier
   if (!pathSimplifier_)
   {
-    pathSimplifier_.reset(new geometric::PathSimplifier(compoundSI_));
+    pathSimplifier_ = std::make_shared<geometric::PathSimplifier>(compoundSI_);
     pathSimplifier_->freeStates(true);
   }
 

@@ -137,7 +137,7 @@ public:
     return g_;
   }
 
-  SparseAdjList &getGraphNonConst()
+  SparseAdjList& getGraphNonConst()
   {
     std::size_t indent = 0;
     BOLT_ERROR("getGraphNonConst");
@@ -168,7 +168,7 @@ public:
   }
 
   /** \brief Get the nearest neighbor structure */
-  std::shared_ptr<NearestNeighbors<SparseVertex> > getNN()
+  std::shared_ptr<NearestNeighbors<SparseVertex>> getNN()
   {
     return nn_;
   }
@@ -490,7 +490,7 @@ protected:
   SparseSmootherPtr sparseSmoother_;
 
   /** \brief Nearest neighbors data structure */
-  std::shared_ptr<NearestNeighbors<SparseVertex> > nn_;
+  std::shared_ptr<NearestNeighbors<SparseVertex>> nn_;
 
   /** \brief Connectivity graph */
   SparseAdjList g_;

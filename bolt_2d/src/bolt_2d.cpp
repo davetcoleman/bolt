@@ -190,7 +190,7 @@ public:
   bool loadOMPL()
   {
     // Construct the state space we are planning in
-    space_.reset(new ob::RealVectorStateSpace(dimensions_));
+    space_ = std::make_shared<ob::RealVectorStateSpace>(dimensions_);
 
     // Create SimpleSetup
     if (experience_planner_ == "bolt")
@@ -810,7 +810,7 @@ public:
     space_->setup();
 
     // Set state validity checking for this space
-    validity_checker_.reset(new ob::ValidityChecker2D(si_, &ppm_));
+    validity_checker_ = std::make_shared<ob::ValidityChecker2D>(si_, &ppm_);
     validity_checker_->setCheckingEnabled(collision_checking_enabled_);
     simple_setup_->setStateValidityChecker(validity_checker_);
 
@@ -923,7 +923,7 @@ public:
     rviz_visual->enableBatchPublishing();
     ros::spinOnce();
 
-    viz_bg_.reset(new TwoDimVizWindow(rviz_visual, si_));
+    viz_bg_ = std::make_shared<TwoDimVizWindow>(rviz_visual, si_);
     viz_bg_->getVisualTools()->setGlobalScale(global_scale_);
     viz_bg_->deleteAllMarkers();
 

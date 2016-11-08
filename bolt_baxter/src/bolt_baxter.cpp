@@ -103,6 +103,7 @@ BoltBaxter::BoltBaxter(const std::string &hostname, const std::string &package_p
   error += !rosparam_shortcuts::get(name_, rpnh, "continue_spars", continue_spars_);
   error += !rosparam_shortcuts::get(name_, rpnh, "eliminate_dense_disjoint_sets", eliminate_dense_disjoint_sets_);
   error += !rosparam_shortcuts::get(name_, rpnh, "check_valid_vertices", check_valid_vertices_);
+  error += !rosparam_shortcuts::get(name_, rpnh, "display_database", display_database_);
   error += !rosparam_shortcuts::get(name_, rpnh, "display_disjoint_sets", display_disjoint_sets_);
   error += !rosparam_shortcuts::get(name_, rpnh, "benchmark_performance", benchmark_performance_);
   error += !rosparam_shortcuts::get(name_, rpnh, "save_imarkers_to_file", save_imarkers_to_file_);
@@ -627,10 +628,21 @@ void BoltBaxter::run(std::size_t indent)
     exit(0);
   }
 
+  // Mirror graph
   if (mirror_graph_)
   {
     mirrorGraph(indent);
     exit(0);
+  }
+
+  // Display Database
+  if (display_database_)
+  {
+    BOLT_INFO(true, "Display database");
+    const bool showVertices = false;
+    const bool showEdges = true;
+    const std::size_t windowID = 6;
+    bolt_->getSparseGraph()->displayDatabase(showVertices, showEdges, windowID, indent);
   }
 
   // Run the demo
@@ -729,12 +741,6 @@ bool BoltBaxter::runProblems(std::size_t indent)
       // -----------------------------------------------------
       // -----------------------------------------------------
 
-      if (is_bolt_)
-      {
-        bolt_->processResults(indent);
-        bolt_->printLogs();
-      }
-
       // Post Proccess
       if (post_processing_ && run_id % post_processing_interval_ == 0)  // every x runs
       {
@@ -829,7 +835,12 @@ bool BoltBaxter::plan(std::size_t indent)
   CALLGRIND_DUMP_STATS;
 
   // Simplify
-  if (!is_bolt_)
+  if (is_bolt_)
+  {
+    bolt_->processResults(indent);
+    bolt_->printLogs();
+  }
+  else
   {
     simple_setup_->simplifySolution();
   }
@@ -1809,14 +1820,14 @@ void BoltBaxter::processAndExecute(std::size_t indent)
   robot_trajectory::RobotTrajectoryPtr execution_traj;
 
   // Interpolate and parameterize
-  if (is_bolt_)
-  {
-    execution_traj = processSegments(indent);
-  }
-  else  // RRTConnect, etc
-  {
-    execution_traj = processSimpleSolution(indent);
-  }
+  // if (is_bolt_)
+  // {
+  //   execution_traj = processSegments(indent);
+  // }
+  // else  // RRTConnect, etc
+  // {
+  execution_traj = processSimpleSolution(indent);
+  //}
 
   // Execute
   if (connect_to_hardware_)

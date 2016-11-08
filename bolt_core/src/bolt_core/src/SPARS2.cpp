@@ -79,7 +79,7 @@ ompl::geometric::SPARS2::SPARS2(const base::SpaceInformationPtr &si)
   psimp_ = std::make_shared<PathSimplifier>(si_);
 
   // Smoothing paths in ideal way for SPARS criteria */
-  sparseSmoother_.reset(new ompl::tools::bolt::SparseSmoother(si_, visual_));
+  sparseSmoother_ = std::make_shared<ompl::tools::bolt::SparseSmoother>(si_, visual_);
 
   Planner::declareParam<double>("stretch_factor", this, &SPARS2::setStretchFactor, &SPARS2::getStretchFactor, "1.1:0.1:"
                                                                                                               "3.0");

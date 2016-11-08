@@ -349,7 +349,7 @@ bool MoveItVizWindow::publishRobotState(const ompl::base::State* state)
 //   // Optionally save the trajectory
 //   if (show_trajectory_animated)
 //   {
-//     robot_trajectory.reset(new robot_trajectory::RobotTrajectory(visuals_->getRobotModel(), jmg->getName()));
+//     robot_trajectorystd::make_shared<robot_trajectory::RobotTrajectory(visuals_->getRobotModel(), jmg->getName()));
 //   }
 
 //   // Each state in the path
@@ -543,7 +543,7 @@ bool MoveItVizWindow::convertPath(const og::PathGeometric& path, const robot_mod
   }
 
   // New trajectory
-  traj.reset(new robot_trajectory::RobotTrajectory(visuals_->getRobotModel(), jmg));
+  trajstd::make_shared<robot_trajectory::RobotTrajectory(visuals_->getRobotModel(), jmg));
   moveit::core::RobotState state(*visuals_->getSharedRobotState());  // TODO(davetcoleman):do i need to copy this?
 
   // Get correct type of space
