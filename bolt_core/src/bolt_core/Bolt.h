@@ -42,7 +42,8 @@
 #include <ompl/geometric/SimpleSetup.h>  // the parent class
 #include <ompl/tools/debug/Visualizer.h>
 #include <bolt_core/BoostGraphHeaders.h>
-#include <bolt_core/RRTConnectBolt.h>
+#include <bolt_core/EERRTConnect.h>
+#include <ompl/geometric/planners/rrt/RRTConnect.h>
 #include <ompl/tools/multiplan/ParallelPlan.h>
 
 // C++
@@ -297,7 +298,8 @@ protected:
   BoltPlannerPtr boltPlanner_;
 
   /** \brief Planning from scratch planner */
-  geometric::RRTConnectBoltPtr rrtPlanner_;
+  geometric::EERRTConnectPtr ERRTPlanner_;
+  geometric::RRTConnectPtr rrtPlanner_;
 
   /** \brief Instance of parallel planning to use for computing solutions in parallel */
   ompl::tools::ParallelPlanPtr pp_;
@@ -316,9 +318,6 @@ protected:
 
   /** \brief Graph used for combining multiple layers of sparse graph */
   TaskGraphPtr taskGraph_;
-
-  /** \brief Various tests to determine if a vertex/edge should be added to the graph, based on SPARS */
-  //TaskCriteriaPtr taskCriteria_;
 
   /** \brief Accumulated experiences to be later added to experience database - ModelBasedStateSpace*/
   std::vector<geometric::PathGeometricPtr> queuedModelSolPaths_;
@@ -347,6 +346,8 @@ public:
   /** \brief Verbose settings */
   bool verbose_ = true;
 
+  bool usePFSPlanner_ = false;
+  bool useEERRTConnect_ = true;
 };  // end of class Bolt
 
 }  // namespace bolt

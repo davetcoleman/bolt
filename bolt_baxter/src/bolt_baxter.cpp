@@ -141,6 +141,7 @@ BoltBaxter::BoltBaxter(const std::string &hostname, const std::string &package_p
   error += !rosparam_shortcuts::get(name_, rpnh, "distance_to_shelf", distance_to_shelf_);
   error += !rosparam_shortcuts::get(name_, rpnh, "use_shelf_noise", use_shelf_noise_);
   error += !rosparam_shortcuts::get(name_, rpnh, "bin_height", bin_height_);
+  error += !rosparam_shortcuts::get(name_, rpnh, "num_rows", num_rows_);
   error += !rosparam_shortcuts::get(name_, rpnh, "test_var", test_var_);
   // execution
   error += !rosparam_shortcuts::get(name_, rpnh, "connect_to_hardware", connect_to_hardware_);
@@ -357,7 +358,8 @@ bool BoltBaxter::loadOMPL(std::size_t indent)
   si_ = std::make_shared<ob::SpaceInformation>(space_);
 
   // Create SimpleSetup
-  if (planner_ == "Bolt")
+  std::cout << "planner_.substr(0,4): " << planner_.substr(0,4) << std::endl;
+  if (planner_.substr(0,4) == "Bolt")
   {
     bolt_ = std::make_shared<otb::Bolt>(si_);
     simple_setup_ = bolt_;
@@ -447,6 +449,24 @@ bool BoltBaxter::loadOMPL(std::size_t indent)
   {
     bolt_->setFilePath(getPlannerFilePath(planning_group_name_, indent));
     bolt_->getBoltPlanner()->setSecondarySI(secondary_si_);  // must be called after loadCollisionChecker()
+
+    // Customize per type of Bolt
+    if (planner_ == "BoltRandom") // use sampling thread
+    {
+      bolt_->getBoltPlanner()->useSamplingThread_ = true;
+    }
+    else if (planner_ == "BoltRRTConnect")
+    {
+      bolt_->usePFSPlanner_ = true;
+      bolt_->useERRTConnect_ = true;
+    }
+    else if (planner_ == "BoltERRTConnect")
+    {
+      bolt_->usePFSPlanner_ = true;
+      bolt_->useERRTConnect_ = false;
+    }
+    else
+      BOLT_ERROR("Unknown bolt type " << planner_);
   }
   else if (is_thunder_)
   {
@@ -670,12 +690,15 @@ void BoltBaxter::run(std::size_t indent)
 
 bool BoltBaxter::runProblems(std::size_t indent)
 {
-  const double low_pd = -0.1;
-  const double high_pd = 0.15 + std::numeric_limits<double>::epsilon();
+  const double low_pd  = 0.0;
+  const double high_pd = 0.2 + std::numeric_limits<double>::epsilon();
   const double step_pd = 0.05;
   for (penetration_dist_ = low_pd; penetration_dist_ <= high_pd; penetration_dist_ += step_pd)
   {
+    std::cout << std::endl;
+    std::cout << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ " << std::endl;
     BOLT_INFO(true, "Penetration distance: " << penetration_dist_);
+    std::cout << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ " << std::endl;
 
     if (!ros::ok())  // Check if user wants to shutdown
       break;
@@ -1851,9 +1874,8 @@ void BoltBaxter::chooseStartGoalIK(std::size_t run_id, std::size_t indent)
   const double horizontal_distance = 0.275; // left and right cubbys
   const double height_of_shelf = 0.24;
   const double penetration_depth = penetration_dist_; //test_var_; // m
-  const std::size_t num_shelves = 4; // 5 - includes top shelf
 
-  double z = (run_id % num_shelves) * height_of_shelf;
+  double z = (run_id % num_rows_) * height_of_shelf;
 
   Eigen::Affine3d left_gripper = Eigen::Affine3d::Identity() * Eigen::AngleAxisd(M_PI / 2.0, Eigen::Vector3d::UnitY());
   left_gripper.translation().x() = half_shelf_depth + penetration_depth;

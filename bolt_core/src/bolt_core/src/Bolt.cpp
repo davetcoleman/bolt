@@ -129,8 +129,14 @@ void Bolt::initialize(std::size_t indent)
   BOLT_INFO(verbose_, "Loading BoltPlanner");
   boltPlanner_ = std::make_shared<BoltPlanner>(si_, compoundSI_, taskGraph_, visual_);
 
-  BOLT_INFO(verbose_, "Loading RRTPlanner");
-  rrtPlanner_ = std::make_shared<geometric::RRTConnectBolt>(si_);
+  if (usePFSPlanner_)
+  {
+    BOLT_INFO(verbose_, "Using planning from scratch planner");
+    if (useEERRTConnect_)
+      ERRTPlanner_ = std::make_shared<geometric::EERRTConnect>(si_, visual_);
+    else
+      rrtPlanner_ = std::make_shared<geometric::RRTConnect>(si_);
+  }
 
   std::size_t numThreads = boost::thread::hardware_concurrency();
   OMPL_INFORM("Bolt Framework initialized using %u threads", numThreads);
@@ -154,8 +160,19 @@ void Bolt::setup()
     if (!boltPlanner_->isSetup())
       boltPlanner_->setup();
 
-    if (!rrtPlanner_->isSetup())
-      rrtPlanner_->setup();
+    if (usePFSPlanner_)
+    {
+      if (useEERRTConnect_)
+      {
+        if (!ERRTPlanner_->isSetup())
+          ERRTPlanner_->setup();
+      }
+      else
+      {
+        if (!rrtPlanner_->isSetup())
+          rrtPlanner_->setup();
+      }
+    }
 
     // Setup SPARS
     sparseGraph_->setup();
@@ -168,19 +185,19 @@ void Bolt::setup()
 
     // Create the parallel component for splitting into two threads
     pp_ = std::make_shared<ot::ParallelPlan>(pdef_);
-    // if (!scratchEnabled_ && !recallEnabled_)
-    // {
-    //   throw Exception("Both planning from scratch and experience have been disabled, unable to plan");
-    // }
-    // if (recallEnabled_)
     pp_->addPlanner(boltPlanner_);  // Add the planning from experience planner if desired
-    //if (scratchEnabled_)
-    pp_->addPlanner(rrtPlanner_);  // Add the planning from scratch planner if desired
-    // if (dualThreadScratchEnabled_ && !recallEnabled_)
-    // {
-    //   OMPL_INFORM("Adding second planning from scratch planner");
-    //   pp_->addPlanner(planner2_);  // Add a SECOND planning from scratch planner if desired
-    // }
+
+    // Planning from scratch
+    if (usePFSPlanner_)
+    {
+      if (useEERRTConnect_)
+      {
+        pp_->addPlanner(ERRTPlanner_);  // Add the planning from scratch planner if desired
+        ERRTPlanner_->setSparseGraph(sparseGraph_);
+      }
+      else
+        pp_->addPlanner(rrtPlanner_);  // Add the planning from scratch planner if desired
+    }
 
   }
 }

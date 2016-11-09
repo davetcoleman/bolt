@@ -25,7 +25,7 @@
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/SamplingQueue.h
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/InterfaceData.h
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/SPARS2.h
-/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/RRTConnectBolt.h
+/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/ERRTConnect.h
 
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/src/Bolt.cpp
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/src/SparseGraph.cpp
@@ -40,7 +40,7 @@
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/src/CandidateQueue.cpp
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/src/SamplingQueue.cpp
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/src/SPARS2.cpp
-/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/src/RRTConnectBolt.cpp
+/home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/src/ERRTConnect.cpp
 
 /home/dave/ros/current/ws_swri/src/ompl/src/ompl/tools/debug/Visualizer.h
 /home/dave/ros/current/ws_swri/src/ompl/src/ompl/tools/debug/VizWindow.h

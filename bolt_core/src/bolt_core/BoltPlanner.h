@@ -309,6 +309,8 @@ public:
   bool visualizeSampling_ = true;
 
   int numStartGoalStatesAddedToTask_ = 0;
+
+  bool useSamplingThread_ = false;
 };
 }  // namespace bolt
 }  // namespace tools

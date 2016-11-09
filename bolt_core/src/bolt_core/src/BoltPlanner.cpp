@@ -63,7 +63,7 @@ namespace bolt
 {
 BoltPlanner::BoltPlanner(const base::SpaceInformationPtr modelSI, const base::SpaceInformationPtr compoundSI,
                          const TaskGraphPtr &taskGraph, VisualizerPtr visual)
-  : base::Planner(modelSI, "Bolt_Planner")
+  : base::Planner(modelSI, "BoltPlanner")
   , modelSI_(modelSI)
   , compoundSI_(compoundSI)
   , taskGraph_(taskGraph)
@@ -174,11 +174,16 @@ base::PlannerStatus BoltPlanner::solve(base::CompoundState *startState, base::Co
   // Mark the solution as not found so the thread knows to continue
   solutionFound_ = false;
 
-  // Create thread for collision checking
-  std::thread sThread([this, &startState, &goalState, &indent]
-                       {
-                         samplingThread(startState, goalState, indent);
-                       });
+  // Create thread for sampling
+  std::thread sThread;
+  if (useSamplingThread_)
+  {
+    BOLT_INFO(true, "Using sampling thread");
+    sThread = std::thread([this, &startState, &goalState, &indent]
+                          {
+                            samplingThread(startState, goalState, indent);
+                          });
+  }
 
   // Create solution structure
   origCompoundSolPath_ = std::make_shared<og::PathGeometric>(compoundSI_);
@@ -536,7 +541,6 @@ bool BoltPlanner::lazyCollisionCheck(std::vector<TaskVertex> &vertexPath, Termin
         hasInvalidEdges = true;
 
 #ifndef NDEBUG
-        std::cout << "ignore this " << std::endl;
         // Check if our planner is out of time - only do this after the slow checkMotion() action has occured to save
         // time
         if (ptc || visual_->viz1()->shutdownRequested())
