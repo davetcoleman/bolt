@@ -159,7 +159,7 @@ base::PlannerStatus BoltPlanner::solve(Termination &ptc)
   base::CompoundState *startStateCompound = taskGraph_->createCompoundState(startState, level0, indent);
   base::CompoundState *goalStateCompound = taskGraph_->createCompoundState(goalState, level2, indent);
 
-  base::PlannerStatus result = solve(startStateCompound, goalStateCompound, ptc, indent);
+  base::PlannerStatus result = solveThreadLayer(startStateCompound, goalStateCompound, ptc, indent);
 
   // Free states
   compoundSI_->getStateSpace()->freeState(startStateCompound);
@@ -168,8 +168,8 @@ base::PlannerStatus BoltPlanner::solve(Termination &ptc)
   return result;
 }
 
-base::PlannerStatus BoltPlanner::solve(base::CompoundState *startState, base::CompoundState *goalState,
-                                       Termination &ptc, std::size_t indent)
+base::PlannerStatus BoltPlanner::solveThreadLayer(base::CompoundState *startState, base::CompoundState *goalState,
+                                                  Termination &ptc, std::size_t indent)
 {
   // Mark the solution as not found so the thread knows to continue
   solutionFound_ = false;
@@ -179,12 +179,31 @@ base::PlannerStatus BoltPlanner::solve(base::CompoundState *startState, base::Co
   if (useSamplingThread_)
   {
     BOLT_INFO(true, "Using sampling thread");
-    sThread = std::thread([this, &startState, &goalState, &indent]
+    sThread = std::thread([this, &startState, &goalState, &ptc, &indent]
                           {
-                            samplingThread(startState, goalState, indent);
+                            samplingThread(startState, goalState, ptc, indent);
                           });
   }
 
+  base::PlannerStatus result = solve(startState, goalState, ptc, indent);
+
+  // Mark the solution as found so the thread knows to stop
+  solutionFound_ = true;
+
+  // Ensure thread is ceased before exiting
+  if (useSamplingThread_)
+  {
+    BOLT_DEBUG(true, "Joining sampling thread");
+    if (sThread.joinable())
+      sThread.join();
+  }
+
+  return result;
+}
+
+base::PlannerStatus BoltPlanner::solve(base::CompoundState *startState, base::CompoundState *goalState,
+                                       Termination &ptc, std::size_t indent)
+{
   // Create solution structure
   origCompoundSolPath_ = std::make_shared<og::PathGeometric>(compoundSI_);
 
@@ -196,6 +215,7 @@ base::PlannerStatus BoltPlanner::solve(base::CompoundState *startState, base::Co
   }
 
   // Mark the solution as found so the thread knows to stop
+  // Call early here, rather than just in parent function, to reduce wait time on thread join
   solutionFound_ = true;
 
   BOLT_DEBUG(verbose_, "getPathOffGraph() found a solution of size " << origCompoundSolPath_->getStateCount());
@@ -237,14 +257,6 @@ base::PlannerStatus BoltPlanner::solve(base::CompoundState *startState, base::Co
   bool approximate = false;
   pdef_->addSolutionPath(origModelSolPath_, approximate, approximateDifference, getName());
   bool solved = true;
-
-  // Ensure thread is ceased before exiting
-  if (useSamplingThread_)
-  {
-    BOLT_DEBUG(true, "Joining sampling thread");
-    if (sThread.joinable())
-      sThread.join();
-  }
 
   BOLT_DEBUG(verbose_, "Finished BoltPlanner.solve()");
   return base::PlannerStatus(solved, approximate);
@@ -535,10 +547,6 @@ bool BoltPlanner::lazyCollisionCheck(std::vector<TaskVertex> &vertexPath, Termin
     TaskEdge edge = boost::edge(fromVertex, toVertex, taskGraph_->getGraph()).first;
     int collision_state = taskGraph_->getGraphNonConst()[edge].collision_state_;
 
-    // TODO: remove
-    // if (collision_state != NOT_CHECKED)
-    //   BOLT_ERROR("Found edge already checked!!");
-
     // Has this edge already been checked before?
     if (collision_state == NOT_CHECKED)
     {
@@ -565,17 +573,8 @@ bool BoltPlanner::lazyCollisionCheck(std::vector<TaskVertex> &vertexPath, Termin
         hasInvalidEdges = true;
 
 #ifndef NDEBUG
-
-        // Debug
         if (visualizeLazyCollisionCheck_)
-        {
-          visual_->prompt("see edge");
-
-          // Path between (from, to) states not valid, disable the edge
-          modelSI_->getMotionValidator()->checkMotion(fromState, toState, visual_);
-
           visualizeBadEdge(fromVertex, toVertex);
-        }
 #endif
       }
       else
@@ -1340,24 +1339,24 @@ void BoltPlanner::visualizeSmoothed(std::size_t indent)
     visual_->prompt("after visualization");
 }
 
-void BoltPlanner::samplingThread(const base::CompoundState *start, const base::CompoundState *goal, std::size_t indent)
+void BoltPlanner::samplingThread(const base::CompoundState *start, const base::CompoundState *goal, Termination &ptc, std::size_t indent)
 {
   BOLT_FUNC(true, "samplingThread()");
 
   std::size_t threadID = 1; // TODO: dynamically assign this
 
-  while (!solutionFound_)
+  while (!solutionFound_ && !ptc)
   {
     BOLT_INFO(true, "Searching around goal");
     addSamples(taskGraph_->getModelBasedState(goal), threadID, indent); // sample around goal
 
-    if (solutionFound_) // check often so that thread does not hold up main process when solution found
+    if (solutionFound_ && !ptc) // check often so that thread does not hold up main process when solution found
       break;
 
     BOLT_INFO(true, "Searching around start");
     addSamples(taskGraph_->getModelBasedState(start), threadID, indent); // sample around start
 
-    if (solutionFound_) // check often so that thread does not hold up main process when solution found
+    if (solutionFound_ && !ptc) // check often so that thread does not hold up main process when solution found
       break;
 
     BOLT_INFO(true, "Searching around all");

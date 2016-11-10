@@ -135,6 +135,7 @@ BoltBaxter::BoltBaxter(const std::string &hostname, const std::string &package_p
   error += !rosparam_shortcuts::get(name_, rpnh, "post_processing", post_processing_);
   error += !rosparam_shortcuts::get(name_, rpnh, "post_processing_interval", post_processing_interval_);
   error += !rosparam_shortcuts::get(name_, rpnh, "use_logging", use_logging_);
+  error += !rosparam_shortcuts::get(name_, rpnh, "log_file_name", log_file_name_);
   error += !rosparam_shortcuts::get(name_, rpnh, "collision_checking_enabled", collision_checking_enabled_);
   // collision
   error += !rosparam_shortcuts::get(name_, rpnh, "scene_type", scene_type_);
@@ -543,10 +544,10 @@ void BoltBaxter::eachPlanner(std::size_t indent)
   if (use_logging_)
   {
     std::string file_path;
-    bolt_moveit::getFilePath(file_path, "bolt_baxter_logging.csv", "ros/ompl_storage");
+    bolt_moveit::getFilePath(file_path, log_file_name_, "ros/ompl_storage");
     logging_file_.open(file_path.c_str(), std::ios::out | std::ios::app);
     // Header of CSV file
-    logging_file_ << "planner, planTime, smoothPlanTime, pathLen, addV, addE, penetrate, solved, thread" << std::endl;
+    logging_file_ << "planner, planTime, smoothTime, pathLen, addV, addE, penetrate, solved, thread" << std::endl;
   }
 
   for (std::size_t i = 0; i < planners_.size(); ++i)
@@ -598,7 +599,7 @@ void BoltBaxter::run(std::size_t indent)
     // bolt_->getSparseGenerator()->benchmarkRandValidSampling();
     // bolt_->getSparseGenerator()->benchmarkVisualizeSampling();
     // bolt_->getSparseGenerator()->benchmarkMemoryAllocation();
-    BOLT_INFO(true, "Finished benchmarking");
+    BOLT_INFO(true, "Finished benchmarking, shutting down");
     exit(0);
   }
 
@@ -625,6 +626,7 @@ void BoltBaxter::run(std::size_t indent)
       // bolt_->getSparseGenerator()->createSPARS();
       bolt_->getSparseGenerator()->createSPARS2(indent);
       loaded = true;
+      BOLT_INFO(true, "Finished creating SPARS, shutting down");
       exit(0);  // after creating graph just end
     }
     if (!loaded)
@@ -635,6 +637,7 @@ void BoltBaxter::run(std::size_t indent)
   if (display_disjoint_sets_ && is_bolt_)
   {
     displayDisjointSets(indent);
+    BOLT_INFO(true, "Finished, shutting down");
     exit(0);
   }
 
@@ -648,6 +651,7 @@ void BoltBaxter::run(std::size_t indent)
   if (check_valid_vertices_)
   {
     bolt_->getSparseGraph()->verifyGraph(indent);
+    BOLT_INFO(true, "Finished, shutting down");
     exit(0);
   }
 
@@ -655,6 +659,7 @@ void BoltBaxter::run(std::size_t indent)
   if (mirror_graph_)
   {
     mirrorGraph(indent);
+    BOLT_INFO(true, "Finished, shutting down");
     exit(0);
   }
 
@@ -867,8 +872,8 @@ bool BoltBaxter::plan(std::size_t indent)
     simple_setup_->simplifySolution();
 
   // Interpolate, parameterize, and execute/visualize
-  if (visualize_interpolated_traj_ || connect_to_hardware_)
-    processAndExecute(indent);
+  //if (visualize_interpolated_traj_ || connect_to_hardware_)
+  processAndExecute(indent);
 
   return true;
 }
@@ -990,7 +995,10 @@ bool BoltBaxter::generateCartGraph(std::size_t indent)
       BOLT_INFO(true, "Unable to populate Bolt graph - try moving the start location");
       visual_->viz1()->prompt("attempt Bolt graph generation again");
       if (!ros::ok())
+      {
+        BOLT_INFO(true, "Finished, shutting down");
         exit(0);
+      }
     }
     else
       break;
@@ -1171,7 +1179,8 @@ void BoltBaxter::mirrorGraph(std::size_t indent)
   {
     BOLT_INFO(true, "TESTING ALL VERTICES ON OTHER ARM");
     bolt_->getSparseMirror()->checkValidityOfArmMirror(both_arms_space_info, left_arm_space_info, indent);
-    std::cout << "success " << std::endl;
+
+    BOLT_INFO(true, "Finished, shutting down");
     exit(0);
   }
 
@@ -1438,7 +1447,7 @@ void BoltBaxter::viewIMarkersFromFile(std::size_t indent)
     ros::Duration(1.0).sleep();
   }
 
-  BOLT_INFO(true, "Done, shutting down.");
+  BOLT_INFO(true, "Finished, shutting down");
   exit(0);
 }
 
@@ -1724,17 +1733,17 @@ std::string BoltBaxter::getPlannerFilePath(const std::string &planning_group_nam
   if (is_bolt_)
   {
     file_name = file_name + planner_lower_ + "_" + planning_group_name + "_" +
-                std::to_string(bolt_->getSparseCriteria()->sparseDeltaFraction_) + "_database_v" +
-                std::to_string(load_database_version_);
+                std::to_string(bolt_->getSparseCriteria()->sparseDeltaFraction_) + "_" +
+                load_database_version_;
   }
   else if (is_thunder_)
   {
     file_name = file_name + planner_lower_ + "_" + planning_group_name + "_" +
-                std::to_string(thunder_->getExperienceDB()->getSPARSdb()->getSparseDeltaFraction()) + "database";
+                std::to_string(thunder_->getExperienceDB()->getSPARSdb()->getSparseDeltaFraction());
   }
   else if (is_lightning_)
   {
-    file_name = file_name + planner_lower_ + "_" + planning_group_name + "_database";
+    file_name = file_name + planner_lower_ + "_" + planning_group_name;
   }
 
   std::string file_path;
@@ -1813,6 +1822,8 @@ void BoltBaxter::loadSPARS2Data(std::size_t indent)
 
 void BoltBaxter::log(bool solved, std::size_t indent)
 {
+  BOLT_FUNC(true, "log()");
+
   std::size_t numVerticesAdded = 0;
   std::size_t numEdgesAdded = 0;
   if (is_bolt_)
@@ -1831,12 +1842,21 @@ void BoltBaxter::log(bool solved, std::size_t indent)
     thunder_->diffNumEdges_ = 0;
   }
 
-  og::PathGeometric &path = static_cast<og::PathGeometric &>(*simple_setup_->getProblemDefinition()->getSolutionPath());
+  double pathLength = 0;
+  if (simple_setup_->getProblemDefinition()->hasSolution())
+  {
+    std::cout << "getSolutionPath() " << std::endl;
+    og::PathGeometric &path = static_cast<og::PathGeometric &>(*simple_setup_->getProblemDefinition()->getSolutionPath());
+    std::cout << "get length " << std::endl;
+    pathLength = path.length();
+  }
+  else
+    BOLT_WARN(true, "logging: does not have solution");
 
   logging_file_ << planner_ << ", "                // bolt, etc
                 << simple_setup_->getLastPlanComputationTime() << ", " // planning time
                 << simple_setup_->getLastSimplificationTime() << ", " // smoothing time
-                << path.length() << ", "  // basic planning stats
+                << pathLength << ", "  // basic planning stats
                 << numVerticesAdded << ", "        // numVerticesAdded
                 << numEdgesAdded << ", "           // numEdgesAdded
                 << penetration_dist_ << ", "       // task

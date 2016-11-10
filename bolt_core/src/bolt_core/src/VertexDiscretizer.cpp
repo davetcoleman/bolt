@@ -356,7 +356,7 @@ void VertexDiscretizer::recursiveDiscretization(std::size_t threadID, std::vecto
 
       // Check for shutdown
       if (visual_->viz1()->shutdownRequested())
-        exit(0);
+        return;
     }
   }
 }

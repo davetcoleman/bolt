@@ -119,7 +119,10 @@ CartPathPlanner::CartPathPlanner(std::vector<mvt::ArmData>& arm_datas, mvt::Move
   PathLoader path_loader(package_path_);
   const bool debug = false;
   if (!path_loader.get2DPath(path_from_file_, debug))
-    exit(0);
+  {
+    BOLT_ERROR("No 2D path found");
+    exit(-1);
+  }
 
   // Specify tolerance for new exact_poses
   tolerance_increment_ = tolerance_pi_fraction_increment;
@@ -881,13 +884,19 @@ bool CartPathPlanner::addEdgesToBoltGraph(const TaskVertexMatrix& point_vertices
       }  // for
 
       if (!ros::ok())
+      {
+        BOLT_INFO(true, "Finished, shutting down");
         exit(0);
+      }
     }  // for
 
     // BOLT_DEBUG(true, "Point " << traj_id << " current edge count: " << new_edge_count);
 
     if (!ros::ok())
+    {
+      BOLT_INFO(true, "Finished, shutting down");
       exit(0);
+    }
 
     // Feedback
     if ((traj_id + 1) % feedbackFrequency == 0)
@@ -1119,7 +1128,10 @@ void CartPathPlanner::visualizeAllJointPoses(const RedunJointPoses& joint_poses,
     ros::Duration(visualize_all_solutions_sleep_).sleep();
 
     if (!ros::ok())
+    {
+      BOLT_INFO(true, "Finished, shutting down");
       exit(0);
+    }
   }
 }
 

@@ -443,7 +443,7 @@ bool SparseGenerator::addSample(SparseCandidateData &candidateD, std::size_t thr
     {
       BOLT_INFO(true, "Shutdown requested");
       stopCandidateQueueAndSave(indent);
-      exit(0);
+      return false;
     }
   }
   else
@@ -671,7 +671,6 @@ bool SparseGenerator::checkGraphOptimality(std::size_t indent)
       sg_->displayDatabase();
 
       visual_->viz1()->spin();
-      // exit(0);
       numFailedPlans++;
       continue;
     }
@@ -749,7 +748,6 @@ bool SparseGenerator::checkGraphOptimality(std::size_t indent)
       sg_->displayDatabase();
 
       visual_->viz1()->spin();
-      exit(0);
       return false;
     }
     else
@@ -997,7 +995,6 @@ void SparseGenerator::benchmarkVisualizeSampling(std::size_t indent)
 
   // Benchmark runtime
   OMPL_INFORM("Done");
-  exit(0);
   std::cout << "-------------------------------------------------------" << std::endl;
   std::cout << std::endl;
 }
@@ -1361,7 +1358,7 @@ bool SparseGenerator::addSampleSparseCriteria(base::State *candidateState, bool 
 
     if (visualizeSampling_ || true)
     {
-      visual_->viz6()->state(candidateState, tools::ROBOT, tools::LIME_GREEN, 1);
+      visual_->viz6()->state(candidateState, tools::ROBOT, tools::PINK, 1);
       //visual_->prompt("coverage");
     }
 

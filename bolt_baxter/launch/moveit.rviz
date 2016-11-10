@@ -1763,13 +1763,15 @@ Visualization Manager:
           Marker Topic: /baxter/ompl_visual6
           Name: ompl6 - markers
           Namespaces:
-            {}
+            Arrow: true
+            Cylinder: true
+            path_spheres: true
           Queue Size: 100
           Value: true
       Enabled: true
       Name: Markers 1to6
     - Class: moveit_rviz_plugin/Trajectory
-      Enabled: false
+      Enabled: true
       Interrupt Display: true
       Links:
         All Links Enabled: true
@@ -2046,7 +2048,7 @@ Visualization Manager:
       Show Trail: false
       State Display Time: REALTIME
       Trajectory Topic: /baxter/display_trajectory
-      Value: false
+      Value: true
     - Class: moveit_rviz_plugin/PlanningScene
       Enabled: true
       Move Group Namespace: ""

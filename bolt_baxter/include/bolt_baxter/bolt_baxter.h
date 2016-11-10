@@ -230,7 +230,6 @@ public:
   bool run_problems_;
   bool create_spars_;
   bool load_spars_;
-  std::size_t load_database_version_;
   bool continue_spars_;
   bool eliminate_dense_disjoint_sets_;
   bool check_valid_vertices_;
@@ -241,6 +240,7 @@ public:
   bool view_imarkers_from_file_;
   bool post_processing_;
   int post_processing_interval_;
+  std::string load_database_version_;
 
   // Type of planner
   std::vector<std::string> planners_;
@@ -268,6 +268,7 @@ public:
   bool auto_run_;
   bool track_memory_consumption_ = false;
   bool use_logging_ = false;
+  std::string log_file_name_ = "bolt_baxter_logging.csv";
   bool collision_checking_enabled_ = true;
 
   double velocity_scaling_factor_ = 0.2;

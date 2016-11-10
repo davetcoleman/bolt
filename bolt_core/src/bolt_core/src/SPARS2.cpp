@@ -1128,7 +1128,7 @@ bool ompl::geometric::SPARS2::checkGraphOptimality()
       visual_->viz3()->state(stateProperty_[goal], tools::LARGE, tools::BLACK, 0);
       visual_->viz3()->trigger();
       visual_->viz1()->spin();
-      exit(0);
+      exit(-1);
       continue;
     }
     double duration = time::seconds(time::now() - startTime);
@@ -1214,7 +1214,7 @@ bool ompl::geometric::SPARS2::checkGraphOptimality()
       // sg_->displayDatabase();
 
       visual_->viz1()->spin();
-      exit(0);
+      exit(-1);
       return false;
     }
     else

@@ -207,25 +207,27 @@ ompl::base::PlannerStatus ompl::geometric::ERRTConnect::solve(const base::Planne
   bool solved = false;
 
   // Find neighbors to start and goal
+  std::size_t indent = 0;
   time::point startTime0 = time::now(); // Benchmark
   {
     pis_.restart(); // restart the start and goal state
     base::State *goalState = si_->cloneState(pis_.nextGoal(ptc));
     base::State *startState = si_->cloneState(pis_.nextStart());
     pis_.restart(); // restart the start and goal state
-    loadSampler(startState, goalState);
+    std::cout << "goalState: " << goalState << std::endl;
+    std::cout << "startState: " << startState << std::endl;
+    loadSampler(startState, goalState, indent);
+    std::cout << "freeing state " << std::endl;
     si_->freeState(startState);
+    std::cout << "temp " << std::endl;
     si_->freeState(goalState);
+    std::cout << "done feeing state " << std::endl;
   }
   OMPL_INFORM("find both neighbors took %f seconds", time::seconds(time::now() - startTime0)); // Benchmark
 
   while (ptc == false)
   {
     TreeData &tree = startTree ? tStart_ : tGoal_;
-
-    // Show status
-    if (tree->size() % 100 == 0)
-      std::cout << "tStart_->size() " << tStart_->size() << ", tGoal_->size() " << tGoal_->size() << std::endl;
 
     tgi.start = startTree;
     startTree = !startTree;
@@ -253,7 +255,7 @@ ompl::base::PlannerStatus ompl::geometric::ERRTConnect::solve(const base::Planne
     // sampler_->sampleUniform(rstate);
 
     /* sample state near either start or goal */
-    sampleFromSparseGraph(rstate, startTree);
+    sampleFromSparseGraph(rstate, startTree, indent);
 
     GrowState gs = growTree(tree, tgi, rmotion);
 
@@ -262,6 +264,10 @@ ompl::base::PlannerStatus ompl::geometric::ERRTConnect::solve(const base::Planne
 
     if (gs != TRAPPED)
     {
+      // Show status
+      if (tree->size() % 100 == 0)
+        std::cout << "Start Tree " << tStart_->size() << ", Goal Tree " << tGoal_->size() << std::endl;
+
       /* remember which motion was just added */
       Motion *addedMotion = tgi.xmotion;
 
@@ -374,24 +380,25 @@ void ompl::geometric::ERRTConnect::getPlannerData(base::PlannerData &data) const
   data.addEdge(data.vertexIndex(connectionPoint_.first), data.vertexIndex(connectionPoint_.second));
 }
 
-void ompl::geometric::ERRTConnect::loadSampler(base::State *start, base::State *goal)
+void ompl::geometric::ERRTConnect::loadSampler(base::State *start, base::State *goal, std::size_t indent)
 {
-  getNeighbors(start, startGraphNeighborhood_);
-  getNeighbors(goal, goalGraphNeighborhood_);
+  BOLT_FUNC(true, "loadSampler()");
 
-  // visual_->viz6()->state(start, tools::ROBOT, tools::ORANGE);
-  // visual_->prompt("start");
-  // visual_->viz6()->state(goal, tools::ROBOT, tools::LIME_GREEN);
-  // visual_->prompt("goal");
+  getNeighbors(start, startGraphNeighborhood_, indent);
+  getNeighbors(goal, goalGraphNeighborhood_, indent);
 
   // Reset
   startNeighborID_ = 0;
   goalNeighborID_ = 0;
   totalSamples_ = 0;
+
+  BOLT_INFO(true, "Done loading sampler");
 }
 
-void ompl::geometric::ERRTConnect::getNeighbors(base::State *state, std::vector<tools::bolt::SparseVertex> &graphNeighborhood)
+void ompl::geometric::ERRTConnect::getNeighbors(base::State *state, std::vector<tools::bolt::SparseVertex> &graphNeighborhood, std::size_t indent)
 {
+  BOLT_FUNC(true, "getNeighbors()");
+
   graphNeighborhood.clear();
   std::size_t threadID = 3; // TODO choose better!
 
@@ -403,13 +410,12 @@ void ompl::geometric::ERRTConnect::getNeighbors(base::State *state, std::vector<
   sparseGraph_->getNN()->nearestK(sparseGraph_->getQueryVertices(threadID), kNearest, graphNeighborhood);
   sparseGraph_->getQueryStateNonConst(threadID) = nullptr;
 
-  std::size_t indent = 0;
   BOLT_INFO(true, "Found " << graphNeighborhood.size() << " neighbors");
 }
 
-void ompl::geometric::ERRTConnect::sampleFromSparseGraph(base::State *rstate, bool isStart)
+void ompl::geometric::ERRTConnect::sampleFromSparseGraph(base::State *rstate, bool isStart, std::size_t indent)
 {
-  std::size_t indent = 0;
+  BOLT_FUNC(true, "sampleFromSparseGraph()");
   totalSamples_++;
 
   if (isStart) // start
@@ -421,7 +427,6 @@ void ompl::geometric::ERRTConnect::sampleFromSparseGraph(base::State *rstate, bo
     }
     else
     {
-
       rstate = sparseGraph_->getStateNonConst(startGraphNeighborhood_[startNeighborID_++]);
     }
   }

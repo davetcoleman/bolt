@@ -89,6 +89,10 @@ public:
   /** \brief Main entry function for finding a path plan */
   virtual base::PlannerStatus solve(Termination &ptc);
 
+  /** \brief Allow safe thread handling in this function */
+  base::PlannerStatus solveThreadLayer(base::CompoundState *startState, base::CompoundState *goalState,
+                                       Termination &ptc, std::size_t indent);
+
   /** \brief Solving after converting states to compound state space */
   base::PlannerStatus solve(base::CompoundState *startState, base::CompoundState *goalState, Termination &ptc,
                             std::size_t indent);
@@ -221,7 +225,7 @@ public:
   void visualizeRaw(std::size_t indent);
   void visualizeSmoothed(std::size_t indent);
 
-  void samplingThread(const base::CompoundState *start, const base::CompoundState *goal, std::size_t indent);
+  void samplingThread(const base::CompoundState *start, const base::CompoundState *goal, Termination &ptc, std::size_t indent);
 
   void setSecondarySI(base::SpaceInformationPtr secondarySI)
   {

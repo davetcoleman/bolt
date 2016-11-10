@@ -42,6 +42,7 @@
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/src/SPARS2.cpp
 /home/dave/ros/current/ws_swri/src/bolt/bolt_core/src/bolt_core/src/ERRTConnect.cpp
 
+/home/dave/ros/current/ws_swri/src/ompl/src/ompl/tools/thunder/Thunder.h
 /home/dave/ros/current/ws_swri/src/ompl/src/ompl/tools/debug/Visualizer.h
 /home/dave/ros/current/ws_swri/src/ompl/src/ompl/tools/debug/VizWindow.h
 /home/dave/ros/current/ws_swri/src/ompl/src/ompl/geometric/PathGeometric.h
@@ -67,7 +68,6 @@
 /home/dave/ros/current/ws_swri/src/bolt/bolt_2d/src/bolt_2d.cpp
 /home/dave/ros/current/ws_swri/src/bolt/bolt_2d/src/two_dim_viz_window.cpp
 /home/dave/ros/current/ws_swri/src/bolt/bolt_2d/README.md
-#/home/dave/ros/current/ws_swri/src/bolt/bolt_2d/config/config_bolt_2d.yaml
 /home/dave/ros/current/ws_swri/src/bolt/bolt_2d/include/bolt_2d/two_dim_viz_window.h
 /home/dave/ros/current/ws_swri/src/bolt/bolt_2d/include/bolt_2d/validity_checker_2d.h
 

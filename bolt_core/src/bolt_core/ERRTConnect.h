@@ -110,9 +110,9 @@ public:
     sparseGraph_ = sparseGraph;
   }
 
-  void loadSampler(base::State *start, base::State *goal);
-  void getNeighbors(base::State *state, std::vector<tools::bolt::SparseVertex> &graphNeighborhood);
-  void sampleFromSparseGraph(base::State *rstate, bool isStart);
+  void loadSampler(base::State *start, base::State *goal, std::size_t indent);
+  void getNeighbors(base::State *state, std::vector<tools::bolt::SparseVertex> &graphNeighborhood, std::size_t indent);
+  void sampleFromSparseGraph(base::State *rstate, bool isStart, std::size_t indent);
 
 protected:
   /** \brief Representation of a motion */
