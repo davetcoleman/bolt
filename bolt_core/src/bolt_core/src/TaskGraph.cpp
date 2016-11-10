@@ -227,13 +227,13 @@ bool TaskGraph::astarSearch(const TaskVertex start, const TaskVertex goal, std::
   }
   catch (FoundGoalException &)
   {
-    if (std::isinf(vertexDistances[goal]))
+    if (std::isinf(vertexDistances[goal])) // TODO: for some reason this never happens
     {
-      BOLT_WARN(true, "Distance is inifinity");
+      BOLT_WARN(true, "Distance is inifinity - how did this finally happen??");
     }
-    else if (vertexDistances[goal] > 1e300)
+    else if (vertexDistances[goal] > 1e300) // TODO: this is a hack to approximate infinity
     {
-      BOLT_WARN(true, "Distance is close to inifinity");
+      //BOLT_WARN(true, "Distance is close to inifinity");
     }
     else
       foundGoal = true;
@@ -576,7 +576,7 @@ void TaskGraph::generateMonoLevelTaskSpace(std::size_t indent)
   std::vector<TaskVertex> sparseToTaskVertex0(sg_->getNumVertices());
 
   // Loop through every vertex in sparse graph and copy once to task graph
-  BOLT_DEBUG(true || vGenerateTask_, "Adding " << sg_->getNumVertices() << " task space vertices");
+  BOLT_DEBUG(true || vGenerateTask_, "Adding " << sg_->getNumRealVertices() << " task space vertices");
   foreach (SparseVertex sparseV, boost::vertices(sg_->getGraph()))
   {
     // The first thread number of verticies are used for queries and should be skipped
@@ -1013,7 +1013,7 @@ bool TaskGraph::smoothQualityPath(geometric::PathGeometric *path, double clearan
   if (visualizeQualityPathSmoothing_)
   {
     visual_->viz2()->deleteAllMarkers();
-    visual_->viz2()->path(path, tools::SMALL, tools::BLACK, tools::GREEN);
+    visual_->viz2()->path(path, tools::SMALL, tools::BLACK, tools::LIME_GREEN);
     visual_->viz2()->trigger();
     visual_->prompt("finished quality path");
   }
@@ -1316,7 +1316,7 @@ void TaskGraph::visualizeVertex(TaskVertex v, std::size_t windowID)
       size = tools::LARGE;
       break;
     case 2:
-      color = tools::GREEN;
+      color = tools::LIME_GREEN;
       size = tools::LARGE;
       break;
     default:
@@ -1467,7 +1467,7 @@ void otb::TaskAstarVisitor::discover_vertex(TaskVertex v, const TaskAdjList &) c
   parent_->recordNodeOpened();
 
   if (parent_->visualizeAstar_)
-    parent_->getVisual()->viz4()->state(parent_->getModelBasedState(v), tools::SMALL, tools::GREEN, 1);
+    parent_->getVisual()->viz4()->state(parent_->getModelBasedState(v), tools::SMALL, tools::LIME_GREEN, 1);
 }
 #endif
 

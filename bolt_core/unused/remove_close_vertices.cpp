@@ -137,7 +137,7 @@ bool SparseCriteria::checkRemoveCloseVertices(SparseVertex v1, std::size_t inden
 void SparseCriteria::visualizeRemoveCloseVertices(SparseVertex v1, SparseVertex v2)
 {
   visual_->viz6()->deleteAllMarkers();
-  visual_->viz6()->state(sg_->getState(v1), tools::LARGE, tools::GREEN, 0);
+  visual_->viz6()->state(sg_->getState(v1), tools::LARGE, tools::LIME_GREEN, 0);
   visual_->viz6()->state(sg_->getState(v2), tools::LARGE, tools::RED, 0);  // RED = to be removed
   visual_->viz6()->trigger();
   usleep(0.001 * 1000000);

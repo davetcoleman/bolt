@@ -143,7 +143,7 @@ bool SparseSmoother::smoothQualityPath(geometric::PathGeometric *path, double cl
   if (visualizeQualityPathSmoothing_)
   {
     visual_->viz6()->deleteAllMarkers();
-    visual_->viz6()->path(path, tools::SMALL, tools::BLACK, tools::GREEN);
+    visual_->viz6()->path(path, tools::SMALL, tools::BLACK, tools::LIME_GREEN);
     visual_->viz6()->trigger();
     // visual_->prompt("finished quality path");
   }
@@ -165,7 +165,7 @@ bool SparseSmoother::smoothQualityPath(geometric::PathGeometric *path, double cl
     if (!visualizeQualityPathSmoothing_)
     {
       visual_->viz6()->deleteAllMarkers();
-      visual_->viz6()->path(path, tools::SMALL, tools::BLACK, tools::GREEN);
+      visual_->viz6()->path(path, tools::SMALL, tools::BLACK, tools::LIME_GREEN);
       visual_->viz6()->trigger();
     }
 

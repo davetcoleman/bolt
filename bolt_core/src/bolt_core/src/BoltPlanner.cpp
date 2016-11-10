@@ -191,7 +191,7 @@ base::PlannerStatus BoltPlanner::solve(base::CompoundState *startState, base::Co
   // Search
   if (!getPathOffGraph(startState, goalState, origCompoundSolPath_, ptc, indent))
   {
-    BOLT_WARN(true, "BoltPlanner::solve() No near start or goal found");
+    BOLT_WARN(!ptc, "BoltPlanner::solve() No near start or goal found");
     return base::PlannerStatus::ABORT;  // The planner failed to find a solution
   }
 
@@ -205,6 +205,9 @@ base::PlannerStatus BoltPlanner::solve(base::CompoundState *startState, base::Co
 
   // Convert orginal ModelBasedStateSpace
   origModelSolPath_ = taskGraph_->convertPathToNonCompound(origCompoundSolPath_);
+
+  if (terminationRequested(ptc)) // check PlannerTerminationCondition
+    return base::PlannerStatus::ABORT;  // The planner failed to find a solution
 
   // Visualize
   if (visualizeRawTrajectory_)
@@ -236,7 +239,12 @@ base::PlannerStatus BoltPlanner::solve(base::CompoundState *startState, base::Co
   bool solved = true;
 
   // Ensure thread is ceased before exiting
-  sThread.join();
+  if (useSamplingThread_)
+  {
+    BOLT_DEBUG(true, "Joining sampling thread");
+    if (sThread.joinable())
+      sThread.join();
+  }
 
   BOLT_DEBUG(verbose_, "Finished BoltPlanner.solve()");
   return base::PlannerStatus(solved, approximate);
@@ -249,7 +257,7 @@ bool BoltPlanner::getPathOffGraph(const base::CompoundState *start, const base::
 
   // Attempt to connect to graph x times, because if it fails we start adding samples
   std::size_t attempt = 0;
-  while (!ptc)
+  while (true)
   {
     BOLT_DEBUG(true, "Starting getPathOffGraph() attempt " << attempt++ << " ------------------------");
 
@@ -258,22 +266,28 @@ bool BoltPlanner::getPathOffGraph(const base::CompoundState *start, const base::
     // Start
     int level = taskGraph_->getTaskLevel(start);
     BOLT_DEBUG(verbose_, "Looking for a node near the problem start on level " << level);
-    if (!findGraphNeighbors(start, startVertexCandidateNeighbors_, level, indent))
+    if (!findGraphNeighbors(start, startVertexCandidateNeighbors_, level, ptc, indent))
     {
       BOLT_DEBUG(verbose_, "No graph neighbors found for start");
       return false;
     }
     BOLT_DEBUG(verbose_, "Found " << startVertexCandidateNeighbors_.size() << " nodes near start");
 
+    if (terminationRequested(ptc)) // check PlannerTerminationCondition
+      return false;
+
     // Goal
     level = taskGraph_->getTaskLevel(goal);
     BOLT_DEBUG(vNearestNeighbor_, "Looking for a node near the problem goal on level " << level);
-    if (!findGraphNeighbors(goal, goalVertexCandidateNeighbors_, level, indent))
+    if (!findGraphNeighbors(goal, goalVertexCandidateNeighbors_, level, ptc, indent))
     {
       BOLT_DEBUG(vNearestNeighbor_, "No graph neighbors found for goal");
       return false;
     }
     BOLT_DEBUG(vNearestNeighbor_, "Found " << goalVertexCandidateNeighbors_.size() << " nodes near goal");
+
+    if (terminationRequested(ptc)) // check PlannerTerminationCondition
+      return false;
 
     // Get paths between start and goal
     const bool debug = false;
@@ -284,14 +298,14 @@ bool BoltPlanner::getPathOffGraph(const base::CompoundState *start, const base::
     if (result)
       break;
 
-    BOLT_WARN(true, "getPathOffGraph(): BoltPlanner returned FALSE for getPathOnGraph, attempt " << attempt);
+    if (terminationRequested(ptc)) // check PlannerTerminationCondition
+      return false;
 
-    if (visual_->viz1()->shutdownRequested())
-      break;
+    BOLT_WARN(verbose_, "getPathOffGraph(): BoltPlanner returned FALSE for getPathOnGraph(), attempt " << attempt);
   }
 
   // All save trajectories should be at least 1 state long, then we append the start and goal states, for min of 3
-  assert(compoundSolution->getStateCount() >= 3);
+  BOLT_ASSERT(compoundSolution->getStateCount() >= 3, "Compound solution has " << compoundSolution->getStateCount() << " states, should be at least 3");
 
   return true;
 }
@@ -309,6 +323,9 @@ bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
   // Try every combination of nearby start and goal pairs
   for (TaskVertex startVertex : candidateStarts)
   {
+    if (terminationRequested(ptc)) // check PlannerTerminationCondition
+      return false;
+
     // Check if this start is visible from the actual start
     if (!taskGraph_->checkMotion(actualStart, taskGraph_->getCompoundState(startVertex)))
     {
@@ -319,7 +336,7 @@ bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
       {
         // visual_->viz4()->state(taskGraph_->getModelBasedState(startVertex), tools::LARGE, tools::RED, 1);
         visual_->viz4()->state(taskGraph_->getModelBasedState(startVertex), tools::ROBOT, tools::RED, 1);
-        visual_->viz5()->state(taskGraph_->getModelBasedState(actualStart), tools::ROBOT, tools::GREEN, 1);
+        visual_->viz5()->state(taskGraph_->getModelBasedState(actualStart), tools::ROBOT, tools::LIME_GREEN, 1);
 
         visual_->viz4()->edge(taskGraph_->getModelBasedState(actualStart), taskGraph_->getModelBasedState(startVertex),
                               tools::MEDIUM, tools::BLACK);
@@ -336,13 +353,10 @@ bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
       BOLT_DEBUG(verbose_, "getPathOnGraph() Planning from candidate start/goal pair "
                                << actualGoal << " to " << taskGraph_->getCompoundState(goalVertex));
 
-      if (ptc)  // Check if our planner is out of time
-      {
-        BOLT_DEBUG(verbose_, "getPathOnGraph() interrupted because termination condition is true.");
+      if (terminationRequested(ptc))
         return false;
-      }
 
-      // visual_->viz6()->state(taskGraph_->getModelBasedState(goalVertex), tools::ROBOT, tools::GREEN, 1);
+      // visual_->viz6()->state(taskGraph_->getModelBasedState(goalVertex), tools::ROBOT, tools::LIME_GREEN, 1);
       // visual_->prompt("nearby goal");
 
       // Check if this goal is visible from the actual goal
@@ -364,6 +378,7 @@ bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
         assert(compoundSolution->getStateCount() >= 3);
 
         // Found a path
+        std::cout << "found a path " << std::endl;
         return true;
       }
       else
@@ -372,16 +387,13 @@ bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
         BOLT_DEBUG(verbose_, "getPathOnGraph() Did not find a path, looking for other start/goal combinations");
       }
     }  // foreach
-
-    if (visual_->viz1()->shutdownRequested())
-      break;
   }  // foreach
 
   //startSampling_ = true;
 
   if (foundValidStart && foundValidGoal)
   {
-    BOLT_WARN(true, "getPathOnGraph() Both a valid start and goal were found but still no path found.");
+    BOLT_WARN(verbose_, "getPathOnGraph() Both a valid start and goal were found but still no path found.");
 
     // Re-attempt to connect both
     // addSamples(taskGraph_->getModelBasedState(actualGoal), indent);
@@ -390,21 +402,21 @@ bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
   }
   else if (foundValidStart && !foundValidGoal)
   {
-    BOLT_WARN(true, "getPathOnGraph() Unable to connect GOAL state to graph");
+    BOLT_WARN(verbose_, "getPathOnGraph() Unable to connect GOAL state to graph");
 
     //addSamples(taskGraph_->getModelBasedState(actualGoal), indent);
   }
   else
   {
-    BOLT_WARN(true, "getPathOnGraph() Unable to connect START state to graph");
+    BOLT_WARN(verbose_, "getPathOnGraph() Unable to connect START state to graph");
 
     //addSamples(taskGraph_->getModelBasedState(actualStart), indent);
   }
 
   // Feedback on growth of graph
-  BOLT_DEBUG(true, "SparseGraph edges: " << taskGraph_->getSparseGraph()->getNumEdges()
-                                         << " vertices: " << taskGraph_->getSparseGraph()->getNumVertices());
-  BOLT_DEBUG(true, "TaskGraph   edges: " << taskGraph_->getNumEdges() << " vertices: " << taskGraph_->getNumVertices());
+  // BOLT_DEBUG(true, "SparseGraph edges: " << taskGraph_->getSparseGraph()->getNumEdges()
+  //                                        << " vertices: " << taskGraph_->getSparseGraph()->getNumVertices());
+  // BOLT_DEBUG(true, "TaskGraph   edges: " << taskGraph_->getNumEdges() << " vertices: " << taskGraph_->getNumVertices());
 
   return false;
 }
@@ -452,7 +464,7 @@ bool BoltPlanner::onGraphSearch(const TaskVertex &startVertex, const TaskVertex 
     // Visualize goal vertex
     BOLT_DEBUG(verbose_, "viz goal ------------------------------");
     // visual_->viz5()->state(taskGraph_->getModelBasedState(goalVertex), tools::VARIABLE_SIZE, tools::PURPLE, 1);
-    visual_->viz5()->state(taskGraph_->getModelBasedState(goalVertex), tools::ROBOT, tools::GREEN);
+    visual_->viz5()->state(taskGraph_->getModelBasedState(goalVertex), tools::ROBOT, tools::LIME_GREEN);
     // visual_->viz5()->edge(actualGoal, taskGraph_->getModelBasedState(goalVertex), tools::MEDIUM, tools::BLACK);
     // visual_->viz5()->trigger();
     // visual_->prompt("goal viz");
@@ -464,6 +476,9 @@ bool BoltPlanner::onGraphSearch(const TaskVertex &startVertex, const TaskVertex 
   // this is necessary for lazy collision checking i.e. rerun after marking invalid edges we found
   while (true)
   {
+    if (terminationRequested(ptc)) // check PlannerTerminationCondition
+      return false;
+
     // attempt to find a solution from start to goal
     graphMutex_.lock();
     bool result = taskGraph_->astarSearch(startVertex, goalVertex, vertexPath, distance, indent);
@@ -477,11 +492,17 @@ bool BoltPlanner::onGraphSearch(const TaskVertex &startVertex, const TaskVertex 
       return false;
     }
 
+    if (terminationRequested(ptc)) // check PlannerTerminationCondition
+      return false;
+
     // Check if all the points in the potential solution are valid
     bool result2 = lazyCollisionCheck(vertexPath, ptc, indent);
     if (result2)
     {
       BOLT_DEBUG(verbose_, "Lazy collision check returned valid ");
+
+      if (terminationRequested(ptc)) // check PlannerTerminationCondition
+        return false;
 
       // the path is valid, we are done!
       convertVertexPathToStatePath(vertexPath, actualStart, actualGoal, compoundSolution, indent);
@@ -526,6 +547,9 @@ bool BoltPlanner::lazyCollisionCheck(std::vector<TaskVertex> &vertexPath, Termin
       const base::State *fromState = taskGraph_->getModelBasedState(fromVertex);
       const base::State *toState = taskGraph_->getModelBasedState(toVertex);
 
+      if (terminationRequested(ptc)) // check PlannerTerminationCondition
+        return false;
+
       bool result = modelSI_->getMotionValidator()->checkMotion(fromState, toState);
 
       if (!result)
@@ -541,14 +565,6 @@ bool BoltPlanner::lazyCollisionCheck(std::vector<TaskVertex> &vertexPath, Termin
         hasInvalidEdges = true;
 
 #ifndef NDEBUG
-        // Check if our planner is out of time - only do this after the slow checkMotion() action has occured to save
-        // time
-        if (ptc || visual_->viz1()->shutdownRequested())
-        {
-          BOLT_DEBUG(verbose_, "Lazy collision check function interrupted because termination condition is "
-                               "true.");
-          exit(0);
-        }
 
         // Debug
         if (visualizeLazyCollisionCheck_)
@@ -589,7 +605,7 @@ bool BoltPlanner::lazyCollisionCheck(std::vector<TaskVertex> &vertexPath, Termin
 }
 
 bool BoltPlanner::findGraphNeighbors(const base::CompoundState *state, std::vector<TaskVertex> &neighbors,
-                                     int requiredLevel, std::size_t indent)
+                                     int requiredLevel, Termination &ptc, std::size_t indent)
 {
   bool useRadius = false;
 
@@ -620,6 +636,9 @@ bool BoltPlanner::findGraphNeighbors(const base::CompoundState *state, std::vect
   else
     taskGraph_->getNN()->nearestK(taskGraph_->getQueryVertices()[threadID], knearest, neighbors);
   taskGraph_->getCompoundQueryStateNonConst(taskGraph_->getQueryVertices()[threadID]) = nullptr;
+
+  if (terminationRequested(ptc)) // check PlannerTerminationCondition
+    return false;
 
   // Convert our list of neighbors to the proper level
   if (requiredLevel == 2)
@@ -718,7 +737,7 @@ bool BoltPlanner::simplifyNonTaskPath(og::PathGeometricPtr compoundPath, Termina
   geometric::PathGeometricPtr modelPath;
 
   // Do until a positive path length is found
-  while (!visual_->viz6()->shutdownRequested())
+  while (!ptc)
   {
     // Convert to ModelBasedStateSpace
     modelPath = taskGraph_->convertPathToNonCompound(compoundPath);
@@ -939,7 +958,7 @@ bool BoltPlanner::canConnect(const base::CompoundState *randomState, Termination
 
   // Find neighbors to rand state
   BOLT_DEBUG(verbose_, "Looking for a node near the random state");
-  if (!findGraphNeighbors(randomState, candidateNeighbors))
+  if (!findGraphNeighbors(randomState, candidateNeighbors, -1, ptc, indent))
   {
     BOLT_DEBUG(verbose_, "No graph neighbors found for randomState");
     return false;
@@ -1075,12 +1094,18 @@ void BoltPlanner::addSamples(const base::State *near, std::size_t threadID, std:
     if (near)
     {
       if (!sampler_->sampleNear(jointState, near, distance))
-        throw Exception(name_, "Unable to find valid sample near state");
+      {
+        BOLT_ERROR("Unable to find valid sample near state");
+        continue;
+      }
     }
     else
     {
       if (!sampler_->sample(jointState))
-        throw Exception(name_, "Unable to find valid sample");
+      {
+        BOLT_ERROR("Unable to find valid sample");
+        continue;
+      }
     }
 
     if (solutionFound_) // check often so that thread does not hold up main process when solution found
@@ -1105,10 +1130,6 @@ void BoltPlanner::addSamples(const base::State *near, std::size_t threadID, std:
     {
       visual_->viz6()->trigger();
     }
-
-    if (visual_->viz3()->shutdownRequested())
-      break;
-
   }  // for each sample attempt
 
   // free state if necessary
@@ -1206,7 +1227,7 @@ bool BoltPlanner::addSampleSparseCriteria(base::CompoundState *compoundState, st
 
     if (visualizeSampling_)
     {
-      visual_->viz6()->state(jointState, tools::ROBOT, tools::GREEN, 1);
+      visual_->viz6()->state(jointState, tools::ROBOT, tools::LIME_GREEN, 1);
       visual_->prompt("coverage");
     }
 

@@ -320,6 +320,7 @@ public:
   bool use_shelf_noise_ = true;
   double bin_height_ = 0;
   std::size_t num_rows_ = 5;
+  double penetration_start_ = -0.05;
   Eigen::Affine3d common_transform_;
   double penetration_dist_;
 

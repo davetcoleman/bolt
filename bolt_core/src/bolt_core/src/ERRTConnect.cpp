@@ -217,14 +217,14 @@ ompl::base::PlannerStatus ompl::geometric::ERRTConnect::solve(const base::Planne
     si_->freeState(startState);
     si_->freeState(goalState);
   }
-  OMPL_WARN("find both neighbors took %f seconds", time::seconds(time::now() - startTime0)); // Benchmark
+  OMPL_INFORM("find both neighbors took %f seconds", time::seconds(time::now() - startTime0)); // Benchmark
 
   while (ptc == false)
   {
     TreeData &tree = startTree ? tStart_ : tGoal_;
 
     // Show status
-    if (tree->size() % 50 == 0)
+    if (tree->size() % 100 == 0)
       std::cout << "tStart_->size() " << tStart_->size() << ", tGoal_->size() " << tGoal_->size() << std::endl;
 
     tgi.start = startTree;
@@ -257,6 +257,9 @@ ompl::base::PlannerStatus ompl::geometric::ERRTConnect::solve(const base::Planne
 
     GrowState gs = growTree(tree, tgi, rmotion);
 
+    if (ptc)
+      break;
+
     if (gs != TRAPPED)
     {
       /* remember which motion was just added */
@@ -279,6 +282,9 @@ ompl::base::PlannerStatus ompl::geometric::ERRTConnect::solve(const base::Planne
       /* if we connected the trees in a valid way (start and goal pair is valid)*/
       if (gsc == REACHED && goal->isStartGoalPairValid(startMotion->root, goalMotion->root))
       {
+        if (ptc)
+          break;
+
         // it must be the case that either the start tree or the goal tree has made some progress
         // so one of the parents is not nullptr. We go one step 'back' to avoid having a duplicate state
         // on the solution path
@@ -375,7 +381,7 @@ void ompl::geometric::ERRTConnect::loadSampler(base::State *start, base::State *
 
   // visual_->viz6()->state(start, tools::ROBOT, tools::ORANGE);
   // visual_->prompt("start");
-  // visual_->viz6()->state(goal, tools::ROBOT, tools::GREEN);
+  // visual_->viz6()->state(goal, tools::ROBOT, tools::LIME_GREEN);
   // visual_->prompt("goal");
 
   // Reset
@@ -390,7 +396,7 @@ void ompl::geometric::ERRTConnect::getNeighbors(base::State *state, std::vector<
   std::size_t threadID = 3; // TODO choose better!
 
   //const std::size_t kNearest = 0;
-  const std::size_t kNearest = sparseGraph_->getNumRealVertices();
+  const std::size_t kNearest = std::min(sparseGraph_->getNumRealVertices(), (unsigned int) 10000);
 
   // Search in thread-safe manner
   sparseGraph_->getQueryStateNonConst(threadID) = state;

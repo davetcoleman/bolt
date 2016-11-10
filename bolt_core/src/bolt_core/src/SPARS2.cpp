@@ -1123,7 +1123,7 @@ bool ompl::geometric::SPARS2::checkGraphOptimality()
       // Visualize actual and snapped states
       visual_->viz3()->deleteAllMarkers();
       visual_->viz3()->state(actualStart, tools::LARGE, tools::RED, 0);
-      visual_->viz3()->state(actualGoal, tools::LARGE, tools::GREEN, 0);
+      visual_->viz3()->state(actualGoal, tools::LARGE, tools::LIME_GREEN, 0);
       visual_->viz3()->state(stateProperty_[start], tools::LARGE, tools::BLACK, 0);
       visual_->viz3()->state(stateProperty_[goal], tools::LARGE, tools::BLACK, 0);
       visual_->viz3()->trigger();
@@ -1161,14 +1161,14 @@ bool ompl::geometric::SPARS2::checkGraphOptimality()
       // Visualize actual and snapped states
       visual_->viz3()->deleteAllMarkers();
       visual_->viz3()->state(actualStart, tools::LARGE, tools::RED, 0);
-      visual_->viz3()->state(actualGoal, tools::LARGE, tools::GREEN, 0);
+      visual_->viz3()->state(actualGoal, tools::LARGE, tools::LIME_GREEN, 0);
       visual_->viz3()->state(stateProperty_[start], tools::LARGE, tools::BLACK, 0);
       visual_->viz3()->state(stateProperty_[goal], tools::LARGE, tools::BLACK, 0);
       visual_->viz3()->trigger();
 
       visual_->viz2()->deleteAllMarkers();
       visual_->viz2()->path(&geometricSolution, tools::SMALL, tools::BLACK, tools::RED);
-      visual_->viz2()->path(smoothedPathPtr, tools::MEDIUM, tools::BLACK, tools::GREEN);
+      visual_->viz2()->path(smoothedPathPtr, tools::MEDIUM, tools::BLACK, tools::LIME_GREEN);
       visual_->viz2()->trigger();
       usleep(0.001 * 1000000);
     }
@@ -1205,7 +1205,7 @@ bool ompl::geometric::SPARS2::checkGraphOptimality()
       // Show the two paths
       visual_->viz2()->deleteAllMarkers();
       visual_->viz2()->path(&geometricSolution, tools::SMALL, tools::BLACK, tools::RED);
-      visual_->viz2()->path(smoothedPathPtr, tools::MEDIUM, tools::BLACK, tools::GREEN);
+      visual_->viz2()->path(smoothedPathPtr, tools::MEDIUM, tools::BLACK, tools::LIME_GREEN);
       visual_->viz2()->trigger();
       usleep(0.001 * 1000000);
 

@@ -167,6 +167,7 @@ void loadOMPLParameters(ros::NodeHandle nh, const std::string &name, ompl::tools
     error += !get(name, rpnh, "verify_graph_properties", sparseGenerator->verifyGraphProperties_);
     error += !get(name, rpnh, "verbose", sparseGenerator->verbose_);
     error += !get(name, rpnh, "verbose/guarantees", sparseGenerator->vGuarantees_);
+    error += !get(name, rpnh, "visualize/sampling", sparseGenerator->visualizeSampling_);
   }
 
   // SparseMirror

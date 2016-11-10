@@ -51,6 +51,7 @@
 /home/dave/ros/current/ws_swri/src/ompl/src/ompl/base/SpaceInformation.h
 /home/dave/ros/current/ws_swri/src/ompl/src/ompl/base/spaces/RealVectorStateSpace.h
 /home/dave/ros/current/ws_swri/src/ompl/src/ompl/base/StateSpace.h
+/home/dave/ros/current/ws_swri/src/ompl/src/ompl/geometric/planners/rrt/src/RRTConnect.cpp
 
 /home/dave/ros/current/ws_swri/src/moveit/moveit_core/robot_state/include/moveit/robot_state/robot_state.h
 /home/dave/ros/current/ws_swri/src/moveit/moveit_core/robot_state/src/robot_state.cpp

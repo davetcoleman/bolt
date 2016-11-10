@@ -125,18 +125,13 @@ void Bolt::initialize(std::size_t indent)
   // Give the task graph reference to the criteria, because sometimes it needs data from there
   //taskGraph_->setTaskCriteria(taskCriteria_);
 
-  // Load the Retrieve repair database. We do it here so that setRepairPlanner() works
   BOLT_INFO(verbose_, "Loading BoltPlanner");
   boltPlanner_ = std::make_shared<BoltPlanner>(si_, compoundSI_, taskGraph_, visual_);
 
-  if (usePFSPlanner_)
-  {
-    BOLT_INFO(verbose_, "Using planning from scratch planner");
-    if (useEERRTConnect_)
-      ERRTPlanner_ = std::make_shared<geometric::EERRTConnect>(si_, visual_);
-    else
-      rrtPlanner_ = std::make_shared<geometric::RRTConnect>(si_);
-  }
+  // Load these even if we are not going to use them to make code initialization easier
+  // because at this point we do not know if they will be used or not
+  ERRTPlanner_ = std::make_shared<geometric::ERRTConnect>(si_, visual_);
+  rrtPlanner_ = std::make_shared<geometric::RRTConnect>(si_);
 
   std::size_t numThreads = boost::thread::hardware_concurrency();
   OMPL_INFORM("Bolt Framework initialized using %u threads", numThreads);
@@ -162,15 +157,16 @@ void Bolt::setup()
 
     if (usePFSPlanner_)
     {
-      if (useEERRTConnect_)
+      double range = si_->getMaximumExtent() * 0.05; // auto config value is 8.284306
+      if (useERRTConnect_)
       {
-        if (!ERRTPlanner_->isSetup())
-          ERRTPlanner_->setup();
+        ERRTPlanner_->setup();
+        ERRTPlanner_->setRange(range);
       }
       else
       {
-        if (!rrtPlanner_->isSetup())
-          rrtPlanner_->setup();
+        rrtPlanner_->setup();
+        rrtPlanner_->setRange(range);
       }
     }
 
@@ -190,7 +186,7 @@ void Bolt::setup()
     // Planning from scratch
     if (usePFSPlanner_)
     {
-      if (useEERRTConnect_)
+      if (useERRTConnect_)
       {
         pp_->addPlanner(ERRTPlanner_);  // Add the planning from scratch planner if desired
         ERRTPlanner_->setSparseGraph(sparseGraph_);
@@ -213,6 +209,8 @@ void Bolt::clearForNextPlan(std::size_t indent)
   pdef_->clearSolutionPaths();
   taskGraph_->clearEdgeCollisionStates();
   pp_->clearHybridizationPaths();
+  ERRTPlanner_->clear();
+  rrtPlanner_->clear();
 }
 
 void Bolt::clear()
@@ -251,9 +249,6 @@ base::PlannerStatus Bolt::solve(const base::PlannerTerminationCondition &ptc)
   // Start both threads
   bool hybridize = false;
   lastStatus_ = pp_->solve(ptc, hybridize);
-
-  // SOLVE
-  //lastStatus_ = boltPlanner_->solve(ptc);
 
   // Task time
   planTime_ = time::seconds(time::now() - start);
@@ -327,11 +322,15 @@ void Bolt::processResults(std::size_t indent)
 
       //og::PathGeometric solutionPath = static_cast<geometric::PathGeometric &>(*pdef_->getSolutionPath());
       og::PathGeometricPtr solutionPath = std::dynamic_pointer_cast<og::PathGeometric>(pdef_->getSolutionPath());
-      OMPL_INFORM("Solution path has %d states and was generated from planner %s", solutionPath->getStateCount(),
-                  getSolutionPlannerName().c_str());
+
+      std::cout << "-------------------------------------------------------" << std::endl;
+      std::cout << "-------------------------------------------------------" << std::endl;
+      BOLT_WARN(true, "Solution path has " << solutionPath->getStateCount() << " states and was generated from planner " << getSolutionPlannerName());
+      std::cout << "-------------------------------------------------------" << std::endl;
+      std::cout << "-------------------------------------------------------" << std::endl;
 
       // Smooth the result
-      simplifySolution(); // max simplify
+      //simplifySolution(); // max simplify
 
       // Error check for repeated states
       // if (!checkRepeatedStates(*smoothedModelSolPath, indent))
@@ -359,6 +358,10 @@ void Bolt::processResults(std::size_t indent)
 bool Bolt::doPostProcessing(std::size_t indent)
 {
   BOLT_FUNC(true, "doPostProcessing()");
+
+  // Check if any need processing
+  if (queuedModelSolPaths_.empty())
+    return true;
 
   if (ppThread_.joinable())
   {
@@ -404,6 +407,7 @@ void Bolt::postProcessingThread(std::vector<geometric::PathGeometricPtr> queuedM
 
   // Remove all inserted paths from the queue
   queuedModelSolPaths.clear();
+  BOLT_INFO(true, "Done post processing (TODO: remove this message)");
 }
 
 bool Bolt::checkRepeatedStates(const og::PathGeometric &path, std::size_t indent)

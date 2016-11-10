@@ -133,7 +133,7 @@ bool SparseCriteria::addStateToRoadmap(SparseCandidateData &candidateD, VertexTy
   if (visualizeAttemptedStates_)
   {
     // visual_->viz2()->deleteAllMarkers();
-    // visual_->viz2()->state(candidateD.state_, tools::LARGE, tools::GREEN, 0);
+    // visual_->viz2()->state(candidateD.state_, tools::LARGE, tools::LIME_GREEN, 0);
     visual_->viz6()->state(candidateD.state_, tools::ROBOT, tools::DEFAULT, 0);
     // visual_->viz2()->trigger();
     // usleep(0.001 * 1000000);
@@ -475,7 +475,7 @@ bool SparseCriteria::checkAddQuality(SparseCandidateData &candidateD, std::size_
     {
       visual_->viz3()->edge(sg_->getState(nearSampledRep), nearSampledState, tools::MEDIUM, tools::RED);
 
-      visual_->viz3()->state(nearSampledState, tools::MEDIUM, tools::GREEN, 0);
+      visual_->viz3()->state(nearSampledState, tools::MEDIUM, tools::LIME_GREEN, 0);
 
       // Replicate a regular vertex visualization
       // visual_->viz3()->state(sg_->getState(nearSampledRep),
@@ -572,7 +572,7 @@ void SparseCriteria::visualizeCheckAddQuality(base::State *candidateState, Spars
   // Show candidate state's representative's neighbors
   foreach (SparseVertex adjVertex, boost::adjacent_vertices(candidateRep, sg_->getGraph()))
   {
-    visual_->viz3()->edge(sg_->getState(adjVertex), sg_->getState(candidateRep), tools::MEDIUM, tools::GREEN);
+    visual_->viz3()->edge(sg_->getState(adjVertex), sg_->getState(candidateRep), tools::MEDIUM, tools::LIME_GREEN);
     visual_->viz3()->state(sg_->getState(adjVertex), tools::LARGE, tools::PURPLE, 0);
   }
 
@@ -681,7 +681,7 @@ void SparseCriteria::visualizeCheckAddPath(SparseVertex v, SparseVertex vp, Spar
   // tools::TRANSLUCENT_LIGHT, sparseDelta_);
 
   // Show edge between them
-  visual_->viz5()->edge(sg_->getState(vp), sg_->getState(v), tools::MEDIUM, tools::GREEN);
+  visual_->viz5()->edge(sg_->getState(vp), sg_->getState(v), tools::MEDIUM, tools::LIME_GREEN);
 
   // Show adjacent state
   visual_->viz5()->state(sg_->getState(vpp), tools::LARGE, tools::PURPLE, 0);
@@ -695,7 +695,7 @@ void SparseCriteria::visualizeCheckAddPath(SparseVertex v, SparseVertex vp, Spar
   if (iData.hasInterface1())
   {
     visual_->viz5()->state(iData.getInterface1Inside(), tools::MEDIUM, tools::ORANGE, 0);
-    visual_->viz5()->state(iData.getInterface1Outside(), tools::MEDIUM, tools::GREEN, 0);
+    visual_->viz5()->state(iData.getInterface1Outside(), tools::MEDIUM, tools::LIME_GREEN, 0);
     visual_->viz5()->edge(iData.getInterface1Inside(), iData.getInterface1Outside(), tools::MEDIUM, tools::RED);
 
     if (vp < vpp)
@@ -706,7 +706,7 @@ void SparseCriteria::visualizeCheckAddPath(SparseVertex v, SparseVertex vp, Spar
   if (iData.hasInterface2())
   {
     visual_->viz5()->state(iData.getInterface2Inside(), tools::MEDIUM, tools::ORANGE, 0);
-    visual_->viz5()->state(iData.getInterface2Outside(), tools::MEDIUM, tools::GREEN, 0);
+    visual_->viz5()->state(iData.getInterface2Outside(), tools::MEDIUM, tools::LIME_GREEN, 0);
     visual_->viz5()->edge(iData.getInterface2Inside(), iData.getInterface2Outside(), tools::MEDIUM, tools::RED);
 
     if (vp < vpp)
@@ -916,7 +916,7 @@ double SparseCriteria::qualityEdgeAstarTest(SparseVertex vp, SparseVertex vpp, I
     for (std::size_t i = 1; i < vertexPath.size(); ++i)
     {
       visual_->viz6()->edge(sg_->getState(vertexPath[i - 1]), sg_->getState(vertexPath[i]), tools::MEDIUM,
-                            tools::GREEN);
+                            tools::LIME_GREEN);
     }
     visual_->viz6()->trigger();
   }
@@ -1015,7 +1015,7 @@ void SparseCriteria::findCloseRepresentatives(const base::State *candidateState,
       }
 
       if (visualizeQualityCriteriaSampler_)
-        visual_->viz3()->state(sampledState, tools::SMALL, tools::GREEN, 0);
+        visual_->viz3()->state(sampledState, tools::SMALL, tools::LIME_GREEN, 0);
 
       BOLT_DEBUG(vQuality_ && false, "Sample attempt " << attempt << " valid ");
 
@@ -1324,7 +1324,7 @@ void SparseCriteria::visualizeInterfaces(SparseVertex v, std::size_t indent)
     if (iData.hasInterface1())
     {
       visual_->viz6()->state(iData.getInterface1Inside(), tools::MEDIUM, tools::ORANGE, 0);
-      visual_->viz6()->state(iData.getInterface1Outside(), tools::MEDIUM, tools::GREEN, 0);
+      visual_->viz6()->state(iData.getInterface1Outside(), tools::MEDIUM, tools::LIME_GREEN, 0);
       visual_->viz6()->edge(iData.getInterface1Inside(), iData.getInterface1Outside(), tools::MEDIUM, tools::YELLOW);
     }
     else
@@ -1335,7 +1335,7 @@ void SparseCriteria::visualizeInterfaces(SparseVertex v, std::size_t indent)
     if (iData.hasInterface2())
     {
       visual_->viz6()->state(iData.getInterface2Inside(), tools::MEDIUM, tools::ORANGE, 0);
-      visual_->viz6()->state(iData.getInterface2Outside(), tools::MEDIUM, tools::GREEN, 0);
+      visual_->viz6()->state(iData.getInterface2Outside(), tools::MEDIUM, tools::LIME_GREEN, 0);
       visual_->viz6()->edge(iData.getInterface2Inside(), iData.getInterface2Outside(), tools::MEDIUM, tools::YELLOW);
     }
     else
@@ -1366,13 +1366,13 @@ void SparseCriteria::visualizeAllInterfaces(std::size_t indent)
       if (iData.hasInterface1())
       {
         visual_->viz6()->state(iData.getInterface1Inside(), tools::MEDIUM, tools::ORANGE, 0);
-        visual_->viz6()->state(iData.getInterface1Outside(), tools::MEDIUM, tools::GREEN, 0);
+        visual_->viz6()->state(iData.getInterface1Outside(), tools::MEDIUM, tools::LIME_GREEN, 0);
       }
 
       if (iData.hasInterface2())
       {
         visual_->viz6()->state(iData.getInterface2Inside(), tools::MEDIUM, tools::ORANGE, 0);
-        visual_->viz6()->state(iData.getInterface2Outside(), tools::MEDIUM, tools::GREEN, 0);
+        visual_->viz6()->state(iData.getInterface2Outside(), tools::MEDIUM, tools::LIME_GREEN, 0);
       }
     }
   }

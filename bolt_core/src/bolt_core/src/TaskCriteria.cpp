@@ -123,7 +123,7 @@ bool TaskCriteria::addStateToRoadmap(TaskCandidateData &candidateD, VertexType &
   if (visualizeAttemptedStates_)
   {
     // visual_->viz2()->deleteAllMarkers();
-    // visual_->viz2()->state(candidateD.state_, tools::LARGE, tools::GREEN, 0);
+    // visual_->viz2()->state(candidateD.state_, tools::LARGE, tools::LIME_GREEN, 0);
     visual_->viz6()->state(candidateD.state_, tools::ROBOT, tools::DEFAULT, 0);
     // visual_->viz2()->trigger();
     // usleep(0.001 * 1000000);

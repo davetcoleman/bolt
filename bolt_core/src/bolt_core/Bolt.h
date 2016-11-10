@@ -42,7 +42,7 @@
 #include <ompl/geometric/SimpleSetup.h>  // the parent class
 #include <ompl/tools/debug/Visualizer.h>
 #include <bolt_core/BoostGraphHeaders.h>
-#include <bolt_core/EERRTConnect.h>
+#include <bolt_core/ERRTConnect.h>
 #include <ompl/geometric/planners/rrt/RRTConnect.h>
 #include <ompl/tools/multiplan/ParallelPlan.h>
 
@@ -298,7 +298,7 @@ protected:
   BoltPlannerPtr boltPlanner_;
 
   /** \brief Planning from scratch planner */
-  geometric::EERRTConnectPtr ERRTPlanner_;
+  geometric::ERRTConnectPtr ERRTPlanner_;
   geometric::RRTConnectPtr rrtPlanner_;
 
   /** \brief Instance of parallel planning to use for computing solutions in parallel */
@@ -347,7 +347,7 @@ public:
   bool verbose_ = true;
 
   bool usePFSPlanner_ = false;
-  bool useEERRTConnect_ = true;
+  bool useERRTConnect_ = true;
 };  // end of class Bolt
 
 }  // namespace bolt

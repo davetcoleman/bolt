@@ -143,7 +143,7 @@ public:
    * \return false is no neighbors found
    */
   bool findGraphNeighbors(const base::CompoundState *state, std::vector<bolt::TaskVertex> &neighbors,
-                          int requiredLevel = -1, std::size_t indent = 0);
+                          int requiredLevel, Termination &ptc, std::size_t indent);
 
   /** \brief Check if there exists a solution, i.e., there exists a pair of milestones such that the
    *   first is in \e start and the second is in \e goal, and the two milestones are in the same
@@ -227,6 +227,18 @@ public:
   {
     secondarySI_ = secondarySI;
   }
+
+  inline bool terminationRequested(Termination &ptc)
+  {
+    const std::size_t indent = 0;
+    if (ptc)  // Check if our planner is out of time
+    {
+      BOLT_DEBUG(verbose_, "interrupted because termination condition is true.");
+      return true;
+    }
+    return false;
+  }
+
 
 private:
   /** \brief This is included in parent class, but mentioned here. Use modelSI_ instead to reduce confusion   */

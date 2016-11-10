@@ -142,6 +142,7 @@ BoltBaxter::BoltBaxter(const std::string &hostname, const std::string &package_p
   error += !rosparam_shortcuts::get(name_, rpnh, "use_shelf_noise", use_shelf_noise_);
   error += !rosparam_shortcuts::get(name_, rpnh, "bin_height", bin_height_);
   error += !rosparam_shortcuts::get(name_, rpnh, "num_rows", num_rows_);
+  error += !rosparam_shortcuts::get(name_, rpnh, "penetration_start", penetration_start_);
   error += !rosparam_shortcuts::get(name_, rpnh, "test_var", test_var_);
   // execution
   error += !rosparam_shortcuts::get(name_, rpnh, "connect_to_hardware", connect_to_hardware_);
@@ -247,6 +248,9 @@ BoltBaxter::BoltBaxter(const std::string &hostname, const std::string &package_p
   // Wait until user does something
   if (!auto_run_)
     visual_->viz1()->prompt("run first problem");
+
+  if (!post_processing_)
+    BOLT_WARN(true, "Post processing disabled!");
 
   // Run application
   eachPlanner(indent);
@@ -358,8 +362,7 @@ bool BoltBaxter::loadOMPL(std::size_t indent)
   si_ = std::make_shared<ob::SpaceInformation>(space_);
 
   // Create SimpleSetup
-  std::cout << "planner_.substr(0,4): " << planner_.substr(0,4) << std::endl;
-  if (planner_.substr(0,4) == "Bolt")
+  if (planner_.substr(0, 4) == "Bolt")
   {
     bolt_ = std::make_shared<otb::Bolt>(si_);
     simple_setup_ = bolt_;
@@ -367,6 +370,24 @@ bool BoltBaxter::loadOMPL(std::size_t indent)
 
     // The visual pointer was already created and populated throughout the Bolt framework
     visual_ = bolt_->getVisual();
+
+    // Customize per type of Bolt
+    if (planner_ == "BoltRandom")  // use sampling thread
+    {
+      bolt_->getBoltPlanner()->useSamplingThread_ = true;
+    }
+    else if (planner_ == "BoltRRTConnect")
+    {
+      bolt_->usePFSPlanner_ = true;
+      bolt_->useERRTConnect_ = false;
+    }
+    else if (planner_ == "BoltERRTConnect")
+    {
+      bolt_->usePFSPlanner_ = true;
+      bolt_->useERRTConnect_ = true;
+    }
+    else
+      BOLT_ERROR("Unknown bolt type " << planner_);
   }
   else if (planner_ == "Thunder")
   {
@@ -449,24 +470,6 @@ bool BoltBaxter::loadOMPL(std::size_t indent)
   {
     bolt_->setFilePath(getPlannerFilePath(planning_group_name_, indent));
     bolt_->getBoltPlanner()->setSecondarySI(secondary_si_);  // must be called after loadCollisionChecker()
-
-    // Customize per type of Bolt
-    if (planner_ == "BoltRandom") // use sampling thread
-    {
-      bolt_->getBoltPlanner()->useSamplingThread_ = true;
-    }
-    else if (planner_ == "BoltRRTConnect")
-    {
-      bolt_->usePFSPlanner_ = true;
-      bolt_->useERRTConnect_ = true;
-    }
-    else if (planner_ == "BoltERRTConnect")
-    {
-      bolt_->usePFSPlanner_ = true;
-      bolt_->useERRTConnect_ = false;
-    }
-    else
-      BOLT_ERROR("Unknown bolt type " << planner_);
   }
   else if (is_thunder_)
   {
@@ -543,7 +546,7 @@ void BoltBaxter::eachPlanner(std::size_t indent)
     bolt_moveit::getFilePath(file_path, "bolt_baxter_logging.csv", "ros/ompl_storage");
     logging_file_.open(file_path.c_str(), std::ios::out | std::ios::app);
     // Header of CSV file
-    logging_file_ << "planner, planTime, pathLength, verticesAdded, edgesAdded, penetration, solved" << std::endl;
+    logging_file_ << "planner, planTime, smoothPlanTime, pathLen, addV, addE, penetrate, solved, thread" << std::endl;
   }
 
   for (std::size_t i = 0; i < planners_.size(); ++i)
@@ -571,7 +574,6 @@ void BoltBaxter::eachPlanner(std::size_t indent)
     if (i + 1 < planners_.size() - 1)  // if there are more planners to test
     {
       BOLT_INFO(true, "Next planner " << planners_[i + 1]);
-      // visual_->prompt("Next planner");  // Must do this before calling reset()
     }
 
     // Clear previous planner
@@ -623,6 +625,7 @@ void BoltBaxter::run(std::size_t indent)
       // bolt_->getSparseGenerator()->createSPARS();
       bolt_->getSparseGenerator()->createSPARS2(indent);
       loaded = true;
+      exit(0);  // after creating graph just end
     }
     if (!loaded)
       BOLT_WARN(true, "Creating AND loading sparse graph disabled, no contents in graph");
@@ -690,18 +693,17 @@ void BoltBaxter::run(std::size_t indent)
 
 bool BoltBaxter::runProblems(std::size_t indent)
 {
-  const double low_pd  = 0.0;
   const double high_pd = 0.2 + std::numeric_limits<double>::epsilon();
   const double step_pd = 0.05;
-  for (penetration_dist_ = low_pd; penetration_dist_ <= high_pd; penetration_dist_ += step_pd)
+  for (penetration_dist_ = penetration_start_; penetration_dist_ <= high_pd; penetration_dist_ += step_pd)
   {
+    if (!ros::ok())  // Check if user wants to shutdown
+      break;
+
     std::cout << std::endl;
     std::cout << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ " << std::endl;
     BOLT_INFO(true, "Penetration distance: " << penetration_dist_);
     std::cout << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ " << std::endl;
-
-    if (!ros::ok())  // Check if user wants to shutdown
-      break;
 
     // Run the demo the desired number of times
     for (std::size_t run_id = 0; run_id < num_problems_; ++run_id)
@@ -719,13 +721,11 @@ bool BoltBaxter::runProblems(std::size_t indent)
       {
         BOLT_WARN(true, "Invalid start/goal found, trying again");
 
-        //visual_->prompt("try again");
-
         // Move the shelf
         loadAmazonScene(indent);
         visual_tools_[6]->triggerPlanningSceneUpdate();
         ros::spinOnce();
-        ros::Duration(1.0).sleep(); // TODO this makes no sense why i need to add this
+        ros::Duration(1.0).sleep();  // TODO this makes no sense why i need to add this
       }
 
       // Track memory usage
@@ -795,7 +795,7 @@ bool BoltBaxter::runProblems(std::size_t indent)
       }
     }  // for each run
 
-  } // for each penetration distance
+  }  // for each penetration distance
 
   // Add last experience to database
   if (post_processing_)
@@ -847,29 +847,28 @@ bool BoltBaxter::plan(std::size_t indent)
   CALLGRIND_TOGGLE_COLLECT;
 
   // Attempt to solve the problem within x seconds of planning time
-  if (!simple_setup_->solve(ptc))
-  {
-    BOLT_ERROR("No solution found");
-    return false;
-  }
+  bool result = simple_setup_->solve(ptc);
 
   // Profiler
   CALLGRIND_TOGGLE_COLLECT;
   CALLGRIND_DUMP_STATS;
 
-  // Simplify
   if (is_bolt_)
   {
     bolt_->processResults(indent);
     bolt_->printLogs();
   }
-  else
-  {
+
+  if (!result)
+    return false;
+
+  // Simplify
+  if (visualize_interpolated_traj_ || connect_to_hardware_ || post_processing_)
     simple_setup_->simplifySolution();
-  }
 
   // Interpolate, parameterize, and execute/visualize
-  processAndExecute(indent);
+  if (visualize_interpolated_traj_ || connect_to_hardware_)
+    processAndExecute(indent);
 
   return true;
 }
@@ -947,7 +946,7 @@ void BoltBaxter::testConnectionToGraphOfRandStates(std::size_t indent)
     getRandomState(moveit_start_);
 
     // Visualize
-    //visual_tools_[6]->publishRobotState(moveit_start_, rvt::GREEN);
+    // visual_tools_[6]->publishRobotState(moveit_start_, rvt::GREEN);
 
     // Convert to ompl
     space_->copyToOMPLState(random_state, *moveit_start_);
@@ -1084,7 +1083,7 @@ bool BoltBaxter::getRandomState(moveit::core::RobotStatePtr &robot_state)
     // Error check
     bool check_verbose = false;
     if (planning_scene->isStateValid(*robot_state, "", check_verbose))  // second argument is what planning group to
-                                                                         // collision check, "" is everything
+                                                                        // collision check, "" is everything
     {
       return true;
     }
@@ -1110,7 +1109,7 @@ void BoltBaxter::testMotionValidator(std::size_t indent)
   moveit_goal_->setToRandomPositions(planning_jmg_);
 
   // visual_tools_[6]->publishRobotState(moveit_start_, rvt::GREEN);
-  //visual_moveit_goal_->publishRobotState(moveit_goal_, rvt::ORANGE);
+  // visual_moveit_goal_->publishRobotState(moveit_goal_, rvt::ORANGE);
 
   // Check for collision between to states
   bool verbose = true;
@@ -1124,7 +1123,7 @@ void BoltBaxter::testMotionValidator(std::size_t indent)
 
   // Check motion
   planning_scene->getCollisionWorld()->checkCollision(req, res, *planning_scene->getCollisionRobot(), *moveit_start_,
-                                                       *moveit_goal_);
+                                                      *moveit_goal_);
 
   std::cout << "motion in collision: " << res.collision << std::endl;
 }
@@ -1276,13 +1275,13 @@ void BoltBaxter::loadScene(std::size_t indent)
       loadAmazonScene(indent);
       loadBin(0.7, indent);
       loadBin(-0.7, indent);
-      // no break on purpose
+    // no break on purpose
     case 0:
       loadOfficeScene(indent);
       break;
   }
 
-  visual_tools_[6]->triggerPlanningSceneUpdate(); // send to Rviz
+  visual_tools_[6]->triggerPlanningSceneUpdate();  // send to Rviz
 
   // Append to allowed collision matrix
   {
@@ -1301,22 +1300,19 @@ void BoltBaxter::loadOfficeScene(std::size_t indent)
   const double table_height = -0.75 * baxter_torso_height_;
   visual_tools_[6]->publishCollisionFloor(baxter_torso_height_ + 0.001, "floor", rvt::TRANSLUCENT_DARK);
   visual_tools_[6]->publishCollisionWall(/*x*/ -1.0, /*y*/ 0.0, /*z*/ baxter_torso_height_, /*angle*/ 0,
-                                             /*width*/ 2, /*height*/ 2.0, "wall1", rvt::YELLOW);
+                                         /*width*/ 2, /*height*/ 2.0, "wall1", rvt::YELLOW);
   visual_tools_[6]->publishCollisionWall(/*x*/ 0.0, /*y*/ -1.075, /*z*/ baxter_torso_height_, /*angle*/ M_PI / 2.0,
-                                             /*width*/ 2, /*height*/ 2.0, "wall2", rvt::YELLOW);
+                                         /*width*/ 2, /*height*/ 2.0, "wall2", rvt::YELLOW);
   visual_tools_[6]->publishCollisionWall(/*x*/ 0.0, /*y*/ 1.075, /*z*/ baxter_torso_height_, /*angle*/ M_PI / 2.0,
-                                             /*width*/ 2, /*height*/ 2.0, "wall3", rvt::YELLOW);
+                                         /*width*/ 2, /*height*/ 2.0, "wall3", rvt::YELLOW);
   visual_tools_[6]->publishCollisionTable(/*x*/ 0.85, /*y*/ 0.0, /*z*/ baxter_torso_height_, /*angle*/ 0,
-                                              /*width*/ 2.0, /*height*/ table_height, /*depth*/ 0.8, "table",
-                                              rvt::DARK_GREY);
+                                          /*width*/ 2.0, /*height*/ table_height, /*depth*/ 0.8, "table",
+                                          rvt::DARK_GREY);
 }
 
 void BoltBaxter::loadAmazonScene(std::size_t indent)
 {
-  // Load mesh file name
-  const std::string collision_mesh_path = "file://" + package_path_ + "/meshes/pod_lowres.stl";
-
-  BOLT_FUNC(true, "loadAmazonScene() " << collision_mesh_path);
+  BOLT_FUNC(true, "loadAmazonScene()");
 
   // Add noise
   double noise = 0.03;  // 3 cm, slighlty more than an inch
@@ -1331,30 +1327,42 @@ void BoltBaxter::loadAmazonScene(std::size_t indent)
     y_noise = visual_tools_[6]->dRand(-noise, noise);
     rotation_noise = visual_tools_[6]->dRand(-rnoise, rnoise);  // z axis
 
-    BOLT_INFO(true, "x_noise = " << x_noise << "; y_noise = " << y_noise << "; rotation_noise = " << rotation_noise << ";");
+    BOLT_INFO(true, "x_noise = " << x_noise << "; y_noise = " << y_noise << "; rotation_noise = " << rotation_noise
+                                 << ";");
   }
 
   visual_tools_[6]->deleteAllMarkers();
 
   // Calculate offset
-  common_transform_ = Eigen::Affine3d::Identity() *
-    Eigen::AngleAxisd(rotation_noise, Eigen::Vector3d::UnitZ());
+  common_transform_ = Eigen::Affine3d::Identity() * Eigen::AngleAxisd(rotation_noise, Eigen::Vector3d::UnitZ());
   common_transform_.translation().x() = distance_to_shelf_ + x_noise;
   common_transform_.translation().y() = y_noise;
 
-  //visual_tools_[6]->publishArrow(common_transform_, rvt::ORANGE, rvt::XLARGE);
+  // visual_tools_[6]->publishArrow(common_transform_, rvt::ORANGE, rvt::XLARGE);
 
   Eigen::Affine3d mesh_centroid;
   mesh_centroid = Eigen::AngleAxisd(M_PI / 2.0, Eigen::Vector3d::UnitX()) *
-    Eigen::AngleAxisd(M_PI / 2.0, Eigen::Vector3d::UnitY()) *
-    Eigen::AngleAxisd(0, Eigen::Vector3d::UnitZ());
+                  Eigen::AngleAxisd(M_PI / 2.0, Eigen::Vector3d::UnitY()) *
+                  Eigen::AngleAxisd(0, Eigen::Vector3d::UnitZ());
   mesh_centroid.translation().z() = baxter_torso_height_;
   mesh_centroid = common_transform_ * mesh_centroid;
 
-  //const std::string object_name = "shelf" + std::to_string(visual_tools_[6]->iRand(0,10000)); // Unique name
+  // const std::string object_name = "shelf" + std::to_string(visual_tools_[6]->iRand(0,10000)); // Unique name
   const std::string object_name = "shelf";
 
-  visual_tools_[6]->publishCollisionMesh(mesh_centroid, object_name, collision_mesh_path, rvt::BROWN);
+  static bool haveAdded = false;
+  if (!haveAdded)
+  {
+    // Load mesh file name
+    const std::string collision_mesh_path = "file://" + package_path_ + "/meshes/pod_lowres.stl";
+    visual_tools_[6]->publishCollisionMesh(mesh_centroid, object_name, collision_mesh_path, rvt::BROWN);
+    haveAdded = true;
+  }
+  else
+  {
+    // Just move the mesh
+    visual_tools_[6]->moveCollisionObject(mesh_centroid, object_name, rvt::BROWN);
+  }
 }
 
 void BoltBaxter::loadBin(double y, std::size_t indent)
@@ -1522,11 +1530,12 @@ robot_trajectory::RobotTrajectoryPtr BoltBaxter::processSimpleSolution(std::size
   double velocity_scaling_factor = velocity_scaling_factor_;
 
   // Interpolate and parameterize
-  ros::Time start_time0 = ros::Time::now(); // Benchmark runtime
+  ros::Time start_time0 = ros::Time::now();  // Benchmark runtime
   const bool use_interpolation = false;
 
   if (connect_to_hardware_)  // if running on hardware, add accel/vel
-    planning_interface_->convertRobotStatesToTraj(trajectory, planning_jmg_, velocity_scaling_factor, use_interpolation);
+    planning_interface_->convertRobotStatesToTraj(trajectory, planning_jmg_, velocity_scaling_factor,
+                                                  use_interpolation);
 
   return trajectory;
 }
@@ -1641,7 +1650,7 @@ bool BoltBaxter::chooseStartGoal(std::size_t run_id, std::size_t indent)
       // imarker_start_->getRobotState()->setToDefaultValues(planning_jmg_, "both_ready");
       // imarker_start_->publishRobotState();
       break;
-    case 4: // from IK
+    case 4:  // from IK
 
       // choose start ---------------------------------------
       if (imarker_start_states_.empty())
@@ -1705,6 +1714,10 @@ std::string BoltBaxter::getPlannerFilePath(const std::string &planning_group_nam
   // Set the database file location
 
   std::string planner_lower_ = planner_;
+  if (is_bolt_)
+  {
+    planner_lower_ = "Bolt";
+  }
   std::transform(planner_lower_.begin(), planner_lower_.end(), planner_lower_.begin(), ::tolower);
 
   std::string file_name;
@@ -1802,11 +1815,8 @@ void BoltBaxter::log(bool solved, std::size_t indent)
 {
   std::size_t numVerticesAdded = 0;
   std::size_t numEdgesAdded = 0;
-  double planTime;
   if (is_bolt_)
   {
-    planTime = bolt_->getPlanTime();
-
     // Get a copy of the stats and clear them from the Bolt setup
     otb::ExperiencePathStats stats = bolt_->getPostProcessingResultsAndReset();
     numVerticesAdded = stats.numVerticesAdded_;
@@ -1814,26 +1824,24 @@ void BoltBaxter::log(bool solved, std::size_t indent)
   }
   if (is_thunder_)
   {
-    planTime = simple_setup_->getLastSimplificationTime() + simple_setup_->getLastPlanComputationTime();
-
     // Get a copy of the stats and clear them from the Thunder setup
     numVerticesAdded = thunder_->diffNumVertices_;
     numEdgesAdded = thunder_->diffNumEdges_;
     thunder_->diffNumVertices_ = 0;
     thunder_->diffNumEdges_ = 0;
   }
-  else
-  {
-    planTime = simple_setup_->getLastSimplificationTime() + simple_setup_->getLastPlanComputationTime();
-  }
+
+  og::PathGeometric &path = static_cast<og::PathGeometric &>(*simple_setup_->getProblemDefinition()->getSolutionPath());
 
   logging_file_ << planner_ << ", "                // bolt, etc
-                << planTime << ", "                // smoothing + planning
-                << last_plan_path_length_ << ", "  // basic planning stats
+                << simple_setup_->getLastPlanComputationTime() << ", " // planning time
+                << simple_setup_->getLastSimplificationTime() << ", " // smoothing time
+                << path.length() << ", "  // basic planning stats
                 << numVerticesAdded << ", "        // numVerticesAdded
                 << numEdgesAdded << ", "           // numEdgesAdded
-                << penetration_dist_ << ", "          // task
-                << solved                          // solved
+                << penetration_dist_ << ", "       // task
+                << solved << ", "                  // solved
+                << simple_setup_->getSolutionPlannerName() // which thread finished first
                 << std::endl;
   logging_file_.flush();
 }
@@ -1870,23 +1878,23 @@ void BoltBaxter::processAndExecute(std::size_t indent)
 
 void BoltBaxter::chooseStartGoalIK(std::size_t run_id, std::size_t indent)
 {
-  const double half_shelf_depth = -0.44; // brings arrows to edge of shelf in x direction
-  const double horizontal_distance = 0.275; // left and right cubbys
+  const double half_shelf_depth = -0.44;     // brings arrows to edge of shelf in x direction
+  const double horizontal_distance = 0.275;  // left and right cubbys
   const double height_of_shelf = 0.24;
-  const double penetration_depth = penetration_dist_; //test_var_; // m
+  const double penetration_depth = penetration_dist_;  // test_var_; // m
 
   double z = (run_id % num_rows_) * height_of_shelf;
 
   Eigen::Affine3d left_gripper = Eigen::Affine3d::Identity() * Eigen::AngleAxisd(M_PI / 2.0, Eigen::Vector3d::UnitY());
   left_gripper.translation().x() = half_shelf_depth + penetration_depth;
-  left_gripper.translation().y() = -horizontal_distance; // left cubby
+  left_gripper.translation().y() = -horizontal_distance;  // left cubby
   left_gripper.translation().z() = z;
   left_gripper = common_transform_ * left_gripper;
   visual_tools_[6]->publishZArrow(left_gripper, rvt::BLUE, rvt::LARGE);
 
   Eigen::Affine3d right_gripper = Eigen::Affine3d::Identity() * Eigen::AngleAxisd(M_PI / 2.0, Eigen::Vector3d::UnitY());
   right_gripper.translation().x() = half_shelf_depth + penetration_depth;
-  right_gripper.translation().y() = horizontal_distance; // right cubby
+  right_gripper.translation().y() = horizontal_distance;  // right cubby
   right_gripper.translation().z() = z;
   right_gripper = common_transform_ * right_gripper;
   visual_tools_[6]->publishZArrow(right_gripper, rvt::GREEN, rvt::LARGE);

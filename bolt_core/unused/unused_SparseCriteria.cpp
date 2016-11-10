@@ -147,7 +147,7 @@ bool SparseCriteria::spannerTestAStar(SparseVertex v, SparseVertex vp, SparseVer
       for (std::size_t i = 1; i < vertexPath.size(); ++i)
       {
         visual_->viz6()->edge(sg_->getState(vertexPath[i - 1]), sg_->getState(vertexPath[i]), tools::MEDIUM,
-                              tools::GREEN);
+                              tools::LIME_GREEN);
       }
     }
 

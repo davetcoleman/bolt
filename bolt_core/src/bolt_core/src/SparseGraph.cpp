@@ -1554,7 +1554,7 @@ void otb::SparseAstarVisitor::discover_vertex(SparseVertex v, const SparseAdjLis
   parent_->recordNodeOpened();
 
   if (parent_->visualizeAstar_)
-    parent_->getVisual()->viz4()->state(parent_->getState(v), tools::SMALL, tools::GREEN, 1);
+    parent_->getVisual()->viz4()->state(parent_->getState(v), tools::SMALL, tools::LIME_GREEN, 1);
 }
 #endif
 

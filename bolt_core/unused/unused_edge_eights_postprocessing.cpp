@@ -131,7 +131,7 @@ bool TaskGraph::postProcessPathWithNeighbors(og::PathGeometric &solutionPath,
 
     if (visualizeSnapPath_)  // Add first state
     {
-      visual_->viz5()->state(stateProperty_[prevGraphVertex], tools::SMALL, tools::GREEN, 1);
+      visual_->viz5()->state(stateProperty_[prevGraphVertex], tools::SMALL, tools::LIME_GREEN, 1);
     }
 
     // Add this start state
@@ -476,7 +476,7 @@ void TaskGraph::connectNewVertex(TaskVertex v1)
   // Visualize new vertex
   if (visualizeAddSample_)
   {
-    visual_->viz1()->state(stateProperty_[v1], tools::SMALL, tools::GREEN, 1);
+    visual_->viz1()->state(stateProperty_[v1], tools::SMALL, tools::LIME_GREEN, 1);
   }
 
   // Connect to nearby vertices
