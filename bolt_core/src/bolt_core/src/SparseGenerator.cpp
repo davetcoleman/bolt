@@ -1356,10 +1356,9 @@ bool SparseGenerator::addSampleSparseCriteria(base::State *candidateState, bool 
     BOLT_DEBUG(vCriteria_, "Adding node for COVERAGE ");
     sg_->addVertex(candidateState, COVERAGE, indent);
 
-    if (visualizeSampling_ || true)
+    if (visualizeSampling_)
     {
       visual_->viz6()->state(candidateState, tools::ROBOT, tools::PINK, 1);
-      //visual_->prompt("coverage");
     }
 
     return true;

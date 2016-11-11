@@ -396,6 +396,9 @@ bool BoltBaxter::loadOMPL(std::size_t indent)
     simple_setup_ = thunder_;
     is_thunder_ = true;
 
+    // This must be called before thunder_->setup() because that is when load() is called
+    thunder_->setFilePath(getPlannerFilePath(planning_group_name_, indent) + ".ompl");
+
     // The visual pointer was already created and populated throughout the Thunder framework
     visual_ = thunder_->getVisual();
   }
@@ -408,12 +411,16 @@ bool BoltBaxter::loadOMPL(std::size_t indent)
     // Set default planner so that a goal definition isn't necessary
     lightning_->setPlanner(std::make_shared<og::RRTConnect>(si_));
 
+    // This must be called before thunder_->setup() because that is when load() is called
+    lightning_->setFilePath(getPlannerFilePath(planning_group_name_, indent) + ".ompl");
+
     // The visual pointer was already created and populated throughout the Bolt framework
     visual_ = std::make_shared<ot::Visualizer>();
   }
   else  // Assume simple setup
   {
-    simple_setup_ = std::make_shared<og::SimpleSetup>(si_);
+    // Note we run all algorithms in two threads
+    simple_setup_ = std::make_shared<og::ParallelSetup>(si_);
     is_simple_setup_ = true;
 
     visual_ = std::make_shared<ot::Visualizer>();
@@ -421,21 +428,26 @@ bool BoltBaxter::loadOMPL(std::size_t indent)
     if (planner_ == "RRTConnect")
     {
       simple_setup_->setPlanner(std::make_shared<og::RRTConnect>(si_));
+      simple_setup_->setPlanner(std::make_shared<og::RRTConnect>(si_));
     }
     else if (planner_ == "LazyRRT")
     {
+      simple_setup_->setPlanner(std::make_shared<og::LazyRRT>(si_));
       simple_setup_->setPlanner(std::make_shared<og::LazyRRT>(si_));
     }
     else if (planner_ == "LazyPRM")
     {
       simple_setup_->setPlanner(std::make_shared<og::LazyPRM>(si_));
+      simple_setup_->setPlanner(std::make_shared<og::LazyPRM>(si_));
     }
     else if (planner_ == "BiEST")
     {
       simple_setup_->setPlanner(std::make_shared<og::BiEST>(si_));
+      simple_setup_->setPlanner(std::make_shared<og::BiEST>(si_));
     }
     else if (planner_ == "PDST")
     {
+      simple_setup_->setPlanner(std::make_shared<og::PDST>(si_));
       simple_setup_->setPlanner(std::make_shared<og::PDST>(si_));
     }
     else if (planner_ == "SPARStwo")
@@ -477,11 +489,10 @@ bool BoltBaxter::loadOMPL(std::size_t indent)
     thunder_->getExperienceDB()->getSPARSdb()->setSparseDeltaFraction(0.1);  // TODO do not hardcode
     thunder_->getExperienceDB()->getSPARSdb()->setDenseDeltaFraction(0.01);  // TODO do not hardcode
     thunder_->getExperienceDB()->getSPARSdb()->setup();
-    thunder_->setFilePath(getPlannerFilePath(planning_group_name_, indent) + ".ompl");
   }
   else if (is_lightning_)
   {
-    lightning_->setFilePath(getPlannerFilePath(planning_group_name_, indent) + ".ompl");
+    // nothing
   }
 
   // Create start and goal states
@@ -525,6 +536,14 @@ bool BoltBaxter::loadData(std::size_t indent)
       BOLT_INFO(true, "Unable to load sparse graph from file");
       return false;
     }
+  }
+  else if (is_thunder_)
+  {
+    // Already loaded in thunder_->setup();
+  }
+  else if (is_lightning_)
+  {
+    // Already loaded in lightning_->setup();
   }
 
   if (track_memory_consumption_)  // Track memory usage
@@ -698,7 +717,7 @@ void BoltBaxter::run(std::size_t indent)
 
 bool BoltBaxter::runProblems(std::size_t indent)
 {
-  const double high_pd = 0.2 + std::numeric_limits<double>::epsilon();
+  const double high_pd = 0.15 + std::numeric_limits<double>::epsilon();
   const double step_pd = 0.05;
   for (penetration_dist_ = penetration_start_; penetration_dist_ <= high_pd; penetration_dist_ += step_pd)
   {
@@ -1723,10 +1742,6 @@ std::string BoltBaxter::getPlannerFilePath(const std::string &planning_group_nam
   // Set the database file location
 
   std::string planner_lower_ = planner_;
-  if (is_bolt_)
-  {
-    planner_lower_ = "Bolt";
-  }
   std::transform(planner_lower_.begin(), planner_lower_.end(), planner_lower_.begin(), ::tolower);
 
   std::string file_name;
@@ -1736,12 +1751,7 @@ std::string BoltBaxter::getPlannerFilePath(const std::string &planning_group_nam
                 std::to_string(bolt_->getSparseCriteria()->sparseDeltaFraction_) + "_" +
                 load_database_version_;
   }
-  else if (is_thunder_)
-  {
-    file_name = file_name + planner_lower_ + "_" + planning_group_name + "_" +
-                std::to_string(thunder_->getExperienceDB()->getSPARSdb()->getSparseDeltaFraction());
-  }
-  else if (is_lightning_)
+  else if (is_thunder_ || is_lightning_)
   {
     file_name = file_name + planner_lower_ + "_" + planning_group_name;
   }
@@ -1842,12 +1852,10 @@ void BoltBaxter::log(bool solved, std::size_t indent)
     thunder_->diffNumEdges_ = 0;
   }
 
-  double pathLength = 0;
+  double pathLength = 99999; // some really large number to prevent forgetting to adjust for this in averages
   if (simple_setup_->getProblemDefinition()->hasSolution())
   {
-    std::cout << "getSolutionPath() " << std::endl;
     og::PathGeometric &path = static_cast<og::PathGeometric &>(*simple_setup_->getProblemDefinition()->getSolutionPath());
-    std::cout << "get length " << std::endl;
     pathLength = path.length();
   }
   else

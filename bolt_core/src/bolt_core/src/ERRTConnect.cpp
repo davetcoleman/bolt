@@ -39,8 +39,7 @@
 #include "ompl/tools/config/SelfConfig.h"
 
 ompl::geometric::ERRTConnect::ERRTConnect(const base::SpaceInformationPtr &si, tools::VisualizerPtr visual)
-  : base::Planner(si, "ERRTConnect")
-  , visual_(visual)
+  : base::Planner(si, "ERRTConnect"), visual_(visual)
 {
   specs_.recognizedGoal = base::GOAL_SAMPLEABLE_REGION;
   specs_.directed = true;
@@ -116,40 +115,66 @@ void ompl::geometric::ERRTConnect::clear()
 }
 
 ompl::geometric::ERRTConnect::GrowState ompl::geometric::ERRTConnect::growTree(TreeData &tree,
-                                                                                     TreeGrowingInfo &tgi,
-                                                                                     Motion *rmotion)
+                                                                               TreeGrowingInfo &treeGrowInfo,
+                                                                               Motion *randMotion)
 {
+  std::size_t indent = 0;
+  BOLT_FUNC(true, "growTree()");
+
   /* find closest state in the tree */
-  Motion *nmotion = tree->nearest(rmotion);
+  Motion *nearestMotion = tree->nearest(randMotion);
+  std::cout << "after NN nearest search ---- " << std::endl;
 
   /* assume we can reach the state we go towards */
   bool reach = true;
 
   /* find state to add */
-  base::State *dstate = rmotion->state;
-  double d = si_->distance(nmotion->state, rmotion->state);
+  base::State *dstate = randMotion->state;
+  std::cout << "dstate ";
+  si_->getStateSpace()->printState(dstate);
+  std::cout << "nearMotion ";
+  si_->getStateSpace()->printState(nearestMotion->state);
+  std::cout << "randMotion ";
+  si_->getStateSpace()->printState(randMotion->state);
+  std::cout << "before check distance ";
+  double d = si_->distance(nearestMotion->state, randMotion->state);
+  if (std::isinf(d))
+  {
+    std::cout << "DISTANCE IS INF " << std::endl;
+  }
   if (d > maxDistance_)
   {
-    si_->getStateSpace()->interpolate(nmotion->state, rmotion->state, maxDistance_ / d, tgi.xstate);
-    dstate = tgi.xstate;
+    std::cout << "maxDistance_: " << maxDistance_ << " d " << d << std::endl;
+    //si_->getStateSpace()->printState(treeGrowInfo.xstate);
+    si_->getStateSpace()->interpolate(nearestMotion->state, // from
+                                      randMotion->state, // to
+                                      maxDistance_ / d, // time t
+                                      treeGrowInfo.xstate); // output state
+    dstate = treeGrowInfo.xstate;
+    si_->getStateSpace()->printState(dstate);
     reach = false;
   }
   // if we are in the start tree, we just check the motion like we normally do;
   // if we are in the goal tree, we need to check the motion in reverse, but checkMotion() assumes the first state it
   // receives as argument is valid,
   // so we check that one first
-  bool validMotion = tgi.start ?
-                         si_->checkMotion(nmotion->state, dstate) :
-                         si_->getStateValidityChecker()->isValid(dstate) && si_->checkMotion(dstate, nmotion->state);
+  // std::cout << "before checkMotion " << std::endl;
+  // si_->getStateSpace()->printState(nearestMotion->state);
+  // std::cout << "dstate: " << std::endl;
+  // si_->getStateSpace()->printState(dstate);
+
+  bool validMotion = treeGrowInfo.start ? si_->checkMotion(nearestMotion->state, dstate) :
+                                          si_->getStateValidityChecker()->isValid(dstate) &&
+                                              si_->checkMotion(dstate, nearestMotion->state);
 
   if (validMotion)
   {
     /* create a motion */
     auto *motion = new Motion(si_);
     si_->copyState(motion->state, dstate);
-    motion->parent = nmotion;
-    motion->root = nmotion->root;
-    tgi.xmotion = motion;
+    motion->parent = nearestMotion;
+    motion->root = nearestMotion->root;
+    treeGrowInfo.xmotion = motion;
 
     tree->add(motion);
     if (reach)
@@ -198,38 +223,30 @@ ompl::base::PlannerStatus ompl::geometric::ERRTConnect::solve(const base::Planne
   OMPL_INFORM("%s: Starting planning with %d states already in datastructure", getName().c_str(),
               (int)(tStart_->size() + tGoal_->size()));
 
-  TreeGrowingInfo tgi;
-  tgi.xstate = si_->allocState();
+  TreeGrowingInfo treeGrowInfo;
+  treeGrowInfo.xstate = si_->allocState();
 
-  auto *rmotion = new Motion(si_);
-  base::State *rstate = rmotion->state;
+  auto *randMotion = new Motion(si_);
+  base::State *randState = randMotion->state;
   bool startTree = true;
   bool solved = false;
 
   // Find neighbors to start and goal
+  pis_.restart();  // restart the start and goal state
+  base::State *goalState = si_->cloneState(pis_.nextGoal(ptc));
+  base::State *startState = si_->cloneState(pis_.nextStart());
+  pis_.restart();  // restart the start and goal state
+
   std::size_t indent = 0;
-  time::point startTime0 = time::now(); // Benchmark
-  {
-    pis_.restart(); // restart the start and goal state
-    base::State *goalState = si_->cloneState(pis_.nextGoal(ptc));
-    base::State *startState = si_->cloneState(pis_.nextStart());
-    pis_.restart(); // restart the start and goal state
-    std::cout << "goalState: " << goalState << std::endl;
-    std::cout << "startState: " << startState << std::endl;
-    loadSampler(startState, goalState, indent);
-    std::cout << "freeing state " << std::endl;
-    si_->freeState(startState);
-    std::cout << "temp " << std::endl;
-    si_->freeState(goalState);
-    std::cout << "done feeing state " << std::endl;
-  }
-  OMPL_INFORM("find both neighbors took %f seconds", time::seconds(time::now() - startTime0)); // Benchmark
+  loadSampler(startState, goalState, indent);
+  si_->freeState(startState);
+  si_->freeState(goalState);
 
   while (ptc == false)
   {
     TreeData &tree = startTree ? tStart_ : tGoal_;
 
-    tgi.start = startTree;
+    treeGrowInfo.start = startTree;
     startTree = !startTree;
     TreeData &otherTree = startTree ? tStart_ : tGoal_;
 
@@ -252,12 +269,13 @@ ompl::base::PlannerStatus ompl::geometric::ERRTConnect::solve(const base::Planne
     }
 
     /* sample random state */
-    // sampler_->sampleUniform(rstate);
+    // sampler_->sampleUniform(randState);
 
     /* sample state near either start or goal */
-    sampleFromSparseGraph(rstate, startTree, indent);
-
-    GrowState gs = growTree(tree, tgi, rmotion);
+    sampleFromSparseGraph(randState, startTree, indent);
+    //si_->getStateSpace()->printState(randState);
+    //std::cout << "after sample from sparse graph " << std::endl;
+    GrowState gs = growTree(tree, treeGrowInfo, randMotion);
 
     if (ptc)
       break;
@@ -266,24 +284,25 @@ ompl::base::PlannerStatus ompl::geometric::ERRTConnect::solve(const base::Planne
     {
       // Show status
       if (tree->size() % 100 == 0)
-        std::cout << "Start Tree " << tStart_->size() << ", Goal Tree " << tGoal_->size() << std::endl;
+        std::cout << "ERRTConnect - Start Tree " << tStart_->size() << ", Goal Tree " << tGoal_->size() << std::endl;
 
       /* remember which motion was just added */
-      Motion *addedMotion = tgi.xmotion;
+      Motion *addedMotion = treeGrowInfo.xmotion;
 
       /* attempt to connect trees */
 
-      /* if reached, it means we used rstate directly, no need top copy again */
+      /* if reached, it means we used randState directly, no need top copy again */
       if (gs != REACHED)
-        si_->copyState(rstate, tgi.xstate);
+        si_->copyState(randState, treeGrowInfo.xstate);
 
       GrowState gsc = ADVANCED;
-      tgi.start = startTree;
-      while (gsc == ADVANCED)
-        gsc = growTree(otherTree, tgi, rmotion);
+      treeGrowInfo.start = startTree;
 
-      Motion *startMotion = startTree ? tgi.xmotion : addedMotion;
-      Motion *goalMotion = startTree ? addedMotion : tgi.xmotion;
+      while (gsc == ADVANCED)
+        gsc = growTree(otherTree, treeGrowInfo, randMotion);
+
+      Motion *startMotion = startTree ? treeGrowInfo.xmotion : addedMotion;
+      Motion *goalMotion = startTree ? addedMotion : treeGrowInfo.xmotion;
 
       /* if we connected the trees in a valid way (start and goal pair is valid)*/
       if (gsc == REACHED && goal->isStartGoalPairValid(startMotion->root, goalMotion->root))
@@ -332,9 +351,9 @@ ompl::base::PlannerStatus ompl::geometric::ERRTConnect::solve(const base::Planne
     }
   }
 
-  si_->freeState(tgi.xstate);
-  si_->freeState(rstate);
-  delete rmotion;
+  si_->freeState(treeGrowInfo.xstate);
+  si_->freeState(randState);
+  delete randMotion;
 
   OMPL_INFORM("%s: Created %u states (%u start + %u goal)", getName().c_str(), tStart_->size() + tGoal_->size(),
               tStart_->size(), tGoal_->size());
@@ -395,15 +414,17 @@ void ompl::geometric::ERRTConnect::loadSampler(base::State *start, base::State *
   BOLT_INFO(true, "Done loading sampler");
 }
 
-void ompl::geometric::ERRTConnect::getNeighbors(base::State *state, std::vector<tools::bolt::SparseVertex> &graphNeighborhood, std::size_t indent)
+void ompl::geometric::ERRTConnect::getNeighbors(base::State *state,
+                                                std::vector<tools::bolt::SparseVertex> &graphNeighborhood,
+                                                std::size_t indent)
 {
   BOLT_FUNC(true, "getNeighbors()");
 
   graphNeighborhood.clear();
-  std::size_t threadID = 3; // TODO choose better!
+  std::size_t threadID = 3;  // TODO choose better!
 
-  //const std::size_t kNearest = 0;
-  const std::size_t kNearest = std::min(sparseGraph_->getNumRealVertices(), (unsigned int) 10000);
+  // const std::size_t kNearest = 0;
+  const std::size_t kNearest = std::min(sparseGraph_->getNumRealVertices(), (unsigned int)10000);
 
   // Search in thread-safe manner
   sparseGraph_->getQueryStateNonConst(threadID) = state;
@@ -413,37 +434,44 @@ void ompl::geometric::ERRTConnect::getNeighbors(base::State *state, std::vector<
   BOLT_INFO(true, "Found " << graphNeighborhood.size() << " neighbors");
 }
 
-void ompl::geometric::ERRTConnect::sampleFromSparseGraph(base::State *rstate, bool isStart, std::size_t indent)
+void ompl::geometric::ERRTConnect::sampleFromSparseGraph(base::State *randState, bool isStart, std::size_t indent)
 {
-  BOLT_FUNC(true, "sampleFromSparseGraph()");
+  bool verbose = true;
+  BOLT_FUNC(verbose, "sampleFromSparseGraph()");
   totalSamples_++;
 
-  if (isStart) // start
+  if (isStart)  // start
   {
-    //BOLT_FUNC(true, "Sampling start " << startNeighborID_);
     if (startNeighborID_ >= startGraphNeighborhood_.size() || totalSamples_ % 2 == 0)
     {
-      sampler_->sampleUniform(rstate);
+      BOLT_FUNC(verbose, "Sampling start " << startNeighborID_ << " sampleUniform");
+      sampler_->sampleUniform(randState);
     }
     else
     {
-      rstate = sparseGraph_->getStateNonConst(startGraphNeighborhood_[startNeighborID_++]);
+      BOLT_FUNC(verbose, "Sampling start " << startNeighborID_ << " getStateNonConst");
+      // Copy from SparseGraph to pre-allocated randState
+      si_->copyState(randState, sparseGraph_->getStateNonConst(startGraphNeighborhood_[startNeighborID_++]));
     }
   }
-  else // goal
+  else  // goal
   {
-    //BOLT_FUNC(true, "Sampling goal " << goalNeighborID_);
     if (goalNeighborID_ >= goalGraphNeighborhood_.size() || totalSamples_ % 2 == 0)
     {
-      sampler_->sampleUniform(rstate);
+      BOLT_FUNC(verbose, "Sampling goal " << goalNeighborID_ << " sampleUniform");
+      sampler_->sampleUniform(randState);
     }
     else
     {
-      rstate = sparseGraph_->getStateNonConst(goalGraphNeighborhood_[goalNeighborID_++]);
+      BOLT_FUNC(verbose, "Sampling goal " << goalNeighborID_ << " getStateNonConst, vertex " << goalGraphNeighborhood_[goalNeighborID_]);
+      // Copy from SparseGraph to pre-allocated randState
+      si_->copyState(randState, sparseGraph_->getStateNonConst(goalGraphNeighborhood_[goalNeighborID_++]));
+      si_->getStateSpace()->printState(randState);
     }
   }
 
-  // visual_->viz6()->state(rstate, tools::ROBOT, tools::BLUE);
+  // visual_->viz6()->state(randState, tools::ROBOT, tools::BLUE);
   // visual_->prompt("next");
-  //visual_->viz6()->triggerEvery(10);
+  // visual_->viz6()->triggerEvery(10);
+  BOLT_DEBUG(verbose, "Done sampling from SparseGraph");
 }

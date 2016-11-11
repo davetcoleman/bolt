@@ -205,12 +205,13 @@ std::size_t Bolt::getExperiencesCount() const
 
 void Bolt::clearForNextPlan(std::size_t indent)
 {
-  boltPlanner_->clear();
+  pp_->clear();
+  // boltPlanner_->clear();
+  // ERRTPlanner_->clear();
+  // rrtPlanner_->clear();
   pdef_->clearSolutionPaths();
   taskGraph_->clearEdgeCollisionStates();
   pp_->clearHybridizationPaths();
-  ERRTPlanner_->clear();
-  rrtPlanner_->clear();
 }
 
 void Bolt::clear()

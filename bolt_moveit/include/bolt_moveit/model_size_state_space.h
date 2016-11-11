@@ -180,11 +180,30 @@ public:
   {
     for (std::size_t j = 0; j < joint_model_vector_.size(); ++j)
     {
+      const int idx = spec_.joint_model_group_->getVariableGroupIndex(joint_model_vector_[j]->getName());
+      const int vc = joint_model_vector_[j]->getVariableCount();
+      for (int i = 0; i < vc; ++i)
+      {
+        if (std::isnan(state->as<StateType>()->values[idx + i]))
+        {
+          std::cout << "ERROR: value is nan! i= " << i << " j = " << j << std::endl;
+          printStateReal(state, out);
+        }
+      }
+    }
+  }
+
+  void printStateReal(const ob::State *state, std::ostream &out) const
+  {
+    for (std::size_t j = 0; j < joint_model_vector_.size(); ++j)
+    {
       out << joint_model_vector_[j]->getName() << " = ";
       const int idx = spec_.joint_model_group_->getVariableGroupIndex(joint_model_vector_[j]->getName());
       const int vc = joint_model_vector_[j]->getVariableCount();
       for (int i = 0; i < vc; ++i)
+      {
         out << state->as<StateType>()->values[idx + i] << " ";
+      }
       out << std::endl;
     }
   }

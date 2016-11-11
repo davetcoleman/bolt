@@ -46,6 +46,7 @@
 #include <ompl/tools/thunder/Thunder.h>
 #include <ompl/tools/lightning/Lightning.h>
 #include <ompl/geometric/SimpleSetup.h>
+#include <ompl/geometric/ParallelSetup.h>
 #include <ompl/geometric/planners/prm/SPARStwo.h>
 
 // bolt_core
@@ -177,6 +178,7 @@ public:
 
   // Save the experience setup until the program ends so that the planner data is not lost
   ompl::geometric::SimpleSetupPtr simple_setup_;
+  ompl::geometric::ParallelSetupPtr parallel_setup_;
   ompl::tools::bolt::BoltPtr bolt_;
   ompl::tools::ThunderPtr thunder_;
   ompl::tools::LightningPtr lightning_;
