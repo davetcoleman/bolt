@@ -3,27 +3,37 @@
 bolt_baxter:
   # WINDOW 1
   # ---------------------------------------
-  planners: [BoltERRTConnect, BoltRandom]
-  load_database_version: nodatabase
-  penetration_start: -0.05
-  log_file_name: log_bolts.csv
-  num_problems: 50
+  # planners: [BoltERRTConnect]
+  # load_database_version: np
+  # penetration_start: -0.05
+  # log_file_name: log_bolterrtconnectnp.csv
+  # num_problems: 50
 
   # WINDOW 2
   # ---------------------------------------
-  # planners: [RRTConnect, BiEST, LazyPRM, LazyRRT]
-  # load_database_version: NA
-  # penetration_start: -0.05
-  # log_file_name: log_scratch_planners.csv
-  # num_problems: 20 # because does not learn
+  planners: [BoltRRTConnect]
+  load_database_version: np
+  penetration_start: -0.05
+  log_file_name: log_boltrrtconnectnp.csv
+  num_problems: 50
 
   # WINDOW 3
   # ---------------------------------------
-  # planners: [Thunder]
-  # load_database_version: NA
+  # planners: [BoltERRTConnect]
+  # load_database_version: exp
   # penetration_start: -0.05
-  # log_file_name: log_thunder.csv
+  # log_file_name: log_bolterrtconnect.csv
   # num_problems: 50
+
+  # WINDOW 4
+  # ---------------------------------------
+  # planners: [BoltRRTConnect]
+  # load_database_version: exp
+  # penetration_start: -0.05
+  # log_file_name: log_boltrrtconnect.csv
+  # num_problems: 50
+
+
 
   # planner types
   #planners: [BoltRandom, BoltRRTConnect, BoltERRTConnect, Thunder, Lightning, RRTConnect, BiEST, LazyPRM, LazyRRT, SPARStwo]

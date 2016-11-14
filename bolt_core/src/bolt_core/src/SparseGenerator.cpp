@@ -313,6 +313,7 @@ bool SparseGenerator::addRandomSamplesOneThread(std::size_t indent)
   maxConsecutiveFailures_ = 0;
   maxPercentComplete_ = 0;
 
+  // TODO: the last candideState allocated has chance of memory leak
   base::State *candidateState = si_->allocState();
   const std::size_t threadID = 0;
 
@@ -553,6 +554,22 @@ void SparseGenerator::showNoQualityStatus(std::size_t indent)
       // copyPasteState();
     }
   }
+}
+
+bool SparseGenerator::addSampleSimple(ob::State *state, std::size_t indent)
+{
+  BOLT_FUNC(verbose_, "addSampleSimple()");
+
+  static const std::size_t threadID = 0;
+
+  // Find nearby nodes
+  SparseCandidateData candidateD(state);
+  findGraphNeighbors(candidateD, threadID, indent);
+
+  VertexType addReason;  // returns why the state was added, unused
+
+  // Run SPARS checks
+  return sparseCriteria_->addStateToRoadmap(candidateD, addReason, threadID, indent);
 }
 
 void SparseGenerator::findGraphNeighbors(SparseCandidateData &candidateD, std::size_t threadID, std::size_t indent)
@@ -1140,8 +1157,13 @@ ExperiencePathStats SparseGenerator::addExperiencePath(geometric::PathGeometricP
     // Copy the state so the graph can own it
     si_->copyState(candidateState, path->getState(shuffledIDs[i]));
 
-    // Add to roadmap
-    usedState = addSampleSparseCriteria(candidateState, addEdges, indent);
+    // Add to roadmap --------------------------------
+
+    // This is the faster version but does not use CONNECTIVITY or QUALITY criteria
+    //usedState = addSampleSparseCriteria(candidateState, addEdges, indent);
+
+    // This is the slower version but does have all criteria
+    usedState = addSampleSimple(candidateState, indent);
 
     // visual_->viz6()->state(candidateState, tools::ROBOT, tools::BLUE);
     // visual_->prompt("adding state");
@@ -1153,6 +1175,7 @@ ExperiencePathStats SparseGenerator::addExperiencePath(geometric::PathGeometricP
 
   ExperiencePathStats stats;
 
+  // TODO: get stats without having to save to file
   if (sg_->hasUnsavedChanges())
   {
     SparseStorage::GraphSizeChange result = sg_->save(indent);
@@ -1262,13 +1285,21 @@ bool SparseGenerator::addSampleSparseCriteria(base::State *candidateState, bool 
   // Here we save computation time by finding only the nearest x nodes which typically result
   // in finding that a new node is not a candidate to be added. Must be greater than two for the
   // edge addition rule
+  // However, it is possible it will bring in too many nearest neighbors that are not actually within sparse delta
+  // so I'm disabling it for now. Its best applicable when pre-processing the whole graph, not just for adding
+  // experiences as I go
+  bool useLimitedRangeNN = false;
   static const std::size_t AVG_NEAREST_NODES_TO_VALID = 30;  // TODO: auto tune this value rather than guess
 
   std::vector<SparseVertex> graphNeighborhood;
-  graphNeighborhood.reserve(AVG_NEAREST_NODES_TO_VALID);
-
   sg_->getQueryStateNonConst(THREAD_ID) = candidateState;
-  sg_->getNN()->nearestK(sg_->getQueryVertices(THREAD_ID), AVG_NEAREST_NODES_TO_VALID, graphNeighborhood);
+  if (useLimitedRangeNN)
+  {
+    graphNeighborhood.reserve(AVG_NEAREST_NODES_TO_VALID);
+    sg_->getNN()->nearestK(sg_->getQueryVertices(THREAD_ID), AVG_NEAREST_NODES_TO_VALID, graphNeighborhood);
+  }
+  else
+    sg_->getNN()->nearestR(sg_->getQueryVertices(THREAD_ID), sparseDelta, graphNeighborhood);
   sg_->getQueryStateNonConst(THREAD_ID) = nullptr;
 
   // BOLT_DEBUG(true, graphNeighborhood.size() / double(sg_->getNumVertices())
@@ -1339,18 +1370,21 @@ bool SparseGenerator::addSampleSparseCriteria(base::State *candidateState, bool 
     sg_->getNN()->nearestR(sg_->getQueryVertices(THREAD_ID), sparseDelta, graphNeighborhood);
     sg_->getQueryStateNonConst(THREAD_ID) = nullptr;
 
-    // Skip the first x because those were already collision checked
-    for (std::size_t i = AVG_NEAREST_NODES_TO_VALID; i < graphNeighborhood.size(); ++i)
+    if (useLimitedRangeNN) // keep searching because there could be more
     {
-      const SparseVertex &v2 = graphNeighborhood[i];
-
-      // Check for visible nearby neighbor - if one is found visible, then this state should not be added
-      if (si_->checkMotion(candidateState, sg_->getState(v2)))
+      // Skip the first x because those were already collision checked
+      for (std::size_t i = AVG_NEAREST_NODES_TO_VALID; i < graphNeighborhood.size(); ++i)
       {
-        //BOLT_WARN(true, "Missed a state that invalidates candidate state, on index " << i);
-        return false;
+        const SparseVertex &v2 = graphNeighborhood[i];
+
+        // Check for visible nearby neighbor - if one is found visible, then this state should not be added
+        if (si_->checkMotion(candidateState, sg_->getState(v2)))
+        {
+          //BOLT_WARN(true, "Missed a state that invalidates candidate state, on index " << i);
+          return false;
+        }
       }
-    }
+    } // if useLimitedRangeNN
 
     // No free paths means we add for coverage
     BOLT_DEBUG(vCriteria_, "Adding node for COVERAGE ");
@@ -1372,7 +1406,6 @@ bool SparseGenerator::addSampleSparseCriteria(base::State *candidateState, bool 
   if (visibleNeighborhood.size() == 1)
   {
     BOLT_DEBUG(vCriteria_, "Not enough visibile neighbors (1)");
-    // visual_->prompt("not enough");
     return false;  // did not use memory of candidateState
   }
 

@@ -281,6 +281,7 @@ void BoltBaxter::reset(std::size_t indent)
   lightning_.reset();
   spars2_.reset();
   simple_setup_.reset();
+  parallel_setup_.reset();
   si_.reset();
   secondary_si_.reset();
   space_.reset();
@@ -534,6 +535,7 @@ bool BoltBaxter::loadData(std::size_t indent)
     if (!bolt_->load(indent))
     {
       BOLT_INFO(true, "Unable to load sparse graph from file");
+      planner_ = planner_ + "NP"; // append "no-preprocessing to planner name
       return false;
     }
   }
@@ -1340,7 +1342,7 @@ void BoltBaxter::loadOfficeScene(std::size_t indent)
 
 void BoltBaxter::loadAmazonScene(std::size_t indent)
 {
-  BOLT_FUNC(true, "loadAmazonScene()");
+  BOLT_FUNC(false, "loadAmazonScene()");
 
   // Add noise
   double noise = 0.03;  // 3 cm, slighlty more than an inch
@@ -1355,8 +1357,8 @@ void BoltBaxter::loadAmazonScene(std::size_t indent)
     y_noise = visual_tools_[6]->dRand(-noise, noise);
     rotation_noise = visual_tools_[6]->dRand(-rnoise, rnoise);  // z axis
 
-    BOLT_INFO(true, "x_noise = " << x_noise << "; y_noise = " << y_noise << "; rotation_noise = " << rotation_noise
-                                 << ";");
+    BOLT_INFO(true, "loadAmazon() x_noise = " << x_noise << "; y_noise = " << y_noise << "; rotation_noise = " <<
+              rotation_noise << ";");
   }
 
   visual_tools_[6]->deleteAllMarkers();
@@ -1747,13 +1749,13 @@ std::string BoltBaxter::getPlannerFilePath(const std::string &planning_group_nam
   std::string file_name;
   if (is_bolt_)
   {
-    file_name = file_name + planner_lower_ + "_" + planning_group_name + "_" +
+    file_name = planner_lower_ + "_" + planning_group_name + "_" +
                 std::to_string(bolt_->getSparseCriteria()->sparseDeltaFraction_) + "_" +
                 load_database_version_;
   }
   else if (is_thunder_ || is_lightning_)
   {
-    file_name = file_name + planner_lower_ + "_" + planning_group_name;
+    file_name = planner_lower_ + "_" + planning_group_name;
   }
 
   std::string file_path;

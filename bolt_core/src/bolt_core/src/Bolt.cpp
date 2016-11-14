@@ -408,7 +408,6 @@ void Bolt::postProcessingThread(std::vector<geometric::PathGeometricPtr> queuedM
 
   // Remove all inserted paths from the queue
   queuedModelSolPaths.clear();
-  BOLT_INFO(true, "Done post processing (TODO: remove this message)");
 }
 
 bool Bolt::checkRepeatedStates(const og::PathGeometric &path, std::size_t indent)

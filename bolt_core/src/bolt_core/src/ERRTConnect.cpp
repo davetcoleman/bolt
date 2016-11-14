@@ -119,50 +119,30 @@ ompl::geometric::ERRTConnect::GrowState ompl::geometric::ERRTConnect::growTree(T
                                                                                Motion *randMotion)
 {
   std::size_t indent = 0;
-  BOLT_FUNC(true, "growTree()");
+  //BOLT_FUNC(true, "growTree()");
 
   /* find closest state in the tree */
   Motion *nearestMotion = tree->nearest(randMotion);
-  std::cout << "after NN nearest search ---- " << std::endl;
 
   /* assume we can reach the state we go towards */
   bool reach = true;
 
   /* find state to add */
   base::State *dstate = randMotion->state;
-  std::cout << "dstate ";
-  si_->getStateSpace()->printState(dstate);
-  std::cout << "nearMotion ";
-  si_->getStateSpace()->printState(nearestMotion->state);
-  std::cout << "randMotion ";
-  si_->getStateSpace()->printState(randMotion->state);
-  std::cout << "before check distance ";
   double d = si_->distance(nearestMotion->state, randMotion->state);
-  if (std::isinf(d))
-  {
-    std::cout << "DISTANCE IS INF " << std::endl;
-  }
   if (d > maxDistance_)
   {
-    std::cout << "maxDistance_: " << maxDistance_ << " d " << d << std::endl;
-    //si_->getStateSpace()->printState(treeGrowInfo.xstate);
     si_->getStateSpace()->interpolate(nearestMotion->state, // from
                                       randMotion->state, // to
                                       maxDistance_ / d, // time t
                                       treeGrowInfo.xstate); // output state
     dstate = treeGrowInfo.xstate;
-    si_->getStateSpace()->printState(dstate);
     reach = false;
   }
   // if we are in the start tree, we just check the motion like we normally do;
   // if we are in the goal tree, we need to check the motion in reverse, but checkMotion() assumes the first state it
   // receives as argument is valid,
   // so we check that one first
-  // std::cout << "before checkMotion " << std::endl;
-  // si_->getStateSpace()->printState(nearestMotion->state);
-  // std::cout << "dstate: " << std::endl;
-  // si_->getStateSpace()->printState(dstate);
-
   bool validMotion = treeGrowInfo.start ? si_->checkMotion(nearestMotion->state, dstate) :
                                           si_->getStateValidityChecker()->isValid(dstate) &&
                                               si_->checkMotion(dstate, nearestMotion->state);
@@ -273,8 +253,7 @@ ompl::base::PlannerStatus ompl::geometric::ERRTConnect::solve(const base::Planne
 
     /* sample state near either start or goal */
     sampleFromSparseGraph(randState, startTree, indent);
-    //si_->getStateSpace()->printState(randState);
-    //std::cout << "after sample from sparse graph " << std::endl;
+
     GrowState gs = growTree(tree, treeGrowInfo, randMotion);
 
     if (ptc)
@@ -401,7 +380,7 @@ void ompl::geometric::ERRTConnect::getPlannerData(base::PlannerData &data) const
 
 void ompl::geometric::ERRTConnect::loadSampler(base::State *start, base::State *goal, std::size_t indent)
 {
-  BOLT_FUNC(true, "loadSampler()");
+  //BOLT_FUNC(true, "loadSampler()");
 
   getNeighbors(start, startGraphNeighborhood_, indent);
   getNeighbors(goal, goalGraphNeighborhood_, indent);
@@ -411,14 +390,14 @@ void ompl::geometric::ERRTConnect::loadSampler(base::State *start, base::State *
   goalNeighborID_ = 0;
   totalSamples_ = 0;
 
-  BOLT_INFO(true, "Done loading sampler");
+  //BOLT_INFO(true, "Done loading sampler");
 }
 
 void ompl::geometric::ERRTConnect::getNeighbors(base::State *state,
                                                 std::vector<tools::bolt::SparseVertex> &graphNeighborhood,
                                                 std::size_t indent)
 {
-  BOLT_FUNC(true, "getNeighbors()");
+  //BOLT_FUNC(true, "getNeighbors()");
 
   graphNeighborhood.clear();
   std::size_t threadID = 3;  // TODO choose better!
@@ -431,25 +410,25 @@ void ompl::geometric::ERRTConnect::getNeighbors(base::State *state,
   sparseGraph_->getNN()->nearestK(sparseGraph_->getQueryVertices(threadID), kNearest, graphNeighborhood);
   sparseGraph_->getQueryStateNonConst(threadID) = nullptr;
 
-  BOLT_INFO(true, "Found " << graphNeighborhood.size() << " neighbors");
+  //BOLT_INFO(true, "Found " << graphNeighborhood.size() << " neighbors");
 }
 
 void ompl::geometric::ERRTConnect::sampleFromSparseGraph(base::State *randState, bool isStart, std::size_t indent)
 {
   bool verbose = true;
-  BOLT_FUNC(verbose, "sampleFromSparseGraph()");
+  //BOLT_FUNC(verbose, "sampleFromSparseGraph()");
   totalSamples_++;
 
   if (isStart)  // start
   {
     if (startNeighborID_ >= startGraphNeighborhood_.size() || totalSamples_ % 2 == 0)
     {
-      BOLT_FUNC(verbose, "Sampling start " << startNeighborID_ << " sampleUniform");
+      //BOLT_FUNC(verbose, "Sampling start " << startNeighborID_ << " sampleUniform");
       sampler_->sampleUniform(randState);
     }
     else
     {
-      BOLT_FUNC(verbose, "Sampling start " << startNeighborID_ << " getStateNonConst");
+      //BOLT_FUNC(verbose, "Sampling start " << startNeighborID_ << " getStateNonConst");
       // Copy from SparseGraph to pre-allocated randState
       si_->copyState(randState, sparseGraph_->getStateNonConst(startGraphNeighborhood_[startNeighborID_++]));
     }
@@ -458,20 +437,16 @@ void ompl::geometric::ERRTConnect::sampleFromSparseGraph(base::State *randState,
   {
     if (goalNeighborID_ >= goalGraphNeighborhood_.size() || totalSamples_ % 2 == 0)
     {
-      BOLT_FUNC(verbose, "Sampling goal " << goalNeighborID_ << " sampleUniform");
+      //BOLT_FUNC(verbose, "Sampling goal " << goalNeighborID_ << " sampleUniform");
       sampler_->sampleUniform(randState);
     }
     else
     {
-      BOLT_FUNC(verbose, "Sampling goal " << goalNeighborID_ << " getStateNonConst, vertex " << goalGraphNeighborhood_[goalNeighborID_]);
+      //BOLT_FUNC(verbose, "Sampling goal " << goalNeighborID_ << " getStateNonConst, vertex " << goalGraphNeighborhood_[goalNeighborID_]);
       // Copy from SparseGraph to pre-allocated randState
       si_->copyState(randState, sparseGraph_->getStateNonConst(goalGraphNeighborhood_[goalNeighborID_++]));
-      si_->getStateSpace()->printState(randState);
     }
   }
 
-  // visual_->viz6()->state(randState, tools::ROBOT, tools::BLUE);
-  // visual_->prompt("next");
-  // visual_->viz6()->triggerEvery(10);
-  BOLT_DEBUG(verbose, "Done sampling from SparseGraph");
+  //BOLT_DEBUG(verbose, "Done sampling from SparseGraph");
 }

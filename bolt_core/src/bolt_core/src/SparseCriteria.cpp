@@ -218,11 +218,11 @@ bool SparseCriteria::checkAddConnectivity(SparseCandidateData &candidateD, std::
     BOLT_DEBUG(vCriteria_, "NOT adding node for connectivity - disabled ");
     return false;
   }
-  if (!useFourthCriteria_)
-  {
-    BOLT_DEBUG(vCriteria_, "NOT adding node for connectivity - waiting until fourth criteria ");
-    return false;
-  }
+  // if (!useFourthCriteria_)
+  // {
+  //   BOLT_DEBUG(vCriteria_, "NOT adding node for connectivity - waiting until fourth criteria ");
+  //   return false;
+  // }
 
   // If less than 2 neighbors there is no way to find a pair of nodes in
   // different connected components
@@ -260,17 +260,21 @@ bool SparseCriteria::checkAddConnectivity(SparseCandidateData &candidateD, std::
         // Can they be connected directly?
         if (useDirectConnectivyCriteria_)
         {
-          if (si_->checkMotion(sg_->getState(v1), sg_->getState(v2)))
+          // Distance check to make sure still within SparseDelta
+          if (si_->distance(sg_->getState(v1), sg_->getState(v2)) < sparseDelta_)
           {
-            sg_->addEdge(v1, v2, eCONNECTIVITY, indent);
+            if (si_->checkMotion(sg_->getState(v1), sg_->getState(v2)))
+            {
+              sg_->addEdge(v1, v2, eCONNECTIVITY, indent);
+              BOLT_MAGENTA(true, "Added just an edge for CONNECTIVITY");
+              // We return true (state was used to improve graph) but we didn't actually use
+              // the state, so we must manually free the memory
+              si_->freeState(candidateD.state_);
 
-            // We return true (state was used to improve graph) but we didn't actually use
-            // the state, so we much manually free the memory
-            si_->freeState(candidateD.state_);
-
-            return true;
-          }
-        }
+              return true;
+            }
+          } // if distance less than sparseDelta
+        } // if criteria enabled
 
         // Add to potential list
         statesInDiffConnectedComponents.insert(v1);
@@ -290,9 +294,11 @@ bool SparseCriteria::checkAddConnectivity(SparseCandidateData &candidateD, std::
 
   // Add the node
   candidateD.newVertex_ = sg_->addVertex(candidateD.state_, CONNECTIVITY, indent);
+  BOLT_MAGENTA(true, "Adding node and some edges for CONNECTIVITY ");
 
   // Remove all edges from all vertices near our new vertex
-  sg_->clearEdgesNearVertex(candidateD.newVertex_, indent);
+  // TODO: re-enable
+  //sg_->clearEdgesNearVertex(candidateD.newVertex_, indent);
 
   // Check if there are really close vertices nearby which should be merged
   // This feature doesn't really do anything but slow things down
@@ -318,15 +324,14 @@ bool SparseCriteria::checkAddConnectivity(SparseCandidateData &candidateD, std::
     }
 
     // New vertex should not be connected to anything - there's no edge between the two states
+    // This check is probably completely redundant
     if (sg_->hasEdge(candidateD.newVertex_, *vertexIt))
     {
-      BOLT_DEBUG(vCriteria_, "The new vertex " << candidateD.newVertex_ << " is already connected to old "
-                                                                                       "vertex");
+      BOLT_DEBUG(vCriteria_, "The new vertex " << candidateD.newVertex_ << " is already connected to old vertex");
       continue;
     }
 
-    // The components haven't been united by previous edges created in this for
-    // loop
+    // The components haven't been united by previous edges created in this for loop
     if (!sg_->sameComponent(*vertexIt, candidateD.newVertex_, indent))
     {
       // Connect
@@ -357,18 +362,6 @@ bool SparseCriteria::checkAddInterface(SparseCandidateData &candidateD, std::siz
   if (!skipThis && !(candidateD.graphNeighborhood_[0] == v1 && candidateD.graphNeighborhood_[1] == v2))
   {
     BOLT_DEBUG(vCriteria_, "NOT adding because two closest nodes are not visible to each other");
-
-    // TEMP
-    if (vCriteria_)
-    {
-      visual_->viz1()->edge(sg_->getState(candidateD.graphNeighborhood_[0]), candidateD.state_, tools::SMALL,
-                            tools::BLUE);
-      visual_->viz1()->edge(sg_->getState(candidateD.graphNeighborhood_[1]), candidateD.state_, tools::SMALL,
-                            tools::BLUE);
-      visual_->viz1()->trigger();
-      usleep(0.001 * 1000000);
-    }
-
     return false;
   }
 
@@ -405,7 +398,8 @@ bool SparseCriteria::checkAddInterface(SparseCandidateData &candidateD, std::siz
   candidateD.newVertex_ = sg_->addVertex(candidateD.state_, INTERFACE, indent);
 
   // Remove all edges from all vertices near our new vertex
-  sg_->clearEdgesNearVertex(candidateD.newVertex_, indent);
+  // Removed because hurts speed of learning in Bolt2
+  //sg_->clearEdgesNearVertex(candidateD.newVertex_, indent);
 
   // Check if there are really close vertices nearby which should be merged
   // This feature doesn't really do anything but slow things down

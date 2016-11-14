@@ -111,6 +111,11 @@ public:
   void showStatus(std::size_t indent);
   void showNoQualityStatus(std::size_t indent);
 
+  /** \brief Add sample to SparseGraph
+   *  \return true if state was used, false if unused and memory needs to be freed
+   */
+  bool addSampleSimple(base::State *state, std::size_t indent);
+
   /**
    * \brief Get neighbors within sparseDelta radius
    * \param indent - debugging tool

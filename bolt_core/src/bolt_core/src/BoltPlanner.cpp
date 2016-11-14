@@ -390,7 +390,6 @@ bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
         assert(compoundSolution->getStateCount() >= 3);
 
         // Found a path
-        std::cout << "found a path " << std::endl;
         return true;
       }
       else
