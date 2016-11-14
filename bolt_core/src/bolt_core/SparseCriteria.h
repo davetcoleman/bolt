@@ -203,6 +203,11 @@ public:
     return numVerticesMoved_;
   }
 
+  std::size_t getNumInterfacesSkippedByLength()
+  {
+    return numInterfacesSkippedByLength_;
+  }
+
 protected:
   /** \brief Short name of this class */
   const std::string name_ = "SparseCriteria";
@@ -244,6 +249,7 @@ protected:
 
   /** \brief For statistics */
   std::size_t numVerticesMoved_ = 0;
+  std::size_t numInterfacesSkippedByLength_ = 0;
 
 public:
   /** \brief SPARS parameter for dense graph connection distance as a fraction of max. extent */

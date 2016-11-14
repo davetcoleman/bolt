@@ -161,9 +161,12 @@ public:
 
   void log(bool solved, std::size_t indent);
 
-  void processAndExecute(std::size_t indent);
+  void processAndExecute(robot_trajectory::RobotTrajectoryPtr execution_traj, std::size_t indent);
 
   void chooseStartGoalIK(std::size_t run_id, std::size_t indent);
+
+  void visualizeRawSolutionLine(std::size_t indent);
+  void visualizeSmoothSolutionLine(std::size_t indent);
 
   // --------------------------------------------------------
 

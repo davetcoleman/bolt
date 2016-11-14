@@ -445,7 +445,7 @@ public:
    * --------------------------------------------------------------------------------- */
 
   /** \brief Show in visualizer the task graph */
-  void displayDatabase(bool showVertices = false, std::size_t indent = 0);
+  void displayDatabase(bool showVertices, bool showEdges, std::size_t windowID, std::size_t indent);
 
   /** \brief Display in viewer */
   void visualizeVertex(TaskVertex v, std::size_t windowID = 2);

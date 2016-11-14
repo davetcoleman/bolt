@@ -189,6 +189,9 @@ public:
   /** \brief Sanity check for solution paths */
   bool checkRepeatedStates(const geometric::PathGeometric &path, std::size_t indent);
 
+  /** \brief Return true if a path can be solved between the first and last states of input path */
+  bool pathIsFullyConnected(geometric::PathGeometricPtr path, std::size_t indent);
+
   /** \brief Insert experiences into database */
   bool doPostProcessing(std::size_t indent);
 
@@ -196,7 +199,8 @@ public:
   void waitForPostProcessing(std::size_t indent);
 
   /** \brief Insert experiences into database in thread */
-  void postProcessingThread(std::vector<geometric::PathGeometricPtr> queuedModelSolPaths, std::size_t indent);
+  void postProcessingThread(std::vector<geometric::PathGeometricPtr> queuedModelSolPaths,
+                            std::vector<geometric::PathGeometricPtr> queuedModelRawPaths, std::size_t indent);
 
   /** \brief Set the database file to load. Actual loading occurs when setup() is called
    *  \param filePath - full absolute path to a experience database to load
@@ -321,6 +325,7 @@ protected:
 
   /** \brief Accumulated experiences to be later added to experience database - ModelBasedStateSpace*/
   std::vector<geometric::PathGeometricPtr> queuedModelSolPaths_;
+  std::vector<geometric::PathGeometricPtr> queuedModelRawPaths_;
 
   /** \brief Location to save logging file for benchmarks */
   std::string benchmarkFilePath_;
@@ -348,6 +353,8 @@ public:
 
   bool usePFSPlanner_ = false;
   bool useERRTConnect_ = true;
+
+  bool testForCompletePathLearning_ = true; // make sure a post-processed path is fully connected to graph
 };  // end of class Bolt
 
 }  // namespace bolt

@@ -1103,10 +1103,10 @@ void SparseGenerator::benchmarkMemoryAllocation(std::size_t indent)
   std::cout << std::endl;
 }
 
-ExperiencePathStats SparseGenerator::addExperiencePath(geometric::PathGeometricPtr path, std::size_t indent)
+ExperiencePathStats SparseGenerator::addExperiencePath(geometric::PathGeometricPtr path, double interpolateFrac, std::size_t indent)
 {
   BOLT_FUNC(true, "addExperiencePath() with " << path->getStateCount() << " states");
-  const std::size_t threadID = 0;
+  ExperiencePathStats stats;
 
   // Reset this class
   // clear();
@@ -1119,61 +1119,26 @@ ExperiencePathStats SparseGenerator::addExperiencePath(geometric::PathGeometricP
   // sparseCriteria_->vAddedReason_ = true;
   // sparseCriteria_->vCriteria_ = true;
   // sparseCriteria_->visualizeAttemptedStates_ = true;
-  sg_->visualizeSparseGraph_ = true;
-  sg_->vAdd_ = true;
+  // sg_->visualizeSparseGraph_ = true;
+  // sg_->vAdd_ = true;
 
   // Clear visuals if necesary
-  if (sg_->visualizeSparseGraph_)
+  // if (sg_->visualizeSparseGraph_)
+  // {
+  //   visual_->viz1()->deleteAllMarkers();
+  //   visual_->viz1()->trigger();
+  // }
+
+  // Display database
+  // sg_->displayDatabase(true, true, 6, indent);
+  // visual_->prompt("display database");
+
+  // Add path ---------------------------------------------
+  if (!addExperiencePathHelper(path, interpolateFrac, indent))
   {
-    visual_->viz1()->deleteAllMarkers();
-    visual_->viz1()->trigger();
+    BOLT_ERROR("Error adding path");
+    return stats;
   }
-
-
-  std::size_t segmentCount = path->length() / sparseCriteria_->getDenseDelta();
-  path->interpolate(segmentCount);
-  BOLT_INFO(true, "After interpolation has " << path->getStateCount() << " states");
-
-  std::vector<std::size_t> shuffledIDs;
-  for (std::size_t i = 1; i < path->getStateCount(); ++i)
-  {
-    shuffledIDs.push_back(i);
-  }                                                             // for each state in path
-  std::random_shuffle(shuffledIDs.begin(), shuffledIDs.end());  // using built-in random generator
-
-  // Insert vertices at random
-  base::State *candidateState;
-  bool usedState = true;  // flag indicating whether memory needs to be allocated again for candidateState
-
-  bool addEdges = true; // a mode for skipping adding edges when graph is first constructed
-  for (std::size_t i = 1; i < shuffledIDs.size(); ++i)
-  {
-    if (usedState)
-    {
-      candidateState = si_->allocState();
-      usedState = false;
-    }
-
-    // Copy the state so the graph can own it
-    si_->copyState(candidateState, path->getState(shuffledIDs[i]));
-
-    // Add to roadmap --------------------------------
-
-    // This is the faster version but does not use CONNECTIVITY or QUALITY criteria
-    //usedState = addSampleSparseCriteria(candidateState, addEdges, indent);
-
-    // This is the slower version but does have all criteria
-    usedState = addSampleSimple(candidateState, indent);
-
-    // visual_->viz6()->state(candidateState, tools::ROBOT, tools::BLUE);
-    // visual_->prompt("adding state");
-  }
-
-  // free state if necessary
-  if (!usedState)
-    si_->freeState(candidateState);
-
-  ExperiencePathStats stats;
 
   // TODO: get stats without having to save to file
   if (sg_->hasUnsavedChanges())
@@ -1189,6 +1154,64 @@ ExperiencePathStats SparseGenerator::addExperiencePath(geometric::PathGeometricP
   BOLT_INFO(true, "Finished adding experience path to SparseGraph");
 
   return stats;
+}
+
+bool SparseGenerator::addExperiencePathHelper(geometric::PathGeometricPtr path, double interpolateFrac, std::size_t indent)
+{
+  BOLT_FUNC(true, "addExperiencePath() with " << path->getStateCount() << " states and interpolation fraction " << interpolateFrac);
+  const std::size_t threadID = 0;
+
+  std::size_t segmentCount = path->length() / sparseCriteria_->getDenseDelta() * interpolateFrac;
+  path->interpolate(segmentCount);
+  BOLT_INFO(true, "After interpolation has " << path->getStateCount() << " states");
+
+  std::vector<std::size_t> shuffledIDs;
+  for (std::size_t i = 1; i < path->getStateCount() - 1; ++i)
+  {
+    shuffledIDs.push_back(i);
+  }                                                             // for each state in path
+  std::random_shuffle(shuffledIDs.begin(), shuffledIDs.end());  // using built-in random generator
+
+  shuffledIDs.insert(shuffledIDs.begin(), 0); // always process first and last, first
+  shuffledIDs.insert(shuffledIDs.begin(), path->getStateCount() - 1); // always process first and last, first
+
+  // Insert vertices at random
+  base::State *candidateState;
+  bool usedState = true;  // flag indicating whether memory needs to be allocated again for candidateState
+
+  const bool addEdges = true; // a mode for skipping adding edges when graph is first constructed
+  for (std::size_t i = 0; i < shuffledIDs.size(); ++i)
+  {
+    if (usedState)
+    {
+      candidateState = si_->allocState();
+      usedState = false;
+    }
+
+    // Copy the state so the graph can own it
+    si_->copyState(candidateState, path->getState(shuffledIDs[i]));
+
+    // Add to roadmap --------------------------------
+
+    // This is the faster version but does not use CONNECTIVITY or QUALITY criteria
+    usedState = addSampleSparseCriteria(candidateState, addEdges, indent);
+
+    // This is the slower version but does have all criteria
+    //usedState = addSampleSimple(candidateState, indent);
+
+    // Debug
+    if (visualizeSampling_)
+    {
+      visual_->viz6()->state(candidateState, tools::MEDIUM, tools::YELLOW);
+      visual_->viz6()->triggerEvery(2);
+    }
+  }
+
+  // free state if necessary
+  if (!usedState)
+    si_->freeState(candidateState);
+
+  return true;
 }
 
 void SparseGenerator::createSPARS2(std::size_t indent)
@@ -1313,8 +1336,8 @@ bool SparseGenerator::addSampleSparseCriteria(base::State *candidateState, bool 
     const SparseVertex &v2 = graphNeighborhood[i];
 
     // Visualize
-    if (visualizeSampling_)
-      visual_->viz6()->state(sg_->getState(v2), tools::MEDIUM, tools::ORANGE, 1);
+    // if (visualizeSampling_)
+    //   visual_->viz6()->state(sg_->getState(v2), tools::MEDIUM, tools::ORANGE, 1);
 
     // Check for visible nearby neighbor
     if (!si_->checkMotion(candidateState, sg_->getState(v2)))
@@ -1338,8 +1361,8 @@ bool SparseGenerator::addSampleSparseCriteria(base::State *candidateState, bool 
       return false;
 
     // Visualize
-    if (visualizeSampling_)
-      visual_->viz6()->edge(candidateState, sg_->getState(v2), tools::MEDIUM, tools::PINK);
+    // if (visualizeSampling_)
+    //   visual_->viz6()->edge(candidateState, sg_->getState(v2), tools::MEDIUM, tools::PINK);
 
     // The two are visible to each other!
     visibleNeighborhood.push_back(v2);
@@ -1362,16 +1385,16 @@ bool SparseGenerator::addSampleSparseCriteria(base::State *candidateState, bool 
   // Criteria 1: add guard (no nearby visibile nodes found *so far*)
   if (visibleNeighborhood.empty())
   {
-    graphNeighborhood.clear();  // reset input structure
-    graphNeighborhood.reserve(sg_->getNumVertices());
-
-    // Check *all* vertices this time
-    sg_->getQueryStateNonConst(THREAD_ID) = candidateState;
-    sg_->getNN()->nearestR(sg_->getQueryVertices(THREAD_ID), sparseDelta, graphNeighborhood);
-    sg_->getQueryStateNonConst(THREAD_ID) = nullptr;
-
     if (useLimitedRangeNN) // keep searching because there could be more
     {
+      graphNeighborhood.clear();  // reset input structure
+      graphNeighborhood.reserve(sg_->getNumVertices());
+
+      // Check *all* vertices this time
+      sg_->getQueryStateNonConst(THREAD_ID) = candidateState;
+      sg_->getNN()->nearestR(sg_->getQueryVertices(THREAD_ID), sparseDelta, graphNeighborhood);
+      sg_->getQueryStateNonConst(THREAD_ID) = nullptr;
+
       // Skip the first x because those were already collision checked
       for (std::size_t i = AVG_NEAREST_NODES_TO_VALID; i < graphNeighborhood.size(); ++i)
       {
@@ -1392,7 +1415,7 @@ bool SparseGenerator::addSampleSparseCriteria(base::State *candidateState, bool 
 
     if (visualizeSampling_)
     {
-      visual_->viz6()->state(candidateState, tools::ROBOT, tools::PINK, 1);
+      visual_->viz6()->state(candidateState, tools::MEDIUM, tools::BLACK, 1);
     }
 
     return true;
@@ -1418,7 +1441,6 @@ bool SparseGenerator::addSampleSparseCriteria(base::State *candidateState, bool 
     BOLT_DEBUG(vCriteria_, "Two closest two neighbors already share an edge, not connecting them");
 
     // Sampled state was not used - free it
-    // visual_->prompt("already share edge");
     return false;  // did not use memory of candidateState
   }
 
@@ -1439,9 +1461,8 @@ bool SparseGenerator::addSampleSparseCriteria(base::State *candidateState, bool 
 
     if (visualizeSampling_)
     {
-      visual_->viz6()->edge(sg_->getState(v1), sg_->getState(v2), tools::SMALL, tools::LIME_GREEN);
+      visual_->viz6()->edge(sg_->getState(v1), sg_->getState(v2), tools::MEDIUM, tools::BLUE);
       visual_->viz6()->trigger();
-      // visual_->prompt("directly added edge");
     }
 
     return false;  // did not use memory of candidateState
@@ -1456,11 +1477,10 @@ bool SparseGenerator::addSampleSparseCriteria(base::State *candidateState, bool 
 
   if (visualizeSampling_)
   {
-    visual_->viz6()->state(candidateState, tools::MEDIUM, tools::YELLOW, 1);
-    visual_->viz6()->edge(candidateState, sg_->getState(v1), tools::SMALL, tools::LIME_GREEN);
-    visual_->viz6()->edge(candidateState, sg_->getState(v2), tools::SMALL, tools::LIME_GREEN);
+    visual_->viz6()->state(candidateState, tools::MEDIUM, tools::BLUE, 1);
+    visual_->viz6()->edge(candidateState, sg_->getState(v1), tools::MEDIUM, tools::BLUE);
+    visual_->viz6()->edge(candidateState, sg_->getState(v2), tools::MEDIUM, tools::BLUE);
     visual_->viz6()->trigger();
-    // visual_->prompt("added node for interface");
   }
 
   return true;

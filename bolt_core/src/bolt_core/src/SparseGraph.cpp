@@ -864,7 +864,6 @@ SparseVertex SparseGraph::addVertex(base::State *state, const VertexType &type, 
   // Debugging
   // if (!sparseCriteria_->getDiscretizedSamplesInsertion())
   // throw Exception(name_, "Added vertex randomly");
-  // visual_->prompt("Added vertex randomly");
 
   return v;
 }
@@ -1026,7 +1025,7 @@ SparseEdge SparseGraph::addEdge(SparseVertex v1, SparseVertex v2, double weight,
   // Visualize
   if (visualizeSparseGraph_)
   {
-    visualizeEdge(e, type, /*windowID*/ 1);
+    visualizeEdge(e, type, /*windowID*/ 6);
     // visualizeEdge(e, type, /*windowID*/ 7);  // projection to 2D space
 
     if (visualizeSparseGraphSpeed_ > std::numeric_limits<double>::epsilon())
@@ -1167,16 +1166,14 @@ void SparseGraph::clearEdgesNearVertex(SparseVertex vertex, std::size_t indent)
   // Only display database if enabled
   if (visualizeSparseGraph_ && visualizeSparseGraphSpeed_ > std::numeric_limits<double>::epsilon())
   {
-    // visual_->prompt("before clear edge near vertex");
     displayDatabase(true, true, 1, indent);
-    // visual_->prompt("after clear edge near vertex");
   }
 #endif
 }
 
 void SparseGraph::displayDatabase(bool showVertices, bool showEdges, std::size_t windowID, std::size_t indent)
 {
-  BOLT_FUNC(vVisualize_, "displayDatabase() - Display Sparse Database in window " << windowID);
+  BOLT_FUNC(vVisualize_, "displayDatabase() - Display SparseGraph in window " << windowID);
 
   // Error check
   if (getNumVertices() == 0 && getNumEdges() == 0)
@@ -1186,7 +1183,7 @@ void SparseGraph::displayDatabase(bool showVertices, bool showEdges, std::size_t
   }
 
   // Clear previous visualization
-  visual_->viz(windowID)->deleteAllMarkers();
+  //visual_->viz(windowID)->deleteAllMarkers();
 
   // Edges
   if (visualizeDatabaseEdges_ && showEdges)
@@ -1261,21 +1258,21 @@ void SparseGraph::visualizeVertex(SparseVertex v, const VertexType &type)
                            sparseCriteria_->getSparseDelta());
 
   // Show vertex
-  visual_->viz1()->state(getState(v), vertexSize_, std::move(color), 0);
+  visual_->viz6()->state(getState(v), vertexSize_, std::move(color), 0);
 
   // Show robot arm
-  visual_->viz1()->state(getState(v), tools::ROBOT, tools::DEFAULT, 0);
+  //visual_->viz1()->state(getState(v), tools::ROBOT, tools::DEFAULT, 0);
 
-  if (visualizeProjection_)  // For joint-space robots: project to 2D space
-  {
-    // Show visibility region around vertex
-    if (visualizeDatabaseCoverage_ && sparseCriteria_)
-      visual_->viz7()->state(getState(v), tools::VARIABLE_SIZE, tools::TRANSLUCENT_LIGHT,
-                             sparseCriteria_->getSparseDelta() * 2.0);
+  // if (visualizeProjection_)  // For joint-space robots: project to 2D space
+  // {
+  //   // Show visibility region around vertex
+  //   if (visualizeDatabaseCoverage_ && sparseCriteria_)
+  //     visual_->viz7()->state(getState(v), tools::VARIABLE_SIZE, tools::TRANSLUCENT_LIGHT,
+  //                            sparseCriteria_->getSparseDelta() * 2.0);
 
-    // Show vertex
-    visual_->viz7()->state(getState(v), vertexSize_, color, 0);
-  }
+  //   // Show vertex
+  //   visual_->viz7()->state(getState(v), vertexSize_, color, 0);
+  // }
 }
 
 tools::VizColors SparseGraph::vertexTypeToColor(VertexType type)
@@ -1323,6 +1320,7 @@ void SparseGraph::visualizeEdge(SparseVertex v1, SparseVertex v2, EdgeType type,
 {
   // Visualize
   visual_->viz(windowID)->edge(getState(v1), getState(v2), edgeSize_, edgeTypeToColor(type));
+  //visual_->viz(windowID)->trigger();
 }
 
 #ifdef ENABLE_QUALITY

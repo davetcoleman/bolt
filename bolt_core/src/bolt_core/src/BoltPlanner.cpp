@@ -98,6 +98,8 @@ void BoltPlanner::clear(void)
   smoothedCompoundSolPath_.reset();
   smoothedModelSolPath_.reset();
   smoothedModelSolSegments_.clear();
+
+  maxAttempt_ = 0;
 }
 
 void BoltPlanner::setExperienceDB(const TaskGraphPtr &taskGraph)
@@ -118,7 +120,7 @@ void BoltPlanner::setup(void)
 base::PlannerStatus BoltPlanner::solve(Termination &ptc)
 {
   std::size_t indent = 0;
-  BOLT_FUNC(verbose_ || true, "solve()");
+  BOLT_FUNC(verbose_, "solve()");
 
   // Check if the database is empty
   if (taskGraph_->isEmpty())
@@ -131,78 +133,99 @@ base::PlannerStatus BoltPlanner::solve(Termination &ptc)
   pis_.restart();  // PlannerInputStates
 
   // Get a single start and goal state
-  // TODO: allocate this memory once for entire class
-  base::State *startState = modelSI_->getStateSpace()->cloneState(pis_.nextStart());  // PlannerInputStates
-  base::State *goalState = modelSI_->getStateSpace()->cloneState(pis_.nextGoal(ptc));
+  const base::State *start = pis_.nextStart();
+  const base::State *goal = pis_.nextGoal(ptc);
 
-  if (startState == nullptr)
+#ifndef NDEBUG
+  if (start == nullptr)
   {
     BOLT_ERROR("No start state found");
     return base::PlannerStatus::ABORT;
   }
-
-  if (goalState == nullptr)
+  if (goal == nullptr)
   {
     BOLT_ERROR("No goal state found");
     return base::PlannerStatus::ABORT;
   }
+#endif
+
+  if (!solve(start, goal, ptc, indent))
+  {
+    return base::PlannerStatus::ABORT;
+  }
+
+  // Save solution
+  double approximateDifference = -1;
+  bool approximate = false;
+  pdef_->addSolutionPath(origModelSolPath_, approximate, approximateDifference, getName());
+  bool solved = true;
+
+  BOLT_DEBUG(verbose_, "Finished BoltPlanner.solve()");
+  return base::PlannerStatus(solved, approximate);
+}
+
+bool BoltPlanner::solve(const base::State *start, const base::State *goal, Termination &ptc, std::size_t indent)
+{
+  BOLT_FUNC(verbose_, "solve()");
+
+  // TODO: allocate this memory once for entire class
+  base::State *startState = modelSI_->getStateSpace()->cloneState(start);  // PlannerInputStates
+  base::State *goalState = modelSI_->getStateSpace()->cloneState(goal);
 
   // Convert start and goal to compound states
   int level0 = 0;
-  int level2;
+  int level2 = 0;  // regular single-task planning
   if (taskGraph_->taskPlanningEnabled())
     level2 = 2;
-  else
-    level2 = 0;  // regular single-task planning
 
   // These compound states now own the startState/goalState
   base::CompoundState *startStateCompound = taskGraph_->createCompoundState(startState, level0, indent);
   base::CompoundState *goalStateCompound = taskGraph_->createCompoundState(goalState, level2, indent);
 
-  base::PlannerStatus result = solveThreadLayer(startStateCompound, goalStateCompound, ptc, indent);
+  bool result;
+  if (useSamplingThread_)
+    result = solveThreadLayer(startStateCompound, goalStateCompound, ptc, indent);
+  else
+    result = solve(startStateCompound, goalStateCompound, ptc, indent);
 
   // Free states
   compoundSI_->getStateSpace()->freeState(startStateCompound);
   compoundSI_->getStateSpace()->freeState(goalStateCompound);
 
+  if (!result)
+    BOLT_WARN(true, "solve() No solution found");
+
   return result;
 }
 
-base::PlannerStatus BoltPlanner::solveThreadLayer(base::CompoundState *startState, base::CompoundState *goalState,
-                                                  Termination &ptc, std::size_t indent)
+bool BoltPlanner::solveThreadLayer(base::CompoundState *startState, base::CompoundState *goalState, Termination &ptc,
+                                   std::size_t indent)
 {
   // Mark the solution as not found so the thread knows to continue
   solutionFound_ = false;
 
   // Create thread for sampling
-  std::thread sThread;
-  if (useSamplingThread_)
-  {
-    BOLT_INFO(true, "Using sampling thread");
-    sThread = std::thread([this, &startState, &goalState, &ptc, &indent]
-                          {
-                            samplingThread(startState, goalState, ptc, indent);
-                          });
-  }
+  BOLT_INFO(true, "Using sampling thread");
+  sThread_ = std::thread([this, &startState, &goalState, &ptc, &indent]
+                         {
+                           samplingThread(startState, goalState, ptc, indent);
+                         });
 
-  base::PlannerStatus result = solve(startState, goalState, ptc, indent);
+  bool result = solve(startState, goalState, ptc, indent);
 
+  // Ensure thread is ceased before exiting
   // Mark the solution as found so the thread knows to stop
   solutionFound_ = true;
 
-  // Ensure thread is ceased before exiting
-  if (useSamplingThread_)
-  {
-    BOLT_DEBUG(true, "Joining sampling thread");
-    if (sThread.joinable())
-      sThread.join();
-  }
+  BOLT_DEBUG(true, "Joining sampling thread");
+  if (sThread_.joinable())
+    sThread_.join();
 
   return result;
 }
 
-base::PlannerStatus BoltPlanner::solve(base::CompoundState *startState, base::CompoundState *goalState,
-                                       Termination &ptc, std::size_t indent)
+bool BoltPlanner::solve(base::CompoundState *startState, base::CompoundState *goalState, Termination &ptc,
+                        std::size_t indent)
 {
   // Create solution structure
   origCompoundSolPath_ = std::make_shared<og::PathGeometric>(compoundSI_);
@@ -210,30 +233,26 @@ base::PlannerStatus BoltPlanner::solve(base::CompoundState *startState, base::Co
   // Search
   if (!getPathOffGraph(startState, goalState, origCompoundSolPath_, ptc, indent))
   {
-    BOLT_WARN(!ptc, "BoltPlanner::solve() No near start or goal found");
-    return base::PlannerStatus::ABORT;  // The planner failed to find a solution
+    BOLT_WARN(!ptc, "solve() No path found through graph");
+    return false;  // The planner failed to find a solution
   }
-
-  // Mark the solution as found so the thread knows to stop
-  // Call early here, rather than just in parent function, to reduce wait time on thread join
-  solutionFound_ = true;
 
   BOLT_DEBUG(verbose_, "getPathOffGraph() found a solution of size " << origCompoundSolPath_->getStateCount());
 
   // All save trajectories should be at least 1 state long, then we append the start and goal states, for min of 3
-  assert(origCompoundSolPath_->getStateCount() >= 3);
+  BOLT_ASSERT(origCompoundSolPath_->getStateCount() >= 3, "Trajectory too short");
 
   // Convert orginal ModelBasedStateSpace
   origModelSolPath_ = taskGraph_->convertPathToNonCompound(origCompoundSolPath_);
 
-  if (terminationRequested(ptc)) // check PlannerTerminationCondition
-    return base::PlannerStatus::ABORT;  // The planner failed to find a solution
+  if (terminationRequested(ptc, indent))  // check PlannerTerminationCondition
+    return false;                         // The planner failed to find a solution
 
+  /*
   // Visualize
   if (visualizeRawTrajectory_)
     visualizeRaw(indent);
 
-  /*
   // Create new PathGeometric that we can modify by smoothing
   smoothedCompoundSolPath_ = std::make_shared<geometric::PathGeometric>(*origCompoundSolPath_);
 
@@ -252,26 +271,18 @@ base::PlannerStatus BoltPlanner::solve(base::CompoundState *startState, base::Co
     visualizeSmoothed(indent);
   */
 
-  // Save solution
-  double approximateDifference = -1;
-  bool approximate = false;
-  pdef_->addSolutionPath(origModelSolPath_, approximate, approximateDifference, getName());
-  bool solved = true;
-
-  BOLT_DEBUG(verbose_, "Finished BoltPlanner.solve()");
-  return base::PlannerStatus(solved, approximate);
+  return true;
 }
 
 bool BoltPlanner::getPathOffGraph(const base::CompoundState *start, const base::CompoundState *goal,
                                   og::PathGeometricPtr compoundSolution, Termination &ptc, std::size_t indent)
 {
-  BOLT_FUNC(verbose_, "getPathOffGraph()");
-
   // Attempt to connect to graph x times, because if it fails we start adding samples
   std::size_t attempt = 0;
-  while (true)
+  while (attempt < maxAttempt_ || maxAttempt_ == 0)
   {
-    BOLT_DEBUG(true, "Starting getPathOffGraph() attempt " << attempt++ << " ------------------------");
+    attempt++;
+    BOLT_DEBUG(verbose_, "getPathOffGraph() attempt " << attempt);
 
     // Get neighbors near start and goal. Note: potentially they are not *visible* - will test for this later
 
@@ -283,9 +294,9 @@ bool BoltPlanner::getPathOffGraph(const base::CompoundState *start, const base::
       BOLT_DEBUG(verbose_, "No graph neighbors found for start");
       return false;
     }
-    BOLT_DEBUG(verbose_, "Found " << startVertexCandidateNeighbors_.size() << " nodes near start");
+    // BOLT_DEBUG(verbose_, "Found " << startVertexCandidateNeighbors_.size() << " nodes near start");
 
-    if (terminationRequested(ptc)) // check PlannerTerminationCondition
+    if (terminationRequested(ptc, indent))  // check PlannerTerminationCondition
       return false;
 
     // Goal
@@ -298,7 +309,7 @@ bool BoltPlanner::getPathOffGraph(const base::CompoundState *start, const base::
     }
     BOLT_DEBUG(vNearestNeighbor_, "Found " << goalVertexCandidateNeighbors_.size() << " nodes near goal");
 
-    if (terminationRequested(ptc)) // check PlannerTerminationCondition
+    if (terminationRequested(ptc, indent))  // check PlannerTerminationCondition
       return false;
 
     // Get paths between start and goal
@@ -308,18 +319,21 @@ bool BoltPlanner::getPathOffGraph(const base::CompoundState *start, const base::
 
     // Error check
     if (result)
-      break;
+    {
+      // All save trajectories should be at least 1 state long, then we append the start and goal states, for min of 3
+      BOLT_ASSERT(compoundSolution->getStateCount() >= 3, "Compound solution has " << compoundSolution->getStateCount()
+                                                                                   << " states, should be at least 3");
 
-    if (terminationRequested(ptc)) // check PlannerTerminationCondition
+      return true;
+    }
+
+    if (terminationRequested(ptc, indent))  // check PlannerTerminationCondition
       return false;
 
     BOLT_WARN(verbose_, "getPathOffGraph(): BoltPlanner returned FALSE for getPathOnGraph(), attempt " << attempt);
   }
 
-  // All save trajectories should be at least 1 state long, then we append the start and goal states, for min of 3
-  BOLT_ASSERT(compoundSolution->getStateCount() >= 3, "Compound solution has " << compoundSolution->getStateCount() << " states, should be at least 3");
-
-  return true;
+  return false;
 }
 
 bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
@@ -335,7 +349,7 @@ bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
   // Try every combination of nearby start and goal pairs
   for (TaskVertex startVertex : candidateStarts)
   {
-    if (terminationRequested(ptc)) // check PlannerTerminationCondition
+    if (terminationRequested(ptc, indent))  // check PlannerTerminationCondition
       return false;
 
     // Check if this start is visible from the actual start
@@ -365,7 +379,7 @@ bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
       BOLT_DEBUG(verbose_, "getPathOnGraph() Planning from candidate start/goal pair "
                                << actualGoal << " to " << taskGraph_->getCompoundState(goalVertex));
 
-      if (terminationRequested(ptc))
+      if (terminationRequested(ptc, indent))
         return false;
 
       // visual_->viz6()->state(taskGraph_->getModelBasedState(goalVertex), tools::ROBOT, tools::LIME_GREEN, 1);
@@ -386,9 +400,6 @@ bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
       // Repeatidly search through graph for connection then check for collisions then repeat
       if (onGraphSearch(startVertex, goalVertex, actualStart, actualGoal, compoundSolution, ptc, indent + 2))
       {
-        // Shoule be at least 1 state long, then we append the start and goal states, for min of 3 states
-        assert(compoundSolution->getStateCount() >= 3);
-
         // Found a path
         return true;
       }
@@ -398,36 +409,51 @@ bool BoltPlanner::getPathOnGraph(const std::vector<TaskVertex> &candidateStarts,
         BOLT_DEBUG(verbose_, "getPathOnGraph() Did not find a path, looking for other start/goal combinations");
       }
     }  // foreach
-  }  // foreach
+  }    // foreach
 
-  //startSampling_ = true;
+  // startSampling_ = true;
 
+  static const std::size_t threadID = 0;
   if (foundValidStart && foundValidGoal)
   {
-    BOLT_WARN(verbose_, "getPathOnGraph() Both a valid start and goal were found but still no path found.");
+    BOLT_WARN(verbose_ || true, "getPathOnGraph() Both a valid start and goal were found but still no path found, "
+                                "sampling");
 
     // Re-attempt to connect both
-    // addSamples(taskGraph_->getModelBasedState(actualGoal), indent);
-    // addSamples(taskGraph_->getModelBasedState(actualStart), indent);
-    // addSamples(NULL, indent);  // do general sampling
+    if (!useSamplingThread_ && maxAttempt_ != 1)
+    {
+      static const std::size_t attempts = 100 / 3.0;
+      addSamples(taskGraph_->getModelBasedState(actualGoal), attempts, threadID, ptc, indent);
+      addSamples(taskGraph_->getModelBasedState(actualStart), attempts, threadID, ptc, indent);
+      addSamples(NULL, attempts, threadID, ptc, indent);  // do general sampling
+    }
   }
   else if (foundValidStart && !foundValidGoal)
   {
-    BOLT_WARN(verbose_, "getPathOnGraph() Unable to connect GOAL state to graph");
+    BOLT_WARN(verbose_ || true, "getPathOnGraph() Unable to connect GOAL state to graph, sampling");
 
-    //addSamples(taskGraph_->getModelBasedState(actualGoal), indent);
+    if (!useSamplingThread_ && maxAttempt_ != 1)
+    {
+      static const std::size_t attempts = 100;
+      addSamples(taskGraph_->getModelBasedState(actualGoal), attempts, threadID, ptc, indent);
+    }
   }
   else
   {
-    BOLT_WARN(verbose_, "getPathOnGraph() Unable to connect START state to graph");
+    BOLT_WARN(verbose_ || true, "getPathOnGraph() Unable to connect START state to graph, sampling");
 
-    //addSamples(taskGraph_->getModelBasedState(actualStart), indent);
+    if (!useSamplingThread_ && maxAttempt_ != 1)
+    {
+      static const std::size_t attempts = 100;
+      addSamples(taskGraph_->getModelBasedState(actualStart), attempts, threadID, ptc, indent);
+    }
   }
 
   // Feedback on growth of graph
   // BOLT_DEBUG(true, "SparseGraph edges: " << taskGraph_->getSparseGraph()->getNumEdges()
   //                                        << " vertices: " << taskGraph_->getSparseGraph()->getNumVertices());
-  // BOLT_DEBUG(true, "TaskGraph   edges: " << taskGraph_->getNumEdges() << " vertices: " << taskGraph_->getNumVertices());
+  // BOLT_DEBUG(true, "TaskGraph   edges: " << taskGraph_->getNumEdges() << " vertices: " <<
+  // taskGraph_->getNumVertices());
 
   return false;
 }
@@ -487,13 +513,13 @@ bool BoltPlanner::onGraphSearch(const TaskVertex &startVertex, const TaskVertex 
   // this is necessary for lazy collision checking i.e. rerun after marking invalid edges we found
   while (true)
   {
-    if (terminationRequested(ptc)) // check PlannerTerminationCondition
+    if (terminationRequested(ptc, indent))  // check PlannerTerminationCondition
       return false;
 
     // attempt to find a solution from start to goal
-    graphMutex_.lock();
+    // graphMutex_.lock();
     bool result = taskGraph_->astarSearch(startVertex, goalVertex, vertexPath, distance, indent);
-    graphMutex_.unlock();
+    // graphMutex_.unlock()
 
     if (!result)
     {
@@ -503,7 +529,7 @@ bool BoltPlanner::onGraphSearch(const TaskVertex &startVertex, const TaskVertex 
       return false;
     }
 
-    if (terminationRequested(ptc)) // check PlannerTerminationCondition
+    if (terminationRequested(ptc, indent))  // check PlannerTerminationCondition
       return false;
 
     // Check if all the points in the potential solution are valid
@@ -512,7 +538,7 @@ bool BoltPlanner::onGraphSearch(const TaskVertex &startVertex, const TaskVertex 
     {
       BOLT_DEBUG(verbose_, "Lazy collision check returned valid ");
 
-      if (terminationRequested(ptc)) // check PlannerTerminationCondition
+      if (terminationRequested(ptc, indent))  // check PlannerTerminationCondition
         return false;
 
       // the path is valid, we are done!
@@ -554,7 +580,7 @@ bool BoltPlanner::lazyCollisionCheck(std::vector<TaskVertex> &vertexPath, Termin
       const base::State *fromState = taskGraph_->getModelBasedState(fromVertex);
       const base::State *toState = taskGraph_->getModelBasedState(toVertex);
 
-      if (terminationRequested(ptc)) // check PlannerTerminationCondition
+      if (terminationRequested(ptc, indent))  // check PlannerTerminationCondition
         return false;
 
       bool result = modelSI_->getMotionValidator()->checkMotion(fromState, toState);
@@ -635,7 +661,7 @@ bool BoltPlanner::findGraphNeighbors(const base::CompoundState *state, std::vect
     taskGraph_->getNN()->nearestK(taskGraph_->getQueryVertices()[threadID], knearest, neighbors);
   taskGraph_->getCompoundQueryStateNonConst(taskGraph_->getQueryVertices()[threadID]) = nullptr;
 
-  if (terminationRequested(ptc)) // check PlannerTerminationCondition
+  if (terminationRequested(ptc, indent))  // check PlannerTerminationCondition
     return false;
 
   // Convert our list of neighbors to the proper level
@@ -1056,7 +1082,8 @@ void BoltPlanner::visualizeBadEdge(const base::State *modelFrom, const base::Sta
   visual_->prompt("collision on edge from viz4 to viz5");
 }
 
-void BoltPlanner::addSamples(const base::State *near, std::size_t threadID, std::size_t indent)
+void BoltPlanner::addSamples(const base::State *near, std::size_t attempts, std::size_t threadID, Termination &ptc,
+                             std::size_t indent)
 {
   BOLT_FUNC(verbose_, "addSamples()");
 
@@ -1065,14 +1092,16 @@ void BoltPlanner::addSamples(const base::State *near, std::size_t threadID, std:
   base::CompoundState *compoundState;
   bool usedState = true;  // flag indicating whether memory needs to be allocated again for compoundState
 
-  std::size_t numAttempts = 100;
-  // if (near)
-  //   numAttempts = 100; // use way less attempts when sampling near a state
-
-  for (std::size_t i = 0; i < numAttempts; ++i)
+  std::size_t attempt = 0;
+  std::size_t numTimesModifiedGraph = 0;
+  while (attempt < attempts || numTimesModifiedGraph == 0)
   {
-    if (solutionFound_) // check often so that thread does not hold up main process when solution found
-      break;;
+    BOLT_DEBUG(false, "addSamples() attempt: " << attempt << " out of " << attempts);
+
+    attempt++;
+    // check often so that thread does not hold up main process when solution found
+    if (solutionFound_ || terminationRequested(ptc, indent))  // check PlannerTerminationCondition
+      return;
 
     if (usedState)
     {
@@ -1085,7 +1114,7 @@ void BoltPlanner::addSamples(const base::State *near, std::size_t threadID, std:
 
     // const double magic_fraction = 0.05;  // TODO
     const double magic_fraction = 0.1;  // TODO
-    double distance = i / double(numAttempts) * magic_fraction * taskGraph_->getSparseGraph()->getSparseDelta();
+    double distance = attempt / double(attempts) * magic_fraction * taskGraph_->getSparseGraph()->getSparseDelta();
     // double fraction = std::max(0.5, i / double(numAttempts));
     // double distance = magic_fraction * taskGraph_->getSparseGraph()->getSparseDelta();
 
@@ -1106,8 +1135,9 @@ void BoltPlanner::addSamples(const base::State *near, std::size_t threadID, std:
       }
     }
 
-    if (solutionFound_) // check often so that thread does not hold up main process when solution found
-      break;;
+    // check often so that thread does not hold up main process when solution found
+    if (solutionFound_ || terminationRequested(ptc, indent))  // check PlannerTerminationCondition
+      break;                                                  // must break so memory can be freed
 
     // Visualize
     if (visualizeSampling_)
@@ -1122,7 +1152,7 @@ void BoltPlanner::addSamples(const base::State *near, std::size_t threadID, std:
     }
 
     // Add to TaskGraph if it obeys sparse properties
-    usedState = addSampleSparseCriteria(compoundState, threadID,indent);
+    numTimesModifiedGraph += addSampleSparseCriteria(compoundState, usedState, threadID, ptc, indent);
 
     if (visualizeSampling_)
     {
@@ -1130,12 +1160,15 @@ void BoltPlanner::addSamples(const base::State *near, std::size_t threadID, std:
     }
   }  // for each sample attempt
 
+  std::cout << "numTimesModifiedGraph: " << numTimesModifiedGraph << std::endl;
+
   // free state if necessary
   if (!usedState)
     compoundSI_->freeState(compoundState);
 }
 
-bool BoltPlanner::addSampleSparseCriteria(base::CompoundState *compoundState, std::size_t threadID, std::size_t indent)
+bool BoltPlanner::addSampleSparseCriteria(base::CompoundState *compoundState, bool &usedState, std::size_t threadID,
+                                          Termination &ptc, std::size_t indent)
 {
   BOLT_FUNC(vCriteria_, "addSampleSparseCriteria()");
 
@@ -1153,7 +1186,8 @@ bool BoltPlanner::addSampleSparseCriteria(base::CompoundState *compoundState, st
   taskGraph_->getNN()->nearestR(taskGraph_->getQueryVertices(threadID), sparseDelta, graphNeighborhood);
   taskGraph_->getQueryStateNonConst(threadID) = nullptr;
 
-  if (solutionFound_) // check often so that thread does not hold up main process when solution found
+  // check often so that thread does not hold up main process when solution found
+  if (solutionFound_ || terminationRequested(ptc, indent))  // check PlannerTerminationCondition
     return false;
 
   if (visualizeSampling_)
@@ -1183,7 +1217,8 @@ bool BoltPlanner::addSampleSparseCriteria(base::CompoundState *compoundState, st
       continue;
     }
 
-    if (solutionFound_) // check often so that thread does not hold up main process when solution found
+    // check often so that thread does not hold up main process when solution found
+    if (solutionFound_ || terminationRequested(ptc, indent))  // check PlannerTerminationCondition
       return false;
 
     // Visualize
@@ -1216,12 +1251,14 @@ bool BoltPlanner::addSampleSparseCriteria(base::CompoundState *compoundState, st
     // No free paths means we add for coverage
     BOLT_DEBUG(vCriteria_, "Adding node for COVERAGE ");
 
-    if (solutionFound_) // check often so that thread does not hold up main process when solution found
+    // check often so that thread does not hold up main process when solution found
+    if (solutionFound_ || terminationRequested(ptc, indent))  // check PlannerTerminationCondition
       return false;
 
-    graphMutex_.lock();
+    // graphMutex_.lock();
     taskGraph_->addVertex(compoundState, indent);
-    graphMutex_.unlock();
+    usedState = true;
+    // graphMutex_.unlock();
 
     if (visualizeSampling_)
     {
@@ -1229,15 +1266,14 @@ bool BoltPlanner::addSampleSparseCriteria(base::CompoundState *compoundState, st
       visual_->prompt("coverage");
     }
 
-    return true;
+    return true; // modified graph
   }
 
   // Criteria 2: determine if two closest visible nodes need connecting
   if (visibleNeighborhood.size() == 1)
   {
     BOLT_DEBUG(vCriteria_, "Not enough visibile neighbors (1)");
-    // visual_->prompt("not enough");
-    return false;  // did not use memory of compoundState
+    return false;
   }
 
   const SparseVertex &v1 = visibleNeighborhood[0];
@@ -1249,24 +1285,24 @@ bool BoltPlanner::addSampleSparseCriteria(base::CompoundState *compoundState, st
     BOLT_DEBUG(vCriteria_, "Two closest two neighbors already share an edge, not connecting them");
 
     // Sampled state was not used - free it
-    // visual_->prompt("already share edge");
-    return false;  // did not use memory of compoundState
+    return false;
   }
 
   // Don't add an interface edge if dist between the two verticies on graph are already the minimum in L1 space
   // if (!taskGraph_->checkPathLength(v1, v2, indent))
   // {
   //   visual_->prompt("checkPathLenght");
-  //   return false; // did not use memory of compoundState
+  //   return false;
   // }
 
-  if (solutionFound_) // check often so that thread does not hold up main process when solution found
+  // check often so that thread does not hold up main process when solution found
+  if (solutionFound_ || terminationRequested(ptc, indent))  // check PlannerTerminationCondition
     return false;
 
   // If they can be directly connected
   if (secondarySI_->checkMotion(taskGraph_->getModelBasedState(v1), taskGraph_->getModelBasedState(v2)))
   {
-    BOLT_DEBUG(vCriteria_ || true, "INTERFACE: directly connected nodes");
+    BOLT_DEBUG(vCriteria_, "INTERFACE: directly connected nodes");
 
     // Connect them
     taskGraph_->addEdge(v1, v2, indent);
@@ -1279,17 +1315,19 @@ bool BoltPlanner::addSampleSparseCriteria(base::CompoundState *compoundState, st
       // visual_->prompt("directly added edge");
     }
 
-    return false;  // did not use memory of compoundState
+    return true; // modified graph
   }
 
-  if (solutionFound_) // check often so that thread does not hold up main process when solution found
+  // check often so that thread does not hold up main process when solution found
+  if (solutionFound_ || terminationRequested(ptc, indent))  // check PlannerTerminationCondition
     return false;
 
   // They cannot be directly connected, so add the new node to the graph, to bridge the interface
-  BOLT_DEBUG(vCriteria_ || true, "INTERFACE2: Added new NODE and surrounding edges");
-  graphMutex_.lock();
+  BOLT_DEBUG(vCriteria_, "INTERFACE2: Added new NODE and surrounding edges");
+  // graphMutex_.lock();
   TaskVertex newVertex = taskGraph_->addVertex(compoundState, indent);
-  graphMutex_.unlock();
+  usedState = true;
+  // graphMutex_.unlock();
 
   taskGraph_->addEdge(newVertex, v1, indent);
   taskGraph_->addEdge(newVertex, v2, indent);
@@ -1303,7 +1341,7 @@ bool BoltPlanner::addSampleSparseCriteria(base::CompoundState *compoundState, st
     // visual_->prompt("added node for interface");
   }
 
-  return true;
+  return true; // modified graph
 }
 
 void BoltPlanner::visualizeRaw(std::size_t indent)
@@ -1338,29 +1376,31 @@ void BoltPlanner::visualizeSmoothed(std::size_t indent)
     visual_->prompt("after visualization");
 }
 
-void BoltPlanner::samplingThread(const base::CompoundState *start, const base::CompoundState *goal, Termination &ptc, std::size_t indent)
+void BoltPlanner::samplingThread(const base::CompoundState *start, const base::CompoundState *goal, Termination &ptc,
+                                 std::size_t indent)
 {
   BOLT_FUNC(true, "samplingThread()");
 
-  std::size_t threadID = 1; // TODO: dynamically assign this
+  std::size_t threadID = 1;  // TODO: dynamically assign this
+  std::size_t attempts = 100;
 
   while (!solutionFound_ && !ptc)
   {
     BOLT_INFO(true, "Searching around goal");
-    addSamples(taskGraph_->getModelBasedState(goal), threadID, indent); // sample around goal
+    addSamples(taskGraph_->getModelBasedState(goal), attempts, threadID, ptc, indent);  // sample around goal
 
-    if (solutionFound_ && !ptc) // check often so that thread does not hold up main process when solution found
+    if (solutionFound_ && !ptc)  // check often so that thread does not hold up main process when solution found
       break;
 
     BOLT_INFO(true, "Searching around start");
-    addSamples(taskGraph_->getModelBasedState(start), threadID, indent); // sample around start
+    addSamples(taskGraph_->getModelBasedState(start), attempts, threadID, ptc, indent);  // sample around start
 
-    if (solutionFound_ && !ptc) // check often so that thread does not hold up main process when solution found
+    if (solutionFound_ && !ptc)  // check often so that thread does not hold up main process when solution found
       break;
 
     BOLT_INFO(true, "Searching around all");
-    addSamples(NULL, threadID, indent);  // do general sampling
-  } // while search is running
+    addSamples(NULL, attempts, threadID, ptc, indent);  // do general sampling
+  }                                                     // while search is running
 
   BOLT_INFO(true, "Sampling thread finished");
 }

@@ -823,7 +823,7 @@ bool BoltBaxter::runProblems(std::size_t indent)
 
   }  // for each penetration distance
 
-  // Add last experience to database
+  // Add last experience to database if any remaining
   if (post_processing_)
     doPostProcessing(indent);
 
@@ -834,6 +834,13 @@ bool BoltBaxter::runProblems(std::size_t indent)
     thunder_->saveIfChanged();
   else if (is_lightning_)
     lightning_->saveIfChanged();
+
+  // Extra debug info
+  if (is_bolt_)
+  {
+    std::cout << "numInterfacesSkippedByLength: " << bolt_->getSparseCriteria()->getNumInterfacesSkippedByLength()
+              << std::endl;
+  }
 
   return true;
 }
@@ -888,13 +895,31 @@ bool BoltBaxter::plan(std::size_t indent)
   if (!result)
     return false;
 
+  // Visualize pre-smoothing
+  visualizeRawSolutionLine(indent);
+
   // Simplify
   if (visualize_interpolated_traj_ || connect_to_hardware_ || post_processing_)
     simple_setup_->simplifySolution();
 
+  // Visualize post-smoothing
+  visualizeSmoothSolutionLine(indent);
+
+  robot_trajectory::RobotTrajectoryPtr execution_traj;
+
+  // Interpolate and parameterize
+  // if (is_bolt_)
+  // {
+  //   execution_traj = processSegments(indent);
+  // }
+  // else  // RRTConnect, etc
+  // {
+  execution_traj = processSimpleSolution(indent);
+  //}
+
   // Interpolate, parameterize, and execute/visualize
   //if (visualize_interpolated_traj_ || connect_to_hardware_)
-  processAndExecute(indent);
+  processAndExecute(execution_traj, indent);
 
   return true;
 }
@@ -1330,11 +1355,11 @@ void BoltBaxter::loadOfficeScene(std::size_t indent)
   const double table_height = -0.75 * baxter_torso_height_;
   visual_tools_[6]->publishCollisionFloor(baxter_torso_height_ + 0.001, "floor", rvt::TRANSLUCENT_DARK);
   visual_tools_[6]->publishCollisionWall(/*x*/ -1.0, /*y*/ 0.0, /*z*/ baxter_torso_height_, /*angle*/ 0,
-                                         /*width*/ 2, /*height*/ 2.0, "wall1", rvt::YELLOW);
+                                         /*width*/ 2, /*height*/ 2.0, "wall1", rvt::TRANSLUCENT_LIGHT);
   visual_tools_[6]->publishCollisionWall(/*x*/ 0.0, /*y*/ -1.075, /*z*/ baxter_torso_height_, /*angle*/ M_PI / 2.0,
-                                         /*width*/ 2, /*height*/ 2.0, "wall2", rvt::YELLOW);
+                                         /*width*/ 2, /*height*/ 2.0, "wall2", rvt::TRANSLUCENT_LIGHT);
   visual_tools_[6]->publishCollisionWall(/*x*/ 0.0, /*y*/ 1.075, /*z*/ baxter_torso_height_, /*angle*/ M_PI / 2.0,
-                                         /*width*/ 2, /*height*/ 2.0, "wall3", rvt::YELLOW);
+                                         /*width*/ 2, /*height*/ 2.0, "wall3", rvt::TRANSLUCENT_LIGHT);
   visual_tools_[6]->publishCollisionTable(/*x*/ 0.85, /*y*/ 0.0, /*z*/ baxter_torso_height_, /*angle*/ 0,
                                           /*width*/ 2.0, /*height*/ table_height, /*depth*/ 0.8, "table",
                                           rvt::DARK_GREY);
@@ -1543,11 +1568,6 @@ robot_trajectory::RobotTrajectoryPtr BoltBaxter::processSimpleSolution(std::size
 
   last_plan_path_length_ = path.length();
 
-  // Have additional visualizations that mimmic those in BoltPlanner
-  visual_->viz6()->deleteAllMarkers();
-  visual_->viz6()->path(&path, ot::MEDIUM, ot::BLACK, ot::BLUE);
-  visual_->viz6()->trigger();
-
   // Convert trajectory from OMPL to MoveIt! format
   robot_trajectory::RobotTrajectoryPtr trajectory;
   const double speed = 0.025;
@@ -1557,16 +1577,14 @@ robot_trajectory::RobotTrajectoryPtr BoltBaxter::processSimpleSolution(std::size
     return false;
   }
 
-  double velocity_scaling_factor = velocity_scaling_factor_;
-
   // Interpolate and parameterize
-  ros::Time start_time0 = ros::Time::now();  // Benchmark runtime
-  const bool use_interpolation = false;
-
   if (connect_to_hardware_)  // if running on hardware, add accel/vel
+  {
+    const double velocity_scaling_factor = velocity_scaling_factor_;
+    const bool use_interpolation = true;
     planning_interface_->convertRobotStatesToTraj(trajectory, planning_jmg_, velocity_scaling_factor,
                                                   use_interpolation);
-
+  }
   return trajectory;
 }
 
@@ -1802,8 +1820,11 @@ void BoltBaxter::loadSPARS2Data(std::size_t indent)
 
   // Mimmic bolt method for calculating
   ompl::tools::bolt::SparseFormula formulas;
+  static bool verboseOnce = true;
   formulas.calc(si_, stretchFactor_, sparseDeltaFraction_, penetrationOverlapFraction_, nearSamplePointsMultiple_,
-                useL2Norm_, indent);
+                useL2Norm_, verboseOnce, indent);
+  if (verboseOnce)
+    verboseOnce = false; // only show this once
 
   spars2_->setSparseDeltaFraction(sparseDeltaFraction_);
   spars2_->setDenseDeltaFraction(denseDeltaFraction_);
@@ -1876,20 +1897,8 @@ void BoltBaxter::log(bool solved, std::size_t indent)
   logging_file_.flush();
 }
 
-void BoltBaxter::processAndExecute(std::size_t indent)
+void BoltBaxter::processAndExecute(robot_trajectory::RobotTrajectoryPtr execution_traj, std::size_t indent)
 {
-  robot_trajectory::RobotTrajectoryPtr execution_traj;
-
-  // Interpolate and parameterize
-  // if (is_bolt_)
-  // {
-  //   execution_traj = processSegments(indent);
-  // }
-  // else  // RRTConnect, etc
-  // {
-  execution_traj = processSimpleSolution(indent);
-  //}
-
   // Execute
   if (connect_to_hardware_)
   {
@@ -1937,6 +1946,21 @@ void BoltBaxter::chooseStartGoalIK(std::size_t run_id, std::size_t indent)
   poses.push_back(right_gripper);
   poses.push_back(left_gripper);
   imarker_goal_->setFromPoses(poses, planning_jmg_);
+}
+
+void BoltBaxter::visualizeRawSolutionLine(std::size_t indent)
+{
+  og::PathGeometric &path = static_cast<og::PathGeometric &>(*simple_setup_->getProblemDefinition()->getSolutionPath());
+  visual_->viz6()->deleteAllMarkers();
+  visual_->viz6()->path(&path, ot::MEDIUM, ot::BLUE, ot::CYAN);
+  visual_->viz6()->trigger();
+}
+
+void BoltBaxter::visualizeSmoothSolutionLine(std::size_t indent)
+{
+  og::PathGeometric &path = static_cast<og::PathGeometric &>(*simple_setup_->getProblemDefinition()->getSolutionPath());
+  visual_->viz6()->path(&path, ot::SMALL, ot::GREEN, ot::LIME_GREEN);
+  visual_->viz6()->trigger();
 }
 
 }  // namespace bolt_baxter

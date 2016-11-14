@@ -1439,7 +1439,7 @@ Visualization Manager:
         - Attached Body Color: 150; 50; 150
           Class: moveit_rviz_plugin/RobotState
           Collision Enabled: false
-          Enabled: true
+          Enabled: false
           Links:
             All Links Enabled: true
             Expand Joint Details: false
@@ -1712,9 +1712,9 @@ Visualization Manager:
           Robot State Topic: /baxter/robot_state6
           Show All Links: true
           Show Highlights: true
-          Value: true
+          Value: false
           Visual Enabled: true
-      Enabled: true
+      Enabled: false
       Name: State 1to6
     - Class: rviz/Group
       Displays:
@@ -1765,13 +1765,14 @@ Visualization Manager:
           Namespaces:
             Arrow: true
             Cylinder: true
+            Sphere: true
             path_spheres: true
           Queue Size: 100
           Value: true
       Enabled: true
       Name: Markers 1to6
     - Class: moveit_rviz_plugin/Trajectory
-      Enabled: true
+      Enabled: false
       Interrupt Display: true
       Links:
         All Links Enabled: true
@@ -2048,7 +2049,7 @@ Visualization Manager:
       Show Trail: false
       State Display Time: REALTIME
       Trajectory Topic: /baxter/display_trajectory
-      Value: true
+      Value: false
     - Class: moveit_rviz_plugin/PlanningScene
       Enabled: true
       Move Group Namespace: ""
@@ -2637,7 +2638,7 @@ Visualization Manager:
           Collision Enabled: false
           Enabled: true
           Links:
-            All Links Enabled: true
+            All Links Enabled: false
             Expand Joint Details: false
             Expand Link Details: false
             Expand Tree: false
@@ -2650,17 +2651,17 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: true
+              Value: false
             collision_head_link_2:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: true
+              Value: false
             display:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: true
+              Value: false
             dummyhead1:
               Alpha: 1
               Show Axes: false
@@ -2669,7 +2670,7 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: true
+              Value: false
             head_camera:
               Alpha: 1
               Show Axes: false
@@ -2772,7 +2773,7 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: true
+              Value: false
             left_wrist:
               Alpha: 1
               Show Axes: false
@@ -2782,7 +2783,7 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: true
+              Value: false
             right_arm_itb:
               Alpha: 1
               Show Axes: false
@@ -2881,7 +2882,7 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: true
+              Value: false
             right_wrist:
               Alpha: 1
               Show Axes: false
@@ -2891,19 +2892,19 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: true
+              Value: false
             sonar_ring:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: true
+              Value: false
             torso:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: true
+              Value: false
           Name: Goal
-          Robot Alpha: 1
+          Robot Alpha: 0.25
           Robot Description: /baxter/robot_description
           Robot State Topic: /baxter/imarker_goal_state
           Show All Links: true
@@ -3258,24 +3259,24 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 2.92518139
+      Distance: 1.43070865
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.119903803
-        Y: 0.0154609531
-        Z: -1.35600567e-06
+        X: 0.640681148
+        Y: -0.13758713
+        Z: -1.19954348e-06
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 1.12479699
+      Pitch: 0.90979743
       Target Frame: robot_table_link
       Value: XYOrbit (rviz)
-      Yaw: 3.23902607
+      Yaw: 3.08901763
     Saved: ~
 Window Geometry:
   Displays:

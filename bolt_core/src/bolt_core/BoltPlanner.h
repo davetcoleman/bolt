@@ -45,6 +45,7 @@
 
 // C++
 #include <mutex>
+#include <thread>
 
 namespace ompl
 {
@@ -89,13 +90,14 @@ public:
   /** \brief Main entry function for finding a path plan */
   virtual base::PlannerStatus solve(Termination &ptc);
 
+  bool solve(const base::State *start, const base::State *goal, Termination &ptc, std::size_t indent);
+
   /** \brief Allow safe thread handling in this function */
-  base::PlannerStatus solveThreadLayer(base::CompoundState *startState, base::CompoundState *goalState,
-                                       Termination &ptc, std::size_t indent);
+  bool solveThreadLayer(base::CompoundState *startState, base::CompoundState *goalState, Termination &ptc,
+                        std::size_t indent);
 
   /** \brief Solving after converting states to compound state space */
-  base::PlannerStatus solve(base::CompoundState *startState, base::CompoundState *goalState, Termination &ptc,
-                            std::size_t indent);
+  bool solve(base::CompoundState *startState, base::CompoundState *goalState, Termination &ptc, std::size_t indent);
 
   /** \brief Clear memory */
   virtual void clear(void);
@@ -119,10 +121,10 @@ public:
    * \param start
    * \param goal
    * \param compoundSolution - the resulting path
-   * \return
    */
   bool getPathOffGraph(const base::CompoundState *start, const base::CompoundState *goal,
-                       geometric::PathGeometricPtr compoundSolution, Termination &ptc, std::size_t indent);
+                       geometric::PathGeometricPtr compoundSolution, Termination &ptc,
+                       std::size_t indent);
 
   /** \brief Clear verticies not on the specified level */
   bool removeVerticesNotOnLevel(std::vector<bolt::TaskVertex> &neighbors, int level);
@@ -146,8 +148,8 @@ public:
    * \param requiredLevel - if -1, allows states from all levels, otherwise only returns states from a certain level
    * \return false is no neighbors found
    */
-  bool findGraphNeighbors(const base::CompoundState *state, std::vector<bolt::TaskVertex> &neighbors,
-                          int requiredLevel, Termination &ptc, std::size_t indent);
+  bool findGraphNeighbors(const base::CompoundState *state, std::vector<bolt::TaskVertex> &neighbors, int requiredLevel,
+                          Termination &ptc, std::size_t indent);
 
   /** \brief Check if there exists a solution, i.e., there exists a pair of milestones such that the
    *   first is in \e start and the second is in \e goal, and the two milestones are in the same
@@ -182,14 +184,17 @@ public:
    * \brief Add samples to the taskGraph if no solution is found because of obstacles
    * \param near - ModelBasedStateSpace, or NULL if you don't want to sample near the start or goal
    */
-  void addSamples(const base::State *near, std::size_t threadID, std::size_t indent);
+  void addSamples(const base::State *near, std::size_t attempts, std::size_t threadID, Termination &ptc,
+                  std::size_t indent);
 
   /**
    * \brief After a valid sample is found, determine if it should be added to the graph based on SPARS criteria
    * \param state - ModelBasedStateSpace - a newly sampled joint state
-   * \param bool - return true if state was added to graph, false if memory can be re-used
+   * \param usedState - true if the memory is in use and should not be freed
+   * \return true if a state or edge was added
    */
-  bool addSampleSparseCriteria(base::CompoundState *compoundState, std::size_t threadID, std::size_t indent);
+  bool addSampleSparseCriteria(base::CompoundState *compoundState, bool &usedState, std::size_t threadID, Termination &ptc,
+                               std::size_t indent);
 
   TaskGraphPtr getTaskGraph()
   {
@@ -225,16 +230,16 @@ public:
   void visualizeRaw(std::size_t indent);
   void visualizeSmoothed(std::size_t indent);
 
-  void samplingThread(const base::CompoundState *start, const base::CompoundState *goal, Termination &ptc, std::size_t indent);
+  void samplingThread(const base::CompoundState *start, const base::CompoundState *goal, Termination &ptc,
+                      std::size_t indent);
 
   void setSecondarySI(base::SpaceInformationPtr secondarySI)
   {
     secondarySI_ = secondarySI;
   }
 
-  inline bool terminationRequested(Termination &ptc)
+  inline bool terminationRequested(Termination &ptc, std::size_t &indent)
   {
-    const std::size_t indent = 0;
     if (ptc)  // Check if our planner is out of time
     {
       BOLT_DEBUG(verbose_, "interrupted because termination condition is true.");
@@ -242,7 +247,6 @@ public:
     }
     return false;
   }
-
 
 private:
   /** \brief This is included in parent class, but mentioned here. Use modelSI_ instead to reduce confusion   */
@@ -298,6 +302,8 @@ protected:
   /** \brief Mutex to guard access to the graph */
   mutable std::mutex graphMutex_;
 
+  std::thread sThread_;
+
 public:
   /** \brief Optionally smooth retrieved and repaired paths from database */
   bool smoothingEnabled_ = true;
@@ -327,6 +333,9 @@ public:
   int numStartGoalStatesAddedToTask_ = 0;
 
   bool useSamplingThread_ = false;
+
+  // Number of times to retry planning
+  std::size_t maxAttempt_ = 0;  // unlimited
 };
 }  // namespace bolt
 }  // namespace tools

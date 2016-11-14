@@ -1206,19 +1206,19 @@ bool TaskGraph::hasEdge(TaskVertex v1, TaskVertex v2)
   return boost::edge(v1, v2, g_).second;
 }
 
-void TaskGraph::displayDatabase(bool showVertices, std::size_t indent)
+void TaskGraph::displayDatabase(bool showVertices, bool showEdges, std::size_t windowID, std::size_t indent)
 {
-  BOLT_FUNC(vVisualize_, "displayDatabase()");
+  BOLT_FUNC(vVisualize_, "displayDatabase() - Display TaskGraph in window " << windowID);
 
   // Error check
-  if (getNumVertices() == 0 || getNumEdges() == 0)
+  if (getNumVertices() == 0 && getNumEdges() == 0)
   {
-    OMPL_WARN("Unable to show database because no vertices/edges available");
+    OMPL_WARN("Unable to show database because no vertices and no edges available");
     return;
   }
 
   // Clear previous visualization
-  visual_->viz2()->deleteAllMarkers();
+  //visual_->viz(windowID)->deleteAllMarkers();
 
   const std::size_t MIN_FEEDBACK = 10000;
   if (visualizeDatabaseEdges_)
@@ -1234,13 +1234,13 @@ void TaskGraph::displayDatabase(bool showVertices, std::size_t indent)
     foreach (TaskEdge e, boost::edges(g_))
     {
       // Visualize
-      visualizeEdge(e);
+      visualizeEdge(e, windowID);
 
       // Prevent viz cache from getting too big
       if (count % debugFrequency == 0)
       {
         std::cout << static_cast<int>((static_cast<double>(count + 1) / getNumEdges()) * 100.0) << "% " << std::flush;
-        visual_->viz2()->trigger();
+        visual_->viz(windowID)->trigger();
         usleep(0.01 * 1000000);
       }
 
@@ -1279,14 +1279,14 @@ void TaskGraph::displayDatabase(bool showVertices, std::size_t indent)
       }
 
       // Visualize
-      visualizeVertex(v);
+      visualizeVertex(v, windowID);
 
       // Prevent viz cache from getting too big
       if (count % debugFrequency == 0)
       {
         std::cout << static_cast<int>((static_cast<double>(count + 1) / getNumVertices()) * 100.0) << "% "
                   << std::flush;
-        visual_->viz2()->trigger();
+        visual_->viz(windowID)->trigger();
         // usleep(0.01 * 1000000);
       }
       count++;
@@ -1294,7 +1294,7 @@ void TaskGraph::displayDatabase(bool showVertices, std::size_t indent)
   }
 
   // Publish remaining edges
-  visual_->viz2()->trigger();
+  visual_->viz(windowID)->trigger();
   usleep(0.001 * 1000000);
 }
 
@@ -1309,15 +1309,15 @@ void TaskGraph::visualizeVertex(TaskVertex v, std::size_t windowID)
   {
     case 0:
       color = tools::BLUE;
-      size = tools::LARGE;
+      size = tools::MEDIUM;
       break;
     case 1:
       color = tools::RED;
-      size = tools::LARGE;
+      size = tools::MEDIUM;
       break;
     case 2:
       color = tools::LIME_GREEN;
-      size = tools::LARGE;
+      size = tools::MEDIUM;
       break;
     default:
       throw Exception(name_, "Unknown vertex levle");
@@ -1346,7 +1346,7 @@ void TaskGraph::visualizeEdge(TaskVertex v1, TaskVertex v2, std::size_t windowID
   ompl::tools::VizColors color = DEFAULT;
 
   if (level1 == 0 && level2 == 0)
-    color = BLUE;
+    color = CYAN;
   else if (level1 == 1 && level2 == 1)
     color = RED;
   else if (level1 == 2 && level2 == 2)
@@ -1357,7 +1357,7 @@ void TaskGraph::visualizeEdge(TaskVertex v1, TaskVertex v2, std::size_t windowID
     OMPL_ERROR("Unknown task level combination");
 
   // Visualize
-  visual_->viz(windowID)->edge(getModelBasedState(v1), getModelBasedState(v2), ompl::tools::MEDIUM, color);
+  visual_->viz(windowID)->edge(getModelBasedState(v1), getModelBasedState(v2), ompl::tools::SMALL, color);
 }
 
 void TaskGraph::debugState(const ompl::base::CompoundState *state)

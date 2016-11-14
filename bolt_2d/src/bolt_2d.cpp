@@ -311,8 +311,11 @@ public:
     // Mimmic bolt method for calculating
     ompl::tools::bolt::SparseFormula formulas;
     std::size_t indent = 0;
+    static bool verboseOnce = true;
     formulas.calc(si_, stretchFactor_, sparseDeltaFraction_, penetrationOverlapFraction_, nearSamplePointsMultiple_,
-                  useL2Norm_, indent);
+                  useL2Norm_, verboseOnce, indent);
+    if (verboseOnce)
+      verboseOnce = false; // only show this once
 
     sparse_two_->setSparseDeltaFraction(sparseDeltaFraction_);
     sparse_two_->setDenseDeltaFraction(denseDeltaFraction_);

@@ -3,19 +3,19 @@
 bolt_baxter:
   # WINDOW 1
   # ---------------------------------------
-  # planners: [BoltERRTConnect]
-  # load_database_version: np
-  # penetration_start: -0.05
-  # log_file_name: log_bolterrtconnectnp.csv
-  # num_problems: 50
+  planners: [BoltERRTConnect]
+  load_database_version: np
+  penetration_start: 0.15
+  log_file_name: log_bolterrtconnectnp.csv
+  num_problems: 50
 
   # WINDOW 2
   # ---------------------------------------
-  planners: [BoltRRTConnect]
-  load_database_version: np
-  penetration_start: -0.05
-  log_file_name: log_boltrrtconnectnp.csv
-  num_problems: 50
+  # planners: [BoltRRTConnect]
+  # load_database_version: np
+  # penetration_start: -0.05
+  # log_file_name: log_boltrrtconnectnp.csv
+  # num_problems: 50
 
   # WINDOW 3
   # ---------------------------------------
@@ -128,7 +128,7 @@ sparse_generator:
     verbose: true
     guarantees: true # show data about the optimiality guarantees verification
   visualize:
-    sampling: false
+    sampling: true
 
 # ====================================================
 sparse_criteria:
@@ -136,7 +136,7 @@ sparse_criteria:
   #sparse_delta_fraction: 0.45
   sparse_delta_fraction: 1.0
   #sparse_delta_fraction: 0.5
-  sparse_delta_fraction_secondary: 0.1
+  sparse_delta_fraction_secondary: 0.05
   penetration_overlap_fraction: 0.01
   near_sample_points_multiple: 2 # multiply this times number of dimensions
 # VAR4
@@ -155,7 +155,7 @@ sparse_criteria:
   verbose:
     added_reason: false # debug criteria for adding vertices & edges
     criteria: false # all criteria except 4th (quality)
-    quality: false # 4th criteria
+    quality: true # 4th criteria
     quality_max_spanner: false
     remove_close: false
   visualize:
@@ -173,12 +173,12 @@ sparse_graph:
   super_debug: false # run more checks and tests that slow down speed
   obstacle_clearance: 0.0 #0.0035 # max before gripper piece is in collision
   verbose:
-    add: false # debug when addVertex() and addEdge() are called
+    add: true # debug when addVertex() and addEdge() are called
     search: false
-    visualize: true
+    visualize: false
   visualize:
     sparse_graph: false
-    sparse_graph_speed: 0.000001 # if 0, does not animate but only single image draw
+    sparse_graph_speed: 0 #0.000001 # if 0, does not animate but only single image draw
     database_vertices: true # must have sparse_graph enabled
     database_edges: true # must have sparse_graph enabled
     database_coverage: false # the grey circles around vertices, must have sparse_graph enabled

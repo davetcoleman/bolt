@@ -221,15 +221,15 @@ void MoveItVizWindow::path(ompl::geometric::PathGeometric* path, ompl::tools::Vi
   switch (type)
   {
     case ompl::tools::SMALL:  // Basic line with vertiices
-      publish3DPath(geometric_path, visuals_->intToRvizColor(edgeColor), rvt::XSMALL);
+      publish3DPath(geometric_path, visuals_->intToRvizColor(edgeColor), rvt::XXSMALL);
       publishSpheres(geometric_path, visuals_->intToRvizColor(vertexColor), rvt::SMALL);
       break;
     case ompl::tools::MEDIUM:  // Basic line with vertiices
-      publish3DPath(geometric_path, visuals_->intToRvizColor(edgeColor), rvt::SMALL);
+      publish3DPath(geometric_path, visuals_->intToRvizColor(edgeColor), rvt::XSMALL);
       publishSpheres(geometric_path, visuals_->intToRvizColor(vertexColor), rvt::MEDIUM);
       break;
     case ompl::tools::LARGE:  // Basic line with vertiices
-      publish3DPath(geometric_path, visuals_->intToRvizColor(edgeColor), rvt::MEDIUM);
+      publish3DPath(geometric_path, visuals_->intToRvizColor(edgeColor), rvt::SMALL);
       publishSpheres(geometric_path, visuals_->intToRvizColor(vertexColor), rvt::LARGE);
       break;
     case ompl::tools::ROBOT:  // Playback motion for real robot

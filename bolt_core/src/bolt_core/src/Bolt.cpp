@@ -348,6 +348,7 @@ void Bolt::processResults(std::size_t indent)
 
       // Queue the solution path for future insertion into experience database (post-processing)
       queuedModelSolPaths_.push_back(solutionPath);
+      queuedModelRawPaths_.push_back(boltPlanner_->getOrigModelSolPath());
     }
     break;
     default:
@@ -372,13 +373,19 @@ bool Bolt::doPostProcessing(std::size_t indent)
 
   // Copy queues paths into thread-safe vector
   std::vector<geometric::PathGeometricPtr> threadQueuedModelSolPaths;
-  for (geometric::PathGeometricPtr queuedSolutionPath : queuedModelSolPaths_)
-    threadQueuedModelSolPaths.push_back(queuedSolutionPath);
+  std::vector<geometric::PathGeometricPtr> threadQueuedModelRawPaths;
+  for (std::size_t i = 0; i < queuedModelSolPaths_.size(); ++i)
+  {
+    threadQueuedModelSolPaths.push_back(queuedModelSolPaths_[i]);
+    threadQueuedModelRawPaths.push_back(queuedModelRawPaths_[i]);
+  }
+
   queuedModelSolPaths_.clear();
+  queuedModelRawPaths_.clear();
 
   // Start thread
   //ppThread_ = std::thread(std::bind(&Bolt::postProcessingThread, this, threadQueuedModelSolPaths, indent));
-  postProcessingThread(threadQueuedModelSolPaths, indent);
+  postProcessingThread(threadQueuedModelSolPaths, threadQueuedModelRawPaths, indent);
 
   return true;
 }
@@ -392,18 +399,71 @@ void Bolt::waitForPostProcessing(std::size_t indent)
   }
 }
 
-void Bolt::postProcessingThread(std::vector<geometric::PathGeometricPtr> queuedModelSolPaths, std::size_t indent)
+void Bolt::postProcessingThread(std::vector<geometric::PathGeometricPtr> queuedModelSolPaths,
+                                std::vector<geometric::PathGeometricPtr> queuedModelRawPaths, std::size_t indent)
 {
   BOLT_FUNC(true, "postProcessingThread() adding " << queuedModelSolPaths.size());
+
+  if (queuedModelSolPaths.size() != queuedModelRawPaths.size())
+    BOLT_ERROR("Mismatching queued vectors of paths");
 
   if (queuedModelSolPaths.size() > 1)
     BOLT_WARN(true, "Normally only post-process one state!");
 
-  for (geometric::PathGeometricPtr queuedSolutionPath : queuedModelSolPaths)
+  for (std::size_t i = 0; i < queuedModelSolPaths.size(); ++i)
   {
-    ExperiencePathStats postProcessingResults = sparseGenerator_->addExperiencePath(queuedSolutionPath, indent);
-    postProcessingResults_.numVerticesAdded_ += postProcessingResults.numVerticesAdded_;
-    postProcessingResults_.numEdgesAdded_ += postProcessingResults.numEdgesAdded_;
+    geometric::PathGeometricPtr queuedSolPath = queuedModelSolPaths[i];
+    geometric::PathGeometricPtr queuedRawPath = queuedModelRawPaths[i];
+
+    // TODO: this is assuming we aren't using a queue
+    // Save the last path before smoothing, deep copy
+    std::cout << "path2.getStateCount(): " << queuedRawPath->getStateCount() << std::endl;
+    visual_->viz6()->deleteAllMarkers();
+    visual_->viz6()->path(queuedRawPath.get(), ot::MEDIUM, ot::BROWN, ot::PURPLE);
+    visual_->viz6()->trigger();
+    visual_->prompt("path orig");
+
+    // keep inserting same path until connectivity is reached
+    double interpolateFrac = 1.0;
+    while (true)
+    {
+      ExperiencePathStats postProcessingResults = sparseGenerator_->addExperiencePath(queuedSolPath, interpolateFrac, indent);
+      postProcessingResults_.numVerticesAdded_ += postProcessingResults.numVerticesAdded_;
+      postProcessingResults_.numEdgesAdded_ += postProcessingResults.numEdgesAdded_;
+
+      if (!testForCompletePathLearning_)
+          break; // ignore incomplete experience learning
+
+      // Check that fully connected graph has been achieved
+      if (pathIsFullyConnected(queuedSolPath, indent))
+        break;
+
+      // Add the original path
+      visual_->prompt("before add original");
+
+      visual_->viz6()->deleteAllMarkers();
+      visual_->viz6()->path(queuedRawPath.get(), ot::MEDIUM, ot::BROWN, ot::PINK);
+      visual_->viz6()->trigger();
+      visual_->prompt("path orig");
+
+      postProcessingResults = sparseGenerator_->addExperiencePath(queuedRawPath, interpolateFrac, indent);
+      postProcessingResults_.numVerticesAdded_ += postProcessingResults.numVerticesAdded_;
+      postProcessingResults_.numEdgesAdded_ += postProcessingResults.numEdgesAdded_;
+      visual_->prompt("after add original");
+
+      // Increase interpolation to help connect graph
+      interpolateFrac += 0.1;
+
+      // Limit how many attempts before giving up
+      if (queuedSolPath->getStateCount() > 1000 || interpolateFrac > 2.0)
+      {
+        visual_->prompt("giving up on connecting path");
+        break;
+      }
+
+      // Re-smooth to help connect graph
+      psk_->simplifyMax(*queuedSolPath);
+    }
   }
 
   // Remove all inserted paths from the queue
@@ -425,6 +485,41 @@ bool Bolt::checkRepeatedStates(const og::PathGeometric &path, std::size_t indent
       return false;
     }
   }
+  return true;
+}
+
+bool Bolt::pathIsFullyConnected(geometric::PathGeometricPtr path, std::size_t indent)
+{
+  BOLT_FUNC(true, "pathIsFullyConnected()");
+
+  // Check if path has been fully connected
+  const base::State* start = path->getState(0);
+  const base::State* goal = path->getState(path->getStateCount() - 1);
+
+  taskGraph_->generateMonoLevelTaskSpace(indent);
+  //taskGraph_->displayDatabase(true, true, 6, indent);
+
+  ob::PlannerTerminationCondition ptc = ob::timedPlannerTerminationCondition(60, 0.1);
+  boltPlanner_->maxAttempt_ = 1;
+  bool result = boltPlanner_->solve(start, goal, ptc, indent);
+  boltPlanner_->maxAttempt_ = 0; // set back to unlimited attempts
+
+  // Visualize
+  if (result)
+  {
+    og::PathGeometric &path2 = static_cast<og::PathGeometric &>(*boltPlanner_->getOrigModelSolPath());
+    visual_->viz6()->state(start, tools::LARGE, tools::RED, 0);
+    visual_->viz6()->state(goal, tools::LARGE, tools::GREEN, 0);
+    visual_->viz6()->path(&path2, ot::MEDIUM, ot::BROWN, ot::ORANGE);
+    visual_->viz6()->trigger();
+  }
+  else // error
+  {
+    BOLT_ERROR("pathIsFullyConnected() No path found through experience graph");
+    return false;
+  }
+
+  BOLT_INFO(true, "pathIsFullyConnected() Path verified");
   return true;
 }
 
