@@ -99,7 +99,7 @@ public:
 
   bool runProblems(std::size_t indent);
 
-  bool plan(std::size_t indent);
+  bool plan(std::size_t run_id, std::size_t indent);
 
   /** \brief Create multiple dummy cartesian paths */
   bool generateCartGraph(std::size_t indent);
@@ -163,7 +163,7 @@ public:
 
   void processAndExecute(robot_trajectory::RobotTrajectoryPtr execution_traj, std::size_t indent);
 
-  void chooseStartGoalIK(std::size_t run_id, std::size_t indent);
+  void chooseGoalIK(std::size_t run_id, std::size_t indent);
 
   void visualizeRawSolutionLine(std::size_t indent);
   void visualizeSmoothSolutionLine(std::size_t indent);

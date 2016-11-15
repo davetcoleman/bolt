@@ -1203,9 +1203,10 @@ bool SparseGenerator::addExperiencePathHelper(geometric::PathGeometricPtr path, 
     if (visualizeSampling_)
     {
       visual_->viz6()->state(candidateState, tools::MEDIUM, tools::YELLOW);
-      visual_->viz6()->triggerEvery(2);
+      visual_->viz6()->triggerEvery(50);
     }
   }
+  visual_->viz6()->trigger();
 
   // free state if necessary
   if (!usedState)
@@ -1462,7 +1463,6 @@ bool SparseGenerator::addSampleSparseCriteria(base::State *candidateState, bool 
     if (visualizeSampling_)
     {
       visual_->viz6()->edge(sg_->getState(v1), sg_->getState(v2), tools::MEDIUM, tools::BLUE);
-      visual_->viz6()->trigger();
     }
 
     return false;  // did not use memory of candidateState
@@ -1480,7 +1480,6 @@ bool SparseGenerator::addSampleSparseCriteria(base::State *candidateState, bool 
     visual_->viz6()->state(candidateState, tools::MEDIUM, tools::BLUE, 1);
     visual_->viz6()->edge(candidateState, sg_->getState(v1), tools::MEDIUM, tools::BLUE);
     visual_->viz6()->edge(candidateState, sg_->getState(v2), tools::MEDIUM, tools::BLUE);
-    visual_->viz6()->trigger();
   }
 
   return true;

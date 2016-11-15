@@ -57,6 +57,7 @@
 #include <ompl/geometric/planners/prm/LazyPRM.h>
 #include <ompl/geometric/planners/est/BiEST.h>
 #include <ompl/geometric/planners/pdst/PDST.h>
+#include <ompl/base/goals/GoalStates.h>
 
 // this package
 #include <bolt_baxter/bolt_baxter.h>
@@ -387,6 +388,8 @@ bool BoltBaxter::loadOMPL(std::size_t indent)
     {
       bolt_->usePFSPlanner_ = true;
       bolt_->useERRTConnect_ = true;
+      // bolt_->usePFSPlanner_ = false;
+      // bolt_->useERRTConnect_ = false;
     }
     else
       BOLT_ERROR("Unknown bolt type " << planner_);
@@ -742,18 +745,6 @@ bool BoltBaxter::runProblems(std::size_t indent)
       BOLT_INFO(true, "Planning " << run_id + 1 << " out of " << num_problems_);
       std::cout << "***************************************************************" << std::endl;
 
-      // Generate start/goal pair
-      while (!chooseStartGoal(run_id, indent))
-      {
-        BOLT_WARN(true, "Invalid start/goal found, trying again");
-
-        // Move the shelf
-        loadAmazonScene(indent);
-        visual_tools_[6]->triggerPlanningSceneUpdate();
-        ros::spinOnce();
-        ros::Duration(1.0).sleep();  // TODO this makes no sense why i need to add this
-      }
-
       // Track memory usage
       double vm1, rss1;
       if (track_memory_consumption_)
@@ -786,7 +777,7 @@ bool BoltBaxter::runProblems(std::size_t indent)
 
       // -----------------------------------------------------
       // -----------------------------------------------------
-      bool solved = plan(indent);
+      bool solved = plan(run_id, indent);
       // -----------------------------------------------------
       // -----------------------------------------------------
 
@@ -845,7 +836,7 @@ bool BoltBaxter::runProblems(std::size_t indent)
   return true;
 }
 
-bool BoltBaxter::plan(std::size_t indent)
+bool BoltBaxter::plan(std::size_t run_id, std::size_t indent)
 {
   BOLT_FUNC(true, "plan()");
 
@@ -861,12 +852,20 @@ bool BoltBaxter::plan(std::size_t indent)
   else
     simple_setup_->clear();
 
-  // Convert MoveIt state to OMPL state
-  space_->copyToOMPLState(ompl_start_, *moveit_start_);
-  space_->copyToOMPLState(ompl_goal_, *moveit_goal_);
+  // Generate start/goal pairs
+  while (!chooseStartGoal(run_id, indent))
+  {
+    BOLT_WARN(true, "Invalid start/goal found, trying again");
+
+    // Move the shelf
+    loadAmazonScene(indent);
+    visual_tools_[6]->triggerPlanningSceneUpdate();
+    ros::spinOnce();
+    ros::Duration(1.0).sleep();  // TODO this makes no sense why i need to add this
+  }
 
   // Set the start and goal states
-  simple_setup_->setStartAndGoalStates(ompl_start_, ompl_goal_);
+  simple_setup_->addStartState(ompl_start_);
 
   // Solve -----------------------------------------------------------
 
@@ -896,14 +895,16 @@ bool BoltBaxter::plan(std::size_t indent)
     return false;
 
   // Visualize pre-smoothing
-  visualizeRawSolutionLine(indent);
+  if (visualize_interpolated_traj_)
+    visualizeRawSolutionLine(indent);
 
   // Simplify
   if (visualize_interpolated_traj_ || connect_to_hardware_ || post_processing_)
     simple_setup_->simplifySolution();
 
   // Visualize post-smoothing
-  visualizeSmoothSolutionLine(indent);
+  if (visualize_interpolated_traj_)
+    visualizeSmoothSolutionLine(indent);
 
   robot_trajectory::RobotTrajectoryPtr execution_traj;
 
@@ -918,8 +919,8 @@ bool BoltBaxter::plan(std::size_t indent)
   //}
 
   // Interpolate, parameterize, and execute/visualize
-  //if (visualize_interpolated_traj_ || connect_to_hardware_)
-  processAndExecute(execution_traj, indent);
+  if (visualize_interpolated_traj_ || connect_to_hardware_)
+    processAndExecute(execution_traj, indent);
 
   return true;
 }
@@ -1711,7 +1712,7 @@ bool BoltBaxter::chooseStartGoal(std::size_t run_id, std::size_t indent)
       imarker_start_->setRobotState(imarker_start_states_[start_state_id_]);
 
       // choose goal
-      chooseStartGoalIK(run_id, indent);
+      chooseGoalIK(run_id, indent);
       break;
     default:
       BOLT_ERROR("Unknown problem type");
@@ -1732,6 +1733,10 @@ bool BoltBaxter::chooseStartGoal(std::size_t run_id, std::size_t indent)
   // Copy imarkers to start and goal state
   *moveit_start_ = *(imarker_start_->getRobotState());
   *moveit_goal_ = *(imarker_goal_->getRobotState());
+
+  // Convert MoveIt state to OMPL state
+  space_->copyToOMPLState(ompl_start_, *moveit_start_);
+  space_->copyToOMPLState(ompl_goal_, *moveit_goal_);
 
   if (!imarker_start_->isStateValid(true))
   {
@@ -1915,7 +1920,7 @@ void BoltBaxter::processAndExecute(robot_trajectory::RobotTrajectoryPtr executio
   }
 }
 
-void BoltBaxter::chooseStartGoalIK(std::size_t run_id, std::size_t indent)
+void BoltBaxter::chooseGoalIK(std::size_t run_id, std::size_t indent)
 {
   const double half_shelf_depth = -0.44;     // brings arrows to edge of shelf in x direction
   const double horizontal_distance = 0.275;  // left and right cubbys
@@ -1945,7 +1950,20 @@ void BoltBaxter::chooseStartGoalIK(std::size_t run_id, std::size_t indent)
   EigenSTL::vector_Affine3d poses;
   poses.push_back(right_gripper);
   poses.push_back(left_gripper);
-  imarker_goal_->setFromPoses(poses, planning_jmg_);
+
+  std::shared_ptr<ompl::base::GoalStates> goals = std::make_shared<ompl::base::GoalStates>(si_);
+  for (std::size_t i = 0; i < 10; ++i)
+  {
+    // Randomize so we get different pose
+    // TODO: discretize instead of random, but that is more work...
+    imarker_goal_->getRobotStateNonConst()->setToRandomPositions(planning_jmg_);
+    imarker_goal_->setFromPoses(poses, planning_jmg_);
+
+    space_->copyToOMPLState(ompl_goal_, *imarker_goal_->getRobotState());
+    goals->addState(ompl_goal_); // this command clones the state / does not own our memory
+  }
+  ompl::base::GoalPtr goal = std::dynamic_pointer_cast<ompl::base::Goal>(goals);
+  simple_setup_->setGoal(goals);
 }
 
 void BoltBaxter::visualizeRawSolutionLine(std::size_t indent)

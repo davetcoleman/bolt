@@ -81,31 +81,16 @@ public:
 
   virtual ~BoltPlanner(void);
 
-  /** \brief Wrapper function to show good user feedback while smoothing a path */
-  bool simplifyNonTaskPath(geometric::PathGeometricPtr path, Termination &ptc, std::size_t indent);
-
-  /** \brief Simplify a multi-modal path for different task levels */
-  bool simplifyTaskPath(geometric::PathGeometricPtr compoundPath, Termination &ptc, std::size_t indent);
-
-  /** \brief Main entry function for finding a path plan */
-  virtual base::PlannerStatus solve(Termination &ptc);
-
-  bool solve(const base::State *start, const base::State *goal, Termination &ptc, std::size_t indent);
-
-  /** \brief Allow safe thread handling in this function */
-  bool solveThreadLayer(base::CompoundState *startState, base::CompoundState *goalState, Termination &ptc,
-                        std::size_t indent);
-
-  /** \brief Solving after converting states to compound state space */
-  bool solve(base::CompoundState *startState, base::CompoundState *goalState, Termination &ptc, std::size_t indent);
-
   /** \brief Clear memory */
   virtual void clear(void);
 
   /**
    * \brief Pass a pointer of the database from the bolt framework
    */
-  void setExperienceDB(const TaskGraphPtr &taskGraph);
+  void setExperienceDB(const TaskGraphPtr &taskGraph)
+  {
+    taskGraph_ = taskGraph;
+  }
 
   /** \brief Setup function */
   virtual void setup(void);
@@ -116,6 +101,21 @@ public:
     smoothingEnabled_ = enable;
   }
 
+  /** \brief Wrapper function to show good user feedback while smoothing a path */
+  bool simplifyNonTaskPath(geometric::PathGeometricPtr path, Termination &ptc, std::size_t indent);
+
+  /** \brief Simplify a multi-modal path for different task levels */
+  bool simplifyTaskPath(geometric::PathGeometricPtr compoundPath, Termination &ptc, std::size_t indent);
+
+  /** \brief Main entry function for finding a path plan */
+  virtual base::PlannerStatus solve(Termination &ptc);
+  bool solve(const base::State *start, const base::State *goal, Termination &ptc, std::size_t indent);
+
+  bool solveMultiAttempt(Termination &ptc, std::size_t indent);
+  bool solveMultiGoal(std::size_t attempt, std::size_t maxAttempts, Termination &ptc, std::size_t indent);
+  bool solveSingleGoal(const base::State *start, const base::State *goal, std::size_t attempt, std::size_t maxAttempts,
+                       Termination &ptc, std::size_t indent);
+
   /**
    * \brief Search the roadmap for the best path close to the given start and goal states that is valid
    * \param start
@@ -123,8 +123,8 @@ public:
    * \param compoundSolution - the resulting path
    */
   bool getPathOffGraph(const base::CompoundState *start, const base::CompoundState *goal,
-                       geometric::PathGeometricPtr compoundSolution, Termination &ptc,
-                       std::size_t indent);
+                       geometric::PathGeometricPtr compoundSolution, std::size_t attempt, std::size_t maxAttempts,
+                       Termination &ptc, std::size_t indent);
 
   /** \brief Clear verticies not on the specified level */
   bool removeVerticesNotOnLevel(std::vector<bolt::TaskVertex> &neighbors, int level);
@@ -149,7 +149,7 @@ public:
    * \return false is no neighbors found
    */
   bool findGraphNeighbors(const base::CompoundState *state, std::vector<bolt::TaskVertex> &neighbors, int requiredLevel,
-                          Termination &ptc, std::size_t indent);
+                          std::size_t attempt, std::size_t maxAttempts, Termination &ptc, std::size_t indent);
 
   /** \brief Check if there exists a solution, i.e., there exists a pair of milestones such that the
    *   first is in \e start and the second is in \e goal, and the two milestones are in the same
@@ -193,8 +193,8 @@ public:
    * \param usedState - true if the memory is in use and should not be freed
    * \return true if a state or edge was added
    */
-  bool addSampleSparseCriteria(base::CompoundState *compoundState, bool &usedState, std::size_t threadID, Termination &ptc,
-                               std::size_t indent);
+  bool addSampleSparseCriteria(base::CompoundState *compoundState, bool &usedState, std::size_t threadID,
+                               Termination &ptc, std::size_t indent);
 
   TaskGraphPtr getTaskGraph()
   {

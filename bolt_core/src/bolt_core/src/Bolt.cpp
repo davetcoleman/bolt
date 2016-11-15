@@ -347,8 +347,9 @@ void Bolt::processResults(std::size_t indent)
       BOLT_ASSERT(solutionPath->getStateCount() >= 2, "Solution is less than 2 states long");
 
       // Queue the solution path for future insertion into experience database (post-processing)
+      geometric::PathGeometricPtr rawPath = std::make_shared<geometric::PathGeometric>(*solutionPath);
       queuedModelSolPaths_.push_back(solutionPath);
-      queuedModelRawPaths_.push_back(boltPlanner_->getOrigModelSolPath());
+      queuedModelRawPaths_.push_back(rawPath);
     }
     break;
     default:
@@ -415,14 +416,6 @@ void Bolt::postProcessingThread(std::vector<geometric::PathGeometricPtr> queuedM
     geometric::PathGeometricPtr queuedSolPath = queuedModelSolPaths[i];
     geometric::PathGeometricPtr queuedRawPath = queuedModelRawPaths[i];
 
-    // TODO: this is assuming we aren't using a queue
-    // Save the last path before smoothing, deep copy
-    std::cout << "path2.getStateCount(): " << queuedRawPath->getStateCount() << std::endl;
-    visual_->viz6()->deleteAllMarkers();
-    visual_->viz6()->path(queuedRawPath.get(), ot::MEDIUM, ot::BROWN, ot::PURPLE);
-    visual_->viz6()->trigger();
-    visual_->prompt("path orig");
-
     // keep inserting same path until connectivity is reached
     double interpolateFrac = 1.0;
     while (true)
@@ -438,31 +431,36 @@ void Bolt::postProcessingThread(std::vector<geometric::PathGeometricPtr> queuedM
       if (pathIsFullyConnected(queuedSolPath, indent))
         break;
 
-      // Add the original path
-      visual_->prompt("before add original");
-
-      visual_->viz6()->deleteAllMarkers();
-      visual_->viz6()->path(queuedRawPath.get(), ot::MEDIUM, ot::BROWN, ot::PINK);
-      visual_->viz6()->trigger();
-      visual_->prompt("path orig");
-
-      postProcessingResults = sparseGenerator_->addExperiencePath(queuedRawPath, interpolateFrac, indent);
-      postProcessingResults_.numVerticesAdded_ += postProcessingResults.numVerticesAdded_;
-      postProcessingResults_.numEdgesAdded_ += postProcessingResults.numEdgesAdded_;
-      visual_->prompt("after add original");
-
       // Increase interpolation to help connect graph
       interpolateFrac += 0.1;
 
-      // Limit how many attempts before giving up
-      if (queuedSolPath->getStateCount() > 1000 || interpolateFrac > 2.0)
-      {
-        visual_->prompt("giving up on connecting path");
-        break;
-      }
-
       // Re-smooth to help connect graph
       psk_->simplifyMax(*queuedSolPath);
+
+      // After a few tries, also attempt original path
+      if (queuedSolPath->getStateCount() > 1000 || interpolateFrac > 1.5)
+      {
+        // Add the original path
+        if (false)
+        {
+          visual_->viz6()->path(queuedRawPath.get(), ot::MEDIUM, ot::BROWN, ot::PINK);
+          visual_->viz6()->trigger();
+        }
+
+        postProcessingResults = sparseGenerator_->addExperiencePath(queuedRawPath, interpolateFrac, indent);
+        postProcessingResults_.numVerticesAdded_ += postProcessingResults.numVerticesAdded_;
+        postProcessingResults_.numEdgesAdded_ += postProcessingResults.numEdgesAdded_;
+
+        // Re-smooth to help connect graph
+        psk_->simplifyMax(*queuedRawPath);
+      }
+
+      // Limit how many attempts before giving up
+      if (queuedSolPath->getStateCount() > 1000 || interpolateFrac > 1.8)
+      {
+        //visual_->prompt("giving up on connecting path");
+        break;
+      }
     }
   }
 
@@ -500,18 +498,19 @@ bool Bolt::pathIsFullyConnected(geometric::PathGeometricPtr path, std::size_t in
   //taskGraph_->displayDatabase(true, true, 6, indent);
 
   ob::PlannerTerminationCondition ptc = ob::timedPlannerTerminationCondition(60, 0.1);
-  boltPlanner_->maxAttempt_ = 1;
   bool result = boltPlanner_->solve(start, goal, ptc, indent);
-  boltPlanner_->maxAttempt_ = 0; // set back to unlimited attempts
 
   // Visualize
   if (result)
   {
-    og::PathGeometric &path2 = static_cast<og::PathGeometric &>(*boltPlanner_->getOrigModelSolPath());
-    visual_->viz6()->state(start, tools::LARGE, tools::RED, 0);
-    visual_->viz6()->state(goal, tools::LARGE, tools::GREEN, 0);
-    visual_->viz6()->path(&path2, ot::MEDIUM, ot::BROWN, ot::ORANGE);
-    visual_->viz6()->trigger();
+    if (false)
+    {
+      og::PathGeometric &path2 = static_cast<og::PathGeometric &>(*boltPlanner_->getOrigModelSolPath());
+      visual_->viz6()->state(start, tools::LARGE, tools::RED, 0);
+      visual_->viz6()->state(goal, tools::LARGE, tools::GREEN, 0);
+      visual_->viz6()->path(&path2, ot::MEDIUM, ot::BROWN, ot::ORANGE);
+      visual_->viz6()->trigger();
+    }
   }
   else // error
   {
