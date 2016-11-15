@@ -45,7 +45,6 @@
 
 #include <bolt_core/Bolt.h>
 
-
 namespace bolt_moveit
 {
 /** \brief Load settings for Bolt via rosparam server */

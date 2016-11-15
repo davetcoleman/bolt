@@ -62,7 +62,8 @@ namespace tools
 {
 namespace bolt
 {
-TaskCriteria::TaskCriteria(TaskGraphPtr taskGraph) : taskGraph_(taskGraph), compoundSI_(taskGraph_->getCompoundSpaceInformation()), visual_(taskGraph_->getVisual())
+TaskCriteria::TaskCriteria(TaskGraphPtr taskGraph)
+  : taskGraph_(taskGraph), compoundSI_(taskGraph_->getCompoundSpaceInformation()), visual_(taskGraph_->getVisual())
 {
   // We really only need one, but this is setup to be threaded for future usage
   for (std::size_t i = 0; i < taskGraph_->getNumQueryVertices(); ++i)
@@ -82,8 +83,8 @@ TaskCriteria::~TaskCriteria(void)
 bool TaskCriteria::setup(std::size_t indent)
 {
   SparseFormula formulas;
-  formulas.calc(compoundSI_, stretchFactor_, sparseDeltaFraction_, penetrationOverlapFraction_, nearSamplePointsMultiple_,
-                useL2Norm_, indent);
+  formulas.calc(compoundSI_, stretchFactor_, sparseDeltaFraction_, penetrationOverlapFraction_,
+                nearSamplePointsMultiple_, useL2Norm_, indent);
   // Copy values back
   maxExtent_ = formulas.maxExtent_;
   sparseDelta_ = formulas.sparseDelta_;
@@ -116,7 +117,7 @@ void TaskCriteria::resetStats()
 }
 
 bool TaskCriteria::addStateToRoadmap(TaskCandidateData &candidateD, VertexType &addReason, std::size_t threadID,
-                                       std::size_t indent)
+                                     std::size_t indent)
 {
   BOLT_FUNC(vCriteria_, "addStateToRoadmap() Adding candidate state ID " << candidateD.state_);
 
@@ -135,7 +136,7 @@ bool TaskCriteria::addStateToRoadmap(TaskCandidateData &candidateD, VertexType &
   if (checkAddCoverage(candidateD, indent))
   {
     BOLT_DEBUG(vAddedReason_, "Graph updated: COVERAGE Fourth: " << useFourthCriteria_
-                                                                         << " State: " << candidateD.state_);
+                                                                 << " State: " << candidateD.state_);
 
     addReason = COVERAGE;
     stateAdded = true;
@@ -143,7 +144,7 @@ bool TaskCriteria::addStateToRoadmap(TaskCandidateData &candidateD, VertexType &
   else if (checkAddConnectivity(candidateD, indent + 2))
   {
     BOLT_MAGENTA(vAddedReason_, "Graph updated: CONNECTIVITY Fourth: " << useFourthCriteria_
-                                                                               << " State: " << candidateD.state_);
+                                                                       << " State: " << candidateD.state_);
 
     addReason = CONNECTIVITY;
     stateAdded = true;
@@ -151,14 +152,14 @@ bool TaskCriteria::addStateToRoadmap(TaskCandidateData &candidateD, VertexType &
   else if (checkAddInterface(candidateD, indent + 4))
   {
     BOLT_BLUE(vAddedReason_, "Graph updated: INTERFACE Fourth: " << useFourthCriteria_
-                                                                         << " State: " << candidateD.state_);
+                                                                 << " State: " << candidateD.state_);
     addReason = INTERFACE;
     stateAdded = true;
   }
   else
   {
     BOLT_DEBUG(vCriteria_, "Did NOT add state for any criteria "
-                                       << " State: " << candidateD.state_);
+                               << " State: " << candidateD.state_);
   }
 
   return stateAdded;
@@ -291,7 +292,8 @@ bool TaskCriteria::checkAddConnectivity(TaskCandidateData &candidateD, std::size
     }
 
     // Do not add edge from self to self
-    if (compoundSI_->getStateSpace()->equalStates(taskGraph_->getState(*vertexIt), taskGraph_->getState(candidateD.newVertex_)))
+    if (compoundSI_->getStateSpace()->equalStates(taskGraph_->getState(*vertexIt),
+  taskGraph_->getState(candidateD.newVertex_)))
     {
       BOLT_ERROR("Prevented same vertex from being added twice ");
       continue;  // skip this pairing
@@ -342,10 +344,10 @@ bool TaskCriteria::checkAddInterface(TaskCandidateData &candidateD, std::size_t 
     // TEMP
     if (vCriteria_)
     {
-      visual_->viz1()->edge(taskGraph_->getModelBasedState(candidateD.graphNeighborhood_[0]), candidateD.state_, tools::SMALL,
-                            tools::BLUE);
-      visual_->viz1()->edge(taskGraph_->getModelBasedState(candidateD.graphNeighborhood_[1]), candidateD.state_, tools::SMALL,
-                            tools::BLUE);
+      visual_->viz1()->edge(taskGraph_->getModelBasedState(candidateD.graphNeighborhood_[0]), candidateD.state_,
+                            tools::SMALL, tools::BLUE);
+      visual_->viz1()->edge(taskGraph_->getModelBasedState(candidateD.graphNeighborhood_[1]), candidateD.state_,
+                            tools::SMALL, tools::BLUE);
       visual_->viz1()->trigger();
       usleep(0.001 * 1000000);
     }
@@ -386,7 +388,7 @@ bool TaskCriteria::checkAddInterface(TaskCandidateData &candidateD, std::size_t 
   candidateD.newVertex_ = taskGraph_->addVertex(candidateD.state_, indent);
 
   // Remove all edges from all vertices near our new vertex
-  //taskGraph_->clearEdgesNearVertex(candidateD.newVertex_, indent);
+  // taskGraph_->clearEdgesNearVertex(candidateD.newVertex_, indent);
 
   // Check if there are really close vertices nearby which should be merged
   // This feature doesn't really do anything but slow things down

@@ -282,9 +282,8 @@ void CandidateQueue::generatingThread(std::size_t threadID, base::SpaceInformati
 
 SparseCandidateData &CandidateQueue::getNextCandidate(std::size_t indent)
 {
-  BOLT_CYAN(verbose_, "CandidateQueue.getNextCanidate(): queue size: "
-                                  << queue_.size()
-                                  << " num samples added: " << sparseGenerator_->getNumRandSamplesAdded());
+  BOLT_CYAN(verbose_, "CandidateQueue.getNextCanidate(): queue size: " << queue_.size() << " num samples added: "
+                                                                       << sparseGenerator_->getNumRandSamplesAdded());
   // This function is run in the parent thread
 
   // Keep looping until a non-expired candidate exists or the thread ends
@@ -371,7 +370,7 @@ void CandidateQueue::waitForQueueNotEmpty(std::size_t indent)
 bool CandidateQueue::findGraphNeighbors(SparseCandidateData &candidateD, std::size_t threadID, std::size_t indent)
 {
   BOLT_FUNC(vNeighbor_, "findGraphNeighbors() within sparse delta " << sparseCriteria_->getSparseDelta()
-                                                                            << " state: " << candidateD.state_);
+                                                                    << " state: " << candidateD.state_);
 
   // Get the version number of the graph, which is simply the number of states that have thus far been added
   // during this program's execution (not of all time). This allows us to know if the candidate has potentially
@@ -420,9 +419,8 @@ bool CandidateQueue::findGraphNeighbors(SparseCandidateData &candidateD, std::si
     candidateD.visibleNeighborhood_.push_back(candidateD.graphNeighborhood_[i]);
   }
 
-  BOLT_DEBUG(vNeighbor_,
-             "Graph neighborhood: " << candidateD.graphNeighborhood_.size()
-                                    << " | Visible neighborhood: " << candidateD.visibleNeighborhood_.size());
+  BOLT_DEBUG(vNeighbor_, "Graph neighborhood: " << candidateD.graphNeighborhood_.size() << " | Visible neighborhood: "
+                                                << candidateD.visibleNeighborhood_.size());
 
   return true;
 }

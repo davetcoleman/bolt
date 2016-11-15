@@ -269,7 +269,7 @@ SparseStorage::GraphSizeChange SparseGraph::save(std::size_t indent)
 
   // Always must clear out deleted veritices from graph before saving otherwise NULL state will throw exception
   // TODO: enable again?
-  //removeDeletedVertices(indent);
+  // removeDeletedVertices(indent);
 
   // Benchmark
   time::point start = time::now();
@@ -283,8 +283,7 @@ SparseStorage::GraphSizeChange SparseGraph::save(std::size_t indent)
 
   // Benchmark
   double loadTime = time::seconds(time::now() - start);
-  BOLT_INFO(true, "Saved database to file in " << loadTime
-                                                       << " seconds. Time: " << time::as_string(time::now()));
+  BOLT_INFO(true, "Saved database to file in " << loadTime << " seconds. Time: " << time::as_string(time::now()));
   return result;
 }
 
@@ -362,8 +361,7 @@ bool SparseGraph::astarSearch(const SparseVertex start, const SparseVertex goal,
   // the custom exception from SparseAstarVisitor
   BOLT_DEBUG(vSearch_, "AStar found solution. Distance to goal: " << vertexDistances[goal]);
 
-  BOLT_DEBUG(vSearch_, "Number nodes opened: " << numNodesOpened_
-                                                       << ", Number nodes closed: " << numNodesClosed_);
+  BOLT_DEBUG(vSearch_, "Number nodes opened: " << numNodesOpened_ << ", Number nodes closed: " << numNodesClosed_);
 #endif
 
   // Only clear the vertexPath after we know we have a new solution, otherwise it might have a good
@@ -488,8 +486,8 @@ bool SparseGraph::checkPathLength(SparseVertex v1, SparseVertex v2, double dista
   if (pathLength < distance + SMALL_EPSILON)
   {
     BOLT_ERROR("New interface edge does not help enough, edge length: " << distance << ", astar: " << pathLength
-                                                                                << ", difference between distances: "
-                                                                                << fabs(distance - pathLength));
+                                                                        << ", difference between distances: "
+                                                                        << fabs(distance - pathLength));
     return false;
   }
 
@@ -687,8 +685,8 @@ void SparseGraph::visualizeDisjointSets(SparseDisjointSetsMap &disjointSets, std
       maxDisjointSetParent = v;
     }
   }
-  BOLT_INFO(true, "The largest disjoint set is of size " << maxDisjointSetSize << " with root vertex " <<
-            maxDisjointSetParent << " (not visualizing)");
+  BOLT_INFO(true, "The largest disjoint set is of size " << maxDisjointSetSize << " with root vertex "
+                                                         << maxDisjointSetParent << " (not visualizing)");
 
   // Display size of disjoint sets and visualize small ones
   for (SparseDisjointSetsMap::const_iterator iterator = disjointSets.begin(); iterator != disjointSets.end();
@@ -1183,7 +1181,7 @@ void SparseGraph::displayDatabase(bool showVertices, bool showEdges, std::size_t
   }
 
   // Clear previous visualization
-  //visual_->viz(windowID)->deleteAllMarkers();
+  // visual_->viz(windowID)->deleteAllMarkers();
 
   // Edges
   if (visualizeDatabaseEdges_ && showEdges)
@@ -1261,7 +1259,7 @@ void SparseGraph::visualizeVertex(SparseVertex v, const VertexType &type)
   visual_->viz6()->state(getState(v), vertexSize_, std::move(color), 0);
 
   // Show robot arm
-  //visual_->viz1()->state(getState(v), tools::ROBOT, tools::DEFAULT, 0);
+  // visual_->viz1()->state(getState(v), tools::ROBOT, tools::DEFAULT, 0);
 
   // if (visualizeProjection_)  // For joint-space robots: project to 2D space
   // {
@@ -1320,7 +1318,7 @@ void SparseGraph::visualizeEdge(SparseVertex v1, SparseVertex v2, EdgeType type,
 {
   // Visualize
   visual_->viz(windowID)->edge(getState(v1), getState(v2), edgeSize_, edgeTypeToColor(type));
-  //visual_->viz(windowID)->trigger();
+  // visual_->viz(windowID)->trigger();
 }
 
 #ifdef ENABLE_QUALITY

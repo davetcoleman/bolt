@@ -100,7 +100,7 @@ struct TaskCandidateData
   }
 
   // Graph version number - allow to determine if candidate was expired by time candidate was generated
-  //std::size_t graphVersion_;
+  // std::size_t graphVersion_;
 
   // The sampled state to be added to the graph
   base::CompoundState* state_;
@@ -198,7 +198,7 @@ public:
    */
   bool astarSearch(const TaskVertex start, const TaskVertex goal, std::vector<TaskVertex>& vertexPath, double& distance,
                    std::size_t indent);
-  bool astarSearchLength(TaskVertex start, TaskVertex goal, double &distance, std::size_t indent);
+  bool astarSearchLength(TaskVertex start, TaskVertex goal, double& distance, std::size_t indent);
 
   bool checkPathLength(TaskVertex v1, TaskVertex v2, std::size_t indent);
   bool checkPathLength(TaskVertex v1, SparseVertex v2, double distance, std::size_t indent);
@@ -230,7 +230,7 @@ public:
 
   TaskVertex getQueryVertices(std::size_t threadID);
 
-  std::vector<TaskVertex> &getQueryVertices()
+  std::vector<TaskVertex>& getQueryVertices()
   {
     return queryVertices_;
   }
@@ -494,7 +494,7 @@ protected:
   VisualizerPtr visual_;
 
   /** \brief Class for deciding which vertices and edges get added */
-  //TaskCriteriaPtr taskCriteria_;
+  // TaskCriteriaPtr taskCriteria_;
 
   /** \brief Nearest neighbors data structure */
   std::shared_ptr<NearestNeighbors<TaskVertex> > nn_;

@@ -72,7 +72,7 @@ SparseGenerator::SparseGenerator(SparseGraphPtr sg)
 
   // Initialize threading tools
   // Speed up random sampling with these threads
-candidateQueue_ = std::make_shared<CandidateQueue>(sg_, this);
+  candidateQueue_ = std::make_shared<CandidateQueue>(sg_, this);
 }
 
 SparseGenerator::~SparseGenerator(void)
@@ -1144,9 +1144,11 @@ bool SparseGenerator::addExperiencePath(geometric::PathGeometricPtr path, double
   return true;
 }
 
-bool SparseGenerator::addExperiencePathHelper(geometric::PathGeometricPtr path, double interpolateFrac, std::size_t indent)
+bool SparseGenerator::addExperiencePathHelper(geometric::PathGeometricPtr path, double interpolateFrac,
+                                              std::size_t indent)
 {
-  BOLT_FUNC(true, "addExperiencePath() with " << path->getStateCount() << " states and interpolation fraction " << interpolateFrac);
+  BOLT_FUNC(true, "addExperiencePath() with " << path->getStateCount() << " states and interpolation fraction "
+                                              << interpolateFrac);
   const std::size_t threadID = 0;
 
   std::size_t segmentCount = path->length() / sparseCriteria_->getDenseDelta() * interpolateFrac;
@@ -1160,14 +1162,14 @@ bool SparseGenerator::addExperiencePathHelper(geometric::PathGeometricPtr path, 
   }                                                             // for each state in path
   std::random_shuffle(shuffledIDs.begin(), shuffledIDs.end());  // using built-in random generator
 
-  shuffledIDs.insert(shuffledIDs.begin(), 0); // always process first and last, first
-  shuffledIDs.insert(shuffledIDs.begin(), path->getStateCount() - 1); // always process first and last, first
+  shuffledIDs.insert(shuffledIDs.begin(), 0);                          // always process first and last, first
+  shuffledIDs.insert(shuffledIDs.begin(), path->getStateCount() - 1);  // always process first and last, first
 
   // Insert vertices at random
   base::State *candidateState;
   bool usedState = true;  // flag indicating whether memory needs to be allocated again for candidateState
 
-  const bool addEdges = true; // a mode for skipping adding edges when graph is first constructed
+  const bool addEdges = true;  // a mode for skipping adding edges when graph is first constructed
   for (std::size_t i = 0; i < shuffledIDs.size(); ++i)
   {
     if (usedState)
@@ -1185,7 +1187,7 @@ bool SparseGenerator::addExperiencePathHelper(geometric::PathGeometricPtr path, 
     usedState = addSampleSparseCriteria(candidateState, addEdges, indent);
 
     // This is the slower version but does have all criteria
-    //usedState = addSampleSimple(candidateState, indent);
+    // usedState = addSampleSimple(candidateState, indent);
 
     // Debug
     if (visualizeSampling_)
@@ -1216,7 +1218,7 @@ void SparseGenerator::createSPARS2(std::size_t indent)
 
   std::size_t attempts = 1;  // start at 1 to allow modulo to skip 0
   std::size_t numStatesUsed = 0;
-  bool addEdges = false; // a mode for skipping adding edges when graph is first constructed
+  bool addEdges = false;  // a mode for skipping adding edges when graph is first constructed
   double nodeAdditionRate = std::numeric_limits<double>::infinity();
   while (!visual_->viz1()->shutdownRequested())
   {
@@ -1331,7 +1333,7 @@ bool SparseGenerator::addSampleSparseCriteria(base::State *candidateState, bool 
     // Check for visible nearby neighbor
     if (!si_->checkMotion(candidateState, sg_->getState(v2)))
     {
-      continue; // not visible, check next one
+      continue;  // not visible, check next one
     }
 
     // we've found a valid edge - see if its the longest one yet
@@ -1374,7 +1376,7 @@ bool SparseGenerator::addSampleSparseCriteria(base::State *candidateState, bool 
   // Criteria 1: add guard (no nearby visibile nodes found *so far*)
   if (visibleNeighborhood.empty())
   {
-    if (useLimitedRangeNN) // keep searching because there could be more
+    if (useLimitedRangeNN)  // keep searching because there could be more
     {
       graphNeighborhood.clear();  // reset input structure
       graphNeighborhood.reserve(sg_->getNumVertices());
@@ -1392,11 +1394,11 @@ bool SparseGenerator::addSampleSparseCriteria(base::State *candidateState, bool 
         // Check for visible nearby neighbor - if one is found visible, then this state should not be added
         if (si_->checkMotion(candidateState, sg_->getState(v2)))
         {
-          //BOLT_WARN(true, "Missed a state that invalidates candidate state, on index " << i);
+          // BOLT_WARN(true, "Missed a state that invalidates candidate state, on index " << i);
           return false;
         }
       }
-    } // if useLimitedRangeNN
+    }  // if useLimitedRangeNN
 
     // No free paths means we add for coverage
     BOLT_DEBUG(vCriteria_, "Adding node for COVERAGE ");

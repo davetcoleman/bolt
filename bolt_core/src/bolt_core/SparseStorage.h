@@ -134,11 +134,13 @@ public:
   /** \brief Stats on how many edges/vertices added */
   struct GraphSizeChange
   {
-    GraphSizeChange() : numEdgesAdded_(0), numVerticesAdded_(0), success_(true) {}
+    GraphSizeChange() : numEdgesAdded_(0), numVerticesAdded_(0), success_(true)
+    {
+    }
 
     int numEdgesAdded_;
     int numVerticesAdded_;
-    bool success_; // return false if failed to save correctly
+    bool success_;  // return false if failed to save correctly
   };
 
   /** \brief Constructor */

@@ -68,7 +68,6 @@
 
 namespace bolt_baxter
 {
-
 static const std::size_t NUM_VISUALS = 6;
 
 class BoltBaxter : public bolt_moveit::MoveItBase
@@ -141,7 +140,8 @@ public:
 
   void viewIMarkersFromFile(std::size_t indent);
 
-  void loadIMarkersFromFile(std::vector<moveit::core::RobotStatePtr>& robot_states, std::string file_name, std::size_t indent);
+  void loadIMarkersFromFile(std::vector<moveit::core::RobotStatePtr>& robot_states, std::string file_name,
+                            std::size_t indent);
 
   void loadIMarkers(std::size_t indent);
 
@@ -190,7 +190,7 @@ public:
   // Configuration space
   bolt_moveit::ModelBasedStateSpacePtr space_;
   ompl::base::SpaceInformationPtr si_;
-  ob::SpaceInformationPtr secondary_si_; // used for second thread
+  ob::SpaceInformationPtr secondary_si_;  // used for second thread
 
   // Mirroring config
   moveit::core::JointModelGroup* both_arms_jmg_;
@@ -204,8 +204,8 @@ public:
   ompl::tools::VisualizerPtr visual_;
 
   // TODO: remove these?
-  //moveit_visual_tools::MoveItVisualToolsPtr visual_moveit_start_;  // Clone of ompl1
-  //moveit_visual_tools::MoveItVisualToolsPtr visual_moveit_goal_;   // Clone of ompl2
+  // moveit_visual_tools::MoveItVisualToolsPtr visual_moveit_start_;  // Clone of ompl1
+  // moveit_visual_tools::MoveItVisualToolsPtr visual_moveit_goal_;   // Clone of ompl2
 
   // Robot states
   moveit::core::RobotStatePtr moveit_start_;
@@ -249,8 +249,8 @@ public:
 
   // Type of planner
   std::vector<std::string> planners_;
-  double planning_time_; // seconds
-  std::string planner_; // the current planner being run
+  double planning_time_;  // seconds
+  std::string planner_;   // the current planner being run
   bool is_bolt_ = false;
   bool is_thunder_ = false;
   bool is_lightning_ = false;
@@ -314,7 +314,7 @@ public:
   std::vector<moveit::core::RobotStatePtr> imarker_start_states_;
   std::vector<moveit::core::RobotStatePtr> imarker_goal_states_;
   std::size_t start_state_id_;
-  std::size_t goal_state_id_; // essentially the task
+  std::size_t goal_state_id_;  // essentially the task
 
   // Validity checker
   bolt_moveit::StateValidityCheckerPtr validity_checker_;

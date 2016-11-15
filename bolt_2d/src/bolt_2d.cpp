@@ -65,7 +65,6 @@
 
 #include <ompl/util/PPM.h>  // For reading image files
 
-
 // Interface for loading rosparam settings into OMPL
 #include <bolt_ros/ompl_rosparam.h>
 #include <rviz_visual_tools/remote_control.h>
@@ -315,7 +314,7 @@ public:
     formulas.calc(si_, stretchFactor_, sparseDeltaFraction_, penetrationOverlapFraction_, nearSamplePointsMultiple_,
                   useL2Norm_, verboseOnce, indent);
     if (verboseOnce)
-      verboseOnce = false; // only show this once
+      verboseOnce = false;  // only show this once
 
     sparse_two_->setSparseDeltaFraction(sparseDeltaFraction_);
     sparse_two_->setDenseDeltaFraction(denseDeltaFraction_);
@@ -512,8 +511,8 @@ public:
       {
         // Debug
         BOLT_DEBUG(true, "----------------------------------------------------------------------------");
-        BOLT_DEBUG(true, "Creating spars graph, trial " << trial_id + 1 << " out of " << TRIALS_PER_MAP
-                                                                    << " for map " << trial_maps[map_id] << ".ppm");
+        BOLT_DEBUG(true, "Creating spars graph, trial " << trial_id + 1 << " out of " << TRIALS_PER_MAP << " for map "
+                                                        << trial_maps[map_id] << ".ppm");
         BOLT_DEBUG(true, "----------------------------------------------------------------------------");
 
         // Clear spars graph

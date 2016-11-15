@@ -70,7 +70,7 @@ OMPL_CLASS_FORWARD(SparseGenerator);
 OMPL_CLASS_FORWARD(SparseCriteria);
 OMPL_CLASS_FORWARD(SparseMirror);
 OMPL_CLASS_FORWARD(TaskGraph);
-//OMPL_CLASS_FORWARD(TaskCriteria);
+// OMPL_CLASS_FORWARD(TaskCriteria);
 /// @endcond
 
 /** \class BoltPtr
@@ -115,9 +115,9 @@ struct ExperienceStats
   double numSolutionsSuccess_;
   double numSolutionsFailed_;
   double numSolutionsTimedout_;
-  double numProblems_;           // input requests
-  double totalPlanningTime_;     // of all input requests, used for averaging
-  double totalInsertionTime_;    // of all input requests, used for averaging
+  double numProblems_;         // input requests
+  double totalPlanningTime_;   // of all input requests, used for averaging
+  double totalInsertionTime_;  // of all input requests, used for averaging
 };
 
 /** \brief Built off of SimpleSetup but provides support for planning from experience */
@@ -137,7 +137,6 @@ private:
   void initialize(std::size_t indent = 0);
 
 public:
-
   void convertLogToString();
 
   /** \brief Display debug data about potential available solutions */
@@ -214,7 +213,7 @@ public:
   bool saveIfChanged(std::size_t indent);
 
   /** \brief Save debug data about overall results since being loaded */
-  //void saveDataLog(std::ostream &out = std::cout);
+  // void saveDataLog(std::ostream &out = std::cout);
 
   /** \brief Do not clear the experience database */
   void clearForNextPlan(std::size_t indent);
@@ -289,7 +288,6 @@ public:
   ExperiencePathStats getPostProcessingResultsAndReset();
 
 protected:
-
   const std::string name_ = "Bolt";
 
   // This is included in parent class, but mentioned here in contrast to modelSI_
@@ -340,22 +338,21 @@ protected:
   ExperienceStats stats_;
 
   // output data to file to analyze performance externally
-  //std::stringstream csvDataLogStream_
+  // std::stringstream csvDataLogStream_
 
   std::thread ppThread_;
 
   ExperiencePathStats postProcessingResults_;
 
 public:
-
   /** \brief Verbose settings */
   bool verbose_ = true;
 
   bool usePFSPlanner_ = false;
   bool useERRTConnect_ = true;
 
-  bool testForCompletePathLearning_ = true; // make sure a post-processed path is fully connected to graph
-};  // end of class Bolt
+  bool testForCompletePathLearning_ = true;  // make sure a post-processed path is fully connected to graph
+};                                           // end of class Bolt
 
 }  // namespace bolt
 }  // namespace tools

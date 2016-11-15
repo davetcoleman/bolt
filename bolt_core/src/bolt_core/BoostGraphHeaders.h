@@ -381,8 +381,8 @@ struct ExperiencePathStats
 
   std::size_t numVerticesAdded_;
   std::size_t numEdgesAdded_;
-  bool inserted_; // whether the last path inserted correctly
-  double insertionTime_; // how much time it took to insert
+  bool inserted_;         // whether the last path inserted correctly
+  double insertionTime_;  // how much time it took to insert
 };
 
 }  // namespace bolt

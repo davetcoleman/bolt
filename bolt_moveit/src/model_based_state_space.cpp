@@ -246,8 +246,7 @@ void ModelBasedStateSpace::setPlanningVolume(double minX, double maxX, double mi
 ob::StateSamplerPtr ModelBasedStateSpace::allocDefaultStateSampler() const
 {
   return ompl::base::StateSamplerPtr(
-      static_cast<ob::StateSampler *>(new ModelBasedStateSampler<ModelBasedStateSpace::StateType>(
-          this, &spec_)));
+      static_cast<ob::StateSampler *>(new ModelBasedStateSampler<ModelBasedStateSpace::StateType>(this, &spec_)));
 }
 
 void ModelBasedStateSpace::printSettings(std::ostream &out) const

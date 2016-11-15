@@ -45,7 +45,7 @@ template <typename T>
 class ModelBasedStateSampler : public ompl::base::StateSampler
 {
 public:
-  ModelBasedStateSampler(const ompl::base::StateSpace *space, const ModelBasedStateSpaceSpecification* spec)
+  ModelBasedStateSampler(const ompl::base::StateSpace *space, const ModelBasedStateSpaceSpecification *spec)
     : ompl::base::StateSampler(space)
     , joint_model_group_(spec->joint_model_group_)
     , joint_bounds_(&spec->joint_bounds_)
@@ -62,15 +62,15 @@ public:
 
   virtual void sampleUniformNear(ompl::base::State *state, const ompl::base::State *near, const double distance)
   {
-    //ROS_INFO_STREAM("sampleUniformNear()");
+    // ROS_INFO_STREAM("sampleUniformNear()");
     // Original method:
 
     // if (visual_tools_->iRand(0,1))
     // {
     //   std::cout << "1 " << std::endl;
-      joint_model_group_->getVariableRandomPositionsNearBy(moveit_rng_, state->as<T>()->values, *joint_bounds_,
-                                                           near->as<T>()->values, distance);
-      return;
+    joint_model_group_->getVariableRandomPositionsNearBy(moveit_rng_, state->as<T>()->values, *joint_bounds_,
+                                                         near->as<T>()->values, distance);
+    return;
     // }
     // else
     //   std::cout << "2 " << std::endl;
@@ -115,21 +115,20 @@ public:
         // visual_tools_->printTransform(near_poses[i]);
 
         this_dist += getPoseDistance(robot_state_.getGlobalLinkTransform(tips[i]), near_poses[i]);
-        //std::cout << "   this_dist: " << this_dist << " desired: " << distance << std::endl;
+        // std::cout << "   this_dist: " << this_dist << " desired: " << distance << std::endl;
       }
-      //std::cout << count << "   this_dist: " << this_dist << " desired: " << distance << std::endl;
+      // std::cout << count << "   this_dist: " << this_dist << " desired: " << distance << std::endl;
 
       if (this_dist < distance)
         break;
 
-      //visual_tools_->publishRobotState(robot_state_);
-      //visual_tools_->prompt("generate next random pose");
+      // visual_tools_->publishRobotState(robot_state_);
+      // visual_tools_->prompt("generate next random pose");
     }
-    //ROS_DEBUG_STREAM_NAMED(name_, "Found nearby (" << distance << ") sample after " << count << " iterations");
+    // ROS_DEBUG_STREAM_NAMED(name_, "Found nearby (" << distance << ") sample after " << count << " iterations");
 
-    //visual_tools_->publishRobotState(robot_state_);
+    // visual_tools_->publishRobotState(robot_state_);
     // visual_tools_->prompt("found utilized pose");
-
 
     // Convert to ompl robot state
     space_->as<ModelBasedStateSpace>()->copyToOMPLState(state, robot_state_);
@@ -178,4 +177,4 @@ protected:
   moveit_visual_tools::MoveItVisualToolsPtr visual_tools_;
 };
 }
-#endif // BOLT_MOVEIT_MODEL_BASED_STATE_SAMPLER_
+#endif  // BOLT_MOVEIT_MODEL_BASED_STATE_SAMPLER_

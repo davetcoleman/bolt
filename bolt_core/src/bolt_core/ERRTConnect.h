@@ -40,7 +40,7 @@
 #include "ompl/geometric/planners/PlannerIncludes.h"
 #include "ompl/datastructures/NearestNeighbors.h"
 #include <ompl/tools/debug/Visualizer.h>
-#include <bolt_core/SparseGraph.h> // TODO remove this dep
+#include <bolt_core/SparseGraph.h>  // TODO remove this dep
 
 namespace ompl
 {
@@ -197,7 +197,6 @@ protected:
   std::size_t startNeighborID_;
   std::size_t goalNeighborID_;
   std::size_t totalSamples_;
-
 };
 }
 }

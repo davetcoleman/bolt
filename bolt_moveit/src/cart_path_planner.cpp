@@ -182,7 +182,7 @@ void CartPathPlanner::generateExactPoses(const Eigen::Affine3d& start_pose, std:
   }
 
   BOLT_DEBUG(verbose_, "Generated exact Cartesian traj with " << exact_poses_.front().size() << " points for "
-                                                                      << arm_datas_.size() << " dimensions");
+                                                              << arm_datas_.size() << " dimensions");
 
   // Publish trajectory poses for visualization
   visual_tools_->deleteAllMarkers();
@@ -330,7 +330,7 @@ bool CartPathPlanner::rotateOnAxis(const Eigen::Affine3d& pose, const Orientatio
   {
     double rotation_amount = i * tolerance_increment_;
     BOLT_DEBUG(verbose, std::string(axis * 2, ' ') << "axis: " << axis << " i: " << i << " rotation_amount: "
-                                                           << rotation_amount << " num_steps: " << num_steps);
+                                                   << rotation_amount << " num_steps: " << num_steps);
 
     // clang-format off
     switch (axis)
@@ -750,7 +750,7 @@ bool CartPathPlanner::addCartPointToBoltGraph(const CombinedPoints& combined_poi
 
   // Lock planning scene
   std::shared_ptr<planning_scene_monitor::LockedPlanningSceneRO> ls =
-       std::make_shared<planning_scene_monitor::LockedPlanningSceneRO>(planning_scene_monitor_);
+      std::make_shared<planning_scene_monitor::LockedPlanningSceneRO>(planning_scene_monitor_);
   const planning_scene::PlanningScene* planning_scene =
       static_cast<const planning_scene::PlanningSceneConstPtr&>(*ls).get();
 
@@ -809,7 +809,7 @@ bool CartPathPlanner::addCartPointToBoltGraph(const CombinedPoints& combined_poi
 
   const double percent = states_rejected / double(combined_points.size()) * 100.0;
   BOLT_DEBUG(verbose_, "Added " << new_vertex_count << " new vertices to TaskGraph, rejected by collision: "
-                                        << states_rejected << "  (" << percent << "%)");
+                                << states_rejected << "  (" << percent << "%)");
 
   return true;
 }
@@ -907,14 +907,13 @@ bool CartPathPlanner::addEdgesToBoltGraph(const TaskVertexMatrix& point_vertices
   std::cout << std::endl;
 
   BOLT_INFO(true, "Added " << new_edge_count << " new edges, rejected " << edges_skipped_count
-                                   << " because of velocity constraint (rejected "
-                                   << edges_skipped_count / (new_edge_count + double(edges_skipped_count)) * 100.0
-                                   << "%)");
+                           << " because of velocity constraint (rejected "
+                           << edges_skipped_count / (new_edge_count + double(edges_skipped_count)) * 100.0 << "%)");
 
   std::size_t warning_factor = 4;
   if (edges_skipped_count * warning_factor > new_edge_count)
     BOLT_INFO(true, "More than " << warning_factor << " times as many edges were rejected than accepted "
-                                                              "because of motion timing/velocity contraints.");
+                                                      "because of motion timing/velocity contraints.");
 
   return true;
 }
@@ -1074,7 +1073,7 @@ bool CartPathPlanner::getRedunJointPosesForCartPoint(const Eigen::Affine3d& pose
 
     // Lock planning scene
     std::shared_ptr<planning_scene_monitor::LockedPlanningSceneRO> ls =
-         std::make_shared<planning_scene_monitor::LockedPlanningSceneRO>(planning_scene_monitor_);
+        std::make_shared<planning_scene_monitor::LockedPlanningSceneRO>(planning_scene_monitor_);
     const planning_scene::PlanningScene* planning_scene =
         static_cast<const planning_scene::PlanningSceneConstPtr&>(*ls).get();
 
@@ -1111,7 +1110,7 @@ bool CartPathPlanner::getRedunJointPosesForCartPoint(const Eigen::Affine3d& pose
 
     const double percent = states_rejected / double(solutions.size()) * 100.0;
     BOLT_DEBUG(verbose_, "Found " << joint_poses.size() << " redun poses for Cartesian point, rejected "
-                                          << states_rejected << "  (" << percent << "%)");
+                                  << states_rejected << "  (" << percent << "%)");
   }
   return true;
 }
@@ -1120,7 +1119,7 @@ void CartPathPlanner::visualizeAllJointPoses(const RedunJointPoses& joint_poses,
                                              const moveit::core::JointModelGroup* jmg, std::size_t indent)
 {
   BOLT_FUNC(true, "visualizeAllJointPoses() found " << joint_poses.size() << " joint_poses for this cartesian "
-                                                                                     "point");
+                                                                             "point");
 
   for (const JointSpacePoint& joint_pose : joint_poses)
   {

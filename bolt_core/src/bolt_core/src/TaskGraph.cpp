@@ -88,7 +88,7 @@ TaskGraph::TaskGraph(const base::SpaceInformationPtr &modelSI, const base::Space
 
   // Initialize nearest neighbor datastructure
   // TODO(davetcoleman): do we need to have a separate NN_ structure for the TaskGraph??
-  nn_ = std::make_shared<NearestNeighborsGNAT<TaskVertex>>(); // this is the thread-safe version
+  nn_ = std::make_shared<NearestNeighborsGNAT<TaskVertex>>();  // this is the thread-safe version
   nn_->setDistanceFunction(boost::bind(&otb::TaskGraph::distanceVertex, this, _1, _2));
 }
 
@@ -227,13 +227,13 @@ bool TaskGraph::astarSearch(const TaskVertex start, const TaskVertex goal, std::
   }
   catch (FoundGoalException &)
   {
-    if (std::isinf(vertexDistances[goal])) // TODO: for some reason this never happens
+    if (std::isinf(vertexDistances[goal]))  // TODO: for some reason this never happens
     {
       BOLT_WARN(true, "Distance is inifinity - how did this finally happen??");
     }
-    else if (vertexDistances[goal] > 1e300) // TODO: this is a hack to approximate infinity
+    else if (vertexDistances[goal] > 1e300)  // TODO: this is a hack to approximate infinity
     {
-      //BOLT_WARN(true, "Distance is close to inifinity");
+      // BOLT_WARN(true, "Distance is close to inifinity");
     }
     else
       foundGoal = true;
@@ -258,8 +258,7 @@ bool TaskGraph::astarSearch(const TaskVertex start, const TaskVertex goal, std::
   // the custom exception from SparseAstarVisitor
   BOLT_DEBUG(vSearch_, "AStar found solution. Distance to goal: " << vertexDistances[goal]);
 
-  BOLT_DEBUG(vSearch_, "Number nodes opened: " << numNodesOpened_
-                                                       << ", Number nodes closed: " << numNodesClosed_);
+  BOLT_DEBUG(vSearch_, "Number nodes opened: " << numNodesOpened_ << ", Number nodes closed: " << numNodesClosed_);
 #endif
 
   // Only clear the vertexPath after we know we have a new solution, otherwise it might have a good
@@ -401,8 +400,8 @@ bool TaskGraph::checkPathLength(TaskVertex v1, SparseVertex v2, double distance,
   if (pathLength < distance + SMALL_EPSILON)
   {
     BOLT_ERROR("New interface edge does not help enough, edge length: " << distance << ", astar: " << pathLength
-                                                                                << ", difference between distances: "
-                                                                                << fabs(distance - pathLength));
+                                                                        << ", difference between distances: "
+                                                                        << fabs(distance - pathLength));
     return false;
   }
 
@@ -536,8 +535,8 @@ double TaskGraph::astarTaskHeuristic(const TaskVertex a, const TaskVertex b) con
     throw Exception(name_, "Unknown task level mode");
   }
 
-  BOLT_DEBUG(vHeuristic_, "Vertex " << a << " @level " << taskLevelA << " to Vertex " << b << " @level "
-                                       << taskLevelB << " has distance " << dist);
+  BOLT_DEBUG(vHeuristic_, "Vertex " << a << " @level " << taskLevelA << " to Vertex " << b << " @level " << taskLevelB
+                                    << " has distance " << dist);
   return dist;
 }
 
@@ -972,7 +971,7 @@ bool TaskGraph::smoothQualityPath(geometric::PathGeometric *path, double clearan
   }
 
   BOLT_DEBUG(visualizeQualityPathSmoothing_, "Created 'quality path' candidate with " << path->getStateCount()
-                                                                                              << " states");
+                                                                                      << " states");
   if (visualizeQualityPathSmoothing_)
     visual_->prompt("path simplification");
 
@@ -1218,7 +1217,7 @@ void TaskGraph::displayDatabase(bool showVertices, bool showEdges, std::size_t w
   }
 
   // Clear previous visualization
-  //visual_->viz(windowID)->deleteAllMarkers();
+  // visual_->viz(windowID)->deleteAllMarkers();
 
   const std::size_t MIN_FEEDBACK = 10000;
   if (visualizeDatabaseEdges_)

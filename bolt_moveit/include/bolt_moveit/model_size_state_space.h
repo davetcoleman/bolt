@@ -172,8 +172,7 @@ public:
   ob::StateSamplerPtr allocDefaultStateSampler() const
   {
     return ob::StateSamplerPtr(
-        static_cast<ob::StateSampler *>(new ModelBasedStateSampler<ModelSizeStateSpace<N>::StateType>(
-            this, &spec_)));
+        static_cast<ob::StateSampler *>(new ModelBasedStateSampler<ModelSizeStateSpace<N>::StateType>(this, &spec_)));
   }
 
   void printState(const ob::State *state, std::ostream &out) const

@@ -78,7 +78,8 @@ public:
    * \param addReason - if function returns true, the reson the denseVertex was added to the sparse graph
    * \return true on success
    */
-  bool addStateToRoadmap(TaskCandidateData& candidateD, VertexType& addReason, std::size_t threadID, std::size_t indent);
+  bool addStateToRoadmap(TaskCandidateData& candidateD, VertexType& addReason, std::size_t threadID,
+                         std::size_t indent);
 
   /* ----------------------------------------------------------------------------------------*/
   /** \brief SPARS-related functions */

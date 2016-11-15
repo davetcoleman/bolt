@@ -215,7 +215,7 @@ public:
     max_state_radius_ = max_state_radius;
   }
 
-  void prompt(const std::string &msg)
+  void prompt(const std::string& msg)
   {
     visuals_->prompt(msg);
   }

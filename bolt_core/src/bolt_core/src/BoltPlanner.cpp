@@ -248,7 +248,7 @@ bool BoltPlanner::solveMultiGoal(std::size_t attempt, std::size_t maxAttempts, T
     return false;
   }
 
-  std::shared_ptr<ob::GoalStates> goals  = std::dynamic_pointer_cast<ob::GoalStates>(pdef_->getGoal());
+  std::shared_ptr<ob::GoalStates> goals = std::dynamic_pointer_cast<ob::GoalStates>(pdef_->getGoal());
 
   // Get multiple goal states
   const base::State *goal;
@@ -283,7 +283,7 @@ bool BoltPlanner::solveSingleGoal(const base::State *start, const base::State *g
   // Visualize start vertex
   if (visualizeStartGoal_)
   {
-    //visual_->viz4()->state(start, tools::ROBOT, tools::ORANGE);
+    // visual_->viz4()->state(start, tools::ROBOT, tools::ORANGE);
     visual_->viz6()->state(goal, tools::ROBOT, tools::YELLOW);
   }
 

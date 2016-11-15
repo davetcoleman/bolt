@@ -131,7 +131,7 @@ void SparseMirror::mirrorGraphDualArm(base::SpaceInformationPtr dualSpaceInfo,
 
   // Loop through every vertex in sparse graph
   BOLT_DEBUG(true, "Adding " << monoSG_->getNumVertices() << " sparse graph vertices into dual arm "
-                                                                     "graph");
+                                                             "graph");
   std::size_t showEvery = std::max((unsigned int)(1), monoSG_->getNumVertices() / 100);
   foreach (SparseVertex sparseV1, boost::vertices(monoSG_->getGraph()))
   {
@@ -195,9 +195,9 @@ void SparseMirror::mirrorGraphDualArm(base::SpaceInformationPtr dualSpaceInfo,
       // Short term mapping
       sparseV2ToDualVertex[sparseV2] = vertexCombined;
     }
-    BOLT_DEBUG(vMirrorStatus_,
-               "Total states skipped: " << (double(skippedStates) / monoSG_->getNumVertices() * 100) << "%. Skipped "
-                                        << skippedStates << " states out of total " << monoSG_->getNumVertices());
+    BOLT_DEBUG(vMirrorStatus_, "Total states skipped: " << (double(skippedStates) / monoSG_->getNumVertices() * 100)
+                                                        << "%. Skipped " << skippedStates << " states out of total "
+                                                        << monoSG_->getNumVertices());
     // visual_->prompt("before adding edges");
 
     // Copy the short term mapping into the long term mapping
@@ -286,12 +286,11 @@ void SparseMirror::addEdgesForDim(std::vector<SparseVertex> &sparseV2ToDualVerte
     dualSG->addEdge(sparseE_v0, sparseE_v1, newEdgeDist, eUNKNOWN, indent);
   }
 
-  BOLT_DEBUG(vMirrorStatus_,
-             "Total edges skipped: " << (double(skippedUnconnectedEdges + skippedCollisionEdges) /
-                                         monoSG_->getNumEdges() * 100)
-                                     << "%. Skipped edges: " << skippedUnconnectedEdges << " no endpoints, "
-                                     << skippedCollisionEdges << " collision, " << skippedTooLongEdges << " length, "
-                                     << "out of total: " << monoSG_->getNumEdges());
+  BOLT_DEBUG(vMirrorStatus_, "Total edges skipped: "
+                                 << (double(skippedUnconnectedEdges + skippedCollisionEdges) / monoSG_->getNumEdges() *
+                                     100) << "%. Skipped edges: " << skippedUnconnectedEdges << " no endpoints, "
+                                 << skippedCollisionEdges << " collision, " << skippedTooLongEdges << " length, "
+                                 << "out of total: " << monoSG_->getNumEdges());
 }
 
 void SparseMirror::addEdgesForAll(std::vector<std::vector<SparseVertex>> &vertexMapMatrix, SparseGraphPtr dualSG,
@@ -363,8 +362,7 @@ void SparseMirror::addEdgesForAll(std::vector<std::vector<SparseVertex>> &vertex
         if ((useHalfOfSparseDelta && newEdgeDist > sparseDelta_) ||
             (!useHalfOfSparseDelta && newEdgeDist > 2 * sparseDelta_))
         {
-          BOLT_WARN(false, "Edge is longer than 2*sparseDelta=" << 2 * sparseDelta_
-                                                                        << ", value=" << newEdgeDist);
+          BOLT_WARN(false, "Edge is longer than 2*sparseDelta=" << 2 * sparseDelta_ << ", value=" << newEdgeDist);
           skippedTooLongEdges++;
           continue;
         }
@@ -419,8 +417,8 @@ void SparseMirror::addEdgesForAll(std::vector<std::vector<SparseVertex>> &vertex
   }
 
   BOLT_DEBUG(vMirrorStatus_, "Skipped " << skippedDuplicateEdges << " edges because duplicate, "
-                                                << skippedCollisionEdges
-                                                << " due to collision, out of total: " << monoSG_->getNumEdges());
+                                        << skippedCollisionEdges
+                                        << " due to collision, out of total: " << monoSG_->getNumEdges());
 }
 
 // TODO: convert this function into a callback that is application specific
@@ -512,7 +510,7 @@ void SparseMirror::checkValidityOfArmMirror(base::SpaceInformationPtr dualSpaceI
 
   // Loop through every vertex in sparse graph and check if state is valid on opposite arm
   BOLT_DEBUG(true, "Checking " << monoSG_->getNumVertices() << " sparse graph vertices for validity on "
-                                                                       "opposite arm");
+                                                               "opposite arm");
   const std::size_t showEvery = std::max((unsigned int)(1), monoSG_->getNumVertices() / 100);
   std::size_t skippedStates = 0;
   foreach (SparseVertex sparseV1, boost::vertices(monoSG_->getGraph()))

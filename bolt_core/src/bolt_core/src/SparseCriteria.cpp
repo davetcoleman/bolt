@@ -88,7 +88,7 @@ bool SparseCriteria::setup(std::size_t indent)
   formulas.calc(si_, stretchFactor_, sparseDeltaFraction_, penetrationOverlapFraction_, nearSamplePointsMultiple_,
                 useL2Norm_, verboseOnce, indent);
   if (verboseOnce)
-    verboseOnce = false; // only show this once
+    verboseOnce = false;  // only show this once
   // Copy values back
   maxExtent_ = formulas.maxExtent_;
   sparseDelta_ = formulas.sparseDelta_;

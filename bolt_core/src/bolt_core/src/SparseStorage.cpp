@@ -88,9 +88,10 @@ SparseStorage::GraphSizeChange SparseStorage::save(const std::string &filePath, 
   out.close();
 
   // Log the graph size
-  std::ofstream loggingFile;                              // open to append
+  std::ofstream loggingFile;  // open to append
   loggingFile.open(loggingPath_.c_str(), std::ios::out | std::ios::app);
-  loggingFile << time::as_string(time::now()) << ", " << sparseGraph_->getNumEdges() << ", " << sparseGraph_->getNumVertices() << std::endl;
+  loggingFile << time::as_string(time::now()) << ", " << sparseGraph_->getNumEdges() << ", "
+              << sparseGraph_->getNumVertices() << std::endl;
   loggingFile.close();
 
   return stats;
@@ -293,12 +294,12 @@ void SparseStorage::loadVertices(std::size_t numVertices, boost::archive::binary
   BOLT_FUNC(true, "Loading vertices from file: " << numVertices);
 
   // Pre-allocate memory in graph
-  //sparseGraph_->getGraphNonConst().m_vertices.reserve(numVertices);
+  // sparseGraph_->getGraphNonConst().m_vertices.reserve(numVertices);
 
   // Create thread to populate nearest neighbor structure, because that is the slowest component
   loadVerticesFinished_ = false;
   SparseVertex startingVertex = sparseGraph_->getNumVertices();  // should be number of threads
-  //boost::thread nnThread(boost::bind(&SparseStorage::populateNNThread, this, startingVertex, numVertices));
+  // boost::thread nnThread(boost::bind(&SparseStorage::populateNNThread, this, startingVertex, numVertices));
 
   const base::StateSpacePtr &space = si_->getStateSpace();
   std::size_t feedbackFrequency = numVertices / 10;
@@ -373,7 +374,7 @@ void SparseStorage::loadEdges(std::size_t numEdges, boost::archive::binary_iarch
   BOLT_FUNC(true, "Loading edges from file: " << numEdges);
 
   // Pre-allocate memory in graph
-  //sparseGraph_->getGraphNonConst().m_edges.reserve(h.edge_count);
+  // sparseGraph_->getGraphNonConst().m_edges.reserve(h.edge_count);
 
   std::size_t feedbackFrequency = std::max(10.0, numEdges / 10.0);
   BoltEdgeData edgeData;

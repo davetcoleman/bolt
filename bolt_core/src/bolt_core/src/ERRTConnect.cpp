@@ -119,7 +119,7 @@ ompl::geometric::ERRTConnect::GrowState ompl::geometric::ERRTConnect::growTree(T
                                                                                Motion *randMotion)
 {
   std::size_t indent = 0;
-  //BOLT_FUNC(true, "growTree()");
+  // BOLT_FUNC(true, "growTree()");
 
   /* find closest state in the tree */
   Motion *nearestMotion = tree->nearest(randMotion);
@@ -132,10 +132,10 @@ ompl::geometric::ERRTConnect::GrowState ompl::geometric::ERRTConnect::growTree(T
   double d = si_->distance(nearestMotion->state, randMotion->state);
   if (d > maxDistance_)
   {
-    si_->getStateSpace()->interpolate(nearestMotion->state, // from
-                                      randMotion->state, // to
-                                      maxDistance_ / d, // time t
-                                      treeGrowInfo.xstate); // output state
+    si_->getStateSpace()->interpolate(nearestMotion->state,  // from
+                                      randMotion->state,     // to
+                                      maxDistance_ / d,      // time t
+                                      treeGrowInfo.xstate);  // output state
     dstate = treeGrowInfo.xstate;
     reach = false;
   }
@@ -380,7 +380,7 @@ void ompl::geometric::ERRTConnect::getPlannerData(base::PlannerData &data) const
 
 void ompl::geometric::ERRTConnect::loadSampler(base::State *start, base::State *goal, std::size_t indent)
 {
-  //BOLT_FUNC(true, "loadSampler()");
+  // BOLT_FUNC(true, "loadSampler()");
 
   getNeighbors(start, startGraphNeighborhood_, indent);
   getNeighbors(goal, goalGraphNeighborhood_, indent);
@@ -390,14 +390,14 @@ void ompl::geometric::ERRTConnect::loadSampler(base::State *start, base::State *
   goalNeighborID_ = 0;
   totalSamples_ = 0;
 
-  //BOLT_INFO(true, "Done loading sampler");
+  // BOLT_INFO(true, "Done loading sampler");
 }
 
 void ompl::geometric::ERRTConnect::getNeighbors(base::State *state,
                                                 std::vector<tools::bolt::SparseVertex> &graphNeighborhood,
                                                 std::size_t indent)
 {
-  //BOLT_FUNC(true, "getNeighbors()");
+  // BOLT_FUNC(true, "getNeighbors()");
 
   graphNeighborhood.clear();
   std::size_t threadID = 3;  // TODO choose better!
@@ -410,25 +410,25 @@ void ompl::geometric::ERRTConnect::getNeighbors(base::State *state,
   sparseGraph_->getNN()->nearestK(sparseGraph_->getQueryVertices(threadID), kNearest, graphNeighborhood);
   sparseGraph_->getQueryStateNonConst(threadID) = nullptr;
 
-  //BOLT_INFO(true, "Found " << graphNeighborhood.size() << " neighbors");
+  // BOLT_INFO(true, "Found " << graphNeighborhood.size() << " neighbors");
 }
 
 void ompl::geometric::ERRTConnect::sampleFromSparseGraph(base::State *randState, bool isStart, std::size_t indent)
 {
   bool verbose = true;
-  //BOLT_FUNC(verbose, "sampleFromSparseGraph()");
+  // BOLT_FUNC(verbose, "sampleFromSparseGraph()");
   totalSamples_++;
 
   if (isStart)  // start
   {
     if (startNeighborID_ >= startGraphNeighborhood_.size() || totalSamples_ % 2 == 0)
     {
-      //BOLT_FUNC(verbose, "Sampling start " << startNeighborID_ << " sampleUniform");
+      // BOLT_FUNC(verbose, "Sampling start " << startNeighborID_ << " sampleUniform");
       sampler_->sampleUniform(randState);
     }
     else
     {
-      //BOLT_FUNC(verbose, "Sampling start " << startNeighborID_ << " getStateNonConst");
+      // BOLT_FUNC(verbose, "Sampling start " << startNeighborID_ << " getStateNonConst");
       // Copy from SparseGraph to pre-allocated randState
       si_->copyState(randState, sparseGraph_->getStateNonConst(startGraphNeighborhood_[startNeighborID_++]));
     }
@@ -437,16 +437,17 @@ void ompl::geometric::ERRTConnect::sampleFromSparseGraph(base::State *randState,
   {
     if (goalNeighborID_ >= goalGraphNeighborhood_.size() || totalSamples_ % 2 == 0)
     {
-      //BOLT_FUNC(verbose, "Sampling goal " << goalNeighborID_ << " sampleUniform");
+      // BOLT_FUNC(verbose, "Sampling goal " << goalNeighborID_ << " sampleUniform");
       sampler_->sampleUniform(randState);
     }
     else
     {
-      //BOLT_FUNC(verbose, "Sampling goal " << goalNeighborID_ << " getStateNonConst, vertex " << goalGraphNeighborhood_[goalNeighborID_]);
+      // BOLT_FUNC(verbose, "Sampling goal " << goalNeighborID_ << " getStateNonConst, vertex " <<
+      // goalGraphNeighborhood_[goalNeighborID_]);
       // Copy from SparseGraph to pre-allocated randState
       si_->copyState(randState, sparseGraph_->getStateNonConst(goalGraphNeighborhood_[goalNeighborID_++]));
     }
   }
 
-  //BOLT_DEBUG(verbose, "Done sampling from SparseGraph");
+  // BOLT_DEBUG(verbose, "Done sampling from SparseGraph");
 }
