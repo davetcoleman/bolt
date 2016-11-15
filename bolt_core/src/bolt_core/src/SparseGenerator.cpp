@@ -1103,10 +1103,9 @@ void SparseGenerator::benchmarkMemoryAllocation(std::size_t indent)
   std::cout << std::endl;
 }
 
-ExperiencePathStats SparseGenerator::addExperiencePath(geometric::PathGeometricPtr path, double interpolateFrac, std::size_t indent)
+bool SparseGenerator::addExperiencePath(geometric::PathGeometricPtr path, double interpolateFrac, std::size_t indent)
 {
   BOLT_FUNC(true, "addExperiencePath() with " << path->getStateCount() << " states");
-  ExperiencePathStats stats;
 
   // Reset this class
   // clear();
@@ -1137,23 +1136,12 @@ ExperiencePathStats SparseGenerator::addExperiencePath(geometric::PathGeometricP
   if (!addExperiencePathHelper(path, interpolateFrac, indent))
   {
     BOLT_ERROR("Error adding path");
-    return stats;
+    return false;
   }
-
-  // TODO: get stats without having to save to file
-  if (sg_->hasUnsavedChanges())
-  {
-    SparseStorage::GraphSizeChange result = sg_->save(indent);
-
-    stats.numVerticesAdded_ = result.numVerticesAdded_;
-    stats.numEdgesAdded_ = result.numEdgesAdded_;
-  }
-  else
-    BOLT_MAGENTA(true, "Sparse graph NOT changed  -------------------------------------");
 
   BOLT_INFO(true, "Finished adding experience path to SparseGraph");
 
-  return stats;
+  return true;
 }
 
 bool SparseGenerator::addExperiencePathHelper(geometric::PathGeometricPtr path, double interpolateFrac, std::size_t indent)

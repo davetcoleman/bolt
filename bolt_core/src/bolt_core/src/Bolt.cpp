@@ -120,10 +120,10 @@ void Bolt::initialize(std::size_t indent)
   taskGraph_ = std::make_shared<TaskGraph>(si_, compoundSI_, sparseGraph_);
 
   // Task Criteria
-  //taskCriteria_ = std::make_shared<TaskCriteria(taskGraph_));
+  // taskCriteria_ = std::make_shared<TaskCriteria(taskGraph_));
 
   // Give the task graph reference to the criteria, because sometimes it needs data from there
-  //taskGraph_->setTaskCriteria(taskCriteria_);
+  // taskGraph_->setTaskCriteria(taskCriteria_);
 
   BOLT_INFO(verbose_, "Loading BoltPlanner");
   boltPlanner_ = std::make_shared<BoltPlanner>(si_, compoundSI_, taskGraph_, visual_);
@@ -157,7 +157,7 @@ void Bolt::setup()
 
     if (usePFSPlanner_)
     {
-      double range = si_->getMaximumExtent() * 0.05; // auto config value is 8.284306
+      double range = si_->getMaximumExtent() * 0.05;  // auto config value is 8.284306
       if (useERRTConnect_)
       {
         ERRTPlanner_->setup();
@@ -175,7 +175,7 @@ void Bolt::setup()
     sparseCriteria_->setup(indent);
     sparseGenerator_->setup(indent);
     taskGraph_->setup();
-    //taskCriteria_->setup(indent);
+    // taskCriteria_->setup(indent);
     // Set the configured flag
     configured_ = true;
 
@@ -194,7 +194,6 @@ void Bolt::setup()
       else
         pp_->addPlanner(rrtPlanner_);  // Add the planning from scratch planner if desired
     }
-
   }
 }
 
@@ -243,8 +242,8 @@ base::PlannerStatus Bolt::solve(const base::PlannerTerminationCondition &ptc)
 
   // Warn if there are queued paths that have not been added to the experience database
   if (!queuedModelSolPaths_.empty())
-    BOLT_INFO(true, "Num solved paths uninserted into the experience database in the post-proccessing queue: " <<
-              queuedModelSolPaths_.size());
+    BOLT_INFO(true, "Num solved paths uninserted into the experience database in the post-proccessing queue: "
+                        << queuedModelSolPaths_.size());
 
   // If \e hybridize is false, when the first solution is found, the rest of the planners are stopped as well.
   // Start both threads
@@ -318,20 +317,21 @@ void Bolt::processResults(std::size_t indent)
       // og::PathGeometric smoothedModelSolPath = og::SimpleSetup::getSolutionPath();  // copied so that it is non-const
       // og::PathGeometricPtr smoothedModelSolPath = boltPlanner_->getSmoothedModelSolPath();
       // pathLength = smoothedModelSolPath->length();
-      //BOLT_BLUE(true, "Solution found in " << planTime_ << " seconds"); // with "
+      // BOLT_BLUE(true, "Solution found in " << planTime_ << " seconds"); // with "
       //<< smoothedModelSolPath->getStateCount() << " states");
 
-      //og::PathGeometric solutionPath = static_cast<geometric::PathGeometric &>(*pdef_->getSolutionPath());
+      // og::PathGeometric solutionPath = static_cast<geometric::PathGeometric &>(*pdef_->getSolutionPath());
       og::PathGeometricPtr solutionPath = std::dynamic_pointer_cast<og::PathGeometric>(pdef_->getSolutionPath());
 
       std::cout << "-------------------------------------------------------" << std::endl;
       std::cout << "-------------------------------------------------------" << std::endl;
-      BOLT_WARN(true, "Solution path has " << solutionPath->getStateCount() << " states and was generated from planner " << getSolutionPlannerName());
+      BOLT_WARN(true, "Solution path has " << solutionPath->getStateCount() << " states and was generated from planner "
+                                           << getSolutionPlannerName());
       std::cout << "-------------------------------------------------------" << std::endl;
       std::cout << "-------------------------------------------------------" << std::endl;
 
       // Smooth the result
-      //simplifySolution(); // max simplify
+      // simplifySolution(); // max simplify
 
       // Error check for repeated states
       // if (!checkRepeatedStates(*smoothedModelSolPath, indent))
@@ -385,7 +385,7 @@ bool Bolt::doPostProcessing(std::size_t indent)
   queuedModelRawPaths_.clear();
 
   // Start thread
-  //ppThread_ = std::thread(std::bind(&Bolt::postProcessingThread, this, threadQueuedModelSolPaths, indent));
+  // ppThread_ = std::thread(std::bind(&Bolt::postProcessingThread, this, threadQueuedModelSolPaths, indent));
   postProcessingThread(threadQueuedModelSolPaths, threadQueuedModelRawPaths, indent);
 
   return true;
@@ -411,58 +411,74 @@ void Bolt::postProcessingThread(std::vector<geometric::PathGeometricPtr> queuedM
   if (queuedModelSolPaths.size() > 1)
     BOLT_WARN(true, "Normally only post-process one state!");
 
-  for (std::size_t i = 0; i < queuedModelSolPaths.size(); ++i)
+  BOOST_ASSERT_MSG(queuedModelSolPaths.size() == 1, "Currently only supports 1 queued path");
+
+  geometric::PathGeometricPtr queuedSolPath = queuedModelSolPaths[0];
+  geometric::PathGeometricPtr queuedRawPath = queuedModelRawPaths[0];
+
+  time::point startTime0 = time::now();  // Benchmark
+  std::size_t beforeNumVertices = sparseGraph_->getNumRealVertices();
+  std::size_t beforeNumEdges = sparseGraph_->getNumEdges();
+
+  // keep inserting same path until connectivity is reached
+  double interpolateFrac = 1.0;
+  while (true)
   {
-    geometric::PathGeometricPtr queuedSolPath = queuedModelSolPaths[i];
-    geometric::PathGeometricPtr queuedRawPath = queuedModelRawPaths[i];
+    sparseGenerator_->addExperiencePath(queuedSolPath, interpolateFrac, indent);
 
-    // keep inserting same path until connectivity is reached
-    double interpolateFrac = 1.0;
-    while (true)
+    if (!testForCompletePathLearning_)
     {
-      ExperiencePathStats postProcessingResults = sparseGenerator_->addExperiencePath(queuedSolPath, interpolateFrac, indent);
-      postProcessingResults_.numVerticesAdded_ += postProcessingResults.numVerticesAdded_;
-      postProcessingResults_.numEdgesAdded_ += postProcessingResults.numEdgesAdded_;
+      postProcessingResults_.inserted_ = true;
+      break;  // ignore incomplete experience learning
+    }
 
-      if (!testForCompletePathLearning_)
-          break; // ignore incomplete experience learning
+    // Check that fully connected graph has been achieved
+    if (pathIsFullyConnected(queuedSolPath, indent))
+    {
+      postProcessingResults_.inserted_ = true;
+      break;
+    }
 
-      // Check that fully connected graph has been achieved
-      if (pathIsFullyConnected(queuedSolPath, indent))
-        break;
+    // Increase interpolation to help connect graph
+    interpolateFrac += 0.1;
 
-      // Increase interpolation to help connect graph
-      interpolateFrac += 0.1;
+    // Re-smooth to help connect graph
+    psk_->simplifyMax(*queuedSolPath);
+
+    // After a few tries, also attempt original path
+    if (queuedSolPath->getStateCount() > 1000 || interpolateFrac > 1.5)
+    {
+      // Add the original path
+      if (false)
+      {
+        visual_->viz6()->path(queuedRawPath.get(), ot::MEDIUM, ot::BROWN, ot::PINK);
+        visual_->viz6()->trigger();
+      }
+
+      sparseGenerator_->addExperiencePath(queuedRawPath, interpolateFrac, indent);
 
       // Re-smooth to help connect graph
-      psk_->simplifyMax(*queuedSolPath);
+      psk_->simplifyMax(*queuedRawPath);
+    }
 
-      // After a few tries, also attempt original path
-      if (queuedSolPath->getStateCount() > 1000 || interpolateFrac > 1.5)
-      {
-        // Add the original path
-        if (false)
-        {
-          visual_->viz6()->path(queuedRawPath.get(), ot::MEDIUM, ot::BROWN, ot::PINK);
-          visual_->viz6()->trigger();
-        }
-
-        postProcessingResults = sparseGenerator_->addExperiencePath(queuedRawPath, interpolateFrac, indent);
-        postProcessingResults_.numVerticesAdded_ += postProcessingResults.numVerticesAdded_;
-        postProcessingResults_.numEdgesAdded_ += postProcessingResults.numEdgesAdded_;
-
-        // Re-smooth to help connect graph
-        psk_->simplifyMax(*queuedRawPath);
-      }
-
-      // Limit how many attempts before giving up
-      if (queuedSolPath->getStateCount() > 1000 || interpolateFrac > 1.8)
-      {
-        //visual_->prompt("giving up on connecting path");
-        break;
-      }
+    // Limit how many attempts before giving up
+    if (queuedSolPath->getStateCount() > 1000 || interpolateFrac > 1.8)
+    {
+      // visual_->prompt("giving up on connecting path");
+      postProcessingResults_.inserted_ = false;
+      break;
     }
   }
+
+  double time = time::seconds(time::now() - startTime0);
+  OMPL_INFORM("Post processing %f seconds", time);  // Benchmark
+  postProcessingResults_.insertionTime_ = time;
+
+  postProcessingResults_.numVerticesAdded_ = sparseGraph_->getNumRealVertices() - beforeNumVertices;
+  postProcessingResults_.numEdgesAdded_ = sparseGraph_->getNumEdges() - beforeNumEdges;
+
+  // Save just cause
+  sparseGraph_->saveIfChanged(indent);
 
   // Remove all inserted paths from the queue
   queuedModelSolPaths.clear();
@@ -475,7 +491,7 @@ bool Bolt::checkRepeatedStates(const og::PathGeometric &path, std::size_t indent
     if (si_->getStateSpace()->equalStates(path.getState(i - 1), path.getState(i)))
     {
       BOLT_ERROR("Duplicate state found between " << i - 1 << " and " << i << " on trajectory, out of "
-                                                          << path.getStateCount());
+                                                  << path.getStateCount());
 
       visual_->viz6()->state(path.getState(i), tools::ROBOT, tools::RED, 0);
       visual_->prompt("duplicate");
@@ -491,11 +507,11 @@ bool Bolt::pathIsFullyConnected(geometric::PathGeometricPtr path, std::size_t in
   BOLT_FUNC(true, "pathIsFullyConnected()");
 
   // Check if path has been fully connected
-  const base::State* start = path->getState(0);
-  const base::State* goal = path->getState(path->getStateCount() - 1);
+  const base::State *start = path->getState(0);
+  const base::State *goal = path->getState(path->getStateCount() - 1);
 
   taskGraph_->generateMonoLevelTaskSpace(indent);
-  //taskGraph_->displayDatabase(true, true, 6, indent);
+  // taskGraph_->displayDatabase(true, true, 6, indent);
 
   ob::PlannerTerminationCondition ptc = ob::timedPlannerTerminationCondition(60, 0.1);
   bool result = boltPlanner_->solve(start, goal, ptc, indent);
@@ -512,7 +528,7 @@ bool Bolt::pathIsFullyConnected(geometric::PathGeometricPtr path, std::size_t in
       visual_->viz6()->trigger();
     }
   }
-  else // error
+  else  // error
   {
     BOLT_ERROR("pathIsFullyConnected() No path found through experience graph");
     return false;
@@ -568,9 +584,9 @@ bool Bolt::load(std::size_t indent)
   // Load from file
   if (!sparseGraph_->isEmpty())
   {
-    BOLT_WARN(1, "Database already loaded, vertices: " << sparseGraph_->getNumVertices()
-                                                               << ", edges: " << sparseGraph_->getNumEdges()
-                                                               << ", queryV: " << sparseGraph_->getNumQueryVertices());
+    BOLT_WARN(1, "Database already loaded, vertices: " << sparseGraph_->getNumRealVertices()
+                                                       << ", edges: " << sparseGraph_->getNumEdges()
+                                                       << ", queryV: " << sparseGraph_->getNumQueryVertices());
     return false;
   }
 
@@ -600,8 +616,6 @@ void Bolt::print(std::ostream &out) const
 
 void Bolt::printLogs(std::ostream &out) const
 {
-  double vertPercent = sparseGraph_->getNumVertices() / double(sparseGraph_->getNumVertices()) * 100.0;
-  double edgePercent = sparseGraph_->getNumEdges() / double(sparseGraph_->getNumEdges()) * 100.0;
   double solvedPercent = stats_.numSolutionsSuccess_ / static_cast<double>(stats_.numProblems_) * 100.0;
   out << "Bolt Framework Logging Results" << std::endl;
   out << "  Solutions Attempted:           " << stats_.numProblems_ << std::endl;
@@ -609,13 +623,12 @@ void Bolt::printLogs(std::ostream &out) const
   out << "    Failed:                      " << stats_.numSolutionsFailed_ << std::endl;
   out << "    Timedout:                    " << stats_.numSolutionsTimedout_ << std::endl;
   out << "  SparseGraph                       " << std::endl;
-  out << "    Vertices:                    " << sparseGraph_->getNumVertices() << " (" << vertPercent << "%)"
-      << std::endl;
-  out << "    Edges:                       " << sparseGraph_->getNumEdges() << " (" << edgePercent << "%)" << std::endl;
-  //out << "    Disjoint Samples Added:      " << sparseGenerator_->getNumRandSamplesAdded() << std::endl;
+  out << "    Vertices:                    " << sparseGraph_->getNumVertices() << std::endl;
+  out << "    Edges:                       " << sparseGraph_->getNumEdges() << std::endl;
+  // out << "    Disjoint Samples Added:      " << sparseGenerator_->getNumRandSamplesAdded() << std::endl;
   out << "    Sparse Delta:                " << sparseCriteria_->getSparseDelta() << std::endl;
   out << "  Average planning time:         " << stats_.getAveragePlanningTime() << " seconds" << std::endl;
-  //out << "  Average insertion time:        " << stats_.getAverageInsertionTime() << " seconds" << std::endl;
+  // out << "  Average insertion time:        " << stats_.getAverageInsertionTime() << " seconds" << std::endl;
   out << std::endl;
 }
 

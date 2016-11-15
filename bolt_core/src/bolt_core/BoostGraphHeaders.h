@@ -375,12 +375,14 @@ class FoundGoalException
 ////////////////////////////////////////////////////////////////////////////////////////
 struct ExperiencePathStats
 {
-  ExperiencePathStats() : numVerticesAdded_(0), numEdgesAdded_(0)
+  ExperiencePathStats() : numVerticesAdded_(0), numEdgesAdded_(0), inserted_(false), insertionTime_(0.0)
   {
   }
 
   std::size_t numVerticesAdded_;
   std::size_t numEdgesAdded_;
+  bool inserted_; // whether the last path inserted correctly
+  double insertionTime_; // how much time it took to insert
 };
 
 }  // namespace bolt

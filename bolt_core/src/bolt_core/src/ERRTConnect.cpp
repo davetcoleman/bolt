@@ -230,7 +230,7 @@ ompl::base::PlannerStatus ompl::geometric::ERRTConnect::solve(const base::Planne
     startTree = !startTree;
     TreeData &otherTree = startTree ? tStart_ : tGoal_;
 
-    if (tGoal_->size() == 0 || pis_.getSampledGoalsCount() < tGoal_->size() / 2)
+    if (pis_.haveMoreGoalStates())
     {
       const base::State *st = tGoal_->size() == 0 ? pis_.nextGoal(ptc) : pis_.nextGoal();
       if (st)

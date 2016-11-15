@@ -55,6 +55,8 @@
 #include <ompl/geometric/planners/rrt/RRTConnect.h>
 #include <ompl/geometric/planners/rrt/LazyRRT.h>
 #include <ompl/geometric/planners/prm/LazyPRM.h>
+#include <ompl/geometric/planners/rrt/RRT.h>
+#include <ompl/geometric/planners/prm/PRM.h>
 #include <ompl/geometric/planners/est/BiEST.h>
 #include <ompl/geometric/planners/pdst/PDST.h>
 #include <ompl/base/goals/GoalStates.h>
@@ -444,6 +446,16 @@ bool BoltBaxter::loadOMPL(std::size_t indent)
       simple_setup_->setPlanner(std::make_shared<og::LazyPRM>(si_));
       simple_setup_->setPlanner(std::make_shared<og::LazyPRM>(si_));
     }
+    else if (planner_ == "RRT")
+    {
+      simple_setup_->setPlanner(std::make_shared<og::RRT>(si_));
+      simple_setup_->setPlanner(std::make_shared<og::RRT>(si_));
+    }
+    else if (planner_ == "PRM")
+    {
+      simple_setup_->setPlanner(std::make_shared<og::PRM>(si_));
+      simple_setup_->setPlanner(std::make_shared<og::PRM>(si_));
+    }
     else if (planner_ == "BiEST")
     {
       simple_setup_->setPlanner(std::make_shared<og::BiEST>(si_));
@@ -538,7 +550,7 @@ bool BoltBaxter::loadData(std::size_t indent)
     if (!bolt_->load(indent))
     {
       BOLT_INFO(true, "Unable to load sparse graph from file");
-      planner_ = planner_ + "NP"; // append "no-preprocessing to planner name
+      planner_ = planner_ + "NP";  // append "no-preprocessing to planner name
       return false;
     }
   }
@@ -571,7 +583,8 @@ void BoltBaxter::eachPlanner(std::size_t indent)
     bolt_moveit::getFilePath(file_path, log_file_name_, "ros/ompl_storage");
     logging_file_.open(file_path.c_str(), std::ios::out | std::ios::app);
     // Header of CSV file
-    logging_file_ << "planner, planTime, smoothTime, pathLen, addV, addE, penetrate, solved, thread" << std::endl;
+    logging_file_ << "planner, thread, penetrate, planTime, pathLen, smoothTime, addV, addE, numV, numE, inserted, "
+                     "insertTime, solved" << std::endl;
   }
 
   for (std::size_t i = 0; i < planners_.size(); ++i)
@@ -1383,8 +1396,8 @@ void BoltBaxter::loadAmazonScene(std::size_t indent)
     y_noise = visual_tools_[6]->dRand(-noise, noise);
     rotation_noise = visual_tools_[6]->dRand(-rnoise, rnoise);  // z axis
 
-    BOLT_INFO(true, "loadAmazon() x_noise = " << x_noise << "; y_noise = " << y_noise << "; rotation_noise = " <<
-              rotation_noise << ";");
+    BOLT_INFO(true, "loadAmazon() x_noise = " << x_noise << "; y_noise = " << y_noise
+                                              << "; rotation_noise = " << rotation_noise << ";");
   }
 
   visual_tools_[6]->deleteAllMarkers();
@@ -1773,8 +1786,7 @@ std::string BoltBaxter::getPlannerFilePath(const std::string &planning_group_nam
   if (is_bolt_)
   {
     file_name = planner_lower_ + "_" + planning_group_name + "_" +
-                std::to_string(bolt_->getSparseCriteria()->sparseDeltaFraction_) + "_" +
-                load_database_version_;
+                std::to_string(bolt_->getSparseCriteria()->sparseDeltaFraction_) + "_" + load_database_version_;
   }
   else if (is_thunder_ || is_lightning_)
   {
@@ -1829,7 +1841,7 @@ void BoltBaxter::loadSPARS2Data(std::size_t indent)
   formulas.calc(si_, stretchFactor_, sparseDeltaFraction_, penetrationOverlapFraction_, nearSamplePointsMultiple_,
                 useL2Norm_, verboseOnce, indent);
   if (verboseOnce)
-    verboseOnce = false; // only show this once
+    verboseOnce = false;  // only show this once
 
   spars2_->setSparseDeltaFraction(sparseDeltaFraction_);
   spars2_->setDenseDeltaFraction(denseDeltaFraction_);
@@ -1864,12 +1876,22 @@ void BoltBaxter::log(bool solved, std::size_t indent)
 
   std::size_t numVerticesAdded = 0;
   std::size_t numEdgesAdded = 0;
+  std::size_t numVertices = 0;
+  std::size_t numEdges = 0;
+  bool inserted = false;
+  double insertionTime = 0;
   if (is_bolt_)
   {
     // Get a copy of the stats and clear them from the Bolt setup
     otb::ExperiencePathStats stats = bolt_->getPostProcessingResultsAndReset();
     numVerticesAdded = stats.numVerticesAdded_;
     numEdgesAdded = stats.numEdgesAdded_;
+    inserted = stats.inserted_;
+    insertionTime = stats.insertionTime_;
+
+    // General graph stats
+    numVertices = bolt_->getSparseGraph()->getNumVertices();
+    numEdges = bolt_->getSparseGraph()->getNumEdges();
   }
   if (is_thunder_)
   {
@@ -1880,24 +1902,29 @@ void BoltBaxter::log(bool solved, std::size_t indent)
     thunder_->diffNumEdges_ = 0;
   }
 
-  double pathLength = 99999; // some really large number to prevent forgetting to adjust for this in averages
+  double pathLength = 99999;  // some really large number to prevent forgetting to adjust for this in averages
   if (simple_setup_->getProblemDefinition()->hasSolution())
   {
-    og::PathGeometric &path = static_cast<og::PathGeometric &>(*simple_setup_->getProblemDefinition()->getSolutionPath());
+    og::PathGeometric &path =
+        static_cast<og::PathGeometric &>(*simple_setup_->getProblemDefinition()->getSolutionPath());
     pathLength = path.length();
   }
   else
     BOLT_WARN(true, "logging: does not have solution");
 
-  logging_file_ << planner_ << ", "                // bolt, etc
-                << simple_setup_->getLastPlanComputationTime() << ", " // planning time
-                << simple_setup_->getLastSimplificationTime() << ", " // smoothing time
-                << pathLength << ", "  // basic planning stats
-                << numVerticesAdded << ", "        // numVerticesAdded
-                << numEdgesAdded << ", "           // numEdgesAdded
-                << penetration_dist_ << ", "       // task
-                << solved << ", "                  // solved
-                << simple_setup_->getSolutionPlannerName() // which thread finished first
+  logging_file_ << planner_ << ", "                                     // bolt, etc
+                << simple_setup_->getSolutionPlannerName() << ", "      // which thread finished first
+                << penetration_dist_ << ", "                            // task
+                << simple_setup_->getLastPlanComputationTime() << ", "  // planning time
+                << pathLength << ", "                                   // basic planning stats
+                << simple_setup_->getLastSimplificationTime() << ", "   // smoothing time
+                << numVerticesAdded << ", "                             // numVerticesAdded
+                << numEdgesAdded << ", "                                // numEdgesAdded
+                << numVertices << ", "                                  // total vertex count
+                << numEdges << ", "                                     // total edge count
+                << inserted << ", "       // whether experience failed to insert (0) or succeeded (1)
+                << insertionTime << ", "  // how long it took to insert
+                << solved                 // solved
                 << std::endl;
   logging_file_.flush();
 }
@@ -1960,7 +1987,7 @@ void BoltBaxter::chooseGoalIK(std::size_t run_id, std::size_t indent)
     imarker_goal_->setFromPoses(poses, planning_jmg_);
 
     space_->copyToOMPLState(ompl_goal_, *imarker_goal_->getRobotState());
-    goals->addState(ompl_goal_); // this command clones the state / does not own our memory
+    goals->addState(ompl_goal_);  // this command clones the state / does not own our memory
   }
   ompl::base::GoalPtr goal = std::dynamic_pointer_cast<ompl::base::Goal>(goals);
   simple_setup_->setGoal(goals);

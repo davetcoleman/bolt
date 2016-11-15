@@ -118,6 +118,13 @@ base::PlannerStatus BoltPlanner::solve(Termination &ptc)
   std::size_t indent = 0;
   BOLT_FUNC(verbose_, "solve()");
 
+  // Check if the database is empty
+  if (taskGraph_->isEmpty())
+  {
+    BOLT_DEBUG(true, "Task experience database is empty so unable to run BoltPlanner algorithm.");
+    return base::PlannerStatus::ABORT;
+  }
+
   // Solve -------------------------------------------------
   if (!solveMultiAttempt(ptc, indent))
   {
@@ -136,6 +143,13 @@ base::PlannerStatus BoltPlanner::solve(Termination &ptc)
 
 bool BoltPlanner::solve(const base::State *start, const base::State *goal, Termination &ptc, std::size_t indent)
 {
+  // Check if the database is empty
+  if (taskGraph_->isEmpty())
+  {
+    BOLT_DEBUG(true, "Task experience database is empty so unable to run BoltPlanner algorithm.");
+    return base::PlannerStatus::ABORT;
+  }
+
   const std::size_t attempt = 1;
   const std::size_t maxAttempts = 1;
   return solveSingleGoal(start, goal, attempt, maxAttempts, ptc, indent);
@@ -265,13 +279,6 @@ bool BoltPlanner::solveSingleGoal(const base::State *start, const base::State *g
                                   std::size_t maxAttempts, Termination &ptc, std::size_t indent)
 {
   BOLT_FUNC(verbose_, "solveSingleGoal()");
-
-  // Check if the database is empty
-  if (taskGraph_->isEmpty())
-  {
-    BOLT_DEBUG(verbose_, "Task experience database is empty so unable to run BoltPlanner algorithm.");
-    return base::PlannerStatus::ABORT;
-  }
 
   // Visualize start vertex
   if (visualizeStartGoal_)

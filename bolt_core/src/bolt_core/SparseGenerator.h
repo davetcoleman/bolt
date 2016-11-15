@@ -176,7 +176,7 @@ public:
     return mean;
   }
 
-  ExperiencePathStats addExperiencePath(geometric::PathGeometricPtr path, double interpolateFrac, std::size_t indent);
+  bool addExperiencePath(geometric::PathGeometricPtr path, double interpolateFrac, std::size_t indent);
   bool addExperiencePathHelper(geometric::PathGeometricPtr path, double interpolateFrac, std::size_t indent);
 
   /** \brief Improved version for sparse criteria */
