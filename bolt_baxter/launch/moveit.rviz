@@ -7,6 +7,7 @@ Panels:
         - /Grid1/Offset1
         - /State 1to61
         - /Markers 1to61
+        - /Trajectory1
         - /PlanningScene1/Scene Robot1
         - /InteractiveMarkers1
         - /TF1/Frames1
@@ -1765,14 +1766,14 @@ Visualization Manager:
           Namespaces:
             Arrow: true
             Cylinder: true
-            Sphere: true
             path_spheres: true
           Queue Size: 100
           Value: true
       Enabled: true
       Name: Markers 1to6
     - Class: moveit_rviz_plugin/Trajectory
-      Enabled: false
+      Color Enabled: true
+      Enabled: true
       Interrupt Display: true
       Links:
         All Links Enabled: true
@@ -2043,13 +2044,14 @@ Visualization Manager:
       Loop Animation: false
       Name: Trajectory
       Robot Alpha: 0.5
+      Robot Color: 150; 50; 150
       Robot Description: baxter/robot_description
       Show Robot Collision: false
       Show Robot Visual: true
       Show Trail: false
       State Display Time: REALTIME
       Trajectory Topic: /baxter/display_trajectory
-      Value: false
+      Value: true
     - Class: moveit_rviz_plugin/PlanningScene
       Enabled: true
       Move Group Namespace: ""
@@ -2638,7 +2640,7 @@ Visualization Manager:
           Collision Enabled: false
           Enabled: true
           Links:
-            All Links Enabled: false
+            All Links Enabled: true
             Expand Joint Details: false
             Expand Link Details: false
             Expand Tree: false
@@ -2651,17 +2653,17 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: false
+              Value: true
             collision_head_link_2:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: false
+              Value: true
             display:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: false
+              Value: true
             dummyhead1:
               Alpha: 1
               Show Axes: false
@@ -2670,7 +2672,7 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: false
+              Value: true
             head_camera:
               Alpha: 1
               Show Axes: false
@@ -2773,7 +2775,7 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: false
+              Value: true
             left_wrist:
               Alpha: 1
               Show Axes: false
@@ -2783,7 +2785,7 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: false
+              Value: true
             right_arm_itb:
               Alpha: 1
               Show Axes: false
@@ -2882,7 +2884,7 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: false
+              Value: true
             right_wrist:
               Alpha: 1
               Show Axes: false
@@ -2892,17 +2894,17 @@ Visualization Manager:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: false
+              Value: true
             sonar_ring:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: false
+              Value: true
             torso:
               Alpha: 1
               Show Axes: false
               Show Trail: false
-              Value: false
+              Value: true
           Name: Goal
           Robot Alpha: 0.25
           Robot Description: /baxter/robot_description
@@ -3259,24 +3261,24 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 1.43070865
+      Distance: 3.1192112
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.640681148
-        Y: -0.13758713
-        Z: -1.19954348e-06
-      Focal Shape Fixed Size: true
+        X: 0
+        Y: 0
+        Z: 0
+      Focal Shape Fixed Size: false
       Focal Shape Size: 0.0500000007
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.90979743
+      Pitch: 1.20039785
       Target Frame: robot_table_link
       Value: XYOrbit (rviz)
-      Yaw: 3.08901763
+      Yaw: 3.1004014
     Saved: ~
 Window Geometry:
   Displays:

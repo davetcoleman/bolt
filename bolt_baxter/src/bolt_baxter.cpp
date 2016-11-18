@@ -755,7 +755,7 @@ bool BoltBaxter::runProblems(std::size_t indent)
 
       std::cout << std::endl;
       std::cout << "***************************************************************" << std::endl;
-      BOLT_INFO(true, "Planning " << run_id + 1 << " out of " << num_problems_);
+      BOLT_INFO(true, "Planning " << run_id + 1 << " out of " << num_problems_ << " for penetration distance: " << penetration_dist_);
       std::cout << "***************************************************************" << std::endl;
 
       // Track memory usage
@@ -878,7 +878,9 @@ bool BoltBaxter::plan(std::size_t run_id, std::size_t indent)
   }
 
   // Set the start and goal states
+  simple_setup_->clearStartStates();
   simple_setup_->addStartState(ompl_start_);
+  // goal state was added in chooseGoalIK
 
   // Solve -----------------------------------------------------------
 
@@ -892,7 +894,12 @@ bool BoltBaxter::plan(std::size_t run_id, std::size_t indent)
   CALLGRIND_TOGGLE_COLLECT;
 
   // Attempt to solve the problem within x seconds of planning time
-  bool result = simple_setup_->solve(ptc);
+  ob::PlannerStatus status = simple_setup_->solve(ptc);
+
+  std::cout << "status: " << status << std::endl;
+  bool solved = false;
+  if (status == ob::PlannerStatus::EXACT_SOLUTION)
+    solved = true;
 
   // Profiler
   CALLGRIND_TOGGLE_COLLECT;
@@ -904,9 +911,11 @@ bool BoltBaxter::plan(std::size_t run_id, std::size_t indent)
     bolt_->printLogs();
   }
 
-  if (!result)
+  if (!solved)
+  {
+    BOLT_ERROR("Failed to find solution");
     return false;
-
+  }
   // Visualize pre-smoothing
   if (visualize_interpolated_traj_)
     visualizeRawSolutionLine(indent);
