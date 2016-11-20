@@ -1764,7 +1764,6 @@ Visualization Manager:
           Marker Topic: /baxter/ompl_visual6
           Name: ompl6 - markers
           Namespaces:
-            Arrow: true
             Cylinder: true
             path_spheres: true
           Queue Size: 100
@@ -2341,17 +2340,17 @@ Visualization Manager:
       Displays:
         - Class: rviz/InteractiveMarkers
           Enable Transparency: true
-          Enabled: false
+          Enabled: true
           Name: Start
           Show Axes: false
           Show Descriptions: true
           Show Visual Aids: false
           Update Topic: /baxter/start_imarker/update
-          Value: false
+          Value: true
         - Attached Body Color: 150; 50; 150
           Class: moveit_rviz_plugin/RobotState
           Collision Enabled: false
-          Enabled: false
+          Enabled: true
           Links:
             All Links Enabled: true
             Expand Joint Details: false
@@ -2624,7 +2623,7 @@ Visualization Manager:
           Robot State Topic: /baxter/imarker_start_state
           Show All Links: true
           Show Highlights: true
-          Value: false
+          Value: true
           Visual Enabled: true
         - Class: rviz/InteractiveMarkers
           Enable Transparency: true
@@ -2906,7 +2905,7 @@ Visualization Manager:
               Show Trail: false
               Value: true
           Name: Goal
-          Robot Alpha: 0.25
+          Robot Alpha: 1
           Robot Description: /baxter/robot_description
           Robot State Topic: /baxter/imarker_goal_state
           Show All Links: true
@@ -3261,24 +3260,24 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 3.1192112
+      Distance: 2.97831321
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0
-        Y: 0
+        X: -0.454776585
+        Y: -0.0735278875
         Z: 0
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.0500000007
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 1.20039785
+      Pitch: 1.56979632
       Target Frame: robot_table_link
       Value: XYOrbit (rviz)
-      Yaw: 3.1004014
+      Yaw: 3.16540623
     Saved: ~
 Window Geometry:
   Displays:

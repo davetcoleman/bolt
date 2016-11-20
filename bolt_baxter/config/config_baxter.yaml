@@ -58,7 +58,7 @@ bolt_baxter:
 
   # run type
   run_problems: true # do plans?
-  problem_type: 4 # 0 - random, 1 - imarkers, 2 - imarker goal list, 3 - stdf, 4 - ik
+  problem_type: 0 # 0 - random, 1 - imarkers, 2 - imarker goal list, 3 - stdf, 4 - ik
 
   # Goal
   imarker_goal_list: problems/benchmark1.moveit
@@ -236,11 +236,11 @@ debug_interface:
 bolt_planner:
   smoothing_enabled: true
   verbose:
-    verbose: false
-    nearest_neighbor: false
-    collision_check: false
-    sampling: false
-    criteria: false
+    verbose: true
+    nearest_neighbor: true
+    collision_check: true
+    sampling: true
+    criteria: true
   visualize:
     raw_trajectory: false
     smooth_trajectory: false

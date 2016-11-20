@@ -755,7 +755,8 @@ bool BoltBaxter::runProblems(std::size_t indent)
 
       std::cout << std::endl;
       std::cout << "***************************************************************" << std::endl;
-      BOLT_INFO(true, "Planning " << run_id + 1 << " out of " << num_problems_ << " for penetration distance: " << penetration_dist_);
+      BOLT_INFO(true, "Planning " << run_id + 1 << " out of " << num_problems_
+                                  << " for penetration distance: " << penetration_dist_);
       std::cout << "***************************************************************" << std::endl;
 
       // Track memory usage
@@ -876,11 +877,6 @@ bool BoltBaxter::plan(std::size_t run_id, std::size_t indent)
     ros::spinOnce();
     ros::Duration(1.0).sleep();  // TODO this makes no sense why i need to add this
   }
-
-  // Set the start and goal states
-  simple_setup_->clearStartStates();
-  simple_setup_->addStartState(ompl_start_);
-  // goal state was added in chooseGoalIK
 
   // Solve -----------------------------------------------------------
 
@@ -1560,8 +1556,7 @@ void BoltBaxter::loadIMarkers(std::size_t indent)
   }
 
   // Create start/goal imarkers
-  if (!connect_to_hardware_)  // if running on hardware, these imarkers are not needed
-    imarker_start_ = std::make_shared<mvt::IMarkerRobotState>(psm_, "start", arm_datas_, rvt::GREEN, package_path_);
+  imarker_start_ = std::make_shared<mvt::IMarkerRobotState>(psm_, "start", arm_datas_, rvt::GREEN, package_path_);
   imarker_goal_ = std::make_shared<mvt::IMarkerRobotState>(psm_, "goal", arm_datas_, rvt::ORANGE, package_path_);
 
   // Error message until current state is valid
@@ -1680,50 +1675,37 @@ robot_trajectory::RobotTrajectoryPtr BoltBaxter::processSegments(std::size_t ind
 
 bool BoltBaxter::chooseStartGoal(std::size_t run_id, std::size_t indent)
 {
-  BOLT_FUNC(verbose_, "chooseStartGoal()");
+  BOLT_FUNC(verbose_ || true, "chooseStartGoal() problem_type: " << problem_type_);
 
   switch (problem_type_)
   {
-    case 0:                       // random
-      if (!connect_to_hardware_)  // if running on hardware, these markers are not needed
-        imarker_start_->setToRandomState();
+    // Random ---------------------------------------------
+    case 0:
+      imarker_start_->setToRandomState();
       imarker_goal_->setToRandomState();
+
+      // Apply imarker start/goal to OMPL SimpleSetup
+      if (!setSingleStartFromIMarker(indent))
+        return false;
+      if (!setSingleGoalFromIMarker(indent))
+        return false;
+
       break;
+    // User Sets from IMarkers ------------------------------------------
     case 1:  // imarkers
-      // do nothing
+      // do nothing - already set
+
+      // Apply imarker start/goal to OMPL SimpleSetup
+      if (!setSingleStartFromIMarker(indent))
+        return false;
+      if (!setSingleGoalFromIMarker(indent))
+        return false;
+
       break;
-    case 2:  // imarker goal list
+    // imarker goal list ------------------------------------------------
+    case 2:
     {
-      // choose start ---------------------------------------
-      if (imarker_start_states_.empty())
-        loadIMarkersFromFile(imarker_start_states_, imarker_start_list_name_, indent);
-
-      start_state_id_ = run_id % imarker_start_states_.size();
-      BOLT_INFO(true, "chooseStartGoal: total start states: " << imarker_start_states_.size() << " run_id: " << run_id
-                                                              << " start_state_id: " << start_state_id_);
-
-      imarker_start_->setRobotState(imarker_start_states_[start_state_id_]);
-
-      // choose goal ---------------------------------------
-      if (imarker_goal_states_.empty())
-        loadIMarkersFromFile(imarker_goal_states_, imarker_goal_list_name_, indent);
-
-      goal_state_id_ = run_id % imarker_goal_states_.size();
-      BOLT_INFO(true, "chooseStartGoal: total goal states: " << imarker_goal_states_.size() << " run_id: " << run_id
-                                                             << " goal_state_id: " << goal_state_id_);
-
-      imarker_goal_->setRobotState(imarker_goal_states_[goal_state_id_]);
-    }
-    break;
-    case 3:  // from SRDF
-      BOLT_WARN(true, "Not implemented");
-      // start is always the same
-      // imarker_start_->getRobotState()->setToDefaultValues(planning_jmg_, "both_ready");
-      // imarker_start_->publishRobotState();
-      break;
-    case 4:  // from IK
-
-      // choose start ---------------------------------------
+      // choose start
       if (imarker_start_states_.empty())
         loadIMarkersFromFile(imarker_start_states_, imarker_start_list_name_, indent);
 
@@ -1734,42 +1716,110 @@ bool BoltBaxter::chooseStartGoal(std::size_t run_id, std::size_t indent)
       imarker_start_->setRobotState(imarker_start_states_[start_state_id_]);
 
       // choose goal
-      chooseGoalIK(run_id, indent);
+      if (imarker_goal_states_.empty())
+        loadIMarkersFromFile(imarker_goal_states_, imarker_goal_list_name_, indent);
+
+      goal_state_id_ = run_id % imarker_goal_states_.size();
+      BOLT_INFO(true, "chooseStartGoal: total goal states: " << imarker_goal_states_.size() << " run_id: " << run_id
+                                                             << " goal_state_id: " << goal_state_id_);
+
+      imarker_goal_->setRobotState(imarker_goal_states_[goal_state_id_]);
+
+      // Apply imarker start/goal to OMPL SimpleSetup
+      if (!setSingleStartFromIMarker(indent))
+        return false;
+      if (!setSingleGoalFromIMarker(indent))
+        return false;
+    }
+    break;
+     // from SRDF ------------------------------------------------
+    case 3:
+      BOLT_WARN(true, "NOT IMPLEMENTED");
+      return false;
+      // start is always the same
+      // imarker_start_->getRobotState()->setToDefaultValues(planning_jmg_, "both_ready");
+      // imarker_start_->publishRobotState();
+
+      // Apply imarker start/goal to OMPL SimpleSetup
+      if (!setSingleStartFromIMarker(indent))
+        return false;
+      if (!setSingleGoalFromIMarker(indent))
+        return false;
+
+      break;
+    // from IK ---------------------------------------------
+    case 4:
+      // choose start
+      if (imarker_start_states_.empty())
+        loadIMarkersFromFile(imarker_start_states_, imarker_start_list_name_, indent);
+
+      start_state_id_ = run_id % imarker_start_states_.size();
+      BOLT_INFO(true, "chooseStartGoal: total start states: " << imarker_start_states_.size() << " run_id: " << run_id
+                                                              << " start_state_id: " << start_state_id_);
+      imarker_start_->setRobotState(imarker_start_states_[start_state_id_]);
+
+      // Apply imarker start to OMPL SimpleSetup, **but not goal**
+      if (!setSingleStartFromIMarker(indent))
+        return false;
+
+      // choose goal and set in OMPL SimpleSetup
+      generateMultiGoalsFromIK(run_id, indent);
       break;
     default:
       BOLT_ERROR("Unknown problem type");
+      return false;
   }
 
-  if (connect_to_hardware_)  // if running on hardware, these markers are not needed
+  return true;
+}
+
+bool BoltBaxter::setSingleStartFromIMarker(std::size_t indent)
+{
+  // if running on hardware, override start state with current state
+  if (connect_to_hardware_)
   {
     imarker_start_->setToCurrentState();
   }
 
-  // Visualize
-  if (visualize_start_goal_states_)
-  {
-    imarker_start_->publishRobotState();
-    imarker_goal_->publishRobotState();
-  }
-
-  // Copy imarkers to start and goal state
-  *moveit_start_ = *(imarker_start_->getRobotState());
-  *moveit_goal_ = *(imarker_goal_->getRobotState());
-
-  // Convert MoveIt state to OMPL state
-  space_->copyToOMPLState(ompl_start_, *moveit_start_);
-  space_->copyToOMPLState(ompl_goal_, *moveit_goal_);
-
+  // Validate with collision checking
   if (!imarker_start_->isStateValid(true))
   {
     BOLT_WARN(true, "Invalid start state");
     return false;
   }
+
+  // Convert MoveIt imarker state to OMPL state
+  space_->copyToOMPLState(ompl_start_, *imarker_start_->getRobotState());
+
+  // Set the start state in OMPL
+  simple_setup_->clearStartStates();
+  simple_setup_->addStartState(ompl_start_);
+
+  // Visualize
+  if (visualize_start_goal_states_)
+    imarker_start_->publishRobotState();
+
+  return true;
+}
+
+bool BoltBaxter::setSingleGoalFromIMarker(std::size_t indent)
+{
+  // Validate with collision checking
   if (!imarker_goal_->isStateValid(true))
   {
     BOLT_WARN(true, "Invalid goal state");
     return false;
   }
+
+  // Convert MoveIt imarker state to OMPL state
+  space_->copyToOMPLState(ompl_goal_, *imarker_goal_->getRobotState());
+
+  // Set the goal state in OMPL
+  simple_setup_->setGoalState(ompl_goal_);
+
+  // Visualize
+  if (visualize_start_goal_states_)
+    imarker_goal_->publishRobotState();
 
   return true;
 }
@@ -1956,7 +2006,7 @@ void BoltBaxter::processAndExecute(robot_trajectory::RobotTrajectoryPtr executio
   }
 }
 
-void BoltBaxter::chooseGoalIK(std::size_t run_id, std::size_t indent)
+void BoltBaxter::generateMultiGoalsFromIK(std::size_t run_id, std::size_t indent)
 {
   const double half_shelf_depth = -0.44;     // brings arrows to edge of shelf in x direction
   const double horizontal_distance = 0.275;  // left and right cubbys

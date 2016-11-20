@@ -1432,26 +1432,49 @@ bool BoltPlanner::getStartGoal(const base::State *&start, std::vector<const base
     return false;
   }
 
-  // Get multiple goal states
-  std::shared_ptr<ob::GoalStates> goalStates = std::dynamic_pointer_cast<ob::GoalStates>(pdef_->getGoal());
-  if (goalStates->getStateCount() == 0)
-  {
-    BOLT_ERROR("No goal states found");
-    return false;
-  }
+  // Get goal(s)
+  const ob::GoalPtr goal = pdef_->getGoal();
+  std::cout << "goal.getType(): " << goal->getType() << std::endl;
 
-  // Copy to vector
-  goals.resize(goalStates->getStateCount());
-  for (std::size_t i = 0; i < goalStates->getStateCount(); ++i)
+  if (goal->getType() == ob::GOAL_STATE)  // Get only one goal state
   {
-    goals[i] = goalStates->getState(i);
+    BOLT_DEBUG(true, "Only one goal state set");
 
-    if (goals[i] == nullptr)
+    const base::State *goal = pis_.nextGoal();
+
+    if (goal == nullptr)
     {
-      BOLT_ERROR("No goal state found");
+      BOLT_ERROR("No goal states found");
       return false;
     }
-  }  // for
+
+    // Just add one goal state
+    goals.push_back(goal);
+  }
+  else if (goal->getType() == ob::GOAL_STATES)  // Get multiple goal states
+  {
+    BOLT_DEBUG(true, "Multiple goal states set");
+
+    std::shared_ptr<ob::GoalStates> goalStates = std::dynamic_pointer_cast<ob::GoalStates>(goal);
+    if (goalStates->getStateCount() == 0)
+    {
+      BOLT_ERROR("No goal states found");
+      return false;
+    }
+
+    // Copy to vector
+    goals.resize(goalStates->getStateCount());
+    for (std::size_t i = 0; i < goalStates->getStateCount(); ++i)
+    {
+      goals[i] = goalStates->getState(i);
+
+      if (goals[i] == nullptr)
+      {
+        BOLT_ERROR("No goal state found");
+        return false;
+      }
+    }  // for
+  }
 
   return true;
 }
