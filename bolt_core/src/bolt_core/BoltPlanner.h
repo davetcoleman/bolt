@@ -111,6 +111,7 @@ public:
   virtual base::PlannerStatus solve(Termination &ptc);
   bool solve(const base::State *start, const base::State *goal, Termination &ptc, std::size_t indent);
 
+  bool solveThreadLayer(Termination &ptc, std::size_t indent);
   bool solveMultiAttempt(Termination &ptc, std::size_t indent);
   bool solveMultiGoal(std::size_t attempt, std::size_t maxAttempts, Termination &ptc, std::size_t indent);
   bool solveSingleGoal(const base::State *start, const base::State *goal, std::size_t attempt, std::size_t maxAttempts,
@@ -182,9 +183,9 @@ public:
 
   /**
    * \brief Add samples to the taskGraph if no solution is found because of obstacles
-   * \param near - ModelBasedStateSpace, or NULL if you don't want to sample near the start or goal
+   * \param nearJoint - ModelBasedStateSpace, or NULL if you don't want to sample near the start or goal
    */
-  void addSamples(const base::State *near, std::size_t attempts, std::size_t threadID, Termination &ptc,
+  void addSamples(const base::State *nearJoint, std::size_t attempts, std::size_t threadID, Termination &ptc,
                   std::size_t indent);
 
   /**
@@ -230,8 +231,7 @@ public:
   void visualizeRaw(std::size_t indent);
   void visualizeSmoothed(std::size_t indent);
 
-  void samplingThread(const base::CompoundState *start, const base::CompoundState *goal, Termination &ptc,
-                      std::size_t indent);
+  void samplingThread(Termination &ptc, std::size_t indent);
 
   void setSecondarySI(base::SpaceInformationPtr secondarySI)
   {
@@ -247,6 +247,8 @@ public:
     }
     return false;
   }
+
+  bool getStartGoal(const base::State *&start, std::vector<const base::State*>& goals, std::size_t indent);
 
 private:
   /** \brief This is included in parent class, but mentioned here. Use modelSI_ instead to reduce confusion   */
@@ -301,6 +303,9 @@ protected:
 
   /** \brief Mutex to guard access to the graph */
   mutable std::mutex graphMutex_;
+
+  /** \brief Mutex to multi-thread access to start and goals */
+  mutable std::mutex startGoalMutex_;
 
   std::thread sThread_;
 
