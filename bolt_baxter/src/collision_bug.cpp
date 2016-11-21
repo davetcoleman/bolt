@@ -51,13 +51,14 @@ int main(int argc, char** argv)
   }
 
   // Optional monitors to start:
-  //psm->startStateMonitor("/robot/joint_states", "");
-  //psm->getPlanningScene()->setName("bolt_scene");
+  // psm->startStateMonitor("/robot/joint_states", "");
+  // psm->getPlanningScene()->setName("bolt_scene");
   psm->startPublishingPlanningScene(event, "/swri/planning_scene");
-  //ros::Duration(0.5).sleep(); // give time for publisher to start
+  // ros::Duration(0.5).sleep(); // give time for publisher to start
 
   // Create initial robot state
-  moveit::core::RobotStatePtr robot_state = std::make_shared<moveit::core::RobotState>(psm->getPlanningScene()->getRobotModel());
+  moveit::core::RobotStatePtr robot_state =
+      std::make_shared<moveit::core::RobotState>(psm->getPlanningScene()->getRobotModel());
   robot_state->setToDefaultValues();
 
   for (std::size_t i = 0; i < 10; ++i)
@@ -69,7 +70,7 @@ int main(int argc, char** argv)
       scene->removeAllCollisionObjects();
     }
     psm->triggerSceneUpdateEvent(planning_scene_monitor::PlanningSceneMonitor::UPDATE_SCENE);
-    ros::Duration(0.5).sleep(); // 2hz refresh rate of psm
+    ros::Duration(0.5).sleep();  // 2hz refresh rate of psm
 
     // Check collision
     {
@@ -94,7 +95,7 @@ int main(int argc, char** argv)
     collision_obj.primitives.resize(1);
     collision_obj.primitives[0].type = shape_msgs::SolidPrimitive::BOX;
     collision_obj.primitives[0].dimensions.resize(
-                                                  geometric_shapes::SolidPrimitiveDimCount<shape_msgs::SolidPrimitive::BOX>::value);
+        geometric_shapes::SolidPrimitiveDimCount<shape_msgs::SolidPrimitive::BOX>::value);
     collision_obj.primitives[0].dimensions[shape_msgs::SolidPrimitive::BOX_X] = 1;
     collision_obj.primitives[0].dimensions[shape_msgs::SolidPrimitive::BOX_Y] = 1;
     collision_obj.primitives[0].dimensions[shape_msgs::SolidPrimitive::BOX_Z] = 1;
@@ -126,7 +127,7 @@ int main(int argc, char** argv)
 
     // Check collision
     {
-      ros::Time start_time0 = ros::Time::now(); // Benchmark runtime
+      ros::Time start_time0 = ros::Time::now();                                  // Benchmark runtime
       planning_scene_monitor::LockedPlanningSceneRO locked_planning_scene(psm);  // Read only lock
       ROS_INFO_STREAM_NAMED("main", "Total time: " << (ros::Time::now() - start_time0).toSec() << " seconds");
 

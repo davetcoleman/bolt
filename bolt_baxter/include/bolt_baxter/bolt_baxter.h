@@ -89,7 +89,7 @@ public:
   void testConnectionToGraphOfRandStates(std::size_t indent);
 
   /** \brief Must lock the planning scene that is passed in for thread safety */
-  void loadCollisionChecker(const planning_scene::PlanningSceneConstPtr &planning_scene, std::size_t indent);
+  void loadCollisionChecker(const planning_scene::PlanningSceneConstPtr& planning_scene, std::size_t indent);
 
   bool loadData(std::size_t indent);
 

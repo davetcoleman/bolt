@@ -881,7 +881,8 @@ bool BoltBaxter::plan(std::size_t run_id, std::size_t indent)
   // Lock the planning scene for read-only while a plan is solved - not outside node should be allowed to modify
   // lock the scene so that it does not modify the world representation while diff() is called
   planning_scene_monitor::LockedPlanningSceneRO lscene(psm_);
-  const planning_scene::PlanningSceneConstPtr &scene = static_cast<const planning_scene::PlanningSceneConstPtr &>(lscene);
+  const planning_scene::PlanningSceneConstPtr &scene =
+      static_cast<const planning_scene::PlanningSceneConstPtr &>(lscene);
   validity_checker_->setPlanningScene(scene);
 
   // Solve -----------------------------------------------------------
@@ -1734,7 +1735,7 @@ bool BoltBaxter::chooseStartGoal(std::size_t run_id, std::size_t indent)
         return false;
     }
     break;
-     // from SRDF ------------------------------------------------
+    // from SRDF ------------------------------------------------
     case 3:
       BOLT_WARN(true, "NOT IMPLEMENTED");
       return false;
@@ -1844,7 +1845,6 @@ bool BoltBaxter::setSingleGoalFromIMarker(std::size_t indent)
   //   BOLT_WARN(true, "Invalid goal state OMPL 1");
   //   exit(-1);
   // }
-
 
   // if (!validity_checker_->isValid(ompl_goal_))
   // {

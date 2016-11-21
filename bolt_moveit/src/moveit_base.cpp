@@ -73,7 +73,7 @@ bool MoveItBase::init(ros::NodeHandle& nh)
   robot_model_ = robot_model_loader_->getModel();  // Get a shared pointer to the robot
 
   // Create the planning scene
-  //planning_scene_ = std::make_shared<planning_scene::PlanningScene>(robot_model_);
+  // planning_scene_ = std::make_shared<planning_scene::PlanningScene>(robot_model_);
 
   // Load planning scene monitor
   if (!loadPlanningSceneMonitor(joint_state_topic))
@@ -102,8 +102,7 @@ bool MoveItBase::loadPlanningSceneMonitor(const std::string& joint_state_topic)
   // Allows us to sycronize to Rviz and also publish collision objects to ourselves
   ROS_DEBUG_STREAM_NAMED(name_, "Loading Planning Scene Monitor");
   static const std::string PLANNING_SCENE_MONITOR_NAME = "MoveItBasePlanningScene";
-  psm_ = std::make_shared<psm::PlanningSceneMonitor>(robot_model_loader_, tf_,
-                                                     PLANNING_SCENE_MONITOR_NAME);
+  psm_ = std::make_shared<psm::PlanningSceneMonitor>(robot_model_loader_, tf_, PLANNING_SCENE_MONITOR_NAME);
   ros::spinOnce();
 
   psm::PlanningSceneMonitor::SceneUpdateType event = psm::PlanningSceneMonitor::UPDATE_NONE;

@@ -248,7 +248,7 @@ public:
     return false;
   }
 
-  bool getStartGoal(const base::State *&start, std::vector<const base::State*>& goals, std::size_t indent);
+  bool getStartGoal(const base::State *&start, std::vector<const base::State *> &goals, std::size_t indent);
 
 private:
   /** \brief This is included in parent class, but mentioned here. Use modelSI_ instead to reduce confusion   */
