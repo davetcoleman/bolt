@@ -1434,11 +1434,10 @@ bool BoltPlanner::getStartGoal(const base::State *&start, std::vector<const base
 
   // Get goal(s)
   const ob::GoalPtr goal = pdef_->getGoal();
-  std::cout << "goal.getType(): " << goal->getType() << std::endl;
 
   if (goal->getType() == ob::GOAL_STATE)  // Get only one goal state
   {
-    BOLT_DEBUG(true, "Only one goal state set");
+    BOLT_DEBUG(verbose_, "Only one goal state set");
 
     const base::State *goal = pis_.nextGoal();
 
@@ -1453,7 +1452,7 @@ bool BoltPlanner::getStartGoal(const base::State *&start, std::vector<const base
   }
   else if (goal->getType() == ob::GOAL_STATES)  // Get multiple goal states
   {
-    BOLT_DEBUG(true, "Multiple goal states set");
+    BOLT_DEBUG(verbose_, "Multiple goal states set");
 
     std::shared_ptr<ob::GoalStates> goalStates = std::dynamic_pointer_cast<ob::GoalStates>(goal);
     if (goalStates->getStateCount() == 0)

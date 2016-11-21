@@ -483,8 +483,8 @@ bool BoltBaxter::loadOMPL(std::size_t indent)
     bolt_moveit::loadOMPLParameters(nh_, name_, bolt_);
   }
 
-  // Load collision checker
-  loadCollisionChecker(indent);
+  // TODO(davetcoleman): Warning: this uses the raw planning_scene, which is generally bad
+  loadCollisionChecker(psm_->getPlanningScene(), indent);
 
   // Add moveit_visual_tools to visual_ class now that OMPL is finished loading
   loadOMPLVisualTools(indent);
@@ -608,6 +608,10 @@ void BoltBaxter::eachPlanner(std::size_t indent)
     run(indent);
     // --------------------------------------
 
+    // Check for shutdown
+    if (!ros::ok())
+      break;
+
     // Wait for user
     if (i + 1 < planners_.size() - 1)  // if there are more planners to test
     {
@@ -616,9 +620,6 @@ void BoltBaxter::eachPlanner(std::size_t indent)
 
     // Clear previous planner
     reset(indent);
-
-    if (!ros::ok())
-      break;
   }
 
   logging_file_.close();
@@ -874,17 +875,19 @@ bool BoltBaxter::plan(std::size_t run_id, std::size_t indent)
     // Move the shelf
     loadAmazonScene(indent);
     visual_tools_[6]->triggerPlanningSceneUpdate();
-    ros::spinOnce();
-    ros::Duration(1.0).sleep();  // TODO this makes no sense why i need to add this
   }
+
+  // Update the planning scene used by OMPL by locking it
+  // Lock the planning scene for read-only while a plan is solved - not outside node should be allowed to modify
+  // lock the scene so that it does not modify the world representation while diff() is called
+  planning_scene_monitor::LockedPlanningSceneRO lscene(psm_);
+  const planning_scene::PlanningSceneConstPtr &scene = static_cast<const planning_scene::PlanningSceneConstPtr &>(lscene);
+  validity_checker_->setPlanningScene(scene);
 
   // Solve -----------------------------------------------------------
 
   // Create the termination condition
   ob::PlannerTerminationCondition ptc = ob::timedPlannerTerminationCondition(planning_time_, 0.1);
-
-  // Lock the planning scene for read-only while a plan is solved - not outside node should be allowed to modify
-  planning_scene_monitor::LockedPlanningSceneRO lscene(psm_);
 
   // Profiler
   CALLGRIND_TOGGLE_COLLECT;
@@ -892,7 +895,6 @@ bool BoltBaxter::plan(std::size_t run_id, std::size_t indent)
   // Attempt to solve the problem within x seconds of planning time
   ob::PlannerStatus status = simple_setup_->solve(ptc);
 
-  std::cout << "status: " << status << std::endl;
   bool solved = false;
   if (status == ob::PlannerStatus::EXACT_SOLUTION)
     solved = true;
@@ -909,7 +911,7 @@ bool BoltBaxter::plan(std::size_t run_id, std::size_t indent)
 
   if (!solved)
   {
-    BOLT_ERROR("Failed to find solution");
+    BOLT_ERROR("Failed to find solution: " << status);
     return false;
   }
   // Visualize pre-smoothing
@@ -943,11 +945,11 @@ bool BoltBaxter::plan(std::size_t run_id, std::size_t indent)
   return true;
 }
 
-void BoltBaxter::loadCollisionChecker(std::size_t indent)
+void BoltBaxter::loadCollisionChecker(const planning_scene::PlanningSceneConstPtr &planning_scene, std::size_t indent)
 {
   // Create state validity checking for this space
   validity_checker_ = std::make_shared<bolt_moveit::StateValidityChecker>(planning_group_name_, si_, *current_state_,
-                                                                          planning_scene_, space_);
+                                                                          planning_scene, space_);
   validity_checker_->setCheckingEnabled(collision_checking_enabled_);
 
   // Set checker
@@ -962,22 +964,22 @@ void BoltBaxter::loadCollisionChecker(std::size_t indent)
   validity_checker_->setVisual(visual_);
 
   // Load more collision checkers
-  if (is_bolt_)
-  {
-    secondary_si_ = std::make_shared<ob::SpaceInformation>(space_);
-    secondary_si_->setup();
-    validity_checker_ = std::make_shared<bolt_moveit::StateValidityChecker>(planning_group_name_, secondary_si_,
-                                                                            *current_state_, planning_scene_, space_);
-    validity_checker_->setCheckingEnabled(collision_checking_enabled_);
+  // if (is_bolt_)
+  // {
+  //   secondary_si_ = std::make_shared<ob::SpaceInformation>(space_);
+  //   secondary_si_->setup();
+  //   validity_checker_ = std::make_shared<bolt_moveit::StateValidityChecker>(planning_group_name_, secondary_si_,
+  //                                                                           *current_state_, planning_scene, space_);
+  //   validity_checker_->setCheckingEnabled(collision_checking_enabled_);
 
-    // Set checker
-    secondary_si_->setStateValidityChecker(validity_checker_);
+  //   // Set checker
+  //   secondary_si_->setStateValidityChecker(validity_checker_);
 
-    // The interval in which obstacles are checked for between states
-    // seems that it default to 0.01 but doesn't do a good job at that level
-    // si_->setStateValidityCheckingResolution(0.005);
-    secondary_si_->setStateValidityCheckingResolution(0.001);
-  }
+  //   // The interval in which obstacles are checked for between states
+  //   // seems that it default to 0.01 but doesn't do a good job at that level
+  //   // si_->setStateValidityCheckingResolution(0.005);
+  //   secondary_si_->setStateValidityCheckingResolution(0.001);
+  // }
 }
 
 void BoltBaxter::deleteAllMarkers(std::size_t indent)
@@ -1228,12 +1230,12 @@ void BoltBaxter::mirrorGraph(std::size_t indent)
 
   // Create state validity checking for both arms
   bolt_moveit::StateValidityCheckerPtr both_arms_validity_checker = std::make_shared<bolt_moveit::StateValidityChecker>(
-      both_arms_group_name_, both_arms_space_info, *current_state_, planning_scene_, both_arms_state_space_);
+      both_arms_group_name_, both_arms_space_info, *current_state_, psm_->getPlanningScene(), both_arms_state_space_);
   both_arms_space_info->setStateValidityChecker(both_arms_validity_checker);
 
   // Create state validity checking for left arm
   bolt_moveit::StateValidityCheckerPtr left_arm_validity_checker = std::make_shared<bolt_moveit::StateValidityChecker>(
-      opposite_arm_name_, left_arm_space_info, *current_state_, planning_scene_, left_arm_state_space_);
+      opposite_arm_name_, left_arm_space_info, *current_state_, psm_->getPlanningScene(), left_arm_state_space_);
   left_arm_space_info->setStateValidityChecker(left_arm_validity_checker);
 
   // Set the database file location
@@ -1675,7 +1677,7 @@ robot_trajectory::RobotTrajectoryPtr BoltBaxter::processSegments(std::size_t ind
 
 bool BoltBaxter::chooseStartGoal(std::size_t run_id, std::size_t indent)
 {
-  BOLT_FUNC(verbose_ || true, "chooseStartGoal() problem_type: " << problem_type_);
+  BOLT_FUNC(verbose_, "chooseStartGoal() problem_type: " << problem_type_);
 
   switch (problem_type_)
   {
@@ -1782,7 +1784,8 @@ bool BoltBaxter::setSingleStartFromIMarker(std::size_t indent)
   }
 
   // Validate with collision checking
-  if (!imarker_start_->isStateValid(true))
+  static const bool VERBOSE = true;
+  if (!imarker_start_->isStateValid(VERBOSE))
   {
     BOLT_WARN(true, "Invalid start state");
     return false;
@@ -1805,7 +1808,8 @@ bool BoltBaxter::setSingleStartFromIMarker(std::size_t indent)
 bool BoltBaxter::setSingleGoalFromIMarker(std::size_t indent)
 {
   // Validate with collision checking
-  if (!imarker_goal_->isStateValid(true))
+  static const bool VERBOSE = true;
+  if (!imarker_goal_->isStateValid(VERBOSE))
   {
     BOLT_WARN(true, "Invalid goal state");
     return false;
@@ -1813,6 +1817,40 @@ bool BoltBaxter::setSingleGoalFromIMarker(std::size_t indent)
 
   // Convert MoveIt imarker state to OMPL state
   space_->copyToOMPLState(ompl_goal_, *imarker_goal_->getRobotState());
+
+  // // TODO: delete (temporary)
+  // imarker_goal_->publishRobotState();
+
+  // planning_scene_monitor::LockedPlanningSceneRO planning_scene(psm_);  // Read only lock
+  // if (!planning_scene->isStateValid(*imarker_goal_->getRobotState(), "", true))
+  // {
+  //   BOLT_WARN(true, "Invalid goal state MoveIt! 1");
+  //   exit(-1);
+  // }
+
+  // if (!planning_scene->isStateValid(*imarker_goal_->getRobotState(), planning_group_name_, true))
+  // {
+  //   BOLT_WARN(true, "Invalid goal state MoveIt! 2");
+  //   exit(-1);
+  // }
+
+  // collision_detection::CollisionRequest collision_request_simple_verbose;
+  // collision_request_simple_verbose.group_name = planning_group_name_;
+  // collision_request_simple_verbose.verbose = true;
+  // collision_detection::CollisionResult res;
+  // psm_->getPlanningScene()->checkCollision(collision_request_simple_verbose, res, *imarker_goal_->getRobotState());
+  // if (res.collision)
+  // {
+  //   BOLT_WARN(true, "Invalid goal state OMPL 1");
+  //   exit(-1);
+  // }
+
+
+  // if (!validity_checker_->isValid(ompl_goal_))
+  // {
+  //   BOLT_WARN(true, "Invalid goal state OMPL 2");
+  //   exit(-1);
+  // }
 
   // Set the goal state in OMPL
   simple_setup_->setGoalState(ompl_goal_);

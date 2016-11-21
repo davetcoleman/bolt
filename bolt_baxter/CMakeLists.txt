@@ -62,6 +62,17 @@ target_link_libraries(${PROJECT_NAME}_bolt_baxter_main
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
+  )
+
+# Main program
+add_executable(collision_bug
+  src/collision_bug.cpp
+)
+# Specify libraries to link a library or executable target against
+target_link_libraries(collision_bug
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
 )
 
 #############

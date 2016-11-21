@@ -134,7 +134,6 @@ protected:
   // Core MoveIt components
   robot_model_loader::RobotModelLoaderPtr robot_model_loader_;
   robot_model::RobotModelPtr robot_model_;
-  planning_scene::PlanningScenePtr planning_scene_;
   psm::PlanningSceneMonitorPtr psm_;
 
   // Allocated memory for robot state

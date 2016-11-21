@@ -99,6 +99,11 @@ public:
     visual_ = visual;
   }
 
+  void setPlanningScene(planning_scene::PlanningSceneConstPtr planning_scene)
+  {
+    planning_scene_ = planning_scene;
+  }
+
 protected:
   std::string group_name_;
   TSStateStorage tss_;

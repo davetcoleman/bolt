@@ -5,29 +5,27 @@ bolt_baxter:
   # Pre-processing Benchmark
   # ---------------------------------------
   #planners: [BoltERRTConnect, BoltRRTConnect]
-  planners: [BoltRandom]
-  load_database_version: exp
-  penetration_start: -0.05
-  log_file_name: log_preprocessing_random.csv
-  num_problems: 400
+  # planners: [BoltRandom]
+  # load_database_version: exp
+  # penetration_start: -0.05
+  # log_file_name: log_preprocessing_random.csv
+  # num_problems: 50
 
   # No Preprocessing Benchmark
   # ---------------------------------------
   #planners: [BoltERRTConnect, BoltRRTConnect, Thunder, Lightning]
-  # planners: [Lightning]
   # load_database_version: np
   # penetration_start: -0.05
   # log_file_name: log_nopreprocessing_lightning.csv
-  # num_problems: 400
+  # num_problems: 50
 
   # Single Query Benchmark
   # ---------------------------------------
-  #planners: [RRTConnect, BiEST, LazyPRM, LazyRRT, PRM, RRT]
-  # planners: [LazyRRT, PRM, RRT]
-  # load_database_version: NA
-  # penetration_start: -0.05
-  # log_file_name: log_single_query_delete.csv
-  # num_problems: 50
+  planners: [RRTConnect, BiEST, LazyPRM, LazyRRT, PRM, RRT]
+  load_database_version: NA
+  penetration_start: -0.05
+  log_file_name: log_single_query.csv
+  num_problems: 50
 
   # planner types
   #planners: [BoltRandom, BoltRRTConnect, BoltERRTConnect, Thunder, Lightning, RRTConnect, BiEST, LazyPRM, LazyRRT, SPARStwo]
@@ -236,11 +234,11 @@ debug_interface:
 bolt_planner:
   smoothing_enabled: true
   verbose:
-    verbose: true
-    nearest_neighbor: true
-    collision_check: true
-    sampling: true
-    criteria: true
+    verbose: false
+    nearest_neighbor: false
+    collision_check: false
+    sampling: false
+    criteria: false
   visualize:
     raw_trajectory: false
     smooth_trajectory: false
