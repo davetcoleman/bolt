@@ -194,7 +194,7 @@ public:
   // Configuration space
   bolt_moveit::ModelBasedStateSpacePtr space_;
   ompl::base::SpaceInformationPtr si_;
-  ob::SpaceInformationPtr secondary_si_;  // used for second thread
+  //ob::SpaceInformationPtr secondary_si_;  // used for second thread
 
   // Mirroring config
   moveit::core::JointModelGroup* both_arms_jmg_;

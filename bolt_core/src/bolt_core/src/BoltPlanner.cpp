@@ -473,8 +473,7 @@ bool BoltPlanner::onGraphSearch(const TaskVertex &startVertex, const TaskVertex 
   // Make sure that the start and goal aren't so close together that they find the same vertex
   if (startVertex == goalVertex)
   {
-    BOLT_DEBUG(verbose_, "    Start equals goal, creating simple solution ");
-    visual_->prompt("    Start equals goal, creating simple solution ");
+    BOLT_DEBUG(verbose_, "Start equals goal, creating simple solution ");
 
     // There are only three verticies in this path - start, middle, goal
     vertexPath.push_back(startVertex);
@@ -1210,7 +1209,7 @@ bool BoltPlanner::addSampleSparseCriteria(base::CompoundState *compoundState, bo
       visual_->viz6()->state(taskGraph_->getModelBasedState(v2), tools::MEDIUM, tools::ORANGE);
     }
 
-    if (!secondarySI_->checkMotion(jointState, taskGraph_->getModelBasedState(v2)))
+    if (!modelSI_->checkMotion(jointState, taskGraph_->getModelBasedState(v2)))
     {
       continue;
     }
@@ -1300,7 +1299,7 @@ bool BoltPlanner::addSampleSparseCriteria(base::CompoundState *compoundState, bo
     return false;
 
   // If they can be directly connected
-  if (secondarySI_->checkMotion(taskGraph_->getModelBasedState(v1), taskGraph_->getModelBasedState(v2)))
+  if (modelSI_->checkMotion(taskGraph_->getModelBasedState(v1), taskGraph_->getModelBasedState(v2)))
   {
     BOLT_DEBUG(vCriteria_, "INTERFACE: directly connected nodes");
 

@@ -233,10 +233,10 @@ public:
 
   void samplingThread(Termination &ptc, std::size_t indent);
 
-  void setSecondarySI(base::SpaceInformationPtr secondarySI)
-  {
-    secondarySI_ = secondarySI;
-  }
+  // void setSecondarySI(base::SpaceInformationPtr secondarySI)
+  // {
+  //   secondarySI_ = secondarySI;
+  // }
 
   inline bool terminationRequested(Termination &ptc, std::size_t &indent)
   {
@@ -299,7 +299,7 @@ protected:
   std::size_t kNearestNeighbors_ = 60;
 
   bool solutionFound_ = false;
-  base::SpaceInformationPtr secondarySI_;
+  //base::SpaceInformationPtr secondarySI_;
 
   /** \brief Mutex to guard access to the graph */
   mutable std::mutex graphMutex_;

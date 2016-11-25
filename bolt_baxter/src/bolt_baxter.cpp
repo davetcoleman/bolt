@@ -83,6 +83,8 @@ namespace ot = ompl::tools;
 namespace otb = ompl::tools::bolt;
 namespace og = ompl::geometric;
 namespace rvt = rviz_visual_tools;
+namespace ps = planning_scene;
+namespace psm = planning_scene_monitor;
 
 namespace bolt_baxter
 {
@@ -286,7 +288,7 @@ void BoltBaxter::reset(std::size_t indent)
   simple_setup_.reset();
   parallel_setup_.reset();
   si_.reset();
-  secondary_si_.reset();
+  //secondary_si_.reset();
   space_.reset();
   visual_.reset();
 }
@@ -498,7 +500,7 @@ bool BoltBaxter::loadOMPL(std::size_t indent)
   if (is_bolt_)
   {
     bolt_->setFilePath(getPlannerFilePath(planning_group_name_, indent));
-    bolt_->getBoltPlanner()->setSecondarySI(secondary_si_);  // must be called after loadCollisionChecker()
+    //bolt_->getBoltPlanner()->setSecondarySI(secondary_si_);  // must be called after loadCollisionChecker()
   }
   else if (is_thunder_)
   {
@@ -630,6 +632,9 @@ void BoltBaxter::run(std::size_t indent)
   // Benchmark performance
   if (benchmark_performance_)
   {
+    // TODO: using unsafe non-locking version of planning scene, need to use something like
+    // TODO: validity_checker_->setPlanningScene(scene);
+
     benchmarkMemoryAllocation(indent);
     // testMotionValidator();
     // bolt_->getSparseGenerator()->benchmarkSparseGraphGeneration();
@@ -661,6 +666,9 @@ void BoltBaxter::run(std::size_t indent)
     // Create SPARS
     if (create_spars_ && (!loaded || continue_spars_))
     {
+      // TODO: using unsafe non-locking version of planning scene, need to use something like
+      // TODO: validity_checker_->setPlanningScene(scene);
+
       // bolt_->getSparseGenerator()->createSPARS();
       bolt_->getSparseGenerator()->createSPARS2(indent);
       loaded = true;
@@ -682,12 +690,17 @@ void BoltBaxter::run(std::size_t indent)
   // Repair missing coverage in the dense graph
   // if (eliminate_dense_disjoint_sets_)
   // {
+  // TODO: using unsafe non-locking version of planning scene, need to use something like
+  // TODO: validity_checker_->setPlanningScene(scene);
   //   bolt_->getSparseGraph()->getDiscretizer()->eliminateDisjointSets();
   // }
 
   // Check for verticies that are somehow in collision
   if (check_valid_vertices_)
   {
+    // TODO: using unsafe non-locking version of planning scene, need to use something like
+    // TODO: validity_checker_->setPlanningScene(scene);
+
     bolt_->getSparseGraph()->verifyGraph(indent);
     BOLT_INFO(true, "Finished, shutting down");
     exit(0);
@@ -877,12 +890,10 @@ bool BoltBaxter::plan(std::size_t run_id, std::size_t indent)
     visual_tools_[6]->triggerPlanningSceneUpdate();
   }
 
-  // Update the planning scene used by OMPL by locking it
-  // Lock the planning scene for read-only while a plan is solved - not outside node should be allowed to modify
-  // lock the scene so that it does not modify the world representation while diff() is called
-  planning_scene_monitor::LockedPlanningSceneRO lscene(psm_);
-  const planning_scene::PlanningSceneConstPtr &scene =
-      static_cast<const planning_scene::PlanningSceneConstPtr &>(lscene);
+  // Lock the planning scene for read-only while a plan is solved - no outside node should be allowed to modify
+  // This is achieved by updating the version of the planning_scene inside StateValidityChecker
+  psm::LockedPlanningSceneRO lscene(psm_);
+  const ps::PlanningSceneConstPtr &scene = static_cast<const ps::PlanningSceneConstPtr &>(lscene);
   validity_checker_->setPlanningScene(scene);
 
   // Solve -----------------------------------------------------------
@@ -906,6 +917,8 @@ bool BoltBaxter::plan(std::size_t run_id, std::size_t indent)
 
   if (is_bolt_)
   {
+    // TODO: using unsafe non-locking version of planning scene, need to use something like
+    // TODO: validity_checker_->setPlanningScene(scene);
     bolt_->processResults(indent);
     bolt_->printLogs();
   }
@@ -1029,6 +1042,8 @@ void BoltBaxter::testConnectionToGraphOfRandStates(std::size_t indent)
     std::size_t indent = 0;
 
     BOLT_ERROR("bolt_baxter: not implemented");
+    // TODO: using unsafe non-locking version of planning scene, need to use something like
+    // TODO: validity_checker_->setPlanningScene(scene);
     // bool result = bolt_->getBoltPlanner()->canConnect(random_state, ptc, indent);
     // if (result)
     //   successful_connections++;
@@ -1058,6 +1073,8 @@ bool BoltBaxter::generateCartGraph(std::size_t indent)
   // Generate the Descartes graph - if it fails let user adjust interactive marker
   while (true)
   {
+    // TODO: using unsafe non-locking version of planning scene, need to use something like
+    // TODO: validity_checker_->setPlanningScene(scene);
     if (!cart_path_planner_->populateBoltGraph(bolt_->getTaskGraph(), indent))
     {
       BOLT_INFO(true, "Unable to populate Bolt graph - try moving the start location");
@@ -1246,6 +1263,8 @@ void BoltBaxter::mirrorGraph(std::size_t indent)
   if (false)
   {
     BOLT_INFO(true, "TESTING ALL VERTICES ON OTHER ARM");
+    // TODO: using unsafe non-locking version of planning scene, need to use something like
+    // TODO: validity_checker_->setPlanningScene(scene);
     bolt_->getSparseMirror()->checkValidityOfArmMirror(both_arms_space_info, left_arm_space_info, indent);
 
     BOLT_INFO(true, "Finished, shutting down");
@@ -1256,6 +1275,8 @@ void BoltBaxter::mirrorGraph(std::size_t indent)
   bolt_->getSparseMirror()->setCombineStatesCallback(boost::bind(&BoltBaxter::combineStates, this, _1, _2));
 
   // Mirror graph
+  // TODO: using unsafe non-locking version of planning scene, need to use something like
+  // TODO: validity_checker_->setPlanningScene(scene);
   bolt_->getSparseMirror()->mirrorGraphDualArm(both_arms_space_info, left_arm_space_info, file_path, indent);
   BOLT_INFO(true, "Done mirroring graph!");
 }
@@ -1897,8 +1918,16 @@ std::string BoltBaxter::getPlannerFilePath(const std::string &planning_group_nam
 
 void BoltBaxter::doPostProcessing(std::size_t indent)
 {
+  // Lock the planning scene for read-only while a plan is solved - no outside node should be allowed to modify
+  // This is achieved by updating the version of the planning_scene inside StateValidityChecker
+  psm::LockedPlanningSceneRO lscene(psm_);
+  const ps::PlanningSceneConstPtr &scene = static_cast<const ps::PlanningSceneConstPtr &>(lscene);
+  validity_checker_->setPlanningScene(scene);
+
   if (is_bolt_)
   {
+    // TODO: using unsafe non-locking version of planning scene, need to use something like
+    // TODO: validity_checker_->setPlanningScene(scene);
     bolt_->doPostProcessing(indent);
   }
   else if (is_thunder_)
