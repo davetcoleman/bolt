@@ -183,6 +183,7 @@ public:
   void createSPARS2(std::size_t indent = 0);
   bool addSampleSparseCriteria(base::State *candidateState, bool addEdges, std::size_t indent);
   void addBridge(base::State* candidateState, const SparseVertex &v0, const SparseVertex &v1, std::size_t indent);
+  bool checkInterface(base::State *candidateState, const SparseVertex &v0, const SparseVertex &v1, std::size_t indent);
 
 protected:
   /** \brief Short name of this class */
@@ -230,6 +231,7 @@ protected:
   std::vector<SparseVertex> graphNeighborhood_;
   std::size_t numEdgesSkippedByAstar_ = 0;
   std::size_t numInterfaceCriteria_ = 0;
+  std::size_t numInterfaceSkipped_ = 0;
   std::size_t numConnectivityCriteria_ = 0;
   std::size_t numCoverageCriteria_ = 0;
 

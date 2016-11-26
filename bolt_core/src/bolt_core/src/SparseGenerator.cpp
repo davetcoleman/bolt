@@ -1254,7 +1254,7 @@ void SparseGenerator::createSPARS2(std::size_t indent)
     if (attempts % FEEDBACK_SAVE_INTERVAL == 0)
     {
       // Check if time to change modes
-      static const double NODE_ADDITION_RATE_THRESHOLD = 0.005;
+      static const double NODE_ADDITION_RATE_THRESHOLD = 0.01;
       nodeAdditionRate = numStatesUsed / double(attempts);
       if (!addEdges && nodeAdditionRate < NODE_ADDITION_RATE_THRESHOLD)
       {
@@ -1266,10 +1266,9 @@ void SparseGenerator::createSPARS2(std::size_t indent)
       std::size_t numSets = sg_->getDisjointSetsCount(indent);
       BOLT_INFO(true, "V: " << sg_->getNumRealVertices() << " E: " << sg_->getNumEdges() << " attempts: " << attempts
                             << " nodeAdditionRate: " << nodeAdditionRate << " DisjointSets: " << numSets);
-      BOLT_INFO(true, "EdgesSkipByAstar: " << numEdgesSkippedByAstar_
-                                                 << " InterfaceCrit: " << numInterfaceCriteria_
-                                                 << " ConnectivityCrit: " << numConnectivityCriteria_
-                                                 << " CoverageCrit: " << numCoverageCriteria_);
+      BOLT_INFO(true, "AstarSkipEdge: " << numEdgesSkippedByAstar_ << " IfaceCrit: " << numInterfaceCriteria_
+                                        << " ConnectCrit: " << numConnectivityCriteria_ << " CovCrit: "
+                                        << numCoverageCriteria_ << " IfaceSkip: " << numInterfaceSkipped_);
 
       // Save less frequently
       if (attempts % (FEEDBACK_SAVE_INTERVAL * 4) == 0)
@@ -1298,9 +1297,7 @@ bool SparseGenerator::addSampleSparseCriteria(base::State *candidateState, bool 
 
   static const std::size_t THREAD_ID = 0;
 
-  // Get neighbors of new state
-  graphNeighborhood_.clear();
-  graphNeighborhood_.reserve(sg_->getNumRealVertices());
+  // Get neighbors of new state. Note: graphNeighborhood_ is clear()ed and resize()ed inside nearestR()
   sg_->getQueryStateNonConst(THREAD_ID) = candidateState;
   sg_->getNN()->nearestR(sg_->getQueryVertices(THREAD_ID), sparseDelta, graphNeighborhood_);
   sg_->getQueryStateNonConst(THREAD_ID) = nullptr;
@@ -1368,7 +1365,7 @@ bool SparseGenerator::addSampleSparseCriteria(base::State *candidateState, bool 
   // Ensure two closest neighbors don't share an edge. If they do, we are done
   if (sg_->hasEdge(v0, v1))
   {
-    //BOLT_DEBUG(vCriteria_, "Two closest two neighbors already share an edge, not connecting them");
+    // BOLT_DEBUG(vCriteria_, "Two closest two neighbors already share an edge, not connecting them");
     return false;  // did not use memory of candidate state
   }
 
@@ -1399,39 +1396,85 @@ bool SparseGenerator::addSampleSparseCriteria(base::State *candidateState, bool 
   // Criteria 3: interface - determine if two closest visible nodes need connecting
   if (graphNeighborhood_[0] == v0 && graphNeighborhood_[1] == v1)
   {
-    // Don't add an interface edge if dist between the two verticies on graph are already the minimum in L1 space
-    if (!sg_->checkPathLength(v0, v1, indent))
+    return checkInterface(candidateState, v0, v1, indent);
+  }
+
+  return false;  // did not use memory of candidate state
+}
+
+bool SparseGenerator::checkInterface(base::State *candidateState, const SparseVertex &v0, const SparseVertex &v1,
+                                std::size_t indent)
+{
+  // Don't add an interface edge if dist between the two verticies on graph are already the minimum in L1 space
+  static const double stretchFactor = 2;
+
+  // Search for an existing path between v0 and v1
+  double currentPathDistance;
+  bool hasPath = sg_->astarSearchLength(v0, v1, currentPathDistance, indent);
+  bool directEdgeNecessary = true;
+
+  // Check if a direct edge is necessary
+  if (hasPath)
+  {
+    // ONLY add a bridge if there isn't already a path within a t-stretch factor
+    double newPathDistance = si_->distance(sg_->getState(v0), sg_->getState(v1));
+    //std::cout << "found astar path: " << currentPathDistance << " newPathDistance: " << newPathDistance << std::endl;
+
+    // There is a path, check its length
+    if (currentPathDistance < stretchFactor * newPathDistance)
     {
-      BOLT_WARN(true, "checkPathLength rejected connected two verticies because of nearby path");
-      numEdgesSkippedByAstar_++;
-      return false;  // did not use memory of candidateState
+      // No need to add vertex and edges because there is already a sufficient path
+      numInterfaceSkipped_++;
+      //std::cout << "INTERFACE: skipped DIRECT iface " << std::endl;
+      directEdgeNecessary = false;
     }
+  }
+
+  // if they can be directly connected
+  if (directEdgeNecessary && si_->checkMotion(sg_->getState(v0), sg_->getState(v1)))
+  {
+    BOLT_DEBUG(vCriteria_, "INTERFACE: directly connected vertices");
+
+    // Connect them
+    sg_->addEdge(v0, v1, eINTERFACE, indent);
 
     // Stat
     numInterfaceCriteria_++;
 
-    // if they can be directly connected
-    if (si_->checkMotion(sg_->getState(v0), sg_->getState(v1)))
-    {
-      BOLT_DEBUG(vCriteria_, "INTERFACE: directly connected vertices");
+    // Debug
+    if (visualizeSampling_)
+      visual_->viz6()->edge(sg_->getState(v0), sg_->getState(v1), tools::MEDIUM, tools::BLUE);
 
-      // Connect them
-      sg_->addEdge(v0, v1, eINTERFACE, indent);
-
-      // Debug
-      if (visualizeSampling_)
-        visual_->viz6()->edge(sg_->getState(v0), sg_->getState(v1), tools::MEDIUM, tools::BLUE);
-
-      return false;  // did not use memory of candidate state
-    }
-
-    // They cannot be directly connected, so add the new node to the graph, to bridge the interface
-    BOLT_DEBUG(vCriteria_, "INTERFACE: Added new vertex and two edges");
-    addBridge(candidateState, v0, v1, indent);
-    return true;  // used memory of candidate state
+    return false;  // did not use memory of candidate state
   }
 
-  return false;  // did not use memory of candidate state
+  if (hasPath)
+  {
+    // ONLY add a bridge if there isn't already a path within a t-stretch factor
+    double newPathDistance =
+      si_->distance(sg_->getState(v0), candidateState) + si_->distance(candidateState, sg_->getState(v1));
+
+    //std::cout << "found astar path: " << currentPathDistance << " newPathDistance: " << newPathDistance << std::endl;
+
+    // There is a path, check its length
+    if (currentPathDistance < stretchFactor * newPathDistance)
+    {
+      // No need to add vertex and edges because there is already a sufficient path
+      numInterfaceSkipped_++;
+      //std::cout << "INTERFACE: skipped NOT DIRECT iface " << std::endl;
+      return false;  // did not use memory of candidate state
+    }
+  }
+
+  // Stat
+  numInterfaceCriteria_++;
+
+  // They cannot be directly connected, so add the new node to the graph, to bridge the interface
+  BOLT_DEBUG(vCriteria_, "INTERFACE: Added new vertex and two edges");
+
+  // Connect them
+  addBridge(candidateState, v0, v1, indent);
+  return true;  // used memory of candidate state
 }
 
 void SparseGenerator::addBridge(base::State *candidateState, const SparseVertex &v0, const SparseVertex &v1,

@@ -669,7 +669,7 @@ void BoltBaxter::run(std::size_t indent)
       // TODO: using unsafe non-locking version of planning scene, need to use something like
       // TODO: validity_checker_->setPlanningScene(scene);
 
-      // bolt_->getSparseGenerator()->createSPARS();
+      //bolt_->getSparseGenerator()->createSPARS();
       bolt_->getSparseGenerator()->createSPARS2(indent);
       loaded = true;
       BOLT_INFO(true, "Finished creating SPARS, shutting down");

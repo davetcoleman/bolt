@@ -297,7 +297,7 @@ bool SparseCriteria::checkAddConnectivity(SparseCandidateData &candidateD, std::
 
   // Add the node
   candidateD.newVertex_ = sg_->addVertex(candidateD.state_, CONNECTIVITY, indent);
-  BOLT_MAGENTA(true, "Adding node and some edges for CONNECTIVITY ");
+  BOLT_MAGENTA(vCriteria_, "Adding node and some edges for CONNECTIVITY ");
 
   // Remove all edges from all vertices near our new vertex
   // TODO: re-enable
