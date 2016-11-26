@@ -5,14 +5,18 @@ bolt_baxter:
   # Pre-processing Benchmark
   # ---------------------------------------
   #planners: [BoltERRTConnect, BoltRRTConnect]
-  planners: [Bolt] # this represents simplified sparse critiera with interface check
-  #planners: [BoltERRTConnect] # this represents original sparse critiera
+
+  # planners: [Bolt] # this represents simplified sparse critiera with interface check
+  # log_file_name: log_preprocessing_bolt.csv
+
+  planners: [BoltERRTConnect] # this represents simplified sparse critiera with interface check and clearance
+  log_file_name: log_preprocessing_errtconnect.csv
+
   #planners: [BoltRRTConnect]  # this represents simplified sparse critiera
+  #log_file_name: log_preprocessing_rrtconnect.csv
+
   load_database_version: exp
   penetration_start: -0.05
-  log_file_name: log_preprocessing_bolt.csv
-  #log_file_name: log_preprocessing_errtconnect.csv
-  #log_file_name: log_preprocessing_rrtconnect.csv
   num_problems: 50
 
   # No Preprocessing Benchmark
@@ -170,7 +174,8 @@ sparse_criteria:
 sparse_graph:
   save_enabled: true
   super_debug: false # run more checks and tests that slow down speed
-  obstacle_clearance: 0.0 #0.0035 # max before gripper piece is in collision
+  #obstacle_clearance: 0.0035 # UR5: max before gripper piece is in collision
+  obstacle_clearance: 0 # Baxter: max before gripper piece is in collision
   verbose:
     add: false # debug when addVertex() and addEdge() are called
     search: false

@@ -1440,7 +1440,7 @@ Visualization Manager:
         - Attached Body Color: 150; 50; 150
           Class: moveit_rviz_plugin/RobotState
           Collision Enabled: false
-          Enabled: false
+          Enabled: true
           Links:
             All Links Enabled: true
             Expand Joint Details: false
@@ -1713,9 +1713,9 @@ Visualization Manager:
           Robot State Topic: /baxter/robot_state6
           Show All Links: true
           Show Highlights: true
-          Value: false
+          Value: true
           Visual Enabled: true
-      Enabled: false
+      Enabled: true
       Name: State 1to6
     - Class: rviz/Group
       Displays:
@@ -1764,8 +1764,7 @@ Visualization Manager:
           Marker Topic: /baxter/ompl_visual6
           Name: ompl6 - markers
           Namespaces:
-            Cylinder: true
-            path_spheres: true
+            {}
           Queue Size: 100
           Value: true
       Enabled: true
@@ -3274,10 +3273,10 @@ Visualization Manager:
       Focal Shape Size: 0.0500000007
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 1.56979632
+      Pitch: -0.260202527
       Target Frame: robot_table_link
       Value: XYOrbit (rviz)
-      Yaw: 3.16540623
+      Yaw: 0.0954055414
     Saved: ~
 Window Geometry:
   Displays:

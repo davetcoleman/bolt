@@ -253,7 +253,7 @@ BoltBaxter::BoltBaxter(const std::string &hostname, const std::string &package_p
 
   // Wait until user does something
   if (!auto_run_)
-    visual_->viz1()->prompt("run first problem");
+    visual_tools_[1]->prompt("run first problem");
 
   if (!post_processing_)
     BOLT_WARN(true, "Post processing disabled!");
@@ -605,6 +605,15 @@ void BoltBaxter::eachPlanner(std::size_t indent)
       BOLT_ERROR("Unable to load planning context");
       exit(-1);
     }
+
+    // // TEMP
+    // std::cout << "before " << std::endl;
+    // space_->copyToOMPLState(ompl_start_, *imarker_start_->getRobotState());
+    // double dist;
+    // if (!si_->getStateValidityChecker()->isValid(ompl_start_, dist))
+    //   std::cout << "not VALID " << std::endl;
+    // std::cout << "dist: " << dist << std::endl;
+    // exit(0);
 
     // --------------------------------------
     run(indent);

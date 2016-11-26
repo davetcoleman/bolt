@@ -1266,9 +1266,9 @@ void SparseGenerator::createSPARS2(std::size_t indent)
       std::size_t numSets = sg_->getDisjointSetsCount(indent);
       BOLT_INFO(true, "V: " << sg_->getNumRealVertices() << " E: " << sg_->getNumEdges() << " attempts: " << attempts
                             << " nodeAdditionRate: " << nodeAdditionRate << " DisjointSets: " << numSets);
-      BOLT_INFO(true, "AstarSkipEdge: " << numEdgesSkippedByAstar_ << " IfaceCrit: " << numInterfaceCriteria_
-                                        << " ConnectCrit: " << numConnectivityCriteria_ << " CovCrit: "
-                                        << numCoverageCriteria_ << " IfaceSkip: " << numInterfaceSkipped_);
+      BOLT_INFO(true, "IfaceCrit: " << numInterfaceCriteria_ << " ConnCrit: " << numConnectivityCriteria_
+                                    << " CovCrit: " << numCoverageCriteria_ << " IfaceSkip: " << numInterfaceSkipped_
+                                    << " CovReject: " << numCoverageClearance_);
 
       // Save less frequently
       if (attempts % (FEEDBACK_SAVE_INTERVAL * 4) == 0)
@@ -1339,6 +1339,9 @@ bool SparseGenerator::addSampleSparseCriteria(base::State *candidateState, bool 
   // Criteria 1: add guard (no nearby visibile nodes found *so far*)
   if (visibleNeighborhood.empty())
   {
+    if (!checkClearance(candidateState, indent))
+      return false;  // did not use memory of candidate state
+
     // No free paths means we add for coverage
     BOLT_CYAN(vCriteria_, "COVERAGE: Adding node");
     sg_->addVertex(candidateState, COVERAGE, indent);
@@ -1388,8 +1391,11 @@ bool SparseGenerator::addSampleSparseCriteria(base::State *candidateState, bool 
     }
 
     // Could not be directly connected, create bridge instead
+    if (!addBridge(candidateState, v0, v1, indent))
+      return false;  // did not use memory of candidate state
+
     BOLT_MAGENTA(vCriteria_, "CONNECTIVITY: Added vertex and two edges");
-    addBridge(candidateState, v0, v1, indent);
+
     return true;  // used memory of candidate state
   }
 
@@ -1403,7 +1409,7 @@ bool SparseGenerator::addSampleSparseCriteria(base::State *candidateState, bool 
 }
 
 bool SparseGenerator::checkInterface(base::State *candidateState, const SparseVertex &v0, const SparseVertex &v1,
-                                std::size_t indent)
+                                     std::size_t indent)
 {
   // Don't add an interface edge if dist between the two verticies on graph are already the minimum in L1 space
   static const double stretchFactor = 2;
@@ -1418,14 +1424,14 @@ bool SparseGenerator::checkInterface(base::State *candidateState, const SparseVe
   {
     // ONLY add a bridge if there isn't already a path within a t-stretch factor
     double newPathDistance = si_->distance(sg_->getState(v0), sg_->getState(v1));
-    //std::cout << "found astar path: " << currentPathDistance << " newPathDistance: " << newPathDistance << std::endl;
+    // std::cout << "found astar path: " << currentPathDistance << " newPathDistance: " << newPathDistance << std::endl;
 
     // There is a path, check its length
     if (currentPathDistance < stretchFactor * newPathDistance)
     {
       // No need to add vertex and edges because there is already a sufficient path
       numInterfaceSkipped_++;
-      //std::cout << "INTERFACE: skipped DIRECT iface " << std::endl;
+      // std::cout << "INTERFACE: skipped DIRECT iface " << std::endl;
       directEdgeNecessary = false;
     }
   }
@@ -1452,16 +1458,16 @@ bool SparseGenerator::checkInterface(base::State *candidateState, const SparseVe
   {
     // ONLY add a bridge if there isn't already a path within a t-stretch factor
     double newPathDistance =
-      si_->distance(sg_->getState(v0), candidateState) + si_->distance(candidateState, sg_->getState(v1));
+        si_->distance(sg_->getState(v0), candidateState) + si_->distance(candidateState, sg_->getState(v1));
 
-    //std::cout << "found astar path: " << currentPathDistance << " newPathDistance: " << newPathDistance << std::endl;
+    // std::cout << "found astar path: " << currentPathDistance << " newPathDistance: " << newPathDistance << std::endl;
 
     // There is a path, check its length
     if (currentPathDistance < stretchFactor * newPathDistance)
     {
       // No need to add vertex and edges because there is already a sufficient path
       numInterfaceSkipped_++;
-      //std::cout << "INTERFACE: skipped NOT DIRECT iface " << std::endl;
+      // std::cout << "INTERFACE: skipped NOT DIRECT iface " << std::endl;
       return false;  // did not use memory of candidate state
     }
   }
@@ -1470,16 +1476,20 @@ bool SparseGenerator::checkInterface(base::State *candidateState, const SparseVe
   numInterfaceCriteria_++;
 
   // They cannot be directly connected, so add the new node to the graph, to bridge the interface
+  if (!addBridge(candidateState, v0, v1, indent))
+    return false;  // did not use memory of candidate state
+
   BOLT_DEBUG(vCriteria_, "INTERFACE: Added new vertex and two edges");
 
-  // Connect them
-  addBridge(candidateState, v0, v1, indent);
   return true;  // used memory of candidate state
 }
 
-void SparseGenerator::addBridge(base::State *candidateState, const SparseVertex &v0, const SparseVertex &v1,
+bool SparseGenerator::addBridge(base::State *candidateState, const SparseVertex &v0, const SparseVertex &v1,
                                 std::size_t indent)
 {
+  if (!checkClearance(candidateState, indent))
+    return false;  // did not use memory of candidate state
+
   SparseVertex newVertex = sg_->addVertex(candidateState, COVERAGE, indent);
 
   sg_->addEdge(newVertex, v0, eINTERFACE, indent);
@@ -1491,6 +1501,32 @@ void SparseGenerator::addBridge(base::State *candidateState, const SparseVertex 
     visual_->viz6()->edge(candidateState, sg_->getState(v0), tools::MEDIUM, tools::BLUE);
     visual_->viz6()->edge(candidateState, sg_->getState(v1), tools::MEDIUM, tools::BLUE);
   }
+
+  return true;  // used memory of candidate state
+}
+
+bool SparseGenerator::checkClearance(base::State *candidateState, std::size_t indent)
+{
+  double dist;
+  static const double thisClearance = 0.015;
+  if (!si_->getStateValidityChecker()->isValid(candidateState, dist))
+  {
+    BOLT_ERROR("Found state that is invalid on second collision check!");
+    return false;
+  }
+
+  if (dist < thisClearance)
+  {
+    BOLT_WARN(vCriteria_, "Rejected because of clearance " << std::fixed << dist << " required: " << thisClearance);
+    numCoverageClearance_++;
+
+    if (visualizeSampling_)
+      visual_->viz6()->state(candidateState, tools::ROBOT, tools::RED, 0);
+
+    return false;  // does not have enough clearance
+  }
+
+  return true;
 }
 
 }  // namespace bolt
