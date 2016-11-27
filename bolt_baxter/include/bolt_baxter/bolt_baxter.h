@@ -253,8 +253,10 @@ public:
 
   // Type of planner
   std::vector<std::string> planners_;
+  std::vector<std::string> experiment_names_;
   double planning_time_;  // seconds
   std::string planner_;   // the current planner being run
+  std::string experiment_name_; // paper name of current planner experiment
   bool is_bolt_ = false;
   bool is_thunder_ = false;
   bool is_lightning_ = false;

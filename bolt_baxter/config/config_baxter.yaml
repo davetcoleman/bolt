@@ -4,20 +4,23 @@ bolt_baxter:
 
   # Pre-processing Benchmark
   # ---------------------------------------
-  #planners: [BoltERRTConnect, BoltRRTConnect]
-
-  # planners: [Bolt] # this represents simplified sparse critiera with interface check
-  # log_file_name: log_preprocessing_bolt.csv
-
-  planners: [BoltERRTConnect] # this represents simplified sparse critiera with interface check and clearance
-  log_file_name: log_preprocessing_errtconnect.csv
-
-  #planners: [BoltRRTConnect]  # this represents simplified sparse critiera
-  #log_file_name: log_preprocessing_rrtconnect.csv
-
   load_database_version: exp
   penetration_start: -0.05
   num_problems: 50
+
+  experiment_names: [BoltDR]
+  planners: [BoltRandom]
+  log_file_name: log_BoltDR.csv
+
+  # experiment_names: [BoltSR-ERRT]
+  # planners: [BoltERRTConnect]
+  # log_file_name: log_BoltSR-ERRT.csv
+
+  # experiment_names: [BoltSR]
+  # planners: [BoltRRTConnect]
+  # log_file_name: log_BoltSR.csv
+
+
 
   # No Preprocessing Benchmark
   # ---------------------------------------
@@ -52,8 +55,8 @@ bolt_baxter:
 
   # create sparse graph
   load_spars: true
-  create_spars: true
-  continue_spars: true # even if a file has been saved, randomly sample for more coverage
+  create_spars: false
+  continue_spars: false # even if a file has been saved, randomly sample for more coverage
   sweep_spars_maps: true
   sweep_map_start: 1 # Base 1, not 0
   sweep_map_end: 1 # Base 1, not 0
@@ -64,7 +67,7 @@ bolt_baxter:
   both_arms_group_name: both_arms
 
   # run type
-  run_problems: false # do plans?
+  run_problems: true # do plans?
   problem_type: 0 # 0 - random, 1 - imarkers, 2 - imarker goal list, 3 - stdf, 4 - ik
 
   # Goal
@@ -73,7 +76,7 @@ bolt_baxter:
   imarker_start_list: problems/benchmark1.moveit.start
 
   # scene
-  scene_type: 0 # 0 - work cell (office), 1 - amazon
+  scene_type: 1 # 0 - work cell (office), 1 - amazon
   distance_to_shelf: 1.3
   use_shelf_noise: true # keep shelf location constant or randomize it
   bin_height: -0.15

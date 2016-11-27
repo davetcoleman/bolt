@@ -1764,7 +1764,8 @@ Visualization Manager:
           Marker Topic: /baxter/ompl_visual6
           Name: ompl6 - markers
           Namespaces:
-            {}
+            Cylinder: true
+            path_spheres: true
           Queue Size: 100
           Value: true
       Enabled: true
@@ -3266,17 +3267,17 @@ Visualization Manager:
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.454776585
-        Y: -0.0735278875
+        X: -0.0227736831
+        Y: 0.157011643
         Z: 0
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.0500000007
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: -0.260202527
+      Pitch: 0.969796896
       Target Frame: robot_table_link
       Value: XYOrbit (rviz)
-      Yaw: 0.0954055414
+      Yaw: 2.64540768
     Saved: ~
 Window Geometry:
   Displays:

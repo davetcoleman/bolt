@@ -126,6 +126,7 @@ BoltBaxter::BoltBaxter(const std::string &hostname, const std::string &package_p
   // run type
   error += !rosparam_shortcuts::get(name_, rpnh, "auto_run", auto_run_);
   error += !rosparam_shortcuts::get(name_, rpnh, "planners", planners_);
+  error += !rosparam_shortcuts::get(name_, rpnh, "experiment_names", experiment_names_);
   error += !rosparam_shortcuts::get(name_, rpnh, "planning_time", planning_time_);
   error += !rosparam_shortcuts::get(name_, rpnh, "num_problems", num_problems_);
   error += !rosparam_shortcuts::get(name_, rpnh, "headless", headless_);
@@ -162,6 +163,13 @@ BoltBaxter::BoltBaxter(const std::string &hostname, const std::string &package_p
   // Debug
   error += !rosparam_shortcuts::get(name_, rpnh, "verbose/print_trajectory", debug_print_trajectory_);
   rosparam_shortcuts::shutdownIfError(name_, error);
+
+  // Check Input
+  if (planners_.size() != experiment_names_.size())
+  {
+    BOLT_ERROR("Mismatching number of items in planners vs experiment_names param");
+    exit(-1);
+  }
 
   // Estimate the worse-case runtime
   double maxRunTime = planning_time_ * planners_.size() * num_problems_;
@@ -392,8 +400,6 @@ bool BoltBaxter::loadOMPL(std::size_t indent)
     {
       bolt_->usePFSPlanner_ = true;
       bolt_->useERRTConnect_ = true;
-      // bolt_->usePFSPlanner_ = false;
-      // bolt_->useERRTConnect_ = false;
     }
     else
       BOLT_ERROR("Unknown bolt type " << planner_);
@@ -592,11 +598,12 @@ void BoltBaxter::eachPlanner(std::size_t indent)
   for (std::size_t i = 0; i < planners_.size(); ++i)
   {
     planner_ = planners_[i];
+    experiment_name_ = experiment_names_[i];
 
     // Feedback
     std::cout << std::endl;
     std::cout << "##############################################################################################\n";
-    BOLT_INFO(true, "Testing with planner '" << planner_ << "'");
+    BOLT_INFO(true, "Testing with planner '" << planner_ << "' (" << experiment_name_ << ")");
     std::cout << "##############################################################################################\n\n";
 
     // Load planning
@@ -2035,6 +2042,16 @@ void BoltBaxter::log(bool solved, std::size_t indent)
     numEdgesAdded = thunder_->diffNumEdges_;
     thunder_->diffNumVertices_ = 0;
     thunder_->diffNumEdges_ = 0;
+
+    // General graph stats
+    numVertices = thunder_->getExperienceDB()->getSPARSdb()->getNumVertices();
+    numEdges = thunder_->getExperienceDB()->getSPARSdb()->getNumEdges();
+  }
+  if (is_lightning_)
+  {
+    numVertices = lightning_->getStatesCount();
+    // count each path as one edge, but there are no real edges
+    numEdges = lightning_->getExperiencesCount();
   }
 
   double pathLength = 99999;  // some really large number to prevent forgetting to adjust for this in averages
@@ -2047,7 +2064,7 @@ void BoltBaxter::log(bool solved, std::size_t indent)
   else
     BOLT_WARN(true, "logging: does not have solution");
 
-  logging_file_ << planner_ << ", "                                     // bolt, etc
+  logging_file_ << experiment_name_ << ", "                                     // bolt, etc
                 << simple_setup_->getSolutionPlannerName() << ", "      // which thread finished first
                 << penetration_dist_ << ", "                            // task
                 << simple_setup_->getLastPlanComputationTime() << ", "  // planning time
