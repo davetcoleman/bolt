@@ -3,14 +3,14 @@
 bolt_baxter:
 
   # Pre-processing Benchmark
-  # ---------------------------------------
-  load_database_version: exp
-  penetration_start: -0.05
-  num_problems: 50
+  # --------------------------------------------------
+  # load_database_version: exp
+  # penetration_start: -0.05
+  # num_problems: 50
 
-  experiment_names: [BoltDR]
-  planners: [BoltRandom]
-  log_file_name: log_BoltDR.csv
+  # experiment_names: [BoltDR]
+  # planners: [BoltRandom]
+  # log_file_name: log_BoltDR.csv
 
   # experiment_names: [BoltSR-ERRT]
   # planners: [BoltERRTConnect]
@@ -20,16 +20,24 @@ bolt_baxter:
   # planners: [BoltRRTConnect]
   # log_file_name: log_BoltSR.csv
 
-
-
   # No Preprocessing Benchmark
-  # ---------------------------------------
-  #planners: [BoltERRTConnect, BoltRRTConnect, Thunder, Lightning]
-  # planners: [Lightning]
-  # load_database_version: np
-  # penetration_start: -0.05
-  # log_file_name: log_nopreprocessing_lightning.csv
-  # num_problems: 50
+  # --------------------------------------------------
+  load_database_version: np
+  penetration_start: -0.05
+  num_problems: 50
+
+  # experiment_names: [Thunder]
+  # planners: [BoltRRTConnect]
+  # log_file_name: log_thunder_errt.csv
+
+  # experiment_names: [Thunder-ERRT]
+  # planners: [BoltERRTConnect]
+  # log_file_name: log_thunder_errt.csv
+
+  experiment_names: [Lightning, Thunder-SPARS]
+  planners: [Lightning, Thunder]
+  log_file_name: log_Lightning_Thunder-SPARS.csv
+
 
   # Single Query Benchmark
   # ---------------------------------------

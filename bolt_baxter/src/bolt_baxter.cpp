@@ -1721,8 +1721,9 @@ bool BoltBaxter::chooseStartGoal(std::size_t run_id, std::size_t indent)
   {
     // Random ---------------------------------------------
     case 0:
-      imarker_start_->setToRandomState();
-      imarker_goal_->setToRandomState();
+      static const double CLEARANCE = 0; //0.015; // 1.5 cm
+      imarker_start_->setToRandomState(CLEARANCE);
+      imarker_goal_->setToRandomState(CLEARANCE);
 
       // Apply imarker start/goal to OMPL SimpleSetup
       if (!setSingleStartFromIMarker(indent))
